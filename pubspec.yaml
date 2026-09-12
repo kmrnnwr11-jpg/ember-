@@ -1,0 +1,27 @@
+name: fluttercursor_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.10.0
+
+workspace:
+  - apps/ide
+  - packages/ide_core
+  - packages/ai_connect
+
+dev_dependencies:
+  melos: ^8.7.0
+
+melos:
+  scripts:
+    analyze:
+      run: melos exec -- flutter analyze
+      description: flutter analyze in every package
+    test:
+      run: melos exec --dir-exists=test -- flutter test
+      description: flutter test in every package that has tests
+    runner:test:
+      run: cd apps/runner && npm test
+      description: Runner (Node) tests
+    build:web:
+      run: cd apps/ide && flutter build web --release

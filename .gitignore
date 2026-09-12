@@ -1,0 +1,11 @@
+.dart_tool/
+build/
+.flutter-plugins-dependencies
+pubspec_overrides.yaml
+node_modules/
+dist/
+.env
+*.log
+data/
+coverage/
+.idea/

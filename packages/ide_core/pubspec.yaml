@@ -1,0 +1,16 @@
+name: ide_core
+description: Shared models, WebSocket protocol and palette commands for FlutterCursor.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.10.0
+
+resolution: workspace
+
+dependencies:
+  meta: ^1.16.0
+
+dev_dependencies:
+  test: ^1.25.0
+  lints: ^6.0.0

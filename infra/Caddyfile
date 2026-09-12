@@ -1,0 +1,14 @@
+{
+	email {$ACME_EMAIL}
+}
+
+runner.{$BASE_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy runner:8787
+}
+
+# Preview host (Phase 2 serves builds under /<workspaceId>/<projectId>/).
+preview.{$BASE_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy runner:8787
+}

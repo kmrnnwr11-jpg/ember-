@@ -1,0 +1,294 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:ide_core/ide_core.dart';
+
+import '../../core/session.dart';
+import '../../l10n/app_localizations.dart';
+import '../../widgets/connection_badge.dart';
+
+/// The user's default workspace (created on first use).
+final workspaceProvider = FutureProvider<Workspace>((ref) async {
+  final api = await ref.watch(runnerApiProvider.future);
+  final list = await api.workspaces();
+  return list.isNotEmpty ? list.first : api.createWorkspace('default');
+});
+
+final projectsProvider = FutureProvider<List<Project>>((ref) async {
+  final api = await ref.watch(runnerApiProvider.future);
+  final ws = await ref.watch(workspaceProvider.future);
+  final list = await api.projects(ws.id);
+  return list..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+});
+
+class ProjectsScreen extends ConsumerStatefulWidget {
+  const ProjectsScreen({super.key});
+
+  @override
+  ConsumerState<ProjectsScreen> createState() => _ProjectsScreenState();
+}
+
+class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
+  StreamSubscription<WsFrame>? _jobSub;
+
+  @override
+  void initState() {
+    super.initState();
+    // Refresh the list whenever a create job finishes.
+    _jobSub = ref.read(runnerSocketProvider).eventsOf(MsgType.jobStatus).listen((f) {
+      final s = JobStatus.fromJson(f.payload);
+      if (s.kind == 'create' && s.isDone) ref.invalidate(projectsProvider);
+    });
+  }
+
+  @override
+  void dispose() {
+    _jobSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _create() async {
+    final l = AppLocalizations.of(context);
+    final name = await showDialog<String>(context: context, builder: (_) => const _NewProjectDialog());
+    if (name == null || !mounted) return;
+    try {
+      final api = await ref.read(runnerApiProvider.future);
+      final ws = await ref.read(workspaceProvider.future);
+      final (project, job) = await api.createProject(ws.id, name);
+      ref.invalidate(projectsProvider);
+      if (!mounted) return;
+      final ok = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => JobLogDialog(title: l.creatingProject(project.name), jobId: job.jobId),
+      );
+      ref.invalidate(projectsProvider);
+      if (ok == true && mounted) context.go('/projects/${project.id}');
+    } on RunnerException catch (e) {
+      if (mounted) _snack(l.error(e.message));
+    }
+  }
+
+  Future<void> _delete(Project p) async {
+    final l = AppLocalizations.of(context);
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        content: Text(l.deleteConfirm(p.name)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(l.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(l.delete)),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    try {
+      await (await ref.read(runnerApiProvider.future)).deleteProject(p.id);
+    } on RunnerException catch (e) {
+      if (mounted) _snack(l.error(e.message));
+    }
+    ref.invalidate(projectsProvider);
+  }
+
+  void _snack(String msg) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final projects = ref.watch(projectsProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l.projects),
+        actions: [
+          const ConnectionBadge(),
+          IconButton(
+            tooltip: l.signOut,
+            icon: const Icon(Icons.logout),
+            onPressed: () => ref.read(sessionProvider.notifier).signOut(),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        key: const Key('newProject'),
+        onPressed: _create,
+        icon: const Icon(Icons.add),
+        label: Text(l.newProject),
+      ),
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(projectsProvider.future),
+        child: projects.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => ListView(
+            children: [
+              const SizedBox(height: 80),
+              Center(child: Text(l.error(e is RunnerException ? e.message : e.toString()), textAlign: TextAlign.center)),
+              Center(child: TextButton(onPressed: () => ref.invalidate(workspaceProvider), child: Text(l.retry))),
+            ],
+          ),
+          data: (list) => list.isEmpty
+              ? ListView(children: [const SizedBox(height: 120), Center(child: Text(l.noProjects))])
+              : ListView.separated(
+                  padding: const EdgeInsets.only(bottom: 96),
+                  itemCount: list.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (_, i) {
+                    final p = list[i];
+                    final (label, icon) = switch (p.status) {
+                      'ready' => (l.statusReady, Icons.folder_outlined),
+                      'creating' => (l.statusCreating, Icons.hourglass_top),
+                      _ => (l.statusError, Icons.error_outline),
+                    };
+                    return ListTile(
+                      leading: Icon(icon),
+                      title: Text(p.name),
+                      subtitle: Text('$label · ${p.template}'),
+                      enabled: p.isReady,
+                      onTap: p.isReady ? () => context.go('/projects/${p.id}') : null,
+                      trailing: IconButton(
+                        tooltip: l.delete,
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: p.status == 'creating' ? null : () => _delete(p),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NewProjectDialog extends StatefulWidget {
+  const _NewProjectDialog();
+
+  @override
+  State<_NewProjectDialog> createState() => _NewProjectDialogState();
+}
+
+class _NewProjectDialogState extends State<_NewProjectDialog> {
+  final _form = GlobalKey<FormState>();
+  final _name = TextEditingController();
+  static final _valid = RegExp(r'^[a-z][a-z0-9_]{0,63}$');
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _ok() {
+    if (_form.currentState!.validate()) Navigator.pop(context, _name.text.trim());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l.newProject),
+      content: Form(
+        key: _form,
+        child: TextFormField(
+          key: const Key('projectName'),
+          controller: _name,
+          autofocus: true,
+          decoration: InputDecoration(labelText: l.projectName, helperText: l.projectNameHelp),
+          validator: (v) => _valid.hasMatch(v?.trim() ?? '') ? null : l.projectNameHelp,
+          onFieldSubmitted: (_) => _ok(),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l.cancel)),
+        FilledButton(onPressed: _ok, child: Text(l.create)),
+      ],
+    );
+  }
+}
+
+/// Streams a job's log; pops `true` on success, `false` on failure.
+class JobLogDialog extends ConsumerStatefulWidget {
+  const JobLogDialog({super.key, required this.title, required this.jobId});
+
+  final String title;
+  final String jobId;
+
+  @override
+  ConsumerState<JobLogDialog> createState() => _JobLogDialogState();
+}
+
+class _JobLogDialogState extends ConsumerState<JobLogDialog> {
+  final _log = StringBuffer();
+  final _scroll = ScrollController();
+  final _subs = <StreamSubscription<WsFrame>>[];
+  JobStatus? _status;
+
+  @override
+  void initState() {
+    super.initState();
+    final socket = ref.read(runnerSocketProvider);
+    _subs
+      ..add(socket.eventsOf(MsgType.jobLog).where((f) => f.payload['jobId'] == widget.jobId).listen((f) {
+        setState(() => _log.write(f.payload['chunk'] as String? ?? ''));
+        _scrollToEnd();
+      }))
+      ..add(socket.eventsOf(MsgType.jobStatus).where((f) => f.payload['jobId'] == widget.jobId).listen((f) {
+        setState(() => _status = JobStatus.fromJson(f.payload));
+      }));
+    // Replay what was logged before we subscribed.
+    ref.read(runnerApiProvider.future).then((api) => api.jobLog(widget.jobId)).then((prior) {
+      if (!mounted || _log.isNotEmpty) return;
+      setState(() => _log.write(prior));
+      _scrollToEnd();
+    }, onError: (_) {});
+  }
+
+  void _scrollToEnd() => WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (_scroll.hasClients) _scroll.jumpTo(_scroll.position.maxScrollExtent);
+  });
+
+  @override
+  void dispose() {
+    for (final s in _subs) {
+      s.cancel();
+    }
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final done = _status?.isDone ?? false;
+    final ok = _status?.status == 'succeeded';
+    return AlertDialog(
+      title: Row(
+        children: [
+          if (!done) const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+          if (done) Icon(ok ? Icons.check_circle : Icons.error, color: ok ? Colors.green : Theme.of(context).colorScheme.error),
+          const SizedBox(width: 12),
+          Expanded(child: Text(widget.title)),
+        ],
+      ),
+      content: SizedBox(
+        width: 640,
+        height: 320,
+        child: Container(
+          color: Colors.black,
+          padding: const EdgeInsets.all(8),
+          child: SingleChildScrollView(
+            controller: _scroll,
+            child: SelectableText(
+              _log.toString(),
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.white70),
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        if (done) FilledButton(onPressed: () => Navigator.pop(context, ok), child: Text(ok ? l.statusReady : l.cancel)),
+      ],
+    );
+  }
+}

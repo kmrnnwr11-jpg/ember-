@@ -63,4 +63,11 @@ void main() {
     final j = JobStatus.fromJson({'jobId': 'j', 'kind': 'create', 'status': 'failed', 'exitCode': 1});
     expect(j.isDone, isTrue);
   });
+
+  test('PreviewInfo resolves URL', () {
+    final local = PreviewInfo.fromJson({'projectId': 'p', 'path': '/preview/w/p/', 'built': true});
+    expect(local.resolve('http://10.0.2.2:8787/'), 'http://10.0.2.2:8787/preview/w/p/');
+    final prod = PreviewInfo.fromJson({'projectId': 'p', 'path': '/preview/w/p/', 'url': 'https://preview.x.dev/w/p/'});
+    expect(prod.resolve('http://ignored'), 'https://preview.x.dev/w/p/');
+  });
 }

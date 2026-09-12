@@ -373,6 +373,120 @@ abstract class AppLocalizations {
   /// In it, this message translates to:
   /// **'File binario o troppo grande: non modificabile nell\'editor.'**
   String get binaryFile;
+
+  /// No description provided for @terminal.
+  ///
+  /// In it, this message translates to:
+  /// **'Terminale'**
+  String get terminal;
+
+  /// No description provided for @newTerminal.
+  ///
+  /// In it, this message translates to:
+  /// **'Nuovo terminale'**
+  String get newTerminal;
+
+  /// No description provided for @toggleTerminal.
+  ///
+  /// In it, this message translates to:
+  /// **'Mostra/nascondi terminale'**
+  String get toggleTerminal;
+
+  /// No description provided for @restart.
+  ///
+  /// In it, this message translates to:
+  /// **'Riavvia'**
+  String get restart;
+
+  /// No description provided for @preview.
+  ///
+  /// In it, this message translates to:
+  /// **'Anteprima'**
+  String get preview;
+
+  /// No description provided for @togglePreview.
+  ///
+  /// In it, this message translates to:
+  /// **'Mostra/nascondi anteprima'**
+  String get togglePreview;
+
+  /// No description provided for @runWeb.
+  ///
+  /// In it, this message translates to:
+  /// **'Avvia Web'**
+  String get runWeb;
+
+  /// No description provided for @building.
+  ///
+  /// In it, this message translates to:
+  /// **'Compilazione…'**
+  String get building;
+
+  /// No description provided for @buildFailed.
+  ///
+  /// In it, this message translates to:
+  /// **'Compilazione fallita: controlla il log qui sotto.'**
+  String get buildFailed;
+
+  /// No description provided for @reloadPreview.
+  ///
+  /// In it, this message translates to:
+  /// **'Ricarica anteprima'**
+  String get reloadPreview;
+
+  /// No description provided for @device.
+  ///
+  /// In it, this message translates to:
+  /// **'Dispositivo'**
+  String get device;
+
+  /// No description provided for @openInBrowser.
+  ///
+  /// In it, this message translates to:
+  /// **'Apri nel browser'**
+  String get openInBrowser;
+
+  /// No description provided for @openOnOtherDevice.
+  ///
+  /// In it, this message translates to:
+  /// **'Apri su un altro dispositivo'**
+  String get openOnOtherDevice;
+
+  /// No description provided for @qrLocalhostWarning.
+  ///
+  /// In it, this message translates to:
+  /// **'Questo indirizzo funziona solo su questo computer. Usa l\'IP di rete del Runner (es. http://192.168.1.20:8787) per aprirlo dal telefono.'**
+  String get qrLocalhostWarning;
+
+  /// No description provided for @copy.
+  ///
+  /// In it, this message translates to:
+  /// **'Copia'**
+  String get copy;
+
+  /// No description provided for @close.
+  ///
+  /// In it, this message translates to:
+  /// **'Chiudi'**
+  String get close;
+
+  /// No description provided for @console.
+  ///
+  /// In it, this message translates to:
+  /// **'Console'**
+  String get console;
+
+  /// No description provided for @autoRebuild.
+  ///
+  /// In it, this message translates to:
+  /// **'Ricompila al salvataggio'**
+  String get autoRebuild;
+
+  /// No description provided for @previewEmpty.
+  ///
+  /// In it, this message translates to:
+  /// **'Premi «Avvia Web» per compilare l\'app e vederla qui. Ogni salvataggio aggiorna l\'anteprima.'**
+  String get previewEmpty;
 }
 
 class _AppLocalizationsDelegate

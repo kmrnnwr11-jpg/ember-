@@ -69,6 +69,58 @@ if (!again.content.includes('FlutterCursor Smoke')) throw new Error('write did n
 await new Promise((r) => setTimeout(r, 800));
 log('persisted ✓, fs.changed events:', events.filter((e) => e.type === 'fs.changed').length);
 
+// ---- Phase 2: real terminal ----
+const waitFor = async (pred, ms = 30000) => {
+  const start = Date.now();
+  while (Date.now() - start < ms) {
+    const i = events.findIndex(pred);
+    if (i >= 0) return events.splice(i, 1)[0];
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  throw new Error('timeout waiting for event');
+};
+const { ptyId } = await req('pty.open', { projectId: project.id, cols: 120, rows: 30 });
+await req('pty.input', { ptyId, data: 'echo FC_$((6*7))_OK\r' });
+let term = '';
+const t1 = Date.now();
+while (!/FC_42_OK|FC_\$\(\(6\*7\)\)_OK/.test(term) && Date.now() - t1 < 15000) {
+  const f = await waitFor((e) => e.type === 'pty.output' && e.payload.ptyId === ptyId, 15000);
+  term += f.payload.data;
+}
+log('terminal ✓ (shell output received)');
+await req('pty.close', { ptyId });
+
+// ---- Phase 2: real web build + preview ----
+const started = await req('preview.start', { projectId: project.id, autoRebuild: true });
+log('building web, job', started.job.jobId);
+const ready = await waitFor((e) => (e.type === 'preview.ready' || e.type === 'preview.failed') && e.payload.projectId === project.id, 600000);
+if (ready.type === 'preview.failed') {
+  console.error((await http('GET', `/v1/jobs/${started.job.jobId}`, token)).log.slice(-3000));
+  process.exit(1);
+}
+const previewUrl = base + ready.payload.path;
+const page = await fetch(previewUrl);
+const html = await page.text();
+if (page.status !== 200 || !html.includes(`<base href="${ready.payload.path}">`)) throw new Error(`preview bad: ${page.status}`);
+const boot = await fetch(previewUrl + 'flutter_bootstrap.js');
+log(`preview ✓ ${previewUrl} (index ${html.length}B, bootstrap ${boot.status})`);
+
+// rebuild on save
+events.length = 0;
+const cur = await req('fs.read', { projectId: project.id, path: 'lib/main.dart' });
+await req('fs.write', { projectId: project.id, path: 'lib/main.dart', content: cur.content.replace('FlutterCursor Smoke', 'Rebuilt On Save') });
+const building = await waitFor((e) => e.type === 'preview.building' && e.payload.projectId === project.id, 20000);
+log('auto-rebuild triggered by save ✓ job', building.payload.jobId);
+const rebuilt = await waitFor((e) => (e.type === 'preview.ready' || e.type === 'preview.failed') && e.payload.projectId === project.id, 600000);
+const js = await (await fetch(previewUrl + 'main.dart.js')).text();
+if (rebuilt.type !== 'preview.ready' || !js.includes('Rebuilt On Save')) throw new Error('rebuild did not pick up change');
+log('rebuilt preview contains the edit ✓');
+await req('preview.stop', { projectId: project.id });
+
+if (process.env.KEEP) {
+  log('KEEP set: project left in place', project.id);
+  process.exit(0);
+}
 await http('DELETE', `/v1/projects/${project.id}`, token);
 log('cleanup ✓');
 sock.close();

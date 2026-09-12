@@ -7,6 +7,21 @@ export interface ExecOptions {
   signal: AbortSignal;
 }
 
+/** An interactive terminal session. */
+export interface PtyHandle {
+  onData(cb: (data: string) => void): void;
+  onExit(cb: (exitCode: number) => void): void;
+  write(data: string): void;
+  resize(cols: number, rows: number): void;
+  kill(): void;
+}
+
+export interface PtyOptions {
+  cwd: string;
+  cols: number;
+  rows: number;
+}
+
 /**
  * Runs commands and hosts files for a workspace.
  * - `local`: files under WORKSPACES_ROOT/<id>, processes on the host (dev only).
@@ -20,4 +35,6 @@ export interface WorkspaceDriver {
   stop(workspaceId: string): Promise<void>;
   /** Runs a command; resolves with the exit code. Rejects only on spawn failure. */
   exec(workspaceId: string, cmd: string, args: string[], opts: ExecOptions): Promise<number>;
+  /** Opens an interactive login shell. */
+  openPty(workspaceId: string, opts: PtyOptions): Promise<PtyHandle>;
 }

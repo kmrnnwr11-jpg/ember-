@@ -8,4 +8,9 @@
 | Tab / Shift+Tab | Indent / Outdent selection | Phase 1 |
 | Right-click / long-press on tree item | New file, new folder, rename, delete | Phase 1 |
 
-Planned: Ctrl+P, Ctrl+Shift+P, Ctrl+K, Ctrl+` (Phase 4, 2).
+| Ctrl+` | Toggle terminal panel (opens a terminal if none) | Phase 2 |
+| F5 | Run Web (build + open preview panel) | Phase 2 |
+
+Mobile terminal key bar: Ctrl (sticky, applies to next letter), Esc, Tab, ↑ ↓ ← →, `|`, `~`, `/`, `-`.
+
+Planned: Ctrl+P, Ctrl+Shift+P, Ctrl+K (Phase 4).

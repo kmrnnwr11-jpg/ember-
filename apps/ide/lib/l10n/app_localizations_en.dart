@@ -154,4 +154,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get binaryFile => 'Binary or too large: cannot be edited.';
+
+  @override
+  String get terminal => 'Terminal';
+
+  @override
+  String get newTerminal => 'New terminal';
+
+  @override
+  String get toggleTerminal => 'Toggle terminal';
+
+  @override
+  String get restart => 'Restart';
+
+  @override
+  String get preview => 'Preview';
+
+  @override
+  String get togglePreview => 'Toggle preview';
+
+  @override
+  String get runWeb => 'Run Web';
+
+  @override
+  String get building => 'Building…';
+
+  @override
+  String get buildFailed => 'Build failed: see the log below.';
+
+  @override
+  String get reloadPreview => 'Reload preview';
+
+  @override
+  String get device => 'Device';
+
+  @override
+  String get openInBrowser => 'Open in browser';
+
+  @override
+  String get openOnOtherDevice => 'Open on another device';
+
+  @override
+  String get qrLocalhostWarning =>
+      'This address only works on this computer. Use the Runner\'s LAN IP (e.g. http://192.168.1.20:8787) to open it from a phone.';
+
+  @override
+  String get copy => 'Copy';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get console => 'Console';
+
+  @override
+  String get autoRebuild => 'Rebuild on save';
+
+  @override
+  String get previewEmpty =>
+      'Press “Run Web” to build the app and see it here. Every save refreshes the preview.';
 }

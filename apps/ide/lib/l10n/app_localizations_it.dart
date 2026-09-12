@@ -156,4 +156,63 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get binaryFile =>
       'File binario o troppo grande: non modificabile nell\'editor.';
+
+  @override
+  String get terminal => 'Terminale';
+
+  @override
+  String get newTerminal => 'Nuovo terminale';
+
+  @override
+  String get toggleTerminal => 'Mostra/nascondi terminale';
+
+  @override
+  String get restart => 'Riavvia';
+
+  @override
+  String get preview => 'Anteprima';
+
+  @override
+  String get togglePreview => 'Mostra/nascondi anteprima';
+
+  @override
+  String get runWeb => 'Avvia Web';
+
+  @override
+  String get building => 'Compilazione…';
+
+  @override
+  String get buildFailed => 'Compilazione fallita: controlla il log qui sotto.';
+
+  @override
+  String get reloadPreview => 'Ricarica anteprima';
+
+  @override
+  String get device => 'Dispositivo';
+
+  @override
+  String get openInBrowser => 'Apri nel browser';
+
+  @override
+  String get openOnOtherDevice => 'Apri su un altro dispositivo';
+
+  @override
+  String get qrLocalhostWarning =>
+      'Questo indirizzo funziona solo su questo computer. Usa l\'IP di rete del Runner (es. http://192.168.1.20:8787) per aprirlo dal telefono.';
+
+  @override
+  String get copy => 'Copia';
+
+  @override
+  String get close => 'Chiudi';
+
+  @override
+  String get console => 'Console';
+
+  @override
+  String get autoRebuild => 'Ricompila al salvataggio';
+
+  @override
+  String get previewEmpty =>
+      'Premi «Avvia Web» per compilare l\'app e vederla qui. Ogni salvataggio aggiorna l\'anteprima.';
 }

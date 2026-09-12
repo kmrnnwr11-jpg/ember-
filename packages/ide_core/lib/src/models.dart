@@ -90,6 +90,45 @@ class FsEntry {
 }
 
 @immutable
+class PreviewInfo {
+  const PreviewInfo({
+    required this.projectId,
+    required this.path,
+    required this.built,
+    required this.autoRebuild,
+    required this.building,
+    this.url,
+    this.builtAt,
+  });
+
+  final String projectId;
+
+  /// Absolute preview URL when the Runner has a preview domain.
+  final String? url;
+
+  /// Path on the Runner host, used when [url] is null.
+  final String path;
+  final bool built;
+  final DateTime? builtAt;
+  final bool autoRebuild;
+  final bool building;
+
+  /// Public URL of the preview given the Runner base URL.
+  String resolve(String runnerUrl) =>
+      url ?? '${runnerUrl.replaceAll(RegExp(r'/+$'), '')}$path';
+
+  factory PreviewInfo.fromJson(Map<String, dynamic> j) => PreviewInfo(
+    projectId: j['projectId'] as String,
+    url: j['url'] as String?,
+    path: j['path'] as String,
+    built: j['built'] as bool? ?? false,
+    builtAt: j['builtAt'] == null ? null : DateTime.parse(j['builtAt'] as String),
+    autoRebuild: j['autoRebuild'] as bool? ?? false,
+    building: j['building'] as bool? ?? false,
+  );
+}
+
+@immutable
 class JobStatus {
   const JobStatus({
     required this.jobId,

@@ -9,7 +9,7 @@ import { loadConfig } from './config.js';
 import { ProjectFs } from './fs.js';
 import { JobManager } from './jobs.js';
 import { normalizeRel, safeResolve, validateProjectName } from './paths.js';
-import type { ExecOptions, WorkspaceDriver } from './workspaces/driver.js';
+import type { ExecOptions, PtyHandle, WorkspaceDriver } from './workspaces/driver.js';
 
 /** Simulates the workspace container: `flutter create <name>` writes a minimal project. */
 class FakeDriver implements WorkspaceDriver {
@@ -23,7 +23,27 @@ class FakeDriver implements WorkspaceDriver {
     return { containerId: null };
   }
   async stop() {}
+  /** Echo "terminal": writes back input prefixed, exits on "exit\r". */
+  async openPty(): Promise<PtyHandle> {
+    let dataCb: (d: string) => void = () => {};
+    let exitCb: (c: number) => void = () => {};
+    return {
+      onData: (cb) => void (dataCb = cb),
+      onExit: (cb) => void (exitCb = cb),
+      write: (d) => (d === 'exit\r' ? setTimeout(() => exitCb(0), 5) : setTimeout(() => dataCb(`echo:${d}`), 5)),
+      resize: (c, r) => setTimeout(() => dataCb(`size:${c}x${r}`), 5),
+      kill: () => setTimeout(() => exitCb(137), 5),
+    };
+  }
   async exec(id: string, cmd: string, args: string[], opts: ExecOptions) {
+    if (cmd === 'flutter' && args[0] === 'build' && args[1] === 'web') {
+      const dir = path.join(this.hostRoot(id), opts.cwd, 'build', 'web');
+      await mkdir(dir, { recursive: true });
+      const base = args[args.indexOf('--base-href') + 1];
+      await writeFile(path.join(dir, 'index.html'), `<base href="${base}">hello preview`);
+      await writeFile(path.join(dir, 'main.dart.js'), 'console.log(1)');
+      return 0;
+    }
     if (args[0] === 'sleep') {
       await new Promise<void>((r) => {
         const t = setTimeout(r, 10_000);
@@ -192,8 +212,51 @@ describe('Runner API (phase 1 acceptance)', () => {
     const escape = await req('fs.read', { projectId: project.id, path: '../../store.json' });
     expect(escape).toMatchObject({ type: 'error', payload: { code: 'bad_path' } });
 
-    const unsupported = await req('pty.open', {});
+    const unsupported = await req('agent.run', {});
     expect(unsupported.payload.code).toBe('unsupported');
+
+    // ---- Phase 2: terminal ----
+    const waitEvent = (pred: (f: any) => boolean) =>
+      new Promise<any>((resolve, reject) => {
+        const t0 = Date.now();
+        const tick = () => {
+          const i = events.findIndex(pred);
+          if (i >= 0) return resolve(events.splice(i, 1)[0]);
+          if (Date.now() - t0 > 3000) return reject(new Error('event timeout'));
+          setTimeout(tick, 10);
+        };
+        tick();
+      });
+    const opened = await req('pty.open', { projectId: project.id, cols: 100, rows: 30 });
+    const ptyId = opened.payload.ptyId as string;
+    expect(ptyId).toBeTruthy();
+    await req('pty.input', { ptyId, data: 'ls\r' });
+    expect((await waitEvent((f) => f.type === 'pty.output' && f.payload.ptyId === ptyId)).payload.data).toBe('echo:ls\r');
+    await req('pty.resize', { ptyId, cols: 9999, rows: 1 });
+    expect((await waitEvent((f) => f.type === 'pty.output')).payload.data).toBe('size:500x2');
+    await req('pty.input', { ptyId, data: 'exit\r' });
+    expect((await waitEvent((f) => f.type === 'pty.exit')).payload).toEqual({ ptyId, exitCode: 0 });
+    expect((await req('pty.input', { ptyId, data: 'x' })).payload.code).toBe('not_found');
+
+    // ---- Phase 2: web preview ----
+    const notBuilt = await fetch(`http://${base}/preview/${ws.id}/${project.id}/`);
+    expect(notBuilt.status).toBe(404);
+    const started = await req('preview.start', { projectId: project.id, autoRebuild: true });
+    expect(started.payload.preview.path).toBe(`/preview/${ws.id}/${project.id}/`);
+    const ready = await waitEvent((f) => f.type === 'preview.ready');
+    expect(ready.payload).toMatchObject({ projectId: project.id, built: true, autoRebuild: true });
+    const page = await fetch(`http://${base}/preview/${ws.id}/${project.id}/`);
+    expect(page.status).toBe(200);
+    expect(page.headers.get('cache-control')).toContain('no-cache');
+    expect(await page.text()).toContain(`<base href="/preview/${ws.id}/${project.id}/">`);
+    const spa = await fetch(`http://${base}/preview/${ws.id}/${project.id}/some/route`);
+    expect(await spa.text()).toContain('hello preview');
+    expect((await fetch(`http://${base}/preview/${ws.id}/${project.id}/missing.js`)).status).toBe(404);
+    expect((await fetch(`http://${base}/preview/${ws.id}/nope/`)).status).toBe(404);
+    expect((await fetch(`http://${base}/preview/${ws.id}/${project.id}/..%2F..%2Fstore.json`)).status).toBeGreaterThanOrEqual(400);
+    const previewStatus = await req('preview.status', { projectId: project.id });
+    expect(previewStatus.payload.built).toBe(true);
+    await req('preview.stop', { projectId: project.id });
     sock.close();
 
     // "persists after refresh": a brand-new connection sees the saved content

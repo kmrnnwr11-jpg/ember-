@@ -1,9 +1,10 @@
 import { spawn } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
+import * as nodePty from '@lydell/node-pty';
 import type { Config } from '../config.js';
 import { safeResolve } from '../paths.js';
-import type { ExecOptions, WorkspaceDriver } from './driver.js';
+import type { ExecOptions, PtyHandle, PtyOptions, WorkspaceDriver } from './driver.js';
 
 /** Host-process driver. No isolation: use only for local development. */
 export class LocalDriver implements WorkspaceDriver {
@@ -22,6 +23,32 @@ export class LocalDriver implements WorkspaceDriver {
 
   async stop(): Promise<void> {
     // Nothing to stop: processes are tied to their jobs.
+  }
+
+  async openPty(workspaceId: string, opts: PtyOptions): Promise<PtyHandle> {
+    await this.ensure(workspaceId);
+    const win = process.platform === 'win32';
+    const shell = win ? 'powershell.exe' : (process.env.SHELL ?? 'bash');
+    const p = nodePty.spawn(shell, win ? ['-NoLogo'] : ['-l'], {
+      name: 'xterm-256color',
+      cols: opts.cols,
+      rows: opts.rows,
+      cwd: safeResolve(this.hostRoot(workspaceId), opts.cwd),
+      env: { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor' } as Record<string, string>,
+    });
+    return {
+      onData: (cb) => void p.onData(cb),
+      onExit: (cb) => void p.onExit((e) => cb(e.exitCode)),
+      write: (d) => p.write(d),
+      resize: (c, r) => p.resize(c, r),
+      kill: () => {
+        try {
+          p.kill();
+        } catch {
+          // already exited
+        }
+      },
+    };
   }
 
   exec(workspaceId: string, cmd: string, args: string[], opts: ExecOptions): Promise<number> {

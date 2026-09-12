@@ -24,6 +24,10 @@ dependencies:
   supabase_flutter: ^2.10.0
   re_editor: ^0.8.0
   re_highlight: ^0.0.3
+  xterm: ^4.0.0
+  flutter_inappwebview: ^6.1.5
+  url_launcher: ^6.3.2
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:

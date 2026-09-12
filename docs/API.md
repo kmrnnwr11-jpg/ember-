@@ -62,8 +62,28 @@ the project root (`..`, absolute and drive paths rejected with `bad_path`).
 | `job.start` | `{projectId, kind: 'pub_get'|'analyze'|'test'}` | `JobStatus` |
 | `job.cancel` | `{jobId}` | `{cancelled}` |
 
-Reserved for later phases (currently `unsupported`): `pty.open`, `pty.input`,
-`pty.resize`, `pty.close` (Phase 2), `analyze.run`, `preview.reload`.
+### Requests (Phase 2)
+
+| type | payload | ok payload |
+|---|---|---|
+| `pty.open` | `{projectId, cols?=80, rows?=24}` | `{ptyId}` — login shell in the project dir (max 8 per connection, killed on disconnect) |
+| `pty.input` | `{ptyId, data}` | `{}` |
+| `pty.resize` | `{ptyId, cols, rows}` | `{}` (clamped 2–500) |
+| `pty.close` | `{ptyId}` | `{closed}` |
+| `preview.start` | `{projectId, autoRebuild?=true}` | `{job: JobStatus, preview: PreviewInfo}` — `flutter build web --release --base-href …` |
+| `preview.reload` | same as `preview.start` | same (forces a rebuild) |
+| `preview.stop` | `{projectId}` | `{}` — stops rebuild-on-save |
+| `preview.status` | `{projectId}` | `PreviewInfo` |
+
+```ts
+PreviewInfo = { projectId, url: string|null, path, built, builtAt, autoRebuild, building }
+// public URL = url ?? RUNNER_URL + path
+```
+
+With `autoRebuild`, saves under `lib/ web/ assets/ packages/`, `pubspec.*` or
+`l10n.yaml` trigger a rebuild after 1.5 s of quiet (queued builds are deduplicated).
+
+Reserved (currently `unsupported`): `analyze.run`, `agent.*`.
 
 ### Events
 
@@ -73,6 +93,22 @@ Reserved for later phases (currently `unsupported`): `pty.open`, `pty.input`,
 | `job.status` | `JobStatus` (all jobs of the connected user) |
 | `job.log` | `{jobId, stream: 'stdout'|'stderr', chunk}` |
 | `pong` | `{}` |
+| `pty.output` | `{ptyId, data}` (coalesced ~12 ms) |
+| `pty.exit` | `{ptyId, exitCode}` |
+| `preview.building` | `{projectId, jobId}` |
+| `preview.ready` | `PreviewInfo` |
+| `preview.failed` | `{projectId, jobId}` |
+
+## Preview hosting
+
+`GET /preview/:workspaceId/:projectId/*` serves `build/web` of the project
+(no auth: the two random ids act as a capability link; `X-Robots-Tag: noindex`).
+Unknown extension-less paths fall back to `index.html` (client routing);
+`index.html`, `flutter_bootstrap.js`, service worker and manifests are sent
+`no-cache`. While a build is running and nothing is built yet, a placeholder
+page auto-refreshes every 3 s. With `PREVIEW_BASE_DOMAIN` set, requests to
+`preview.<domain>/<ws>/<project>/…` are rewritten to the same route and builds
+use base href `/<ws>/<project>/`.
 
 ## Jobs
 

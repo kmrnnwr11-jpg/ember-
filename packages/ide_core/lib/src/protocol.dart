@@ -17,7 +17,10 @@ abstract final class MsgType {
   static const jobStart = 'job.start';
   static const jobCancel = 'job.cancel';
   static const analyzeRun = 'analyze.run';
+  static const previewStart = 'preview.start';
   static const previewReload = 'preview.reload';
+  static const previewStop = 'preview.stop';
+  static const previewStatus = 'preview.status';
   static const ping = 'ping';
 
   // Responses
@@ -27,6 +30,10 @@ abstract final class MsgType {
   // Server events
   static const fsChanged = 'fs.changed';
   static const ptyOutput = 'pty.output';
+  static const ptyExit = 'pty.exit';
+  static const previewReady = 'preview.ready';
+  static const previewBuilding = 'preview.building';
+  static const previewFailed = 'preview.failed';
   static const jobLog = 'job.log';
   static const jobStatus = 'job.status';
   static const analyzeResult = 'analyze.result';

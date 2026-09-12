@@ -1,6 +1,11 @@
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import { mkdir, stat } from 'node:fs/promises';
+import path from 'node:path';
 import cors from '@fastify/cors';
+import fastifyStatic from '@fastify/static';
 import websocket from '@fastify/websocket';
+import { PathError, safeResolve } from './paths.js';
+import { PreviewService } from './preview.js';
 import { z } from 'zod';
 import { Authenticator, bearer, type AuthUser } from './auth.js';
 import type { Config } from './config.js';
@@ -25,7 +30,10 @@ export interface AppDeps {
   driver?: WorkspaceDriver;
 }
 
-export async function buildApp(cfg: Config, deps: AppDeps = {}): Promise<{ app: FastifyInstance; services: Services }> {
+export async function buildApp(
+  cfg: Config,
+  deps: AppDeps = {},
+): Promise<{ app: FastifyInstance; services: Services; preview: PreviewService }> {
   const app = Fastify({
     logger: {
       level: cfg.LOG_LEVEL,
@@ -33,6 +41,12 @@ export async function buildApp(cfg: Config, deps: AppDeps = {}): Promise<{ app: 
       redact: ['req.headers.authorization', 'req.query.token', 'req.headers["x-provider-key"]'],
     },
     bodyLimit: cfg.MAX_WS_FILE_BYTES + 1024 * 64,
+    // preview.<domain>/<ws>/<project>/… is served by the /preview route.
+    rewriteUrl: (req) => {
+      const host = (req.headers.host ?? '').toLowerCase();
+      const url = req.url ?? '/';
+      return cfg.PREVIEW_BASE_DOMAIN && host.startsWith(`preview.${cfg.PREVIEW_BASE_DOMAIN}`) ? `/preview${url}` : url;
+    },
   });
   const store = deps.store ?? (cfg.supabaseEnabled ? new SupabaseStore(cfg) : new JsonStore(cfg.DATA_DIR));
   const driver = deps.driver ?? (cfg.WORKSPACE_DRIVER === 'docker' ? new DockerDriver(cfg) : new LocalDriver(cfg));
@@ -40,11 +54,14 @@ export async function buildApp(cfg: Config, deps: AppDeps = {}): Promise<{ app: 
   const services = new Services(cfg, store, driver, jobs);
   const auth = new Authenticator(cfg);
   const hub = new WatchHub();
+  const preview = new PreviewService(cfg, services, hub);
 
   await app.register(cors, {
     origin: cfg.CORS_ORIGINS === '*' ? true : cfg.CORS_ORIGINS.split(',').map((s) => s.trim()),
   });
   await app.register(websocket, { options: { maxPayload: cfg.MAX_WS_FILE_BYTES + 1024 * 64 } });
+  await mkdir(path.resolve(cfg.WORKSPACES_ROOT), { recursive: true });
+  await app.register(fastifyStatic, { root: path.resolve(cfg.WORKSPACES_ROOT), serve: false, cacheControl: false });
 
   app.decorateRequest('user', null as unknown as AuthUser);
 
@@ -66,7 +83,51 @@ export async function buildApp(cfg: Config, deps: AppDeps = {}): Promise<{ app: 
   };
 
   app.addHook('onClose', async () => {
+    preview.stopAll();
     await hub.closeAll();
+  });
+
+  // ---------------- preview (public by unguessable ids, §2) ----------------
+
+  app.get('/preview/:workspaceId/:projectId', async (req, reply) => {
+    return reply.redirect(`${req.url.split('?')[0]}/`, 301);
+  });
+
+  app.get('/preview/:workspaceId/:projectId/*', async (req, reply) => {
+    const { workspaceId, projectId, '*': rest } = req.params as { workspaceId: string; projectId: string; '*': string };
+    const project = await store.getProject(projectId);
+    if (!project || project.workspaceId !== workspaceId) {
+      return reply.status(404).type('text/html').send(previewPlaceholder('Preview not found'));
+    }
+    const root = preview.webRoot(project);
+    let rel = rest || 'index.html';
+    let abs: string;
+    try {
+      abs = safeResolve(root, rel);
+    } catch (e) {
+      if (e instanceof PathError) return reply.status(400).send({ code: e.code, message: e.message });
+      throw e;
+    }
+    let st = await stat(abs).catch(() => null);
+    if (!st || st.isDirectory()) {
+      // SPA fallback for client-side routes without a file extension.
+      if (path.extname(rel) !== '' && st === null) return reply.status(404).send();
+      rel = 'index.html';
+      abs = path.join(root, rel);
+      st = await stat(abs).catch(() => null);
+      if (!st) {
+        const building = jobs.findActive((j) => j.projectId === project.id && j.kind === 'build_web');
+        return reply
+          .status(building ? 202 : 404)
+          .header('Refresh', building ? '3' : '')
+          .type('text/html')
+          .send(previewPlaceholder(building ? 'Building… this page refreshes automatically.' : 'Not built yet. Press Run Web in FlutterCursor.'));
+      }
+    }
+    const noCache = /(^|\/)(index\.html|flutter_bootstrap\.js|flutter_service_worker\.js|version\.json|manifest\.json)$/.test(rel);
+    reply.header('Cache-Control', noCache ? 'no-cache, no-store, must-revalidate' : 'public, max-age=300');
+    reply.header('X-Robots-Tag', 'noindex');
+    return reply.sendFile(rel, root);
   });
 
   // ---------------- public ----------------
@@ -149,10 +210,15 @@ export async function buildApp(cfg: Config, deps: AppDeps = {}): Promise<{ app: 
       socket.close(4401, 'unauthorized');
       return;
     }
-    new Session(socket, user, services, hub, req.log);
+    new Session(socket, user, services, hub, preview, req.log);
   });
 
-  return { app, services };
+  return { app, services, preview };
+}
+
+function previewPlaceholder(message: string): string {
+  const safe = message.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]!);
+  return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>FlutterCursor preview</title><body style="font-family:system-ui;display:grid;place-items:center;height:100vh;margin:0;background:#111;color:#ddd"><p>${safe}</p></body>`;
 }
 
 function publicWorkspace(w: { id: string; name: string; status: string; createdAt: string }) {

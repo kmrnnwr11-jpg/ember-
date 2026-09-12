@@ -73,6 +73,14 @@ export class JobManager extends EventEmitter<JobEvents> {
     return this.jobs.get(id);
   }
 
+  /** A queued or running job matching [pred], if any. */
+  findActive(pred: (job: Job) => boolean): Job | undefined {
+    for (const job of this.jobs.values()) {
+      if ((job.status === 'queued' || job.status === 'running') && pred(job)) return job;
+    }
+    return undefined;
+  }
+
   wait(id: string): Promise<Job> {
     const p = this.completion.get(id);
     if (!p) return Promise.reject(new Error(`unknown job ${id}`));

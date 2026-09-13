@@ -26,12 +26,26 @@
   "statusReady": "Ready",
   "statusError": "Error",
   "creatingProject": "Creating {name}",
+  "@creatingProject": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "files": "Files",
   "editor": "Editor",
   "newFile": "New file",
   "newFolder": "New folder",
   "fileName": "Name",
   "deleteConfirm": "Delete {path}?",
+  "@deleteConfirm": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "save": "Save",
   "saved": "Saved",
   "unsavedChanges": "Unsaved changes",
@@ -39,12 +53,26 @@
   "noFileOpen": "Open a file from the tree.",
   "conflictTitle": "File changed elsewhere",
   "conflictBody": "{path} changed on the Runner after you opened it.",
+  "@conflictBody": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "reload": "Reload",
   "overwrite": "Overwrite",
   "connected": "Connected",
   "connecting": "Connecting…",
   "disconnected": "Disconnected",
   "error": "Error: {message}",
+  "@error": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "binaryFile": "Binary or too large: cannot be edited.",
   "terminal": "Terminal",
   "newTerminal": "New terminal",
@@ -78,6 +106,13 @@
   "testKey": "Test",
   "testing": "Testing…",
   "keyWorks": "Works ✓ ({model})",
+  "@keyWorks": {
+    "placeholders": {
+      "model": {
+        "type": "String"
+      }
+    }
+  },
   "getKey": "Get a key",
   "addModelId": "Add model ID",
   "selectModel": "Select model",
@@ -85,11 +120,25 @@
   "notConfigured": "not configured",
   "per1k": "per 1k tokens (in/out)",
   "applyTo": "Apply to {path}",
+  "@applyTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "noChanges": "No differences from the current file.",
   "accept": "Accept",
   "reject": "Reject",
   "apply": "Apply",
   "applied": "Change applied to {path}: review and save.",
+  "@applied": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "applyNoTarget": "Open a file or ask the AI to include the file path.",
   "clearChat": "Clear chat",
   "chatEmpty": "Ask about your project. The open file is sent as context.",
@@ -106,6 +155,13 @@
   "badgeSubscription": "subscription",
   "badgePaid": "paid",
   "needsKey": "Needs a {name} API key: add it in settings.",
+  "@needsKey": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "claudeCodeUnavailable": "Claude Code is not available on this Runner (it must be installed and logged in on the Runner's PC).",
   "appPromptHint": "E.g.: a recipe app with photos, shopping list and cooking timer, warm colors…",
   "chooseAi": "Which AI?",
@@ -119,9 +175,23 @@
   "buildLog": "Details",
   "stepClaudeCode": "Claude Code writes and verifies the code",
   "stepWriting": "Writing code ({count} files)",
+  "@stepWriting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "stepDependencies": "Installing dependencies",
   "stepChecking": "Checking for errors",
   "stepFixing": "Fixing errors (attempt {round})",
+  "@stepFixing": {
+    "placeholders": {
+      "round": {
+        "type": "int"
+      }
+    }
+  },
   "stepBuilding": "Building the app",
   "stepReady": "Ready",
   "appReadyTitle": "Your app is ready 🎉",
@@ -137,6 +207,13 @@
   "generateApk": "Build APK",
   "generateAab": "Build AAB",
   "androidBuilding": "Building {kind}… the first time can take 3-5 minutes.",
+  "@androidBuilding": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
   "downloadApk": "Download & install APK",
   "downloadAab": "Download AAB",
   "apkInstallHint": "Signed APK. If Android asks, allow installs from this source.",
@@ -148,15 +225,36 @@
   "fullscreenExitHint": "Swipe or press back to return to FlutterCursor",
   "runFullscreen": "Run full screen",
   "cliNotInstalled": "not installed on the Runner ({name})",
+  "@cliNotInstalled": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "terminalCliHint": "Claude Code, Codex and Gemini use the login on the Runner's machine. The first time, follow the instructions in the terminal to sign in.",
   "generatingMockups": "Creating 5 visual styles…",
   "designingStyle": "Designing “{style}”…",
+  "@designingStyle": {
+    "placeholders": {
+      "style": {
+        "type": "String"
+      }
+    }
+  },
   "chooseMockup": "Choose this",
   "editMockup": "Edit this mockup",
   "editMockupHint": "E.g.: darker, rounded buttons, pink logo…",
   "newMockups": "New mockups (5 different styles)",
   "previousMockups": "Previous mockups",
   "mockupSet": "Set {n}",
+  "@mockupSet": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "skipMockups": "Skip mockups and build the app",
   "playAskUpload": "Upload the app to Google Play Store?",
   "playYesUpload": "Yes, upload to Play Store",
@@ -192,8 +290,28 @@
   "playUpload": "Upload to Google Play",
   "playStepFinish": "Finish in Play Console",
   "playUploaded": "✅ Uploaded! Version {version} on track “{track}”. {draft}",
+  "@playUploaded": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "track": {
+        "type": "String"
+      },
+      "draft": {
+        "type": "String"
+      }
+    }
+  },
   "playDraftNote": "Because the app was never published, Google saved it as a draft: complete the steps below and press “Send for review” in Play Console.",
   "playManualChecklist": "Google requires confirming these manually in Play Console (ready answers below):\n- **Privacy policy** → paste the link: {privacyUrl}\n- **Data safety**\n- **Content rating** questionnaire\n- **Target audience and content**\n- **Ads** and **App access** (provide a test account if login is required)\n- **Store listing**: 512×512 icon and at least 2 screenshots\n- New personal accounts: Google may require **closed testing** with a minimum number of testers before production",
+  "@playManualChecklist": {
+    "placeholders": {
+      "privacyUrl": {
+        "type": "String"
+      }
+    }
+  },
   "playDataSafety": "Answers for “Data safety”",
   "playContentRating": "Answers for “Content rating”",
   "playOtherDeclarations": "Audience, ads and app access",
@@ -204,5 +322,173 @@
   "assistantHint": "Ask a question…",
   "assistantSuggest1": "What app can I build for my shop?",
   "assistantSuggest2": "How do I publish an app on Play Store?",
-  "assistantSuggest3": "How does Google login work?"
+  "assistantSuggest3": "How does Google login work?",
+  "language": "Language",
+  "find": "Find",
+  "replace": "Replace",
+  "replaceAll": "All",
+  "baseUrl": "Base URL",
+  "fontLabel": "Font: {font}",
+  "@fontLabel": {
+    "placeholders": {
+      "font": {
+        "type": "String"
+      }
+    }
+  },
+  "styleMinimal": "Light minimal",
+  "styleDark": "Dark premium",
+  "stylePlayful": "Colorful & playful",
+  "styleGlass": "Glassmorphism",
+  "styleMaterial": "Material 3",
+  "styleNeumorph": "Neumorphism",
+  "styleLuxury": "Elegant luxury",
+  "styleBrutal": "Bold brutalist",
+  "stylePastel": "Soft pastel",
+  "styleTech": "Futuristic tech",
+  "styleNature": "Nature",
+  "styleIos": "iOS style",
+  "styleRetro": "80s retro",
+  "styleMono": "Monochrome",
+  "styleCorporate": "Professional",
+  "bWriting": "Writing the code with {model}…",
+  "@bWriting": {
+    "placeholders": {
+      "model": {
+        "type": "String"
+      }
+    }
+  },
+  "bApplying": "Applying the change with {model}: {change}",
+  "@bApplying": {
+    "placeholders": {
+      "change": {
+        "type": "String"
+      },
+      "model": {
+        "type": "String"
+      }
+    }
+  },
+  "bNoModel": "No model selected",
+  "bNoFiles": "The AI did not produce any files: try again or change model.",
+  "bErrorsRemain": "Errors remain after {count} fix attempts:\n{problems}",
+  "@bErrorsRemain": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "problems": {
+        "type": "String"
+      }
+    }
+  },
+  "bFixing": "Fixing errors (attempt {round} of {max})…",
+  "@bFixing": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      },
+      "round": {
+        "type": "int"
+      }
+    }
+  },
+  "bNoFixes": "The AI did not propose fixes for:\n{problems}",
+  "@bNoFixes": {
+    "placeholders": {
+      "problems": {
+        "type": "String"
+      }
+    }
+  },
+  "bIncompleteFile": "Incomplete file ignored: {path}",
+  "@bIncompleteFile": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "bPathNotAllowed": "Path not allowed, ignored: {path}",
+  "@bPathNotAllowed": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "bTruncated": "Response cut by the token limit: incomplete files will be recreated during fixing.",
+  "bRefused": "The model declined the request.",
+  "bPubGet": "Installing dependencies (flutter pub get)…",
+  "bPubGetFailed": "flutter pub get failed",
+  "bAnalyze": "Checking for errors (flutter analyze)…",
+  "bNoErrors": "No errors ✓",
+  "bErrorsFound": "{count} errors found",
+  "@bErrorsFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bClaudeApplying": "Claude Code is applying the change…",
+  "bClaudeBuilding": "Claude Code is building the app on the PC…",
+  "bClaudeFailed": "Claude Code did not finish the app: check the log.",
+  "bWebBuilding": "Building the app for the web (about 30 seconds)…",
+  "bWebFailed": "The web build failed:\n{log}",
+  "@bWebFailed": {
+    "placeholders": {
+      "log": {
+        "type": "String"
+      }
+    }
+  },
+  "bApk": "Building the APK (the first time can take a few minutes)…",
+  "bAab": "Building the AAB for the Play Store…",
+  "bAndroidFailed": "{kind} build failed",
+  "@bAndroidFailed": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "bAndroidReady": "{kind} ready ✓",
+  "@bAndroidReady": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "bStopped": "Stopped",
+  "bAppReady": "App ready ✓",
+  "bAppUpdated": "App updated ✓",
+  "actWrites": "Writing {file}",
+  "@actWrites": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "actEdits": "Editing {file}",
+  "@actEdits": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "actReads": "Reading {file}",
+  "@actReads": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "actPubGet": "Installing dependencies",
+  "actAnalyze": "Checking for errors"
 }

@@ -1,9 +1,10 @@
 import 'dart:async';
 
 import 'package:ai_connect/ai_connect.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:ide_core/ide_core.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../editor/project_controller.dart' show RunnerRequest;
 
 /// Which AI builds the app (§1B "Crea App").
@@ -114,12 +115,14 @@ class AppBuilder extends ChangeNotifier {
     required Future<String> Function(String jobId) fetchJobLog,
     required Future<AiProvider> Function(AiModel model) resolveProvider,
     this.androidInfo,
+    AppLocalizations? strings,
     this.maxFixRounds = 3,
     this.jobTimeout = const Duration(minutes: 15),
   }) : _request = request,
        _events = events,
        _fetchJobLog = fetchJobLog,
-       _resolve = resolveProvider;
+       _resolve = resolveProvider,
+       strings = strings ?? lookupAppLocalizations(const Locale('en'));
 
   final String projectId;
   final String projectName;
@@ -130,6 +133,8 @@ class AppBuilder extends ChangeNotifier {
 
   /// Returns a text block with package name and SHA-1s (for Firebase/Google Sign-In).
   final Future<String?> Function()? androidInfo;
+  /// UI language for log lines and errors; updated when the user switches language.
+  AppLocalizations strings;
   final int maxFixRounds;
   final Duration jobTimeout;
 
@@ -249,9 +254,9 @@ class AppBuilder extends ChangeNotifier {
       if (_cancelled) return;
       await _buildPreview();
       if (_cancelled) return;
-      conversation.add((role: 'assistant', text: _replyText?.trim().isNotEmpty == true ? _replyText!.trim() : 'App aggiornata ✓'));
+      conversation.add((role: 'assistant', text: _replyText?.trim().isNotEmpty == true ? _replyText!.trim() : strings.bAppUpdated));
       _setPhase(BuildPhase.ready);
-      _log('App pronta ✓', kind: 'info');
+      _log(strings.bAppReady, kind: 'info');
     } on _Cancelled {
       _setPhase(BuildPhase.cancelled);
     } catch (e) {
@@ -274,24 +279,24 @@ class AppBuilder extends ChangeNotifier {
 
   Future<void> _runApiEngine({String? change}) async {
     final m = model;
-    if (m == null) throw const AiException('Nessun modello selezionato');
+    if (m == null) throw AiException(strings.bNoModel);
     final provider = await _resolve(m);
     final maxTokens = engine!.maxTokens;
 
     _setPhase(BuildPhase.generating);
     final String userMessage;
     if (change == null) {
-      _log('Scrivo il codice con ${m.label}…');
+      _log(strings.bWriting(m.label));
       userMessage = '$prompt${design ?? ''}\n\n(Project package name: $projectName)${await _androidBlock()}';
     } else {
-      _log('Applico la modifica con ${m.label}: $change');
+      _log(strings.bApplying(m.label, change));
       userMessage = '${improvePrompt(prompt, await _readProjectFiles(), change)}${await _androidBlock()}';
     }
     var files = await _generate(provider, m, userMessage, maxTokens);
     // The prose around the files is the reply shown in the chat.
     final reply = CodeBlocks.parse(liveText.toString()).whereType<TextSegment>().map((t) => t.markdown.trim()).where((t) => t.isNotEmpty).join('\n\n');
     if (reply.isNotEmpty) _replyText = reply;
-    if (files.isEmpty) throw const AiException("L'AI non ha prodotto file: riprova o cambia modello.");
+    if (files.isEmpty) throw AiException(strings.bNoFiles);
     await _writeFiles(files, removeDefaultTest: change == null);
 
     while (true) {
@@ -299,13 +304,13 @@ class AppBuilder extends ChangeNotifier {
       final problems = await _verify();
       if (problems == null) return;
       if (fixRound >= maxFixRounds) {
-        throw AiException('Restano errori dopo $maxFixRounds tentativi di correzione:\n$problems');
+        throw AiException(strings.bErrorsRemain(maxFixRounds, problems));
       }
       fixRound++;
       _setPhase(BuildPhase.fixing);
-      _log('Correggo gli errori (tentativo $fixRound di $maxFixRounds)…');
+      _log(strings.bFixing(fixRound, maxFixRounds));
       files = await _generate(provider, m, fixPrompt(prompt, await _readProjectFiles(), problems), maxTokens);
-      if (files.isEmpty) throw AiException("L'AI non ha proposto correzioni per:\n$problems");
+      if (files.isEmpty) throw AiException(strings.bNoFixes(problems));
       await _writeFiles(files, removeDefaultTest: false);
     }
   }
@@ -354,19 +359,19 @@ class AppBuilder extends ChangeNotifier {
       final path = s.path;
       if (path == null) continue;
       if (!s.complete) {
-        _log('File incompleto ignorato: $path', kind: 'error');
+        _log(strings.bIncompleteFile(path), kind: 'error');
         continue;
       }
       if (!BuildSupport.isWritableByAi(path)) {
-        _log('Percorso non consentito ignorato: $path', kind: 'error');
+        _log(strings.bPathNotAllowed(path), kind: 'error');
         continue;
       }
       files[path] = s.code.endsWith('\n') ? s.code : '${s.code}\n';
     }
     if (stop == 'max_tokens') {
-      _log('Risposta troncata dal limite di token: i file incompleti verranno ricreati nella correzione.', kind: 'error');
+      _log(strings.bTruncated, kind: 'error');
     }
-    if (stop == 'refusal') throw const AiException('Il modello ha rifiutato la richiesta.');
+    if (stop == 'refusal') throw AiException(strings.bRefused);
     return files;
   }
 
@@ -392,26 +397,26 @@ class AppBuilder extends ChangeNotifier {
   /// Runs pub get + analyze. Returns a problem report, or null if clean.
   Future<String?> _verify() async {
     _setPhase(BuildPhase.dependencies);
-    _log('Installo le dipendenze (flutter pub get)…');
+    _log(strings.bPubGet);
     final pub = await _runJob('pub_get');
     if (pub.status != 'succeeded') {
       final tail = _tail(await _fetchJobLog(pub.jobId), 60);
-      _log('flutter pub get non riuscito', kind: 'error');
+      _log(strings.bPubGetFailed, kind: 'error');
       return 'flutter pub get failed:\n$tail';
     }
     _setPhase(BuildPhase.checking);
-    _log('Controllo errori (flutter analyze)…');
+    _log(strings.bAnalyze);
     final analyze = await _runJob('analyze');
     final logText = await _fetchJobLog(analyze.jobId);
     final errors = BuildSupport.errorsOnly(logText);
     if (errors.isEmpty) {
       if (analyze.status == 'succeeded' || analyze.exitCode == 0) {
-        _log('Nessun errore ✓');
+        _log(strings.bNoErrors);
         return null;
       }
       return 'flutter analyze failed:\n${_tail(logText, 60)}';
     }
-    _log('${errors.length} errori trovati', kind: 'error');
+    _log(strings.bErrorsFound(errors.length), kind: 'error');
     return errors.take(40).map((e) => e.toString()).join('\n');
   }
 
@@ -472,7 +477,7 @@ class AppBuilder extends ChangeNotifier {
 
   Future<void> _runClaudeCode(String text, {required bool resume}) async {
     _setPhase(BuildPhase.generating);
-    _log(resume ? 'Claude Code applica la modifica…' : 'Claude Code costruisce l\'app sul PC…');
+    _log(resume ? strings.bClaudeApplying : strings.bClaudeBuilding);
     final done = Completer<String>();
     // Frames that arrive before agent.start replies are buffered, then replayed.
     final early = <WsFrame>[];
@@ -498,11 +503,11 @@ class AppBuilder extends ChangeNotifier {
             // The CLI interleaves writing, pub get and analyze: show the live action
             // instead of jumping between step rows.
             currentAction = switch (name) {
-              'Write' => 'Scrive $summary',
-              'Edit' || 'MultiEdit' => 'Modifica $summary',
-              'Read' || 'Glob' || 'Grep' => 'Legge $summary',
-              'Bash' when summary.contains('pub get') => 'Installa le dipendenze',
-              'Bash' when summary.contains('analyze') => 'Controlla gli errori',
+              'Write' => strings.actWrites(summary),
+              'Edit' || 'MultiEdit' => strings.actEdits(summary),
+              'Read' || 'Glob' || 'Grep' => strings.actReads(summary),
+              'Bash' when summary.contains('pub get') => strings.actPubGet,
+              'Bash' when summary.contains('analyze') => strings.actAnalyze,
               _ => '$name $summary',
             };
             _log('$name ${summary.isEmpty ? '' : summary}', kind: name == 'Bash' ? 'tool' : 'file');
@@ -535,7 +540,7 @@ class AppBuilder extends ChangeNotifier {
       }
       early.clear();
       final status = await _orCancel(done.future.timeout(const Duration(hours: 1)));
-      if (status != 'succeeded') throw const AiException('Claude Code non ha completato l\'app: controlla il log.');
+      if (status != 'succeeded') throw AiException(strings.bClaudeFailed);
     } finally {
       await sub.cancel();
       _agentRunId = null;
@@ -547,7 +552,7 @@ class AppBuilder extends ChangeNotifier {
   Future<void> _buildPreview() async {
     currentAction = null;
     _setPhase(BuildPhase.building);
-    _log('Compilo l\'app per il web (circa 30 secondi)…');
+    _log(strings.bWebBuilding);
     final c = Completer<WsFrame>();
     final sub = _events
         .where((f) => (f.type == MsgType.previewReady || f.type == MsgType.previewFailed) && f.payload['projectId'] == projectId)
@@ -558,7 +563,7 @@ class AppBuilder extends ChangeNotifier {
       final f = await _orCancel(c.future.timeout(jobTimeout));
       if (f.type == MsgType.previewFailed) {
         final tail = _tail(await _fetchJobLog(f.payload['jobId'] as String), 40);
-        throw AiException('La compilazione web non è riuscita:\n$tail');
+        throw AiException(strings.bWebFailed(tail));
       }
       preview = PreviewInfo.fromJson(f.payload);
     } finally {
@@ -602,17 +607,17 @@ class AppBuilder extends ChangeNotifier {
     androidError = null;
     _cancelled = false;
     if (_cancelSignal.isCompleted) _cancelSignal = Completer<void>();
-    _log(kind == 'apk' ? "Genero l'APK (la prima volta può richiedere alcuni minuti)…" : "Genero l'AAB per il Play Store…");
+    _log(kind == 'apk' ? strings.bApk : strings.bAab);
     notifyListeners();
     try {
       final job = await _runJob(kind == 'apk' ? 'build_apk' : 'build_aab');
       if (job.status != 'succeeded') {
         androidError = _tail(await _fetchJobLog(job.jobId), 30);
         androidStatus = 'failed';
-        _log('Generazione ${kind.toUpperCase()} non riuscita', kind: 'error');
+        _log(strings.bAndroidFailed(kind.toUpperCase()), kind: 'error');
       } else {
         androidStatus = 'ready';
-        _log('${kind.toUpperCase()} pronto ✓');
+        _log(strings.bAndroidReady(kind.toUpperCase()));
       }
     } catch (e) {
       androidError = e is RunnerException ? e.message : e.toString();
@@ -631,7 +636,7 @@ class AppBuilder extends ChangeNotifier {
     if (job != null) unawaited(_request(MsgType.jobCancel, {'jobId': job}).catchError((_) => <String, dynamic>{}));
     final run = _agentRunId;
     if (run != null) unawaited(_request(MsgType.agentCancel, {'runId': run}).catchError((_) => <String, dynamic>{}));
-    _log('Interrotto', kind: 'error');
+    _log(strings.bStopped, kind: 'error');
     _setPhase(BuildPhase.cancelled);
   }
 

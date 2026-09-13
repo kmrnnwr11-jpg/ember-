@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/env.dart';
+import '../../core/locale.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -52,6 +53,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      appBar: AppBar(backgroundColor: Colors.transparent, actions: const [LanguageButton()]),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

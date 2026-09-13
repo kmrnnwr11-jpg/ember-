@@ -233,7 +233,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            m == null ? l.generatingMockups : (m.name.isEmpty ? m.style.name : m.name),
+                            m == null ? l.generatingMockups : (m.name.isEmpty ? mockupStyleLabel(l, m.style.id) : m.name),
                             style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -250,7 +250,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          [if (m.tagline.isNotEmpty) m.tagline, if (m.font.isNotEmpty) 'Font: ${m.font}'].join(' · '),
+                          [if (m.tagline.isNotEmpty) m.tagline, if (m.font.isNotEmpty) l.fontLabel(m.font)].join(' · '),
                           style: const TextStyle(color: Colors.white70, fontSize: 12),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -322,7 +322,7 @@ class _MockupPage extends StatelessWidget {
             children: [
               const CircularProgressIndicator(),
               const SizedBox(height: 16),
-              Text(l.designingStyle(mockup.style.name), style: const TextStyle(color: Colors.white70)),
+              Text(l.designingStyle(mockupStyleLabel(l, mockup.style.id)), style: const TextStyle(color: Colors.white70)),
             ],
           ),
         );

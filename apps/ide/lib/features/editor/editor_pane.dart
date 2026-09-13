@@ -186,6 +186,7 @@ class _FindBar extends StatelessWidget implements PreferredSizeWidget {
     final value = controller.value;
     if (value == null) return const SizedBox.shrink();
     final result = value.result;
+    final l = AppLocalizations.of(context);
     final count = result == null ? '0/0' : '${result.index + 1}/${result.matches.length}';
     return Material(
       elevation: 2,
@@ -199,7 +200,7 @@ class _FindBar extends StatelessWidget implements PreferredSizeWidget {
                   child: TextField(
                     controller: controller.findInputController,
                     focusNode: controller.findInputFocusNode,
-                    decoration: const InputDecoration(isDense: true, hintText: 'Find', border: InputBorder.none),
+                    decoration: InputDecoration(isDense: true, hintText: l.find, border: InputBorder.none),
                   ),
                 ),
                 Text(count),
@@ -216,11 +217,11 @@ class _FindBar extends StatelessWidget implements PreferredSizeWidget {
                     child: TextField(
                       controller: controller.replaceInputController,
                       focusNode: controller.replaceInputFocusNode,
-                      decoration: const InputDecoration(isDense: true, hintText: 'Replace', border: InputBorder.none),
+                      decoration: InputDecoration(isDense: true, hintText: l.replace, border: InputBorder.none),
                     ),
                   ),
-                  TextButton(onPressed: controller.replaceMatch, child: const Text('Replace')),
-                  TextButton(onPressed: controller.replaceAllMatches, child: const Text('All')),
+                  TextButton(onPressed: controller.replaceMatch, child: Text(l.replace)),
+                  TextButton(onPressed: controller.replaceAllMatches, child: Text(l.replaceAll)),
                 ],
               ),
           ],

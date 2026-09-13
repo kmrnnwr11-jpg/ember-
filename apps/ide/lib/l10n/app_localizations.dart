@@ -5,7 +5,10 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'app_localizations_ar.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
+import 'app_localizations_fr.dart';
 import 'app_localizations_it.dart';
 
 // ignore_for_file: type=lint
@@ -94,1239 +97,1566 @@ abstract class AppLocalizations {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
+    Locale('ar'),
     Locale('en'),
+    Locale('es'),
+    Locale('fr'),
     Locale('it'),
   ];
 
   /// No description provided for @appTitle.
   ///
-  /// In it, this message translates to:
+  /// In en, this message translates to:
   /// **'FlutterCursor'**
   String get appTitle;
 
   /// No description provided for @loginTitle.
   ///
-  /// In it, this message translates to:
-  /// **'Accedi'**
+  /// In en, this message translates to:
+  /// **'Sign in'**
   String get loginTitle;
 
   /// No description provided for @loginSubtitle.
   ///
-  /// In it, this message translates to:
-  /// **'Crea app Flutter da qualsiasi dispositivo, con l\'AI.'**
+  /// In en, this message translates to:
+  /// **'Build Flutter apps from any device, with AI.'**
   String get loginSubtitle;
 
   /// No description provided for @email.
   ///
-  /// In it, this message translates to:
+  /// In en, this message translates to:
   /// **'Email'**
   String get email;
 
   /// No description provided for @password.
   ///
-  /// In it, this message translates to:
+  /// In en, this message translates to:
   /// **'Password'**
   String get password;
 
   /// No description provided for @runnerUrl.
   ///
-  /// In it, this message translates to:
-  /// **'URL Runner'**
+  /// In en, this message translates to:
+  /// **'Runner URL'**
   String get runnerUrl;
 
   /// No description provided for @signIn.
   ///
-  /// In it, this message translates to:
-  /// **'Accedi'**
+  /// In en, this message translates to:
+  /// **'Sign in'**
   String get signIn;
 
   /// No description provided for @signUp.
   ///
-  /// In it, this message translates to:
-  /// **'Registrati'**
+  /// In en, this message translates to:
+  /// **'Sign up'**
   String get signUp;
 
   /// No description provided for @devLoginHint.
   ///
-  /// In it, this message translates to:
-  /// **'Modalità sviluppo: Supabase non configurato, accesso solo con email tramite il Runner.'**
+  /// In en, this message translates to:
+  /// **'Development mode: Supabase not configured, email-only sign in through the Runner.'**
   String get devLoginHint;
 
   /// No description provided for @invalidEmail.
   ///
-  /// In it, this message translates to:
-  /// **'Email non valida'**
+  /// In en, this message translates to:
+  /// **'Invalid email'**
   String get invalidEmail;
 
   /// No description provided for @passwordTooShort.
   ///
-  /// In it, this message translates to:
-  /// **'Almeno 6 caratteri'**
+  /// In en, this message translates to:
+  /// **'At least 6 characters'**
   String get passwordTooShort;
 
   /// No description provided for @signOut.
   ///
-  /// In it, this message translates to:
-  /// **'Esci'**
+  /// In en, this message translates to:
+  /// **'Sign out'**
   String get signOut;
 
   /// No description provided for @projects.
   ///
-  /// In it, this message translates to:
-  /// **'Progetti'**
+  /// In en, this message translates to:
+  /// **'Projects'**
   String get projects;
 
   /// No description provided for @noProjects.
   ///
-  /// In it, this message translates to:
-  /// **'Nessun progetto. Creane uno per iniziare.'**
+  /// In en, this message translates to:
+  /// **'No projects yet. Create one to get started.'**
   String get noProjects;
 
   /// No description provided for @newProject.
   ///
-  /// In it, this message translates to:
-  /// **'Nuovo progetto'**
+  /// In en, this message translates to:
+  /// **'New project'**
   String get newProject;
 
   /// No description provided for @projectName.
   ///
-  /// In it, this message translates to:
-  /// **'Nome progetto'**
+  /// In en, this message translates to:
+  /// **'Project name'**
   String get projectName;
 
   /// No description provided for @projectNameHelp.
   ///
-  /// In it, this message translates to:
-  /// **'minuscolo, lettere/numeri/_ (es. my_app)'**
+  /// In en, this message translates to:
+  /// **'lowercase, letters/digits/_ (e.g. my_app)'**
   String get projectNameHelp;
 
   /// No description provided for @create.
   ///
-  /// In it, this message translates to:
-  /// **'Crea'**
+  /// In en, this message translates to:
+  /// **'Create'**
   String get create;
 
   /// No description provided for @cancel.
   ///
-  /// In it, this message translates to:
-  /// **'Annulla'**
+  /// In en, this message translates to:
+  /// **'Cancel'**
   String get cancel;
 
   /// No description provided for @delete.
   ///
-  /// In it, this message translates to:
-  /// **'Elimina'**
+  /// In en, this message translates to:
+  /// **'Delete'**
   String get delete;
 
   /// No description provided for @rename.
   ///
-  /// In it, this message translates to:
-  /// **'Rinomina'**
+  /// In en, this message translates to:
+  /// **'Rename'**
   String get rename;
 
   /// No description provided for @retry.
   ///
-  /// In it, this message translates to:
-  /// **'Riprova'**
+  /// In en, this message translates to:
+  /// **'Retry'**
   String get retry;
 
   /// No description provided for @statusCreating.
   ///
-  /// In it, this message translates to:
-  /// **'In creazione…'**
+  /// In en, this message translates to:
+  /// **'Creating…'**
   String get statusCreating;
 
   /// No description provided for @statusReady.
   ///
-  /// In it, this message translates to:
-  /// **'Pronto'**
+  /// In en, this message translates to:
+  /// **'Ready'**
   String get statusReady;
 
   /// No description provided for @statusError.
   ///
-  /// In it, this message translates to:
-  /// **'Errore'**
+  /// In en, this message translates to:
+  /// **'Error'**
   String get statusError;
 
   /// No description provided for @creatingProject.
   ///
-  /// In it, this message translates to:
-  /// **'Creazione di {name}'**
+  /// In en, this message translates to:
+  /// **'Creating {name}'**
   String creatingProject(String name);
 
   /// No description provided for @files.
   ///
-  /// In it, this message translates to:
-  /// **'File'**
+  /// In en, this message translates to:
+  /// **'Files'**
   String get files;
 
   /// No description provided for @editor.
   ///
-  /// In it, this message translates to:
+  /// In en, this message translates to:
   /// **'Editor'**
   String get editor;
 
   /// No description provided for @newFile.
   ///
-  /// In it, this message translates to:
-  /// **'Nuovo file'**
+  /// In en, this message translates to:
+  /// **'New file'**
   String get newFile;
 
   /// No description provided for @newFolder.
   ///
-  /// In it, this message translates to:
-  /// **'Nuova cartella'**
+  /// In en, this message translates to:
+  /// **'New folder'**
   String get newFolder;
 
   /// No description provided for @fileName.
   ///
-  /// In it, this message translates to:
-  /// **'Nome'**
+  /// In en, this message translates to:
+  /// **'Name'**
   String get fileName;
 
   /// No description provided for @deleteConfirm.
   ///
-  /// In it, this message translates to:
-  /// **'Eliminare {path}?'**
+  /// In en, this message translates to:
+  /// **'Delete {path}?'**
   String deleteConfirm(String path);
 
   /// No description provided for @save.
   ///
-  /// In it, this message translates to:
-  /// **'Salva'**
+  /// In en, this message translates to:
+  /// **'Save'**
   String get save;
 
   /// No description provided for @saved.
   ///
-  /// In it, this message translates to:
-  /// **'Salvato'**
+  /// In en, this message translates to:
+  /// **'Saved'**
   String get saved;
 
   /// No description provided for @unsavedChanges.
   ///
-  /// In it, this message translates to:
-  /// **'Modifiche non salvate'**
+  /// In en, this message translates to:
+  /// **'Unsaved changes'**
   String get unsavedChanges;
 
   /// No description provided for @discard.
   ///
-  /// In it, this message translates to:
-  /// **'Scarta'**
+  /// In en, this message translates to:
+  /// **'Discard'**
   String get discard;
 
   /// No description provided for @noFileOpen.
   ///
-  /// In it, this message translates to:
-  /// **'Apri un file dall\'albero a sinistra.'**
+  /// In en, this message translates to:
+  /// **'Open a file from the tree.'**
   String get noFileOpen;
 
   /// No description provided for @conflictTitle.
   ///
-  /// In it, this message translates to:
-  /// **'File modificato altrove'**
+  /// In en, this message translates to:
+  /// **'File changed elsewhere'**
   String get conflictTitle;
 
   /// No description provided for @conflictBody.
   ///
-  /// In it, this message translates to:
-  /// **'{path} è cambiato sul Runner dopo che l\'hai aperto.'**
+  /// In en, this message translates to:
+  /// **'{path} changed on the Runner after you opened it.'**
   String conflictBody(String path);
 
   /// No description provided for @reload.
   ///
-  /// In it, this message translates to:
-  /// **'Ricarica'**
+  /// In en, this message translates to:
+  /// **'Reload'**
   String get reload;
 
   /// No description provided for @overwrite.
   ///
-  /// In it, this message translates to:
-  /// **'Sovrascrivi'**
+  /// In en, this message translates to:
+  /// **'Overwrite'**
   String get overwrite;
 
   /// No description provided for @connected.
   ///
-  /// In it, this message translates to:
-  /// **'Connesso'**
+  /// In en, this message translates to:
+  /// **'Connected'**
   String get connected;
 
   /// No description provided for @connecting.
   ///
-  /// In it, this message translates to:
-  /// **'Connessione…'**
+  /// In en, this message translates to:
+  /// **'Connecting…'**
   String get connecting;
 
   /// No description provided for @disconnected.
   ///
-  /// In it, this message translates to:
-  /// **'Disconnesso'**
+  /// In en, this message translates to:
+  /// **'Disconnected'**
   String get disconnected;
 
   /// No description provided for @error.
   ///
-  /// In it, this message translates to:
-  /// **'Errore: {message}'**
+  /// In en, this message translates to:
+  /// **'Error: {message}'**
   String error(String message);
 
   /// No description provided for @binaryFile.
   ///
-  /// In it, this message translates to:
-  /// **'File binario o troppo grande: non modificabile nell\'editor.'**
+  /// In en, this message translates to:
+  /// **'Binary or too large: cannot be edited.'**
   String get binaryFile;
 
   /// No description provided for @terminal.
   ///
-  /// In it, this message translates to:
-  /// **'Terminale'**
+  /// In en, this message translates to:
+  /// **'Terminal'**
   String get terminal;
 
   /// No description provided for @newTerminal.
   ///
-  /// In it, this message translates to:
-  /// **'Nuovo terminale'**
+  /// In en, this message translates to:
+  /// **'New terminal'**
   String get newTerminal;
 
   /// No description provided for @toggleTerminal.
   ///
-  /// In it, this message translates to:
-  /// **'Mostra/nascondi terminale'**
+  /// In en, this message translates to:
+  /// **'Toggle terminal'**
   String get toggleTerminal;
 
   /// No description provided for @restart.
   ///
-  /// In it, this message translates to:
-  /// **'Riavvia'**
+  /// In en, this message translates to:
+  /// **'Restart'**
   String get restart;
 
   /// No description provided for @preview.
   ///
-  /// In it, this message translates to:
-  /// **'Anteprima'**
+  /// In en, this message translates to:
+  /// **'Preview'**
   String get preview;
 
   /// No description provided for @togglePreview.
   ///
-  /// In it, this message translates to:
-  /// **'Mostra/nascondi anteprima'**
+  /// In en, this message translates to:
+  /// **'Toggle preview'**
   String get togglePreview;
 
   /// No description provided for @runWeb.
   ///
-  /// In it, this message translates to:
-  /// **'Avvia Web'**
+  /// In en, this message translates to:
+  /// **'Run Web'**
   String get runWeb;
 
   /// No description provided for @building.
   ///
-  /// In it, this message translates to:
-  /// **'Compilazione…'**
+  /// In en, this message translates to:
+  /// **'Building…'**
   String get building;
 
   /// No description provided for @buildFailed.
   ///
-  /// In it, this message translates to:
-  /// **'Compilazione fallita: controlla il log qui sotto.'**
+  /// In en, this message translates to:
+  /// **'Build failed: see the log below.'**
   String get buildFailed;
 
   /// No description provided for @reloadPreview.
   ///
-  /// In it, this message translates to:
-  /// **'Ricarica anteprima'**
+  /// In en, this message translates to:
+  /// **'Reload preview'**
   String get reloadPreview;
 
   /// No description provided for @device.
   ///
-  /// In it, this message translates to:
-  /// **'Dispositivo'**
+  /// In en, this message translates to:
+  /// **'Device'**
   String get device;
 
   /// No description provided for @openInBrowser.
   ///
-  /// In it, this message translates to:
-  /// **'Apri nel browser'**
+  /// In en, this message translates to:
+  /// **'Open in browser'**
   String get openInBrowser;
 
   /// No description provided for @openOnOtherDevice.
   ///
-  /// In it, this message translates to:
-  /// **'Apri su un altro dispositivo'**
+  /// In en, this message translates to:
+  /// **'Open on another device'**
   String get openOnOtherDevice;
 
   /// No description provided for @qrLocalhostWarning.
   ///
-  /// In it, this message translates to:
-  /// **'Questo indirizzo funziona solo su questo computer. Usa l\'IP di rete del Runner (es. http://192.168.1.20:8787) per aprirlo dal telefono.'**
+  /// In en, this message translates to:
+  /// **'This address only works on this computer. Use the Runner\'s LAN IP (e.g. http://192.168.1.20:8787) to open it from a phone.'**
   String get qrLocalhostWarning;
 
   /// No description provided for @copy.
   ///
-  /// In it, this message translates to:
-  /// **'Copia'**
+  /// In en, this message translates to:
+  /// **'Copy'**
   String get copy;
 
   /// No description provided for @close.
   ///
-  /// In it, this message translates to:
-  /// **'Chiudi'**
+  /// In en, this message translates to:
+  /// **'Close'**
   String get close;
 
   /// No description provided for @console.
   ///
-  /// In it, this message translates to:
+  /// In en, this message translates to:
   /// **'Console'**
   String get console;
 
   /// No description provided for @autoRebuild.
   ///
-  /// In it, this message translates to:
-  /// **'Ricompila al salvataggio'**
+  /// In en, this message translates to:
+  /// **'Rebuild on save'**
   String get autoRebuild;
 
   /// No description provided for @previewEmpty.
   ///
-  /// In it, this message translates to:
-  /// **'Premi «Avvia Web» per compilare l\'app e vederla qui. Ogni salvataggio aggiorna l\'anteprima.'**
+  /// In en, this message translates to:
+  /// **'Press “Run Web” to build the app and see it here. Every save refreshes the preview.'**
   String get previewEmpty;
 
   /// No description provided for @ai.
   ///
-  /// In it, this message translates to:
+  /// In en, this message translates to:
   /// **'AI'**
   String get ai;
 
   /// No description provided for @toggleAi.
   ///
-  /// In it, this message translates to:
-  /// **'Mostra/nascondi pannello AI'**
+  /// In en, this message translates to:
+  /// **'Toggle AI panel'**
   String get toggleAi;
 
   /// No description provided for @aiSettings.
   ///
-  /// In it, this message translates to:
-  /// **'Chiavi API e modelli'**
+  /// In en, this message translates to:
+  /// **'API keys & models'**
   String get aiSettings;
 
   /// No description provided for @apiKeysHint.
   ///
-  /// In it, this message translates to:
-  /// **'Le chiavi restano cifrate su questo dispositivo (archivio sicuro). Con il proxy attivo passano dal tuo Runner solo per la singola richiesta e non vengono salvate né registrate nei log.'**
+  /// In en, this message translates to:
+  /// **'Keys stay encrypted on this device (secure storage). With the proxy on they pass through your Runner for each request only and are never stored or logged.'**
   String get apiKeysHint;
 
   /// No description provided for @useRunnerProxy.
   ///
-  /// In it, this message translates to:
-  /// **'Passa dal Runner (proxy)'**
+  /// In en, this message translates to:
+  /// **'Route through Runner (proxy)'**
   String get useRunnerProxy;
 
   /// No description provided for @useRunnerProxyHint.
   ///
-  /// In it, this message translates to:
-  /// **'Consigliato. Disattiva per chiamare i provider direttamente da questo dispositivo.'**
+  /// In en, this message translates to:
+  /// **'Recommended. Turn off to call providers directly from this device.'**
   String get useRunnerProxyHint;
 
   /// No description provided for @useRunnerProxyWeb.
   ///
-  /// In it, this message translates to:
-  /// **'Sul web è obbligatorio: il browser non può chiamare i provider direttamente.'**
+  /// In en, this message translates to:
+  /// **'Required on web: browsers cannot call providers directly.'**
   String get useRunnerProxyWeb;
 
   /// No description provided for @apiKey.
   ///
-  /// In it, this message translates to:
-  /// **'Chiave API'**
+  /// In en, this message translates to:
+  /// **'API key'**
   String get apiKey;
 
   /// No description provided for @apiKeyOptional.
   ///
-  /// In it, this message translates to:
-  /// **'Chiave API (se richiesta)'**
+  /// In en, this message translates to:
+  /// **'API key (if required)'**
   String get apiKeyOptional;
 
   /// No description provided for @replaceApiKey.
   ///
-  /// In it, this message translates to:
-  /// **'Sostituisci chiave'**
+  /// In en, this message translates to:
+  /// **'Replace key'**
   String get replaceApiKey;
 
   /// No description provided for @testKey.
   ///
-  /// In it, this message translates to:
-  /// **'Prova'**
+  /// In en, this message translates to:
+  /// **'Test'**
   String get testKey;
 
   /// No description provided for @testing.
   ///
-  /// In it, this message translates to:
-  /// **'Prova in corso…'**
+  /// In en, this message translates to:
+  /// **'Testing…'**
   String get testing;
 
   /// No description provided for @keyWorks.
   ///
-  /// In it, this message translates to:
-  /// **'Funziona ✓ ({model})'**
+  /// In en, this message translates to:
+  /// **'Works ✓ ({model})'**
   String keyWorks(String model);
 
   /// No description provided for @getKey.
   ///
-  /// In it, this message translates to:
-  /// **'Ottieni una chiave'**
+  /// In en, this message translates to:
+  /// **'Get a key'**
   String get getKey;
 
   /// No description provided for @addModelId.
   ///
-  /// In it, this message translates to:
-  /// **'Aggiungi ID modello'**
+  /// In en, this message translates to:
+  /// **'Add model ID'**
   String get addModelId;
 
   /// No description provided for @selectModel.
   ///
-  /// In it, this message translates to:
-  /// **'Scegli modello'**
+  /// In en, this message translates to:
+  /// **'Select model'**
   String get selectModel;
 
   /// No description provided for @keyPresent.
   ///
-  /// In it, this message translates to:
-  /// **'chiave presente'**
+  /// In en, this message translates to:
+  /// **'key present'**
   String get keyPresent;
 
   /// No description provided for @notConfigured.
   ///
-  /// In it, this message translates to:
-  /// **'non configurato'**
+  /// In en, this message translates to:
+  /// **'not configured'**
   String get notConfigured;
 
   /// No description provided for @per1k.
   ///
-  /// In it, this message translates to:
-  /// **'per 1k token (in/out)'**
+  /// In en, this message translates to:
+  /// **'per 1k tokens (in/out)'**
   String get per1k;
 
   /// No description provided for @applyTo.
   ///
-  /// In it, this message translates to:
-  /// **'Applica a {path}'**
+  /// In en, this message translates to:
+  /// **'Apply to {path}'**
   String applyTo(String path);
 
   /// No description provided for @noChanges.
   ///
-  /// In it, this message translates to:
-  /// **'Nessuna differenza rispetto al file attuale.'**
+  /// In en, this message translates to:
+  /// **'No differences from the current file.'**
   String get noChanges;
 
   /// No description provided for @accept.
   ///
-  /// In it, this message translates to:
-  /// **'Accetta'**
+  /// In en, this message translates to:
+  /// **'Accept'**
   String get accept;
 
   /// No description provided for @reject.
   ///
-  /// In it, this message translates to:
-  /// **'Rifiuta'**
+  /// In en, this message translates to:
+  /// **'Reject'**
   String get reject;
 
   /// No description provided for @apply.
   ///
-  /// In it, this message translates to:
-  /// **'Applica'**
+  /// In en, this message translates to:
+  /// **'Apply'**
   String get apply;
 
   /// No description provided for @applied.
   ///
-  /// In it, this message translates to:
-  /// **'Modifica applicata a {path}: controlla e salva.'**
+  /// In en, this message translates to:
+  /// **'Change applied to {path}: review and save.'**
   String applied(String path);
 
   /// No description provided for @applyNoTarget.
   ///
-  /// In it, this message translates to:
-  /// **'Apri un file o chiedi all\'AI di indicare il percorso del file.'**
+  /// In en, this message translates to:
+  /// **'Open a file or ask the AI to include the file path.'**
   String get applyNoTarget;
 
   /// No description provided for @clearChat.
   ///
-  /// In it, this message translates to:
-  /// **'Svuota chat'**
+  /// In en, this message translates to:
+  /// **'Clear chat'**
   String get clearChat;
 
   /// No description provided for @chatEmpty.
   ///
-  /// In it, this message translates to:
-  /// **'Chiedi qualcosa sul tuo progetto. Il file aperto viene inviato come contesto.'**
+  /// In en, this message translates to:
+  /// **'Ask about your project. The open file is sent as context.'**
   String get chatEmpty;
 
   /// No description provided for @chatNoKeys.
   ///
-  /// In it, this message translates to:
-  /// **'Per usare l\'AI inserisci almeno una chiave API (Claude, ChatGPT o Gemini).'**
+  /// In en, this message translates to:
+  /// **'Add at least one API key (Claude, ChatGPT or Gemini) to use AI.'**
   String get chatNoKeys;
 
   /// No description provided for @attachOpenFile.
   ///
-  /// In it, this message translates to:
-  /// **'Allega il file aperto come contesto'**
+  /// In en, this message translates to:
+  /// **'Attach the open file as context'**
   String get attachOpenFile;
 
   /// No description provided for @askAi.
   ///
-  /// In it, this message translates to:
-  /// **'Chiedi all\'AI…  (Ctrl+Invio per inviare)'**
+  /// In en, this message translates to:
+  /// **'Ask AI…  (Ctrl+Enter to send)'**
   String get askAi;
 
   /// No description provided for @send.
   ///
-  /// In it, this message translates to:
-  /// **'Invia'**
+  /// In en, this message translates to:
+  /// **'Send'**
   String get send;
 
   /// No description provided for @stop.
   ///
-  /// In it, this message translates to:
-  /// **'Ferma'**
+  /// In en, this message translates to:
+  /// **'Stop'**
   String get stop;
 
   /// No description provided for @copied.
   ///
-  /// In it, this message translates to:
-  /// **'Copiato'**
+  /// In en, this message translates to:
+  /// **'Copied'**
   String get copied;
 
   /// No description provided for @truncated.
   ///
-  /// In it, this message translates to:
-  /// **'risposta troncata (limite token)'**
+  /// In en, this message translates to:
+  /// **'truncated (token limit)'**
   String get truncated;
 
   /// No description provided for @refused.
   ///
-  /// In it, this message translates to:
-  /// **'rifiutata dal modello'**
+  /// In en, this message translates to:
+  /// **'declined by the model'**
   String get refused;
 
   /// No description provided for @stopped.
   ///
-  /// In it, this message translates to:
-  /// **'interrotta'**
+  /// In en, this message translates to:
+  /// **'stopped'**
   String get stopped;
 
   /// No description provided for @badgeFreeTier.
   ///
-  /// In it, this message translates to:
-  /// **'gratis*'**
+  /// In en, this message translates to:
+  /// **'free*'**
   String get badgeFreeTier;
 
   /// No description provided for @badgeSubscription.
   ///
-  /// In it, this message translates to:
-  /// **'abbonamento'**
+  /// In en, this message translates to:
+  /// **'subscription'**
   String get badgeSubscription;
 
   /// No description provided for @badgePaid.
   ///
-  /// In it, this message translates to:
-  /// **'a pagamento'**
+  /// In en, this message translates to:
+  /// **'paid'**
   String get badgePaid;
 
   /// No description provided for @needsKey.
   ///
-  /// In it, this message translates to:
-  /// **'Serve una chiave API {name}: aggiungila nelle impostazioni.'**
+  /// In en, this message translates to:
+  /// **'Needs a {name} API key: add it in settings.'**
   String needsKey(String name);
 
   /// No description provided for @claudeCodeUnavailable.
   ///
-  /// In it, this message translates to:
-  /// **'Claude Code non è disponibile su questo Runner (serve Claude Code installato e con login sul PC del Runner).'**
+  /// In en, this message translates to:
+  /// **'Claude Code is not available on this Runner (it must be installed and logged in on the Runner\'s PC).'**
   String get claudeCodeUnavailable;
 
   /// No description provided for @appPromptHint.
   ///
-  /// In it, this message translates to:
-  /// **'Es.: un\'app di ricette con foto, lista della spesa e timer di cottura, colori caldi…'**
+  /// In en, this message translates to:
+  /// **'E.g.: a recipe app with photos, shopping list and cooking timer, warm colors…'**
   String get appPromptHint;
 
   /// No description provided for @chooseAi.
   ///
-  /// In it, this message translates to:
-  /// **'Con quale AI?'**
+  /// In en, this message translates to:
+  /// **'Which AI?'**
   String get chooseAi;
 
   /// No description provided for @createApp.
   ///
-  /// In it, this message translates to:
-  /// **'Crea app'**
+  /// In en, this message translates to:
+  /// **'Create app'**
   String get createApp;
 
   /// No description provided for @openEditor.
   ///
-  /// In it, this message translates to:
+  /// In en, this message translates to:
   /// **'Editor'**
   String get openEditor;
 
   /// No description provided for @describeYourApp.
   ///
-  /// In it, this message translates to:
-  /// **'Descrivi la tua app'**
+  /// In en, this message translates to:
+  /// **'Describe your app'**
   String get describeYourApp;
 
   /// No description provided for @describeYourAppHint.
   ///
-  /// In it, this message translates to:
-  /// **'Scrivi cosa deve fare e come deve essere: l\'AI crea l\'app completa, controlla gli errori e te la mostra. (*Gemini: quota gratuita di Google con limiti giornalieri)'**
+  /// In en, this message translates to:
+  /// **'Say what it should do and look like: the AI builds the complete app, checks errors and shows it to you. (*Gemini: Google\'s free tier with daily limits)'**
   String get describeYourAppHint;
 
   /// No description provided for @improveApp.
   ///
-  /// In it, this message translates to:
-  /// **'Cosa vuoi aggiungere o migliorare?'**
+  /// In en, this message translates to:
+  /// **'What would you like to add or improve?'**
   String get improveApp;
 
   /// No description provided for @improveAppHint.
   ///
-  /// In it, this message translates to:
-  /// **'Descrivi le prossime funzioni o modifiche, es.: aggiungi le videochiamate, il login con Google, le stanze private… Puoi anche incollare qui le chiavi che ti chiede l\'AI.'**
+  /// In en, this message translates to:
+  /// **'Describe the next features or changes, e.g.: add video calls, Google login, private rooms… You can also paste the keys the AI asks for here.'**
   String get improveAppHint;
 
   /// No description provided for @applyChange.
   ///
-  /// In it, this message translates to:
-  /// **'Applica modifica'**
+  /// In en, this message translates to:
+  /// **'Apply change'**
   String get applyChange;
 
   /// No description provided for @buildLog.
   ///
-  /// In it, this message translates to:
-  /// **'Dettagli'**
+  /// In en, this message translates to:
+  /// **'Details'**
   String get buildLog;
 
   /// No description provided for @stepClaudeCode.
   ///
-  /// In it, this message translates to:
-  /// **'Claude Code scrive e verifica il codice'**
+  /// In en, this message translates to:
+  /// **'Claude Code writes and verifies the code'**
   String get stepClaudeCode;
 
   /// No description provided for @stepWriting.
   ///
-  /// In it, this message translates to:
-  /// **'Scrittura del codice ({count} file)'**
+  /// In en, this message translates to:
+  /// **'Writing code ({count} files)'**
   String stepWriting(int count);
 
   /// No description provided for @stepDependencies.
   ///
-  /// In it, this message translates to:
-  /// **'Installazione dipendenze'**
+  /// In en, this message translates to:
+  /// **'Installing dependencies'**
   String get stepDependencies;
 
   /// No description provided for @stepChecking.
   ///
-  /// In it, this message translates to:
-  /// **'Controllo errori'**
+  /// In en, this message translates to:
+  /// **'Checking for errors'**
   String get stepChecking;
 
   /// No description provided for @stepFixing.
   ///
-  /// In it, this message translates to:
-  /// **'Correzione errori (tentativo {round})'**
+  /// In en, this message translates to:
+  /// **'Fixing errors (attempt {round})'**
   String stepFixing(int round);
 
   /// No description provided for @stepBuilding.
   ///
-  /// In it, this message translates to:
-  /// **'Compilazione dell\'app'**
+  /// In en, this message translates to:
+  /// **'Building the app'**
   String get stepBuilding;
 
   /// No description provided for @stepReady.
   ///
-  /// In it, this message translates to:
-  /// **'Pronta'**
+  /// In en, this message translates to:
+  /// **'Ready'**
   String get stepReady;
 
   /// No description provided for @appReadyTitle.
   ///
-  /// In it, this message translates to:
-  /// **'La tua app è pronta 🎉'**
+  /// In en, this message translates to:
+  /// **'Your app is ready 🎉'**
   String get appReadyTitle;
 
   /// No description provided for @openApp.
   ///
-  /// In it, this message translates to:
-  /// **'Apri app'**
+  /// In en, this message translates to:
+  /// **'Open app'**
   String get openApp;
 
   /// No description provided for @viewCode.
   ///
-  /// In it, this message translates to:
-  /// **'Vedi codice'**
+  /// In en, this message translates to:
+  /// **'View code'**
   String get viewCode;
 
   /// No description provided for @buildCancelled.
   ///
-  /// In it, this message translates to:
-  /// **'Creazione interrotta'**
+  /// In en, this message translates to:
+  /// **'Build stopped'**
   String get buildCancelled;
 
   /// No description provided for @buildFailedTitle.
   ///
-  /// In it, this message translates to:
-  /// **'Non sono riuscito a completare l\'app'**
+  /// In en, this message translates to:
+  /// **'I couldn\'t finish the app'**
   String get buildFailedTitle;
 
   /// No description provided for @bestQuality.
   ///
-  /// In it, this message translates to:
-  /// **'Qualità massima'**
+  /// In en, this message translates to:
+  /// **'Best quality'**
   String get bestQuality;
 
   /// No description provided for @bestQualityOn.
   ///
-  /// In it, this message translates to:
-  /// **'Modello più potente: più lento, per app complesse'**
+  /// In en, this message translates to:
+  /// **'Most capable model: slower, for complex apps'**
   String get bestQualityOn;
 
   /// No description provided for @bestQualityOff.
   ///
-  /// In it, this message translates to:
-  /// **'Veloce (consigliato): ideale per la maggior parte delle app'**
+  /// In en, this message translates to:
+  /// **'Fast (recommended): right for most apps'**
   String get bestQualityOff;
 
   /// No description provided for @androidFileQuestion.
   ///
-  /// In it, this message translates to:
-  /// **'Vuoi il file per Android?'**
+  /// In en, this message translates to:
+  /// **'Do you want the Android file?'**
   String get androidFileQuestion;
 
   /// No description provided for @androidFileHint.
   ///
-  /// In it, this message translates to:
-  /// **'APK: da installare sul telefono. AAB: da caricare sulla Google Play Console. Entrambi firmati.'**
+  /// In en, this message translates to:
+  /// **'APK: install on a phone. AAB: upload to Google Play Console. Both signed.'**
   String get androidFileHint;
 
   /// No description provided for @generateApk.
   ///
-  /// In it, this message translates to:
-  /// **'Genera APK'**
+  /// In en, this message translates to:
+  /// **'Build APK'**
   String get generateApk;
 
   /// No description provided for @generateAab.
   ///
-  /// In it, this message translates to:
-  /// **'Genera AAB'**
+  /// In en, this message translates to:
+  /// **'Build AAB'**
   String get generateAab;
 
   /// No description provided for @androidBuilding.
   ///
-  /// In it, this message translates to:
-  /// **'Genero {kind}… la prima volta può richiedere 3-5 minuti.'**
+  /// In en, this message translates to:
+  /// **'Building {kind}… the first time can take 3-5 minutes.'**
   String androidBuilding(String kind);
 
   /// No description provided for @downloadApk.
   ///
-  /// In it, this message translates to:
-  /// **'Scarica e installa APK'**
+  /// In en, this message translates to:
+  /// **'Download & install APK'**
   String get downloadApk;
 
   /// No description provided for @downloadAab.
   ///
-  /// In it, this message translates to:
-  /// **'Scarica AAB'**
+  /// In en, this message translates to:
+  /// **'Download AAB'**
   String get downloadAab;
 
   /// No description provided for @apkInstallHint.
   ///
-  /// In it, this message translates to:
-  /// **'APK firmato. Se Android lo chiede, consenti l\'installazione da questa fonte.'**
+  /// In en, this message translates to:
+  /// **'Signed APK. If Android asks, allow installs from this source.'**
   String get apkInstallHint;
 
   /// No description provided for @aabHint.
   ///
-  /// In it, this message translates to:
-  /// **'AAB firmato con la chiave di caricamento di questa app: pronto per la Google Play Console. Il numero di versione sale da solo a ogni build.'**
+  /// In en, this message translates to:
+  /// **'AAB signed with this app\'s upload key: ready for Google Play Console. The version code increases on every build.'**
   String get aabHint;
 
   /// No description provided for @androidFailed.
   ///
-  /// In it, this message translates to:
-  /// **'Generazione non riuscita:'**
+  /// In en, this message translates to:
+  /// **'Build failed:'**
   String get androidFailed;
 
   /// No description provided for @backupSigningKey.
   ///
-  /// In it, this message translates to:
-  /// **'Salva chiave di firma'**
+  /// In en, this message translates to:
+  /// **'Save signing key'**
   String get backupSigningKey;
 
   /// No description provided for @backupSigningKeyHint.
   ///
-  /// In it, this message translates to:
-  /// **'Conserva il file della chiave e la password in un posto sicuro (es. Google Drive): servono per pubblicare gli aggiornamenti di questa app sul Play Store. Il link funziona una sola volta per 10 minuti.'**
+  /// In en, this message translates to:
+  /// **'Keep the key file and password somewhere safe (e.g. Google Drive): you need them to publish updates of this app on Google Play. The link works once, for 10 minutes.'**
   String get backupSigningKeyHint;
 
   /// No description provided for @downloadKeystore.
   ///
-  /// In it, this message translates to:
-  /// **'Scarica file chiave'**
+  /// In en, this message translates to:
+  /// **'Download key file'**
   String get downloadKeystore;
 
   /// No description provided for @fullscreenExitHint.
   ///
-  /// In it, this message translates to:
-  /// **'Scorri o premi indietro per tornare a FlutterCursor'**
+  /// In en, this message translates to:
+  /// **'Swipe or press back to return to FlutterCursor'**
   String get fullscreenExitHint;
 
   /// No description provided for @runFullscreen.
   ///
-  /// In it, this message translates to:
-  /// **'Avvia a schermo intero'**
+  /// In en, this message translates to:
+  /// **'Run full screen'**
   String get runFullscreen;
 
   /// No description provided for @cliNotInstalled.
   ///
-  /// In it, this message translates to:
-  /// **'non installato sul Runner ({name})'**
+  /// In en, this message translates to:
+  /// **'not installed on the Runner ({name})'**
   String cliNotInstalled(String name);
 
   /// No description provided for @terminalCliHint.
   ///
-  /// In it, this message translates to:
-  /// **'Claude Code, Codex e Gemini usano il login fatto sul PC del Runner. La prima volta segui le istruzioni nel terminale per accedere.'**
+  /// In en, this message translates to:
+  /// **'Claude Code, Codex and Gemini use the login on the Runner\'s machine. The first time, follow the instructions in the terminal to sign in.'**
   String get terminalCliHint;
 
   /// No description provided for @generatingMockups.
   ///
-  /// In it, this message translates to:
-  /// **'Creo 5 stili grafici…'**
+  /// In en, this message translates to:
+  /// **'Creating 5 visual styles…'**
   String get generatingMockups;
 
   /// No description provided for @designingStyle.
   ///
-  /// In it, this message translates to:
-  /// **'Disegno lo stile «{style}»…'**
+  /// In en, this message translates to:
+  /// **'Designing “{style}”…'**
   String designingStyle(String style);
 
   /// No description provided for @chooseMockup.
   ///
-  /// In it, this message translates to:
-  /// **'Scegli questo'**
+  /// In en, this message translates to:
+  /// **'Choose this'**
   String get chooseMockup;
 
   /// No description provided for @editMockup.
   ///
-  /// In it, this message translates to:
-  /// **'Modifica questo mockup'**
+  /// In en, this message translates to:
+  /// **'Edit this mockup'**
   String get editMockup;
 
   /// No description provided for @editMockupHint.
   ///
-  /// In it, this message translates to:
-  /// **'Es.: più scuro, bottoni arrotondati, logo rosa…'**
+  /// In en, this message translates to:
+  /// **'E.g.: darker, rounded buttons, pink logo…'**
   String get editMockupHint;
 
   /// No description provided for @newMockups.
   ///
-  /// In it, this message translates to:
-  /// **'Nuovi mockup (5 stili diversi)'**
+  /// In en, this message translates to:
+  /// **'New mockups (5 different styles)'**
   String get newMockups;
 
   /// No description provided for @previousMockups.
   ///
-  /// In it, this message translates to:
-  /// **'Mockup precedenti'**
+  /// In en, this message translates to:
+  /// **'Previous mockups'**
   String get previousMockups;
 
   /// No description provided for @mockupSet.
   ///
-  /// In it, this message translates to:
-  /// **'Serie {n}'**
+  /// In en, this message translates to:
+  /// **'Set {n}'**
   String mockupSet(int n);
 
   /// No description provided for @skipMockups.
   ///
-  /// In it, this message translates to:
-  /// **'Salta i mockup e crea l\'app'**
+  /// In en, this message translates to:
+  /// **'Skip mockups and build the app'**
   String get skipMockups;
 
   /// No description provided for @playAskUpload.
   ///
-  /// In it, this message translates to:
-  /// **'Vuoi caricare l\'app sul Google Play Store?'**
+  /// In en, this message translates to:
+  /// **'Upload the app to Google Play Store?'**
   String get playAskUpload;
 
   /// No description provided for @playYesUpload.
   ///
-  /// In it, this message translates to:
-  /// **'Sì, carica sul Play Store'**
+  /// In en, this message translates to:
+  /// **'Yes, upload to Play Store'**
   String get playYesUpload;
 
   /// No description provided for @playNotNow.
   ///
-  /// In it, this message translates to:
-  /// **'Non ora'**
+  /// In en, this message translates to:
+  /// **'Not now'**
   String get playNotNow;
 
   /// No description provided for @playFeeNotice.
   ///
-  /// In it, this message translates to:
-  /// **'Serve un account sviluppatore Google Play Console. Costo: 25 \$ una sola volta (non è un abbonamento), pagati direttamente a Google, non a FlutterCursor.'**
+  /// In en, this message translates to:
+  /// **'You need a Google Play Console developer account. Cost: \$25 one time (not a subscription), paid directly to Google, not to FlutterCursor.'**
   String get playFeeNotice;
 
   /// No description provided for @playPublishTitle.
   ///
-  /// In it, this message translates to:
-  /// **'Pubblica su Google Play'**
+  /// In en, this message translates to:
+  /// **'Publish to Google Play'**
   String get playPublishTitle;
 
   /// No description provided for @playStepAccount.
   ///
-  /// In it, this message translates to:
-  /// **'Account Google Play Console'**
+  /// In en, this message translates to:
+  /// **'Google Play Console account'**
   String get playStepAccount;
 
   /// No description provided for @playOpenSignup.
   ///
-  /// In it, this message translates to:
-  /// **'Crea account Play Console'**
+  /// In en, this message translates to:
+  /// **'Create Play Console account'**
   String get playOpenSignup;
 
   /// No description provided for @playHaveAccount.
   ///
-  /// In it, this message translates to:
-  /// **'Ho già un account Play Console attivo'**
+  /// In en, this message translates to:
+  /// **'I already have an active Play Console account'**
   String get playHaveAccount;
 
   /// No description provided for @next.
   ///
-  /// In it, this message translates to:
-  /// **'Avanti'**
+  /// In en, this message translates to:
+  /// **'Next'**
   String get next;
 
   /// No description provided for @playStepCreateApp.
   ///
-  /// In it, this message translates to:
-  /// **'Crea l\'app nel Play Console'**
+  /// In en, this message translates to:
+  /// **'Create the app in Play Console'**
   String get playStepCreateApp;
 
   /// No description provided for @playCreateAppGuide.
   ///
-  /// In it, this message translates to:
-  /// **'Google richiede questo passaggio a mano, solo la prima volta:\n1. Apri **Play Console** → **Crea app**\n2. Nome app, lingua predefinita **Italiano**, tipo **App**, **Gratuita**\n3. Accetta le dichiarazioni e premi **Crea app**\n\nIl package name verrà associato automaticamente al primo caricamento: usa quello qui sotto.'**
+  /// In en, this message translates to:
+  /// **'Google requires this step manually, only the first time:\n1. Open **Play Console** → **Create app**\n2. App name, default language, type **App**, **Free**\n3. Accept the declarations and press **Create app**\n\nThe package name is linked on the first upload: use the one below.'**
   String get playCreateAppGuide;
 
   /// No description provided for @playPackageName.
   ///
-  /// In it, this message translates to:
+  /// In en, this message translates to:
   /// **'Package name'**
   String get playPackageName;
 
   /// No description provided for @playOpenConsole.
   ///
-  /// In it, this message translates to:
-  /// **'Apri Play Console'**
+  /// In en, this message translates to:
+  /// **'Open Play Console'**
   String get playOpenConsole;
 
   /// No description provided for @playAppCreated.
   ///
-  /// In it, this message translates to:
-  /// **'Ho creato l\'app nel Play Console'**
+  /// In en, this message translates to:
+  /// **'I created the app in Play Console'**
   String get playAppCreated;
 
   /// No description provided for @playStepConnect.
   ///
-  /// In it, this message translates to:
-  /// **'Collega FlutterCursor a Google Play'**
+  /// In en, this message translates to:
+  /// **'Connect FlutterCursor to Google Play'**
   String get playStepConnect;
 
   /// No description provided for @playConnectGuide.
   ///
-  /// In it, this message translates to:
-  /// **'Serve una **chiave di account di servizio** (una sola volta per tutte le tue app):\n1. Apri **Google Cloud** e attiva l\'API **Google Play Android Developer API**\n2. Vai su **Account di servizio** → **Crea account di servizio** → poi **Chiavi** → **Aggiungi chiave** → **JSON** (si scarica un file)\n3. Nel **Play Console** → **Utenti e autorizzazioni** → **Invita nuovi utenti** → incolla l\'email dell\'account di servizio → dai i permessi di **rilascio** per le tue app\n4. Apri il file JSON scaricato e **incolla qui tutto il contenuto**\n\nLa chiave resta salvata cifrata su questo dispositivo e viene usata solo per il caricamento.'**
+  /// In en, this message translates to:
+  /// **'You need a **service account key** (once for all your apps):\n1. Open **Google Cloud** and enable **Google Play Android Developer API**\n2. **Service accounts** → **Create** → **Keys** → **Add key** → **JSON** (a file downloads)\n3. In **Play Console** → **Users and permissions** → **Invite new users** → paste the service account email → grant **release** permissions\n4. Open the downloaded JSON and **paste its whole content here**\n\nThe key stays encrypted on this device and is used only for uploads.'**
   String get playConnectGuide;
 
   /// No description provided for @playOpenApiLibrary.
   ///
-  /// In it, this message translates to:
-  /// **'Attiva API Google Play'**
+  /// In en, this message translates to:
+  /// **'Enable Google Play API'**
   String get playOpenApiLibrary;
 
   /// No description provided for @playOpenServiceAccounts.
   ///
-  /// In it, this message translates to:
-  /// **'Account di servizio'**
+  /// In en, this message translates to:
+  /// **'Service accounts'**
   String get playOpenServiceAccounts;
 
   /// No description provided for @playServiceAccountJson.
   ///
-  /// In it, this message translates to:
-  /// **'Contenuto del file JSON dell\'account di servizio'**
+  /// In en, this message translates to:
+  /// **'Service account JSON content'**
   String get playServiceAccountJson;
 
   /// No description provided for @playStepListing.
   ///
-  /// In it, this message translates to:
-  /// **'Scheda dello store e caricamento'**
+  /// In en, this message translates to:
+  /// **'Store listing and upload'**
   String get playStepListing;
 
   /// No description provided for @playGenerateWithAi.
   ///
-  /// In it, this message translates to:
-  /// **'Genera scheda, privacy policy e risposte con l\'AI'**
+  /// In en, this message translates to:
+  /// **'Generate listing, privacy policy and answers with AI'**
   String get playGenerateWithAi;
 
   /// No description provided for @playTitle.
   ///
-  /// In it, this message translates to:
-  /// **'Titolo (max 30)'**
+  /// In en, this message translates to:
+  /// **'Title (max 30)'**
   String get playTitle;
 
   /// No description provided for @playShortDescription.
   ///
-  /// In it, this message translates to:
-  /// **'Descrizione breve (max 80)'**
+  /// In en, this message translates to:
+  /// **'Short description (max 80)'**
   String get playShortDescription;
 
   /// No description provided for @playFullDescription.
   ///
-  /// In it, this message translates to:
-  /// **'Descrizione completa'**
+  /// In en, this message translates to:
+  /// **'Full description'**
   String get playFullDescription;
 
   /// No description provided for @playReleaseNotes.
   ///
-  /// In it, this message translates to:
-  /// **'Note di versione'**
+  /// In en, this message translates to:
+  /// **'Release notes'**
   String get playReleaseNotes;
 
   /// No description provided for @playContactEmail.
   ///
-  /// In it, this message translates to:
-  /// **'Email di contatto (obbligatoria su Play Store)'**
+  /// In en, this message translates to:
+  /// **'Contact email (required on Play Store)'**
   String get playContactEmail;
 
   /// No description provided for @playPrivacyUrl.
   ///
-  /// In it, this message translates to:
-  /// **'Link privacy policy'**
+  /// In en, this message translates to:
+  /// **'Privacy policy link'**
   String get playPrivacyUrl;
 
   /// No description provided for @playTrack.
   ///
-  /// In it, this message translates to:
-  /// **'Dove pubblicare'**
+  /// In en, this message translates to:
+  /// **'Where to publish'**
   String get playTrack;
 
   /// No description provided for @playTrackInternal.
   ///
-  /// In it, this message translates to:
-  /// **'Test interno (consigliato per iniziare)'**
+  /// In en, this message translates to:
+  /// **'Internal testing (recommended first)'**
   String get playTrackInternal;
 
   /// No description provided for @playTrackClosed.
   ///
-  /// In it, this message translates to:
-  /// **'Test chiuso'**
+  /// In en, this message translates to:
+  /// **'Closed testing'**
   String get playTrackClosed;
 
   /// No description provided for @playTrackProduction.
   ///
-  /// In it, this message translates to:
-  /// **'Produzione (pubblico)'**
+  /// In en, this message translates to:
+  /// **'Production (public)'**
   String get playTrackProduction;
 
   /// No description provided for @playUpload.
   ///
-  /// In it, this message translates to:
-  /// **'Carica su Google Play'**
+  /// In en, this message translates to:
+  /// **'Upload to Google Play'**
   String get playUpload;
 
   /// No description provided for @playStepFinish.
   ///
-  /// In it, this message translates to:
-  /// **'Completa nel Play Console'**
+  /// In en, this message translates to:
+  /// **'Finish in Play Console'**
   String get playStepFinish;
 
   /// No description provided for @playUploaded.
   ///
-  /// In it, this message translates to:
-  /// **'✅ Caricata! Versione {version} sulla traccia «{track}». {draft}'**
+  /// In en, this message translates to:
+  /// **'✅ Uploaded! Version {version} on track “{track}”. {draft}'**
   String playUploaded(String version, String track, String draft);
 
   /// No description provided for @playDraftNote.
   ///
-  /// In it, this message translates to:
-  /// **'Poiché l\'app non è ancora mai stata pubblicata, Google l\'ha salvata come bozza: completa i passaggi qui sotto e premi «Invia per la revisione» nel Play Console.'**
+  /// In en, this message translates to:
+  /// **'Because the app was never published, Google saved it as a draft: complete the steps below and press “Send for review” in Play Console.'**
   String get playDraftNote;
 
   /// No description provided for @playManualChecklist.
   ///
-  /// In it, this message translates to:
-  /// **'Google richiede di confermare a mano queste voci nel Play Console (le risposte pronte sono qui sotto):\n- **Norme sulla privacy** → incolla il link: {privacyUrl}\n- **Sicurezza dei dati**\n- **Classificazione dei contenuti** (questionario)\n- **Pubblico di destinazione e contenuti**\n- **Annunci** e **Accesso all\'app** (se serve il login, fornisci un account di prova)\n- **Scheda dello store**: icona 512×512 e almeno 2 screenshot\n- Account personali nuovi: Google può richiedere un **test chiuso** con un numero minimo di tester prima della produzione'**
+  /// In en, this message translates to:
+  /// **'Google requires confirming these manually in Play Console (ready answers below):\n- **Privacy policy** → paste the link: {privacyUrl}\n- **Data safety**\n- **Content rating** questionnaire\n- **Target audience and content**\n- **Ads** and **App access** (provide a test account if login is required)\n- **Store listing**: 512×512 icon and at least 2 screenshots\n- New personal accounts: Google may require **closed testing** with a minimum number of testers before production'**
   String playManualChecklist(String privacyUrl);
 
   /// No description provided for @playDataSafety.
   ///
-  /// In it, this message translates to:
-  /// **'Risposte per «Sicurezza dei dati»'**
+  /// In en, this message translates to:
+  /// **'Answers for “Data safety”'**
   String get playDataSafety;
 
   /// No description provided for @playContentRating.
   ///
-  /// In it, this message translates to:
-  /// **'Risposte per «Classificazione dei contenuti»'**
+  /// In en, this message translates to:
+  /// **'Answers for “Content rating”'**
   String get playContentRating;
 
   /// No description provided for @playOtherDeclarations.
   ///
-  /// In it, this message translates to:
-  /// **'Pubblico, annunci e accesso all\'app'**
+  /// In en, this message translates to:
+  /// **'Audience, ads and app access'**
   String get playOtherDeclarations;
 
   /// No description provided for @assistantTitle.
   ///
-  /// In it, this message translates to:
-  /// **'Assistente AI'**
+  /// In en, this message translates to:
+  /// **'AI assistant'**
   String get assistantTitle;
 
   /// No description provided for @assistantFree.
   ///
-  /// In it, this message translates to:
-  /// **'Gratis'**
+  /// In en, this message translates to:
+  /// **'Free'**
   String get assistantFree;
 
   /// No description provided for @assistantEmpty.
   ///
-  /// In it, this message translates to:
-  /// **'Ciao! Chiedimi qualsiasi cosa: idee per la tua app, come pubblicarla sul Play Store, come configurare login e database…'**
+  /// In en, this message translates to:
+  /// **'Hi! Ask me anything: app ideas, how to publish on Play Store, how to set up login and databases…'**
   String get assistantEmpty;
 
   /// No description provided for @assistantUnconfigured.
   ///
-  /// In it, this message translates to:
-  /// **'L\'assistente gratuito non è ancora attivo su questo server (manca la chiave Gemini del Runner).'**
+  /// In en, this message translates to:
+  /// **'The free assistant is not active on this server yet (the Runner\'s Gemini key is missing).'**
   String get assistantUnconfigured;
 
   /// No description provided for @assistantHint.
   ///
-  /// In it, this message translates to:
-  /// **'Scrivi una domanda…'**
+  /// In en, this message translates to:
+  /// **'Ask a question…'**
   String get assistantHint;
 
   /// No description provided for @assistantSuggest1.
   ///
-  /// In it, this message translates to:
-  /// **'Che app posso creare per il mio negozio?'**
+  /// In en, this message translates to:
+  /// **'What app can I build for my shop?'**
   String get assistantSuggest1;
 
   /// No description provided for @assistantSuggest2.
   ///
-  /// In it, this message translates to:
-  /// **'Come pubblico un\'app sul Play Store?'**
+  /// In en, this message translates to:
+  /// **'How do I publish an app on Play Store?'**
   String get assistantSuggest2;
 
   /// No description provided for @assistantSuggest3.
   ///
-  /// In it, this message translates to:
-  /// **'Come funziona il login con Google?'**
+  /// In en, this message translates to:
+  /// **'How does Google login work?'**
   String get assistantSuggest3;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @find.
+  ///
+  /// In en, this message translates to:
+  /// **'Find'**
+  String get find;
+
+  /// No description provided for @replace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get replace;
+
+  /// No description provided for @replaceAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get replaceAll;
+
+  /// No description provided for @baseUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Base URL'**
+  String get baseUrl;
+
+  /// No description provided for @fontLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Font: {font}'**
+  String fontLabel(String font);
+
+  /// No description provided for @styleMinimal.
+  ///
+  /// In en, this message translates to:
+  /// **'Light minimal'**
+  String get styleMinimal;
+
+  /// No description provided for @styleDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark premium'**
+  String get styleDark;
+
+  /// No description provided for @stylePlayful.
+  ///
+  /// In en, this message translates to:
+  /// **'Colorful & playful'**
+  String get stylePlayful;
+
+  /// No description provided for @styleGlass.
+  ///
+  /// In en, this message translates to:
+  /// **'Glassmorphism'**
+  String get styleGlass;
+
+  /// No description provided for @styleMaterial.
+  ///
+  /// In en, this message translates to:
+  /// **'Material 3'**
+  String get styleMaterial;
+
+  /// No description provided for @styleNeumorph.
+  ///
+  /// In en, this message translates to:
+  /// **'Neumorphism'**
+  String get styleNeumorph;
+
+  /// No description provided for @styleLuxury.
+  ///
+  /// In en, this message translates to:
+  /// **'Elegant luxury'**
+  String get styleLuxury;
+
+  /// No description provided for @styleBrutal.
+  ///
+  /// In en, this message translates to:
+  /// **'Bold brutalist'**
+  String get styleBrutal;
+
+  /// No description provided for @stylePastel.
+  ///
+  /// In en, this message translates to:
+  /// **'Soft pastel'**
+  String get stylePastel;
+
+  /// No description provided for @styleTech.
+  ///
+  /// In en, this message translates to:
+  /// **'Futuristic tech'**
+  String get styleTech;
+
+  /// No description provided for @styleNature.
+  ///
+  /// In en, this message translates to:
+  /// **'Nature'**
+  String get styleNature;
+
+  /// No description provided for @styleIos.
+  ///
+  /// In en, this message translates to:
+  /// **'iOS style'**
+  String get styleIos;
+
+  /// No description provided for @styleRetro.
+  ///
+  /// In en, this message translates to:
+  /// **'80s retro'**
+  String get styleRetro;
+
+  /// No description provided for @styleMono.
+  ///
+  /// In en, this message translates to:
+  /// **'Monochrome'**
+  String get styleMono;
+
+  /// No description provided for @styleCorporate.
+  ///
+  /// In en, this message translates to:
+  /// **'Professional'**
+  String get styleCorporate;
+
+  /// No description provided for @bWriting.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing the code with {model}…'**
+  String bWriting(String model);
+
+  /// No description provided for @bApplying.
+  ///
+  /// In en, this message translates to:
+  /// **'Applying the change with {model}: {change}'**
+  String bApplying(String change, String model);
+
+  /// No description provided for @bNoModel.
+  ///
+  /// In en, this message translates to:
+  /// **'No model selected'**
+  String get bNoModel;
+
+  /// No description provided for @bNoFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI did not produce any files: try again or change model.'**
+  String get bNoFiles;
+
+  /// No description provided for @bErrorsRemain.
+  ///
+  /// In en, this message translates to:
+  /// **'Errors remain after {count} fix attempts:\n{problems}'**
+  String bErrorsRemain(int count, String problems);
+
+  /// No description provided for @bFixing.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixing errors (attempt {round} of {max})…'**
+  String bFixing(int max, int round);
+
+  /// No description provided for @bNoFixes.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI did not propose fixes for:\n{problems}'**
+  String bNoFixes(String problems);
+
+  /// No description provided for @bIncompleteFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Incomplete file ignored: {path}'**
+  String bIncompleteFile(String path);
+
+  /// No description provided for @bPathNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Path not allowed, ignored: {path}'**
+  String bPathNotAllowed(String path);
+
+  /// No description provided for @bTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Response cut by the token limit: incomplete files will be recreated during fixing.'**
+  String get bTruncated;
+
+  /// No description provided for @bRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'The model declined the request.'**
+  String get bRefused;
+
+  /// No description provided for @bPubGet.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing dependencies (flutter pub get)…'**
+  String get bPubGet;
+
+  /// No description provided for @bPubGetFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'flutter pub get failed'**
+  String get bPubGetFailed;
+
+  /// No description provided for @bAnalyze.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for errors (flutter analyze)…'**
+  String get bAnalyze;
+
+  /// No description provided for @bNoErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'No errors ✓'**
+  String get bNoErrors;
+
+  /// No description provided for @bErrorsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} errors found'**
+  String bErrorsFound(int count);
+
+  /// No description provided for @bClaudeApplying.
+  ///
+  /// In en, this message translates to:
+  /// **'Claude Code is applying the change…'**
+  String get bClaudeApplying;
+
+  /// No description provided for @bClaudeBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Claude Code is building the app on the PC…'**
+  String get bClaudeBuilding;
+
+  /// No description provided for @bClaudeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Claude Code did not finish the app: check the log.'**
+  String get bClaudeFailed;
+
+  /// No description provided for @bWebBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Building the app for the web (about 30 seconds)…'**
+  String get bWebBuilding;
+
+  /// No description provided for @bWebFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The web build failed:\n{log}'**
+  String bWebFailed(String log);
+
+  /// No description provided for @bApk.
+  ///
+  /// In en, this message translates to:
+  /// **'Building the APK (the first time can take a few minutes)…'**
+  String get bApk;
+
+  /// No description provided for @bAab.
+  ///
+  /// In en, this message translates to:
+  /// **'Building the AAB for the Play Store…'**
+  String get bAab;
+
+  /// No description provided for @bAndroidFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} build failed'**
+  String bAndroidFailed(String kind);
+
+  /// No description provided for @bAndroidReady.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} ready ✓'**
+  String bAndroidReady(String kind);
+
+  /// No description provided for @bStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get bStopped;
+
+  /// No description provided for @bAppReady.
+  ///
+  /// In en, this message translates to:
+  /// **'App ready ✓'**
+  String get bAppReady;
+
+  /// No description provided for @bAppUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'App updated ✓'**
+  String get bAppUpdated;
+
+  /// No description provided for @actWrites.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing {file}'**
+  String actWrites(String file);
+
+  /// No description provided for @actEdits.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing {file}'**
+  String actEdits(String file);
+
+  /// No description provided for @actReads.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading {file}'**
+  String actReads(String file);
+
+  /// No description provided for @actPubGet.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing dependencies'**
+  String get actPubGet;
+
+  /// No description provided for @actAnalyze.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for errors'**
+  String get actAnalyze;
 }
 
 class _AppLocalizationsDelegate
@@ -1340,7 +1670,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en', 'it'].contains(locale.languageCode);
+      <String>['ar', 'en', 'es', 'fr', 'it'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -1349,8 +1679,14 @@ class _AppLocalizationsDelegate
 AppLocalizations lookupAppLocalizations(Locale locale) {
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
+    case 'ar':
+      return AppLocalizationsAr();
     case 'en':
       return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
+    case 'fr':
+      return AppLocalizationsFr();
     case 'it':
       return AppLocalizationsIt();
   }

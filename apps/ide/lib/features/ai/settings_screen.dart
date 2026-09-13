@@ -205,7 +205,7 @@ class _CompatibleTileState extends ConsumerState<_CompatibleTile> {
             const SizedBox(height: 8),
             TextField(
               controller: _base,
-              decoration: const InputDecoration(labelText: 'Base URL', hintText: 'https://openrouter.ai/api/v1', isDense: true),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context).baseUrl, hintText: 'https://openrouter.ai/api/v1', isDense: true),
             ),
             TextField(
               controller: _key,

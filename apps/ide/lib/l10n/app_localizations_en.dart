@@ -680,4 +680,200 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assistantSuggest3 => 'How does Google login work?';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get find => 'Find';
+
+  @override
+  String get replace => 'Replace';
+
+  @override
+  String get replaceAll => 'All';
+
+  @override
+  String get baseUrl => 'Base URL';
+
+  @override
+  String fontLabel(String font) {
+    return 'Font: $font';
+  }
+
+  @override
+  String get styleMinimal => 'Light minimal';
+
+  @override
+  String get styleDark => 'Dark premium';
+
+  @override
+  String get stylePlayful => 'Colorful & playful';
+
+  @override
+  String get styleGlass => 'Glassmorphism';
+
+  @override
+  String get styleMaterial => 'Material 3';
+
+  @override
+  String get styleNeumorph => 'Neumorphism';
+
+  @override
+  String get styleLuxury => 'Elegant luxury';
+
+  @override
+  String get styleBrutal => 'Bold brutalist';
+
+  @override
+  String get stylePastel => 'Soft pastel';
+
+  @override
+  String get styleTech => 'Futuristic tech';
+
+  @override
+  String get styleNature => 'Nature';
+
+  @override
+  String get styleIos => 'iOS style';
+
+  @override
+  String get styleRetro => '80s retro';
+
+  @override
+  String get styleMono => 'Monochrome';
+
+  @override
+  String get styleCorporate => 'Professional';
+
+  @override
+  String bWriting(String model) {
+    return 'Writing the code with $model…';
+  }
+
+  @override
+  String bApplying(String change, String model) {
+    return 'Applying the change with $model: $change';
+  }
+
+  @override
+  String get bNoModel => 'No model selected';
+
+  @override
+  String get bNoFiles =>
+      'The AI did not produce any files: try again or change model.';
+
+  @override
+  String bErrorsRemain(int count, String problems) {
+    return 'Errors remain after $count fix attempts:\n$problems';
+  }
+
+  @override
+  String bFixing(int max, int round) {
+    return 'Fixing errors (attempt $round of $max)…';
+  }
+
+  @override
+  String bNoFixes(String problems) {
+    return 'The AI did not propose fixes for:\n$problems';
+  }
+
+  @override
+  String bIncompleteFile(String path) {
+    return 'Incomplete file ignored: $path';
+  }
+
+  @override
+  String bPathNotAllowed(String path) {
+    return 'Path not allowed, ignored: $path';
+  }
+
+  @override
+  String get bTruncated =>
+      'Response cut by the token limit: incomplete files will be recreated during fixing.';
+
+  @override
+  String get bRefused => 'The model declined the request.';
+
+  @override
+  String get bPubGet => 'Installing dependencies (flutter pub get)…';
+
+  @override
+  String get bPubGetFailed => 'flutter pub get failed';
+
+  @override
+  String get bAnalyze => 'Checking for errors (flutter analyze)…';
+
+  @override
+  String get bNoErrors => 'No errors ✓';
+
+  @override
+  String bErrorsFound(int count) {
+    return '$count errors found';
+  }
+
+  @override
+  String get bClaudeApplying => 'Claude Code is applying the change…';
+
+  @override
+  String get bClaudeBuilding => 'Claude Code is building the app on the PC…';
+
+  @override
+  String get bClaudeFailed =>
+      'Claude Code did not finish the app: check the log.';
+
+  @override
+  String get bWebBuilding => 'Building the app for the web (about 30 seconds)…';
+
+  @override
+  String bWebFailed(String log) {
+    return 'The web build failed:\n$log';
+  }
+
+  @override
+  String get bApk =>
+      'Building the APK (the first time can take a few minutes)…';
+
+  @override
+  String get bAab => 'Building the AAB for the Play Store…';
+
+  @override
+  String bAndroidFailed(String kind) {
+    return '$kind build failed';
+  }
+
+  @override
+  String bAndroidReady(String kind) {
+    return '$kind ready ✓';
+  }
+
+  @override
+  String get bStopped => 'Stopped';
+
+  @override
+  String get bAppReady => 'App ready ✓';
+
+  @override
+  String get bAppUpdated => 'App updated ✓';
+
+  @override
+  String actWrites(String file) {
+    return 'Writing $file';
+  }
+
+  @override
+  String actEdits(String file) {
+    return 'Editing $file';
+  }
+
+  @override
+  String actReads(String file) {
+    return 'Reading $file';
+  }
+
+  @override
+  String get actPubGet => 'Installing dependencies';
+
+  @override
+  String get actAnalyze => 'Checking for errors';
 }

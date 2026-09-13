@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ide_core/ide_core.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/locale.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../ai/ai_settings.dart';
@@ -30,9 +31,10 @@ class CreateAppArgs {
 final appBuilderProvider = ChangeNotifierProvider.family<AppBuilder, (String, String)>((ref, key) {
   final (projectId, projectName) = key;
   final socket = ref.watch(runnerSocketProvider);
-  return AppBuilder(
+  final builder = AppBuilder(
     projectId: projectId,
     projectName: projectName,
+    strings: ref.read(stringsProvider),
     request: socket.request,
     events: socket.events,
     fetchJobLog: (jobId) async => (await ref.read(runnerApiProvider.future)).jobLog(jobId),
@@ -45,6 +47,9 @@ final appBuilderProvider = ChangeNotifierProvider.family<AppBuilder, (String, St
           '- SHA-1 debug: ${info['sha1Debug']}';
     },
   );
+  // Follow language changes without recreating the builder (a build may be running).
+  ref.listen(stringsProvider, (_, s) => builder.strings = s);
+  return builder;
 });
 
 /// Availability of each engine given keys and Runner capabilities.

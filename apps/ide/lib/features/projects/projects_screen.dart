@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ide_core/ide_core.dart';
 
+import '../../core/locale.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../../widgets/connection_badge.dart';
@@ -131,6 +132,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         title: Text(l.projects),
         actions: [
           const ConnectionBadge(),
+          const LanguageButton(),
           Builder(
             builder: (context) => IconButton(
               key: const Key('toggleAssistant'),

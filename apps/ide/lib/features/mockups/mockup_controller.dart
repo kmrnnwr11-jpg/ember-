@@ -5,6 +5,7 @@ import 'package:ai_connect/ai_connect.dart';
 import 'package:flutter/foundation.dart';
 import 'package:ide_core/ide_core.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../create/app_builder.dart' show BuildEngine;
 
 /// A visual direction the AI must follow for one mockup.
@@ -17,21 +18,21 @@ class MockupStyle {
 
 /// Pool of clearly different styles; each "Nuovi mockup" takes the next five.
 const mockupStylePool = <MockupStyle>[
-  MockupStyle('minimal', 'Minimal chiaro', 'Minimal light: lots of white space, one accent color, thin dividers, simple line icons, clean sans-serif (Inter).'),
+  MockupStyle('minimal', 'Light minimal', 'Minimal light: lots of white space, one accent color, thin dividers, simple line icons, clean sans-serif (Inter).'),
   MockupStyle('dark', 'Dark premium', 'Dark premium: near-black background, rich gradients with gold or electric accent, glowing highlights, elegant typography (Manrope).'),
-  MockupStyle('playful', 'Colorato & giocoso', 'Playful colorful: bright multi-color palette, big rounded shapes, chunky buttons, friendly emoji/illustration accents (Nunito).'),
+  MockupStyle('playful', 'Colorful & playful', 'Playful colorful: bright multi-color palette, big rounded shapes, chunky buttons, friendly emoji/illustration accents (Nunito).'),
   MockupStyle('glass', 'Glassmorphism', 'Glassmorphism: vivid blurred gradient background, frosted translucent cards (backdrop-filter blur), white text, soft shadows (Poppins).'),
   MockupStyle('material', 'Material 3', 'Material 3 classic: tonal surfaces from one seed color, FAB, top app bar, navigation bar, 16px radius cards (Roboto).'),
   MockupStyle('neumorph', 'Neumorphism', 'Soft neumorphism: monochrome soft gray-blue background, extruded/inset elements with dual soft shadows, subtle accent (DM Sans).'),
-  MockupStyle('luxury', 'Lusso elegante', 'Luxury editorial: cream and deep green or burgundy, serif headings (Playfair Display), fine gold lines, generous spacing.'),
-  MockupStyle('brutal', 'Bold brutalista', 'Neo-brutalism: high-contrast flat colors, thick black borders, hard offset shadows, oversized bold type (Space Grotesk).'),
-  MockupStyle('pastel', 'Pastello morbido', 'Soft pastel: light pastel palette (peach, lilac, mint), pill buttons, rounded 24px cards, airy and calm (Quicksand).'),
-  MockupStyle('tech', 'Tech futuristico', 'Futuristic tech: deep navy, neon cyan/magenta accents, grid lines, monospace details, sharp geometric cards (Sora + JetBrains Mono).'),
-  MockupStyle('nature', 'Natura', 'Organic nature: earthy greens and sand tones, organic rounded shapes, photo-like placeholders, warm friendly type (Lora + Nunito Sans).'),
-  MockupStyle('ios', 'Stile iOS', 'iOS native look: SF-like system font stack, grouped inset lists, large titles, blur tab bar, system blue accents.'),
-  MockupStyle('retro', 'Retro anni 80', 'Retro 80s: sunset gradient purple-pink-orange, chrome headings, bold outlines, playful vintage type (Righteous).'),
-  MockupStyle('mono', 'Monocromatico', 'Monochrome black & white with a single strong red accent, strict grid, bold typography (Archivo).'),
-  MockupStyle('corporate', 'Professionale', 'Professional corporate: navy and teal, data cards, clear hierarchy, trustworthy and precise (IBM Plex Sans).'),
+  MockupStyle('luxury', 'Elegant luxury', 'Luxury editorial: cream and deep green or burgundy, serif headings (Playfair Display), fine gold lines, generous spacing.'),
+  MockupStyle('brutal', 'Bold brutalist', 'Neo-brutalism: high-contrast flat colors, thick black borders, hard offset shadows, oversized bold type (Space Grotesk).'),
+  MockupStyle('pastel', 'Soft pastel', 'Soft pastel: light pastel palette (peach, lilac, mint), pill buttons, rounded 24px cards, airy and calm (Quicksand).'),
+  MockupStyle('tech', 'Futuristic tech', 'Futuristic tech: deep navy, neon cyan/magenta accents, grid lines, monospace details, sharp geometric cards (Sora + JetBrains Mono).'),
+  MockupStyle('nature', 'Nature', 'Organic nature: earthy greens and sand tones, organic rounded shapes, photo-like placeholders, warm friendly type (Lora + Nunito Sans).'),
+  MockupStyle('ios', 'iOS style', 'iOS native look: SF-like system font stack, grouped inset lists, large titles, blur tab bar, system blue accents.'),
+  MockupStyle('retro', '80s retro', 'Retro 80s: sunset gradient purple-pink-orange, chrome headings, bold outlines, playful vintage type (Righteous).'),
+  MockupStyle('mono', 'Monochrome', 'Monochrome black & white with a single strong red accent, strict grid, bold typography (Archivo).'),
+  MockupStyle('corporate', 'Professional', 'Professional corporate: navy and teal, data cards, clear hierarchy, trustworthy and precise (IBM Plex Sans).'),
 ];
 
 const mockupSystemPrompt = '''
@@ -212,3 +213,23 @@ CompleteText claudeCodeCompleter(Future<Map<String, dynamic>> Function(String ty
       final res = await request(MsgType.agentComplete, {'system': system, 'prompt': prompt, 'quality': 'fast'});
       return (text: res['text'] as String, costUsd: (res['costUsd'] as num?)?.toDouble());
     };
+
+/// Localized display name of a style from [mockupStylePool].
+String mockupStyleLabel(AppLocalizations l, String id) => switch (id) {
+  'minimal' => l.styleMinimal,
+  'dark' => l.styleDark,
+  'playful' => l.stylePlayful,
+  'glass' => l.styleGlass,
+  'material' => l.styleMaterial,
+  'neumorph' => l.styleNeumorph,
+  'luxury' => l.styleLuxury,
+  'brutal' => l.styleBrutal,
+  'pastel' => l.stylePastel,
+  'tech' => l.styleTech,
+  'nature' => l.styleNature,
+  'ios' => l.styleIos,
+  'retro' => l.styleRetro,
+  'mono' => l.styleMono,
+  'corporate' => l.styleCorporate,
+  _ => id,
+};

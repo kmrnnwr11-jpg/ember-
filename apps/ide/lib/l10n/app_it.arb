@@ -26,26 +26,12 @@
   "statusReady": "Pronto",
   "statusError": "Errore",
   "creatingProject": "Creazione di {name}",
-  "@creatingProject": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "files": "File",
   "editor": "Editor",
   "newFile": "Nuovo file",
   "newFolder": "Nuova cartella",
   "fileName": "Nome",
   "deleteConfirm": "Eliminare {path}?",
-  "@deleteConfirm": {
-    "placeholders": {
-      "path": {
-        "type": "String"
-      }
-    }
-  },
   "save": "Salva",
   "saved": "Salvato",
   "unsavedChanges": "Modifiche non salvate",
@@ -53,26 +39,12 @@
   "noFileOpen": "Apri un file dall'albero a sinistra.",
   "conflictTitle": "File modificato altrove",
   "conflictBody": "{path} è cambiato sul Runner dopo che l'hai aperto.",
-  "@conflictBody": {
-    "placeholders": {
-      "path": {
-        "type": "String"
-      }
-    }
-  },
   "reload": "Ricarica",
   "overwrite": "Sovrascrivi",
   "connected": "Connesso",
   "connecting": "Connessione…",
   "disconnected": "Disconnesso",
   "error": "Errore: {message}",
-  "@error": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
   "binaryFile": "File binario o troppo grande: non modificabile nell'editor.",
   "terminal": "Terminale",
   "newTerminal": "Nuovo terminale",
@@ -106,13 +78,6 @@
   "testKey": "Prova",
   "testing": "Prova in corso…",
   "keyWorks": "Funziona ✓ ({model})",
-  "@keyWorks": {
-    "placeholders": {
-      "model": {
-        "type": "String"
-      }
-    }
-  },
   "getKey": "Ottieni una chiave",
   "addModelId": "Aggiungi ID modello",
   "selectModel": "Scegli modello",
@@ -120,25 +85,11 @@
   "notConfigured": "non configurato",
   "per1k": "per 1k token (in/out)",
   "applyTo": "Applica a {path}",
-  "@applyTo": {
-    "placeholders": {
-      "path": {
-        "type": "String"
-      }
-    }
-  },
   "noChanges": "Nessuna differenza rispetto al file attuale.",
   "accept": "Accetta",
   "reject": "Rifiuta",
   "apply": "Applica",
   "applied": "Modifica applicata a {path}: controlla e salva.",
-  "@applied": {
-    "placeholders": {
-      "path": {
-        "type": "String"
-      }
-    }
-  },
   "applyNoTarget": "Apri un file o chiedi all'AI di indicare il percorso del file.",
   "clearChat": "Svuota chat",
   "chatEmpty": "Chiedi qualcosa sul tuo progetto. Il file aperto viene inviato come contesto.",
@@ -155,13 +106,6 @@
   "badgeSubscription": "abbonamento",
   "badgePaid": "a pagamento",
   "needsKey": "Serve una chiave API {name}: aggiungila nelle impostazioni.",
-  "@needsKey": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "claudeCodeUnavailable": "Claude Code non è disponibile su questo Runner (serve Claude Code installato e con login sul PC del Runner).",
   "appPromptHint": "Es.: un'app di ricette con foto, lista della spesa e timer di cottura, colori caldi…",
   "chooseAi": "Con quale AI?",
@@ -175,23 +119,9 @@
   "buildLog": "Dettagli",
   "stepClaudeCode": "Claude Code scrive e verifica il codice",
   "stepWriting": "Scrittura del codice ({count} file)",
-  "@stepWriting": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "stepDependencies": "Installazione dipendenze",
   "stepChecking": "Controllo errori",
   "stepFixing": "Correzione errori (tentativo {round})",
-  "@stepFixing": {
-    "placeholders": {
-      "round": {
-        "type": "int"
-      }
-    }
-  },
   "stepBuilding": "Compilazione dell'app",
   "stepReady": "Pronta",
   "appReadyTitle": "La tua app è pronta 🎉",
@@ -212,13 +142,6 @@
   "apkInstallHint": "APK firmato. Se Android lo chiede, consenti l'installazione da questa fonte.",
   "aabHint": "AAB firmato con la chiave di caricamento di questa app: pronto per la Google Play Console. Il numero di versione sale da solo a ogni build.",
   "androidFailed": "Generazione non riuscita:",
-  "@androidBuilding": {
-    "placeholders": {
-      "kind": {
-        "type": "String"
-      }
-    }
-  },
   "backupSigningKey": "Salva chiave di firma",
   "backupSigningKeyHint": "Conserva il file della chiave e la password in un posto sicuro (es. Google Drive): servono per pubblicare gli aggiornamenti di questa app sul Play Store. Il link funziona una sola volta per 10 minuti.",
   "downloadKeystore": "Scarica file chiave",
@@ -226,13 +149,6 @@
   "runFullscreen": "Avvia a schermo intero",
   "cliNotInstalled": "non installato sul Runner ({name})",
   "terminalCliHint": "Claude Code, Codex e Gemini usano il login fatto sul PC del Runner. La prima volta segui le istruzioni nel terminale per accedere.",
-  "@cliNotInstalled": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "generatingMockups": "Creo 5 stili grafici…",
   "designingStyle": "Disegno lo stile «{style}»…",
   "chooseMockup": "Scegli questo",
@@ -242,20 +158,6 @@
   "previousMockups": "Mockup precedenti",
   "mockupSet": "Serie {n}",
   "skipMockups": "Salta i mockup e crea l'app",
-  "@designingStyle": {
-    "placeholders": {
-      "style": {
-        "type": "String"
-      }
-    }
-  },
-  "@mockupSet": {
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
-  },
   "playAskUpload": "Vuoi caricare l'app sul Google Play Store?",
   "playYesUpload": "Sì, carica sul Play Store",
   "playNotNow": "Non ora",
@@ -295,26 +197,6 @@
   "playDataSafety": "Risposte per «Sicurezza dei dati»",
   "playContentRating": "Risposte per «Classificazione dei contenuti»",
   "playOtherDeclarations": "Pubblico, annunci e accesso all'app",
-  "@playUploaded": {
-    "placeholders": {
-      "version": {
-        "type": "String"
-      },
-      "track": {
-        "type": "String"
-      },
-      "draft": {
-        "type": "String"
-      }
-    }
-  },
-  "@playManualChecklist": {
-    "placeholders": {
-      "privacyUrl": {
-        "type": "String"
-      }
-    }
-  },
   "assistantTitle": "Assistente AI",
   "assistantFree": "Gratis",
   "assistantEmpty": "Ciao! Chiedimi qualsiasi cosa: idee per la tua app, come pubblicarla sul Play Store, come configurare login e database…",
@@ -322,5 +204,59 @@
   "assistantHint": "Scrivi una domanda…",
   "assistantSuggest1": "Che app posso creare per il mio negozio?",
   "assistantSuggest2": "Come pubblico un'app sul Play Store?",
-  "assistantSuggest3": "Come funziona il login con Google?"
+  "assistantSuggest3": "Come funziona il login con Google?",
+  "language": "Lingua",
+  "find": "Cerca",
+  "replace": "Sostituisci",
+  "replaceAll": "Tutti",
+  "baseUrl": "URL base",
+  "fontLabel": "Font: {font}",
+  "styleMinimal": "Minimal chiaro",
+  "styleDark": "Dark premium",
+  "stylePlayful": "Colorato & giocoso",
+  "styleGlass": "Glassmorphism",
+  "styleMaterial": "Material 3",
+  "styleNeumorph": "Neumorphism",
+  "styleLuxury": "Lusso elegante",
+  "styleBrutal": "Bold brutalista",
+  "stylePastel": "Pastello morbido",
+  "styleTech": "Tech futuristico",
+  "styleNature": "Natura",
+  "styleIos": "Stile iOS",
+  "styleRetro": "Retro anni 80",
+  "styleMono": "Monocromatico",
+  "styleCorporate": "Professionale",
+  "bWriting": "Scrivo il codice con {model}…",
+  "bApplying": "Applico la modifica con {model}: {change}",
+  "bNoModel": "Nessun modello selezionato",
+  "bNoFiles": "L'AI non ha prodotto file: riprova o cambia modello.",
+  "bErrorsRemain": "Restano errori dopo {count} tentativi di correzione:\n{problems}",
+  "bFixing": "Correggo gli errori (tentativo {round} di {max})…",
+  "bNoFixes": "L'AI non ha proposto correzioni per:\n{problems}",
+  "bIncompleteFile": "File incompleto ignorato: {path}",
+  "bPathNotAllowed": "Percorso non consentito ignorato: {path}",
+  "bTruncated": "Risposta troncata dal limite di token: i file incompleti verranno ricreati nella correzione.",
+  "bRefused": "Il modello ha rifiutato la richiesta.",
+  "bPubGet": "Installo le dipendenze (flutter pub get)…",
+  "bPubGetFailed": "flutter pub get non riuscito",
+  "bAnalyze": "Controllo errori (flutter analyze)…",
+  "bNoErrors": "Nessun errore ✓",
+  "bErrorsFound": "{count} errori trovati",
+  "bClaudeApplying": "Claude Code applica la modifica…",
+  "bClaudeBuilding": "Claude Code costruisce l'app sul PC…",
+  "bClaudeFailed": "Claude Code non ha completato l'app: controlla il log.",
+  "bWebBuilding": "Compilo l'app per il web (circa 30 secondi)…",
+  "bWebFailed": "La compilazione web non è riuscita:\n{log}",
+  "bApk": "Genero l'APK (la prima volta può richiedere alcuni minuti)…",
+  "bAab": "Genero l'AAB per il Play Store…",
+  "bAndroidFailed": "Generazione {kind} non riuscita",
+  "bAndroidReady": "{kind} pronto ✓",
+  "bStopped": "Interrotto",
+  "bAppReady": "App pronta ✓",
+  "bAppUpdated": "App aggiornata ✓",
+  "actWrites": "Scrive {file}",
+  "actEdits": "Modifica {file}",
+  "actReads": "Legge {file}",
+  "actPubGet": "Installa le dipendenze",
+  "actAnalyze": "Controlla gli errori"
 }

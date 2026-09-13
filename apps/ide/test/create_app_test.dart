@@ -131,7 +131,7 @@ void main() {
     );
     await b.build(prompt: 'x', engine: BuildEngine.gemini, model: gemini);
     expect(b.phase, BuildPhase.failed);
-    expect(b.error, contains('2 tentativi'));
+    expect(b.error, contains('after 2 fix attempts'));
   });
 
   test('no files from the AI fails fast; cancel during a job stops the build', () async {
@@ -146,7 +146,7 @@ void main() {
     );
     await empty.build(prompt: 'x', engine: BuildEngine.gemini, model: gemini);
     expect(empty.phase, BuildPhase.failed);
-    expect(empty.error, contains('non ha prodotto file'));
+    expect(empty.error, contains('did not produce any files'));
 
     // A runner whose jobs never finish: cancel must release the pending wait.
     final hanging = AppBuilder(

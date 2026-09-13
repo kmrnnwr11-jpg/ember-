@@ -38,6 +38,7 @@ You are an expert Flutter engineer building a real app for a non-technical user 
 The project was created with `flutter create`; you replace/extend its content. Follow-up messages are change requests on the same app: keep what works and extend it.
 
 Output format (strict):
+- Start your answer with one line `PLAN_FILES: <n>`: how many files you will output.
 - Output every created or changed file as a fenced code block whose info string is the language followed by the project-relative path, e.g.
 ```dart lib/main.dart
 ...complete file...
@@ -119,6 +120,7 @@ class AppBuilder extends ChangeNotifier {
     AppLocalizations? strings,
     this.maxFixRounds = 3,
     this.jobTimeout = const Duration(minutes: 15),
+    this.pollInterval = const Duration(seconds: 10),
   }) : _request = request,
        _events = events,
        _fetchJobLog = fetchJobLog,
@@ -141,6 +143,9 @@ class AppBuilder extends ChangeNotifier {
   final int maxFixRounds;
   final Duration jobTimeout;
 
+  /// How often running work is re-checked on the Runner, in case push events were missed.
+  final Duration pollInterval;
+
   BuildPhase phase = BuildPhase.idle;
   BuildEngine? engine;
   AiModel? model;
@@ -153,6 +158,20 @@ class AppBuilder extends ChangeNotifier {
   String? error;
   PreviewInfo? preview;
   String? summary;
+
+  /// Files the AI announced it will write (`PLAN_FILES: n`), when known.
+  int? expectedFiles;
+
+  /// When the current build started (for the estimated time).
+  DateTime? startedAt;
+
+  static final _planRe = RegExp(r'PLAN_FILES:\s*(\d{1,3})');
+
+  void _readPlan(String text) {
+    if (expectedFiles != null) return;
+    final m = _planRe.firstMatch(text);
+    if (m != null) expectedFiles = int.parse(m.group(1)!);
+  }
 
   /// Latest action reported by Claude Code (e.g. "Write lib/main.dart").
   String? currentAction;
@@ -235,6 +254,8 @@ class AppBuilder extends ChangeNotifier {
     _cancelSignal = Completer<void>();
     error = null;
     fixRound = 0;
+    expectedFiles = null;
+    startedAt = DateTime.now();
     liveText.clear();
     if (change == null) {
       log.clear();
@@ -248,6 +269,8 @@ class AppBuilder extends ChangeNotifier {
       conversation.add((role: 'user', text: change));
     }
     _replyText = null;
+    // Saved right away: if the app is closed mid-build, reopening the project picks the work up again.
+    _saveSession();
     try {
       if (engine.isCli) {
         await _runClaudeCode('${change ?? '$prompt${design ?? ''}'}${await _androidBlock()}', resume: change != null);
@@ -315,6 +338,15 @@ class AppBuilder extends ChangeNotifier {
     _cancelSignal = Completer<void>();
     error = null;
     try {
+      if (engine.isCli) {
+        final res = await _request(MsgType.agentGet, {'projectId': projectId, 'withEvents': true});
+        final run = res['run'] as Map<String, dynamic>?;
+        if (run != null && run['status'] == 'running') {
+          startedAt = DateTime.tryParse(run['startedAt'] as String? ?? '') ?? DateTime.now();
+          await _runClaudeCode('', resume: true, attachTo: run);
+          if (_cancelled) return;
+        }
+      }
       await _buildPreview();
       if (_cancelled) return;
       _setPhase(BuildPhase.ready);
@@ -352,7 +384,7 @@ class AppBuilder extends ChangeNotifier {
     }
     var files = await _generate(provider, m, userMessage, maxTokens);
     // The prose around the files is the reply shown in the chat.
-    final reply = CodeBlocks.parse(liveText.toString()).whereType<TextSegment>().map((t) => t.markdown.trim()).where((t) => t.isNotEmpty).join('\n\n');
+    final reply = CodeBlocks.parse(liveText.toString()).whereType<TextSegment>().map((t) => t.markdown.replaceAll(_planRe, '').trim()).where((t) => t.isNotEmpty).join('\n\n');
     if (reply.isNotEmpty) _replyText = reply;
     if (files.isEmpty) throw AiException(strings.bNoFiles);
     await _writeFiles(files, removeDefaultTest: change == null);
@@ -387,6 +419,7 @@ class AppBuilder extends ChangeNotifier {
             switch (e) {
               case AiTextDelta(:final text):
                 liveText.write(text);
+                if (expectedFiles == null && liveText.length < 400) _readPlan(liveText.toString());
                 notifyListeners();
               case AiUsage(:final inputTokens, :final outputTokens):
                 if (inputTokens > 0) input = inputTokens;
@@ -498,7 +531,17 @@ class AppBuilder extends ChangeNotifier {
       _currentJobId = wanted = started.jobId;
       final early = started.isDone ? started : finished[started.jobId];
       if (early != null) return early;
-      return await _orCancel(c.future.timeout(jobTimeout));
+      final poll = Timer.periodic(pollInterval, (_) async {
+        try {
+          final s = JobStatus.fromJson(await _request(MsgType.jobGet, {'jobId': started.jobId}));
+          if (s.isDone && !c.isCompleted) c.complete(s);
+        } catch (_) {}
+      });
+      try {
+        return await _orCancel(c.future.timeout(jobTimeout));
+      } finally {
+        poll.cancel();
+      }
     } finally {
       _currentJobId = null;
       await sub.cancel();
@@ -533,7 +576,7 @@ class AppBuilder extends ChangeNotifier {
 
   // --------------------------------------------------------------- Claude Code
 
-  Future<void> _runClaudeCode(String text, {required bool resume}) async {
+  Future<void> _runClaudeCode(String text, {required bool resume, Map<String, dynamic>? attachTo}) async {
     _setPhase(BuildPhase.generating);
     _log(resume ? strings.bClaudeApplying : strings.bClaudeBuilding);
     final done = Completer<String>();
@@ -553,7 +596,8 @@ class AppBuilder extends ChangeNotifier {
         final ev = f.payload['event'] as Map<String, dynamic>;
         switch (ev['kind']) {
           case 'text':
-            _log((ev['text'] as String).trim(), kind: 'ai');
+            _readPlan(ev['text'] as String);
+            _log((ev['text'] as String).replaceAll(_planRe, '').trim(), kind: 'ai');
           case 'tool':
             final name = ev['name'] as String;
             final summary = ev['summary'] as String? ?? '';
@@ -585,19 +629,43 @@ class AppBuilder extends ChangeNotifier {
       }
     };
     try {
-      final run = await _request(MsgType.agentStart, {
-        'projectId': projectId,
-        'engine': 'claude-code',
-        'prompt': text,
-        'resume': resume,
-        'quality': quality,
-      });
+      final run = attachTo ??
+          await _request(MsgType.agentStart, {
+            'projectId': projectId,
+            'engine': 'claude-code',
+            'prompt': text,
+            'resume': resume,
+            'quality': quality,
+          });
       _agentRunId = run['id'] as String;
+      if (run['plannedFiles'] is int) expectedFiles = run['plannedFiles'] as int;
+      // Replay what happened while this device was away.
+      for (final ev in (run['events'] as List? ?? const [])) {
+        handle(WsFrame(type: MsgType.agentEvent, payload: {'runId': _agentRunId, 'projectId': projectId, 'event': ev}));
+      }
+      if (run['status'] is String && run['status'] != 'running') done.complete(run['status'] as String);
       for (final f in early) {
         handle(f);
       }
       early.clear();
-      final status = await _orCancel(done.future.timeout(const Duration(hours: 1)));
+      final poll = Timer.periodic(pollInterval, (_) async {
+        try {
+          final res = await _request(MsgType.agentGet, {'runId': _agentRunId});
+          final r = res['run'] as Map<String, dynamic>?;
+          if (r == null) return;
+          if (r['plannedFiles'] is int && expectedFiles == null) {
+            expectedFiles = r['plannedFiles'] as int;
+            notifyListeners();
+          }
+          if (r['status'] != 'running' && !done.isCompleted) done.complete(r['status'] as String);
+        } catch (_) {}
+      });
+      final String status;
+      try {
+        status = await _orCancel(done.future.timeout(const Duration(hours: 1)));
+      } finally {
+        poll.cancel();
+      }
       if (status != 'succeeded') throw AiException(strings.bClaudeFailed);
     } finally {
       await sub.cancel();
@@ -618,7 +686,25 @@ class AppBuilder extends ChangeNotifier {
     try {
       final res = await _request(MsgType.previewStart, {'projectId': projectId, 'autoRebuild': true});
       _currentJobId = (res['job'] as Map<String, dynamic>)['jobId'] as String;
-      final f = await _orCancel(c.future.timeout(jobTimeout));
+      final jobId = _currentJobId!;
+      final poll = Timer.periodic(pollInterval, (_) async {
+        try {
+          final s = JobStatus.fromJson(await _request(MsgType.jobGet, {'jobId': jobId}));
+          if (!s.isDone || c.isCompleted) return;
+          if (s.status == 'succeeded') {
+            final info = await _request(MsgType.previewStatus, {'projectId': projectId});
+            if (!c.isCompleted) c.complete(WsFrame(type: MsgType.previewReady, payload: info));
+          } else if (!c.isCompleted) {
+            c.complete(WsFrame(type: MsgType.previewFailed, payload: {'projectId': projectId, 'jobId': jobId}));
+          }
+        } catch (_) {}
+      });
+      final WsFrame f;
+      try {
+        f = await _orCancel(c.future.timeout(jobTimeout));
+      } finally {
+        poll.cancel();
+      }
       if (f.type == MsgType.previewFailed) {
         final tail = _tail(await _fetchJobLog(f.payload['jobId'] as String), 40);
         throw AiException(strings.bWebFailed(tail));

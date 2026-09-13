@@ -24,6 +24,8 @@ abstract final class MsgType {
   static const agentStart = 'agent.start';
   static const agentCancel = 'agent.cancel';
   static const agentComplete = 'agent.complete';
+  static const agentGet = 'agent.get';
+  static const jobGet = 'job.get';
   static const ping = 'ping';
 
   // Responses

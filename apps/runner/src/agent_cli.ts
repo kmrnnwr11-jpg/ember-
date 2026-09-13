@@ -19,10 +19,18 @@ export interface AgentRun {
   engine: 'claude-code';
   status: 'running' | 'succeeded' | 'failed' | 'cancelled';
   startedAt: string;
+  /** Files the agent announced it will create or change (from its `PLAN_FILES: n` line). */
+  plannedFiles?: number;
+  /** Latest events, so a client that reconnects (screen off, app in background) can catch up. */
+  events?: AgentEvent[];
 }
+
+const PLAN_RE = /PLAN_FILES:\s*(\d{1,3})/;
 
 /** System prompt appended to Claude Code for "Crea App" builds. */
 export const CLAUDE_CODE_BUILD_PROMPT = `You are building a Flutter app inside the current directory (a \`flutter create\` project), working with a non-technical user through a phone chat. Later messages in this session are follow-up requests on the same app: keep everything that already works and extend it.
+
+FIRST LINE: before touching any file, reply with one line \`PLAN_FILES: <n>\` where n is how many files you expect to create or change.
 
 WHAT TO BUILD
 - Build a complete, real product for the kind of app requested, not a single screen or a demo. For a product-type request include the core feature set users expect (e.g. a chat/dating app like Badoo: sign-up and login with email and Google, profile with photo, user list/discovery, conversation list, 1-to-1 private chats and private rooms, real-time messages, logout). For a simple utility (e.g. a calculator) keep it simple.
@@ -160,6 +168,11 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
     return [...this.runs.values()].find((r) => r.projectId === projectId && r.status === 'running');
   }
 
+  /** The running or most recent run of a project. */
+  latestFor(projectId: string): AgentRun | undefined {
+    return [...this.runs.values()].filter((r) => r.projectId === projectId).at(-1);
+  }
+
   get(runId: string): AgentRun | undefined {
     return this.runs.get(runId);
   }
@@ -212,6 +225,11 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
         if (!line) continue;
         for (const ev of parseClaudeLine(line)) {
           if (ev.kind === 'result') sawResult = true;
+          if (ev.kind === 'text' && run.plannedFiles === undefined) {
+            const m = PLAN_RE.exec(ev.text);
+            if (m) run.plannedFiles = Number(m[1]);
+          }
+          run.events = [...(run.events ?? []), ev].slice(-300);
           this.emit('event', run, ev);
         }
       }

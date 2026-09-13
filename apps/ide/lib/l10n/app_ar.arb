@@ -264,5 +264,10 @@
   "researchingApp": "جارٍ دراسة «{name}» على Google Play…",
   "pickReferenceApp": "أي تطبيق تقصد؟",
   "pickReferenceAppHint": "سيدرس Ember ميزاته على Google Play وينشئ تطبيقًا يقوم بالشيء نفسه، باسمك وتصميمك الخاص.",
-  "referenceNone": "لا شيء منها، تابع بدون"
+  "referenceNone": "لا شيء منها، تابع بدون",
+  "forgeFilesOf": "تم استدعاء {count} من {total} ملفات",
+  "forgeEta": "متبقٍ حوالي {minutes} دقيقة",
+  "forgeEstimated": "الوقت المقدَّر حوالي {minutes} دقيقة",
+  "forgeElapsed": "مضى {time}",
+  "forgeBackground": "يمكنك إطفاء الشاشة أو استخدام تطبيقات أخرى: يواصل Ember العمل وينهي التطبيق."
 }

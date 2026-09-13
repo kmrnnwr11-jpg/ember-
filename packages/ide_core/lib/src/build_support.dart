@@ -68,7 +68,7 @@ abstract final class BuildSupport {
       'the', 'an', 'of', 'for', 'with', 'and', 'to', 'make', 'create', 'build', 'me', 'my', 'please',
     };
     const accents = {'à': 'a', 'á': 'a', 'è': 'e', 'é': 'e', 'ì': 'i', 'í': 'i', 'ò': 'o', 'ó': 'o', 'ù': 'u', 'ú': 'u'};
-    var s = prompt.toLowerCase();
+    var s = prompt.replaceAll(RegExp(r'https?://\S+'), ' ').toLowerCase();
     accents.forEach((k, v) => s = s.replaceAll(k, v));
     final words = s
         .replaceAll(RegExp(r"[^a-z0-9\s]"), ' ')

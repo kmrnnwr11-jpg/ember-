@@ -898,4 +898,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get referenceNone => 'None of these, continue without';
+
+  @override
+  String forgeFilesOf(int count, int total) {
+    return '$count of $total files summoned';
+  }
+
+  @override
+  String forgeEta(int minutes) {
+    return 'about $minutes min left';
+  }
+
+  @override
+  String forgeEstimated(int minutes) {
+    return 'estimated time about $minutes min';
+  }
+
+  @override
+  String forgeElapsed(String time) {
+    return '$time elapsed';
+  }
+
+  @override
+  String get forgeBackground =>
+      'You can lock the screen or use other apps: Ember keeps working and finishes the app.';
 }

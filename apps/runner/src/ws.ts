@@ -84,7 +84,7 @@ export class Session {
     }
   };
   private readonly onAgentStatus = (run: AgentRun) => {
-    if (run.ownerId === this.user.id) this.send({ type: 'agent.status', payload: { ...run } });
+    if (run.ownerId === this.user.id) this.send({ type: 'agent.status', payload: { ...run, events: undefined } });
   };
   private readonly ptys = new PtySessions(
     (ptyId, data) => this.send({ type: 'pty.output', payload: { ptyId, data } }),
@@ -294,6 +294,17 @@ export class Session {
         const system = str(p.system, 'system');
         if (prompt.length > 60000 || system.length > 20000) throw Object.assign(new Error('prompt too long'), { code: 'bad_request' });
         return await this.claudeCode.complete({ prompt, system, quality: p.quality === 'best' ? 'best' : 'fast' });
+      }
+      // Catch-up after a disconnect: status, planned files and recent events of a run.
+      case 'agent.get': {
+        const run = typeof p.runId === 'string' ? this.claudeCode.get(p.runId) : this.claudeCode.latestFor(str(p.projectId, 'projectId'));
+        if (!run || run.ownerId !== uid) return { run: null };
+        return { run: { ...run, events: p.withEvents === true ? run.events ?? [] : undefined } };
+      }
+      case 'job.get': {
+        const job = this.services.jobs.get(str(p.jobId, 'jobId'));
+        if (!job || job.ownerId !== uid) throw Object.assign(new Error('job not found'), { code: 'not_found' });
+        return jobPublic(job);
       }
       case 'agent.cancel': {
         const run = this.claudeCode.get(str(p.runId, 'runId'));

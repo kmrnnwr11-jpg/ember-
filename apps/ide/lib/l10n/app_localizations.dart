@@ -1693,6 +1693,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'None of these, continue without'**
   String get referenceNone;
+
+  /// No description provided for @forgeFilesOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {total} files summoned'**
+  String forgeFilesOf(int count, int total);
+
+  /// No description provided for @forgeEta.
+  ///
+  /// In en, this message translates to:
+  /// **'about {minutes} min left'**
+  String forgeEta(int minutes);
+
+  /// No description provided for @forgeEstimated.
+  ///
+  /// In en, this message translates to:
+  /// **'estimated time about {minutes} min'**
+  String forgeEstimated(int minutes);
+
+  /// No description provided for @forgeElapsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{time} elapsed'**
+  String forgeElapsed(String time);
+
+  /// No description provided for @forgeBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'You can lock the screen or use other apps: Ember keeps working and finishes the app.'**
+  String get forgeBackground;
 }
 
 class _AppLocalizationsDelegate

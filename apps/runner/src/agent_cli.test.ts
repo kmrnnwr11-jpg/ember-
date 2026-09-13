@@ -113,3 +113,10 @@ describe('typeWhenPromptReady', () => {
     expect(writes.length).toBe(2);
   });
 });
+
+describe('agent run catch-up', () => {
+  it('build prompt asks for the planned file count first', async () => {
+    const { CLAUDE_CODE_BUILD_PROMPT } = await import('./agent_cli.js');
+    expect(CLAUDE_CODE_BUILD_PROMPT).toContain('PLAN_FILES: <n>');
+  });
+});

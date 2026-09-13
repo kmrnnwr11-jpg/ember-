@@ -86,6 +86,26 @@ class _ForgeViewState extends State<ForgeView> with SingleTickerProviderStateMix
     return _fakeCode[_rng.nextInt(_fakeCode.length)];
   }
 
+  /// "3 of 12 files" pace when the plan is known, otherwise a typical duration for the engine.
+  String _timeLine(AppLocalizations l, AppBuilder b) {
+    final started = b.startedAt;
+    if (started == null) return '';
+    final elapsed = DateTime.now().difference(started);
+    final clock = '${elapsed.inMinutes}:${(elapsed.inSeconds % 60).toString().padLeft(2, '0')}';
+    final planned = b.expectedFiles;
+    final written = b.writtenFiles.length;
+    int minutesLeft;
+    if (planned != null && planned > 0 && written > 0) {
+      final perFile = elapsed.inSeconds / written;
+      // Remaining files plus checks and the web build (~1.5 min).
+      minutesLeft = ((perFile * math.max(planned - written, 0) + 90) / 60).ceil();
+      return '${l.forgeEta(math.max(minutesLeft, 1))} · ${l.forgeElapsed(clock)}';
+    }
+    final typical = b.engine == BuildEngine.claudeCode ? (b.quality == 'best' ? 15 : 8) : 4;
+    minutesLeft = math.max(typical - elapsed.inMinutes, 1);
+    return '${l.forgeEstimated(minutesLeft)} · ${l.forgeElapsed(clock)}';
+  }
+
   @override
   void dispose() {
     _ticker.dispose();
@@ -130,6 +150,11 @@ class _ForgeViewState extends State<ForgeView> with SingleTickerProviderStateMix
                     ),
                     const SizedBox(height: 6),
                     Text(
+                      l.forgeBackground,
+                      style: const TextStyle(color: Color(0xFFD9A0A8), fontSize: 12),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
                       '> ${widget.status}',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -169,9 +194,21 @@ class _ForgeViewState extends State<ForgeView> with SingleTickerProviderStateMix
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        Text(
-                          l.forgeFiles(b.writtenFiles.length),
-                          style: const TextStyle(fontFamily: 'monospace', color: Color(0xFFFF1A2E), fontSize: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              b.expectedFiles != null && b.expectedFiles! > 0
+                                  ? l.forgeFilesOf(b.writtenFiles.length, math.max(b.expectedFiles!, b.writtenFiles.length))
+                                  : l.forgeFiles(b.writtenFiles.length),
+                              style: const TextStyle(fontFamily: 'monospace', color: Color(0xFFFF1A2E), fontSize: 12),
+                            ),
+                            Text(
+                              _timeLine(l, b),
+                              style: const TextStyle(fontFamily: 'monospace', color: Color(0xFFD9A0A8), fontSize: 11),
+                            ),
+                          ],
                         ),
                         const SizedBox(width: 12),
                         Expanded(

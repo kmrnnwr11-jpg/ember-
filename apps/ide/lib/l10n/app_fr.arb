@@ -264,5 +264,10 @@
   "researchingApp": "Analyse de « {name} » sur Google Play…",
   "pickReferenceApp": "De quelle app parlez-vous ?",
   "pickReferenceAppHint": "Ember étudiera ses fonctions sur Google Play et créera une app qui fait la même chose, avec votre propre nom et design.",
-  "referenceNone": "Aucune, continuer sans"
+  "referenceNone": "Aucune, continuer sans",
+  "forgeFilesOf": "{count} fichiers invoqués sur {total}",
+  "forgeEta": "environ {minutes} min restantes",
+  "forgeEstimated": "temps estimé environ {minutes} min",
+  "forgeElapsed": "{time} écoulées",
+  "forgeBackground": "Vous pouvez éteindre l'écran ou utiliser d'autres apps : Ember continue et termine l'app."
 }

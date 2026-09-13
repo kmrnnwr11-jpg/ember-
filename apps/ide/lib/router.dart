@@ -6,6 +6,7 @@ import 'core/session.dart';
 import 'features/ai/settings_screen.dart';
 import 'features/auth/login_screen.dart';
 import 'features/create/create_app_screen.dart';
+import 'features/preview/fullscreen_app_screen.dart';
 import 'features/editor/workspace_screen.dart';
 import 'features/projects/projects_screen.dart';
 
@@ -33,6 +34,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
       GoRoute(path: '/settings', builder: (_, _) => const AiSettingsScreen()),
+      GoRoute(path: '/run', builder: (_, state) => FullscreenAppScreen(url: state.uri.queryParameters['url'] ?? '')),
       GoRoute(
         path: '/projects',
         builder: (_, _) => const ProjectsScreen(),

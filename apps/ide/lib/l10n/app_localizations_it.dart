@@ -485,4 +485,11 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get downloadKeystore => 'Scarica file chiave';
+
+  @override
+  String get fullscreenExitHint =>
+      'Scorri o premi indietro per tornare a FlutterCursor';
+
+  @override
+  String get runFullscreen => 'Avvia a schermo intero';
 }

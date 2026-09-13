@@ -967,6 +967,18 @@ abstract class AppLocalizations {
   /// In it, this message translates to:
   /// **'Scarica file chiave'**
   String get downloadKeystore;
+
+  /// No description provided for @fullscreenExitHint.
+  ///
+  /// In it, this message translates to:
+  /// **'Scorri o premi indietro per tornare a FlutterCursor'**
+  String get fullscreenExitHint;
+
+  /// No description provided for @runFullscreen.
+  ///
+  /// In it, this message translates to:
+  /// **'Avvia a schermo intero'**
+  String get runFullscreen;
 }
 
 class _AppLocalizationsDelegate

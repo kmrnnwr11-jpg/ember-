@@ -144,5 +144,7 @@
   "androidFailed": "Build failed:",
   "backupSigningKey": "Save signing key",
   "backupSigningKeyHint": "Keep the key file and password somewhere safe (e.g. Google Drive): you need them to publish updates of this app on Google Play. The link works once, for 10 minutes.",
-  "downloadKeystore": "Download key file"
+  "downloadKeystore": "Download key file",
+  "fullscreenExitHint": "Swipe or press back to return to FlutterCursor",
+  "runFullscreen": "Run full screen"
 }

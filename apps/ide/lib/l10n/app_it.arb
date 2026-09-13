@@ -221,5 +221,7 @@
   },
   "backupSigningKey": "Salva chiave di firma",
   "backupSigningKeyHint": "Conserva il file della chiave e la password in un posto sicuro (es. Google Drive): servono per pubblicare gli aggiornamenti di questa app sul Play Store. Il link funziona una sola volta per 10 minuti.",
-  "downloadKeystore": "Scarica file chiave"
+  "downloadKeystore": "Scarica file chiave",
+  "fullscreenExitHint": "Scorri o premi indietro per tornare a FlutterCursor",
+  "runFullscreen": "Avvia a schermo intero"
 }

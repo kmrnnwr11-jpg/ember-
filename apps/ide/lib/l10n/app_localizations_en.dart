@@ -480,4 +480,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get downloadKeystore => 'Download key file';
+
+  @override
+  String get fullscreenExitHint =>
+      'Swipe or press back to return to FlutterCursor';
+
+  @override
+  String get runFullscreen => 'Run full screen';
 }

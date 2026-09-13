@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -123,6 +124,12 @@ class _PreviewPanelState extends State<PreviewPanel> {
                         for (final d in DevicePreset.values)
                           PopupMenuItem(value: d, child: ListTile(leading: Icon(d.icon), title: Text(d.label))),
                       ],
+                    ),
+                    IconButton(
+                      key: const Key('runFullscreen'),
+                      tooltip: l.runFullscreen,
+                      icon: const Icon(Icons.fullscreen),
+                      onPressed: url == null ? null : () => context.push(Uri(path: '/run', queryParameters: {'url': url}).toString()),
                     ),
                     IconButton(
                       tooltip: l.openInBrowser,

@@ -428,7 +428,9 @@ class _ReadyCard extends StatelessWidget {
                   children: [
                     FilledButton.icon(
                       key: const Key('openPreview'),
-                      onPressed: () => context.go('/projects/$projectId?panel=preview'),
+                      onPressed: () => url == null
+                          ? context.go('/projects/$projectId?panel=preview')
+                          : context.push(Uri(path: '/run', queryParameters: {'url': url}).toString()),
                       icon: const Icon(Icons.play_arrow),
                       label: Text(l.openApp),
                     ),

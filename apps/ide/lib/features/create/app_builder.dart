@@ -706,7 +706,7 @@ class AppBuilder extends ChangeNotifier {
         poll.cancel();
       }
       if (f.type == MsgType.previewFailed) {
-        final tail = _tail(await _fetchJobLog(f.payload['jobId'] as String), 40);
+        final tail = _buildErrors(await _fetchJobLog(f.payload['jobId'] as String), 12);
         throw AiException(strings.bWebFailed(tail));
       }
       preview = PreviewInfo.fromJson(f.payload);
@@ -782,6 +782,17 @@ class AppBuilder extends ChangeNotifier {
     if (run != null) unawaited(_request(MsgType.agentCancel, {'runId': run}).catchError((_) => <String, dynamic>{}));
     _log(strings.bStopped, kind: 'error');
     _setPhase(BuildPhase.cancelled);
+  }
+
+  /// The lines that explain a failed build, without Dart stack frames.
+  static String _buildErrors(String log, int lines) {
+    final useful = log
+        .split('\n')
+        .where((l) => !RegExp(r'^\s*(#\d+\s|<asynchronous suspension>)').hasMatch(l) && l.trim().isNotEmpty)
+        .toList();
+    final errors = useful.where((l) => RegExp(r'error', caseSensitive: false).hasMatch(l)).toList();
+    final picked = errors.isNotEmpty ? errors : useful;
+    return (picked.length <= lines ? picked : picked.sublist(picked.length - lines)).join('\n');
   }
 
   static String _tail(String s, int lines) {

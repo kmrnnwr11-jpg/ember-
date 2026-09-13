@@ -1,0 +1,37 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
+/**
+ * Packages whose newest release needs a newer Dart than the Runner's Flutter SDK
+ * although their pubspec says otherwise. Pinned through dependency_overrides.
+ */
+export const SDK_PINS: Array<{ when: RegExp; pkg: string; version: string; reason: string }> = [
+  {
+    when: /^\s+firebase_core:/m,
+    pkg: 'firebase_core_web',
+    version: '3.10.0',
+    reason: 'firebase_core_web 3.11 uses Object.isA (newer Dart): web build fails on Flutter 3.38',
+  },
+];
+
+/** Adds the needed overrides to a pubspec text; returns it unchanged when nothing applies. */
+export function applySdkPins(pubspec: string): string {
+  let out = pubspec;
+  for (const pin of SDK_PINS) {
+    if (!pin.when.test(out) || new RegExp(`^[ \\t]+${pin.pkg}:`, 'm').test(out.split(/^dependency_overrides:/m)[1] ?? '')) continue;
+    const line = `  # ${pin.reason}\n  ${pin.pkg}: ${pin.version}\n`;
+    out = /^dependency_overrides:[ \t]*$/m.test(out)
+      ? out.replace(/^dependency_overrides:[ \t]*\n/m, (h) => h + line)
+      : `${out.replace(/\s*$/, '')}\n\ndependency_overrides:\n${line}`;
+  }
+  return out;
+}
+
+/** Applies [applySdkPins] to a project's pubspec.yaml on disk. */
+export async function pinProjectSdk(projectRoot: string): Promise<void> {
+  const file = path.join(projectRoot, 'pubspec.yaml');
+  const text = await readFile(file, 'utf8').catch(() => null);
+  if (text === null) return;
+  const pinned = applySdkPins(text);
+  if (pinned !== text) await writeFile(file, pinned);
+}

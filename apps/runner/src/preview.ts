@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import { pinProjectSdk } from './sdk_pins.js';
 import { stat } from 'node:fs/promises';
 import path from 'node:path';
 import type { Config } from './config.js';
@@ -78,6 +79,7 @@ export class PreviewService extends EventEmitter<PreviewEvents> {
   /** Builds now (deduplicated) and optionally keeps rebuilding on changes. */
   async start(ownerId: string, projectId: string, autoRebuild: boolean): Promise<{ job: Job; info: PreviewInfo }> {
     const { fs, project } = await this.services.projectFs(ownerId, projectId);
+    await pinProjectSdk(fs.root);
     if (autoRebuild && !this.live.has(projectId)) {
       this.live.set(projectId, { ownerId, release: this.hub.acquire(projectId, fs.root), timer: null });
     } else if (!autoRebuild) {

@@ -6,6 +6,7 @@ import { FsError, ProjectFs } from './fs.js';
 import type { Job, JobKind, JobManager } from './jobs.js';
 import { validateProjectName } from './paths.js';
 import { prepareSignedBuild } from './signing.js';
+import { pinProjectSdk } from './sdk_pins.js';
 import type { ProjectRow, Store, WorkspaceRow } from './store.js';
 import type { WorkspaceDriver } from './workspaces/driver.js';
 
@@ -154,6 +155,8 @@ export class Services {
     const { project } = await this.projectFs(ownerId, projectId);
     const args = typeof kind === 'string' ? JOB_COMMANDS[kind as JobKind] : undefined;
     if (!args) throw new FsError('bad_job', `unsupported job kind; available: ${Object.keys(JOB_COMMANDS).join(', ')}`);
+    // Keep AI-chosen dependencies compatible with this Runner's Flutter SDK.
+    await pinProjectSdk(this.projectRoot(project));
     let env: Record<string, string> | undefined;
     if (kind === 'build_apk' || kind === 'build_aab') {
       // Signed release for Play Console: upload key + bumped versionCode.

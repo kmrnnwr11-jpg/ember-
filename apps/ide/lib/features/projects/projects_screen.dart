@@ -224,7 +224,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                       title: Text(p.name),
                       subtitle: Text(label),
                       enabled: p.isReady,
-                      onTap: p.isReady ? () => context.go('/projects/${p.id}') : null,
+                      onTap: p.isReady ? () => context.go('/projects/${p.id}/create') : null,
                       trailing: IconButton(
                         tooltip: l.delete,
                         icon: const Icon(Icons.delete_outline),

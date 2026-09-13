@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:ai_connect/ai_connect.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,14 +8,36 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ide_core/ide_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/locale.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../ai/ai_settings.dart';
+import '../../widgets/ember_logo.dart';
 import 'app_builder.dart';
 import 'forge_view.dart';
+
+/// The chat and settings of each built app, saved on this device.
+class AppSessionStore {
+  static String _key(String projectId) => 'ember_session_$projectId';
+
+  static Future<void> save(String projectId, Map<String, dynamic> session) async {
+    try {
+      await (await SharedPreferences.getInstance()).setString(_key(projectId), jsonEncode(session));
+    } catch (_) {}
+  }
+
+  static Future<Map<String, dynamic>?> load(String projectId) async {
+    try {
+      final raw = (await SharedPreferences.getInstance()).getString(_key(projectId));
+      return raw == null ? null : jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+}
 
 /// Arguments passed when arriving from the home prompt.
 class CreateAppArgs {
@@ -36,6 +60,7 @@ final appBuilderProvider = ChangeNotifierProvider.family<AppBuilder, (String, St
     projectId: projectId,
     projectName: projectName,
     strings: ref.read(stringsProvider),
+    onSession: (s) => AppSessionStore.save(projectId, s),
     request: socket.request,
     events: socket.events,
     fetchJobLog: (jobId) async => (await ref.read(runnerApiProvider.future)).jobLog(jobId),
@@ -232,9 +257,25 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
 
   Future<void> _autoStart(AppBuilder b) async {
     final args = widget.args;
-    if (_autoStarted || args == null || b.phase != BuildPhase.idle) return;
+    if (_autoStarted || b.phase != BuildPhase.idle) return;
     _autoStarted = true;
     final catalog = await ref.read(aiCatalogProvider.future);
+    if (args == null) {
+      // Opening an existing app: continue the chat, rebuild the preview, allow new changes and new APK/AAB versions.
+      final session = await AppSessionStore.load(widget.projectId) ?? <String, dynamic>{};
+      final health = await ref.read(runnerHealthProvider.future).catchError((_) => <String, dynamic>{});
+      final saved = BuildEngine.values.where((e) => e.name == session['engine']).firstOrNull;
+      final claudeCode = (health['engines'] as Map?)?['claudeCode'] == true;
+      final engine = saved ?? (claudeCode ? BuildEngine.claudeCode : BuildEngine.gemini);
+      final model = engine.provider == null
+          ? null
+          : catalog.where((m) => m.key == session['modelKey']).firstOrNull ??
+              catalog.where((m) => m.provider == engine.provider && m.id == engine.defaultModel).firstOrNull ??
+              catalog.where((m) => m.provider == engine.provider).firstOrNull;
+      if (!mounted) return;
+      await b.reopen(session: session, engine: engine, model: model);
+      return;
+    }
     final model = args.engine.provider == null
         ? null
         : catalog.where((m) => m.key == args.modelKey).firstOrNull ??
@@ -273,12 +314,9 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    if (b.phase == BuildPhase.idle && widget.args == null) ...[
-                      Text(l.describeYourApp, style: Theme.of(context).textTheme.headlineSmall),
-                      const SizedBox(height: 4),
-                      Text(l.describeYourAppHint),
-                      const SizedBox(height: 16),
-                      AppPromptComposer(onSubmit: (prompt, engine, model, quality) => b.build(prompt: prompt, engine: engine, model: model, quality: quality)),
+                    if (b.phase == BuildPhase.idle) ...[
+                      const SizedBox(height: 120),
+                      const Center(child: EmberMark(size: 96)),
                     ] else ...[
                       _PromptCard(prompt: b.prompt, engine: b.engine, model: b.model, designName: b.designName),
                       const SizedBox(height: 12),

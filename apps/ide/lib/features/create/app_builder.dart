@@ -115,6 +115,7 @@ class AppBuilder extends ChangeNotifier {
     required Future<String> Function(String jobId) fetchJobLog,
     required Future<AiProvider> Function(AiModel model) resolveProvider,
     this.androidInfo,
+    this.onSession,
     AppLocalizations? strings,
     this.maxFixRounds = 3,
     this.jobTimeout = const Duration(minutes: 15),
@@ -135,6 +136,8 @@ class AppBuilder extends ChangeNotifier {
   final Future<String?> Function()? androidInfo;
   /// UI language for log lines and errors; updated when the user switches language.
   AppLocalizations strings;
+  /// Called with [toSession] whenever the chat changes, so the app can be reopened later.
+  final void Function(Map<String, dynamic> session)? onSession;
   final int maxFixRounds;
   final Duration jobTimeout;
 
@@ -256,6 +259,7 @@ class AppBuilder extends ChangeNotifier {
       if (_cancelled) return;
       conversation.add((role: 'assistant', text: _replyText?.trim().isNotEmpty == true ? _replyText!.trim() : strings.bAppUpdated));
       _setPhase(BuildPhase.ready);
+      _saveSession();
       _log(strings.bAppReady, kind: 'info');
     } on _Cancelled {
       _setPhase(BuildPhase.cancelled);
@@ -266,6 +270,60 @@ class AppBuilder extends ChangeNotifier {
       }
       error = e is AiException ? e.message : (e is RunnerException ? e.message : e.toString());
       conversation.add((role: 'assistant', text: '⚠️ $error'));
+      _log(error!, kind: 'error');
+      _setPhase(BuildPhase.failed);
+      _saveSession();
+    }
+  }
+
+  // ---------------------------------------------------------------- sessions
+
+  void _saveSession() {
+    if (engine != null) onSession?.call(toSession());
+  }
+
+  /// Everything needed to continue working on the app later.
+  Map<String, dynamic> toSession() => {
+    'prompt': prompt,
+    'engine': engine?.name,
+    'modelKey': model?.key,
+    'quality': quality,
+    'design': design,
+    'designName': designName,
+    'conversation': [
+      for (final m in conversation.length > 60 ? conversation.sublist(conversation.length - 60) : conversation) {'role': m.role, 'text': m.text},
+    ],
+  };
+
+  /// Reopens an app built earlier: restores the chat and rebuilds the preview, like opening a project on a PC.
+  Future<void> reopen({required Map<String, dynamic> session, required BuildEngine engine, AiModel? model}) async {
+    if (running || phase != BuildPhase.idle) return;
+    prompt = session['prompt'] as String? ?? projectName;
+    this.engine = engine;
+    this.model = model;
+    quality = session['quality'] as String? ?? 'fast';
+    design = session['design'] as String?;
+    designName = session['designName'] as String?;
+    conversation
+      ..clear()
+      ..addAll([
+        for (final m in (session['conversation'] as List? ?? const []).cast<Map<String, dynamic>>())
+          (role: m['role'] as String, text: m['text'] as String),
+      ]);
+    if (conversation.isEmpty) conversation.add((role: 'user', text: prompt));
+    _cancelled = false;
+    _cancelSignal = Completer<void>();
+    error = null;
+    try {
+      await _buildPreview();
+      if (_cancelled) return;
+      _setPhase(BuildPhase.ready);
+      _saveSession();
+    } on _Cancelled {
+      _setPhase(BuildPhase.cancelled);
+    } catch (e) {
+      if (_cancelled) return;
+      error = e is AiException ? e.message : (e is RunnerException ? e.message : e.toString());
       _log(error!, kind: 'error');
       _setPhase(BuildPhase.failed);
     }

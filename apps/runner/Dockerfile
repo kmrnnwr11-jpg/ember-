@@ -11,6 +11,6 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
-COPY package.json ./
+COPY package.json ai-catalog.json ./
 EXPOSE 8787
 CMD ["node", "dist/index.js"]

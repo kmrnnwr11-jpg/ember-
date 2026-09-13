@@ -36,6 +36,12 @@ const schema = z.object({
   MAX_WS_FILE_BYTES: z.coerce.number().int().default(5 * 1024 * 1024),
 
   PREVIEW_BASE_DOMAIN: z.string().default(''),
+
+  /** Remote JSON model catalog (falls back to bundled ai-catalog.json). */
+  AI_CATALOG_URL: z.string().default(''),
+  AI_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().default(120),
+  /** Allow http:// and private/loopback OpenAI-compatible base URLs (e.g. local Ollama). Dev only. */
+  AI_ALLOW_PRIVATE_BASE_URLS: bool,
   VAULT_MASTER_KEY: z.string().default(''),
 });
 

@@ -10,6 +10,8 @@
 
 | Ctrl+` | Toggle terminal panel (opens a terminal if none) | Phase 2 |
 | F5 | Run Web (build + open preview panel) | Phase 2 |
+| Ctrl+L / Cmd+L | Toggle AI chat panel | Phase 3 |
+| Ctrl+Enter / Cmd+Enter | Send chat message | Phase 3 |
 
 Mobile terminal key bar: Ctrl (sticky, applies to next letter), Esc, Tab, ↑ ↓ ← →, `|`, `~`, `/`, `-`.
 

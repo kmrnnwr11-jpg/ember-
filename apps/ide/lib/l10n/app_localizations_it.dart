@@ -215,4 +215,127 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get previewEmpty =>
       'Premi «Avvia Web» per compilare l\'app e vederla qui. Ogni salvataggio aggiorna l\'anteprima.';
+
+  @override
+  String get ai => 'AI';
+
+  @override
+  String get toggleAi => 'Mostra/nascondi pannello AI';
+
+  @override
+  String get aiSettings => 'Chiavi API e modelli';
+
+  @override
+  String get apiKeysHint =>
+      'Le chiavi restano cifrate su questo dispositivo (archivio sicuro). Con il proxy attivo passano dal tuo Runner solo per la singola richiesta e non vengono salvate né registrate nei log.';
+
+  @override
+  String get useRunnerProxy => 'Passa dal Runner (proxy)';
+
+  @override
+  String get useRunnerProxyHint =>
+      'Consigliato. Disattiva per chiamare i provider direttamente da questo dispositivo.';
+
+  @override
+  String get useRunnerProxyWeb =>
+      'Sul web è obbligatorio: il browser non può chiamare i provider direttamente.';
+
+  @override
+  String get apiKey => 'Chiave API';
+
+  @override
+  String get apiKeyOptional => 'Chiave API (se richiesta)';
+
+  @override
+  String get replaceApiKey => 'Sostituisci chiave';
+
+  @override
+  String get testKey => 'Prova';
+
+  @override
+  String get testing => 'Prova in corso…';
+
+  @override
+  String keyWorks(String model) {
+    return 'Funziona ✓ ($model)';
+  }
+
+  @override
+  String get getKey => 'Ottieni una chiave';
+
+  @override
+  String get addModelId => 'Aggiungi ID modello';
+
+  @override
+  String get selectModel => 'Scegli modello';
+
+  @override
+  String get keyPresent => 'chiave presente';
+
+  @override
+  String get notConfigured => 'non configurato';
+
+  @override
+  String get per1k => 'per 1k token (in/out)';
+
+  @override
+  String applyTo(String path) {
+    return 'Applica a $path';
+  }
+
+  @override
+  String get noChanges => 'Nessuna differenza rispetto al file attuale.';
+
+  @override
+  String get accept => 'Accetta';
+
+  @override
+  String get reject => 'Rifiuta';
+
+  @override
+  String get apply => 'Applica';
+
+  @override
+  String applied(String path) {
+    return 'Modifica applicata a $path: controlla e salva.';
+  }
+
+  @override
+  String get applyNoTarget =>
+      'Apri un file o chiedi all\'AI di indicare il percorso del file.';
+
+  @override
+  String get clearChat => 'Svuota chat';
+
+  @override
+  String get chatEmpty =>
+      'Chiedi qualcosa sul tuo progetto. Il file aperto viene inviato come contesto.';
+
+  @override
+  String get chatNoKeys =>
+      'Per usare l\'AI inserisci almeno una chiave API (Claude, ChatGPT o Gemini).';
+
+  @override
+  String get attachOpenFile => 'Allega il file aperto come contesto';
+
+  @override
+  String get askAi => 'Chiedi all\'AI…  (Ctrl+Invio per inviare)';
+
+  @override
+  String get send => 'Invia';
+
+  @override
+  String get stop => 'Ferma';
+
+  @override
+  String get copied => 'Copiato';
+
+  @override
+  String get truncated => 'risposta troncata (limite token)';
+
+  @override
+  String get refused => 'rifiutata dal modello';
+
+  @override
+  String get stopped => 'interrotta';
 }

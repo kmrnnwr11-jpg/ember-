@@ -28,6 +28,9 @@ dependencies:
   flutter_inappwebview: ^6.1.5
   url_launcher: ^6.3.2
   qr_flutter: ^4.1.0
+  flutter_markdown_plus: ^1.0.12
+  shared_preferences: ^2.5.5
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

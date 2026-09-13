@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/session.dart';
+import 'features/ai/settings_screen.dart';
 import 'features/auth/login_screen.dart';
 import 'features/editor/workspace_screen.dart';
 import 'features/projects/projects_screen.dart';
@@ -30,6 +31,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const Scaffold(body: Center(child: CircularProgressIndicator())),
       ),
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      GoRoute(path: '/settings', builder: (_, _) => const AiSettingsScreen()),
       GoRoute(
         path: '/projects',
         builder: (_, _) => const ProjectsScreen(),

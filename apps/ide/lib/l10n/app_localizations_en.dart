@@ -213,4 +213,127 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get previewEmpty =>
       'Press “Run Web” to build the app and see it here. Every save refreshes the preview.';
+
+  @override
+  String get ai => 'AI';
+
+  @override
+  String get toggleAi => 'Toggle AI panel';
+
+  @override
+  String get aiSettings => 'API keys & models';
+
+  @override
+  String get apiKeysHint =>
+      'Keys stay encrypted on this device (secure storage). With the proxy on they pass through your Runner for each request only and are never stored or logged.';
+
+  @override
+  String get useRunnerProxy => 'Route through Runner (proxy)';
+
+  @override
+  String get useRunnerProxyHint =>
+      'Recommended. Turn off to call providers directly from this device.';
+
+  @override
+  String get useRunnerProxyWeb =>
+      'Required on web: browsers cannot call providers directly.';
+
+  @override
+  String get apiKey => 'API key';
+
+  @override
+  String get apiKeyOptional => 'API key (if required)';
+
+  @override
+  String get replaceApiKey => 'Replace key';
+
+  @override
+  String get testKey => 'Test';
+
+  @override
+  String get testing => 'Testing…';
+
+  @override
+  String keyWorks(String model) {
+    return 'Works ✓ ($model)';
+  }
+
+  @override
+  String get getKey => 'Get a key';
+
+  @override
+  String get addModelId => 'Add model ID';
+
+  @override
+  String get selectModel => 'Select model';
+
+  @override
+  String get keyPresent => 'key present';
+
+  @override
+  String get notConfigured => 'not configured';
+
+  @override
+  String get per1k => 'per 1k tokens (in/out)';
+
+  @override
+  String applyTo(String path) {
+    return 'Apply to $path';
+  }
+
+  @override
+  String get noChanges => 'No differences from the current file.';
+
+  @override
+  String get accept => 'Accept';
+
+  @override
+  String get reject => 'Reject';
+
+  @override
+  String get apply => 'Apply';
+
+  @override
+  String applied(String path) {
+    return 'Change applied to $path: review and save.';
+  }
+
+  @override
+  String get applyNoTarget =>
+      'Open a file or ask the AI to include the file path.';
+
+  @override
+  String get clearChat => 'Clear chat';
+
+  @override
+  String get chatEmpty =>
+      'Ask about your project. The open file is sent as context.';
+
+  @override
+  String get chatNoKeys =>
+      'Add at least one API key (Claude, ChatGPT or Gemini) to use AI.';
+
+  @override
+  String get attachOpenFile => 'Attach the open file as context';
+
+  @override
+  String get askAi => 'Ask AI…  (Ctrl+Enter to send)';
+
+  @override
+  String get send => 'Send';
+
+  @override
+  String get stop => 'Stop';
+
+  @override
+  String get copied => 'Copied';
+
+  @override
+  String get truncated => 'truncated (token limit)';
+
+  @override
+  String get refused => 'declined by the model';
+
+  @override
+  String get stopped => 'stopped';
 }

@@ -110,6 +110,51 @@ page auto-refreshes every 3 s. With `PREVIEW_BASE_DOMAIN` set, requests to
 `preview.<domain>/<ws>/<project>/…` are rewritten to the same route and builds
 use base href `/<ws>/<project>/`.
 
+## AI (Phase 3)
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `/v1/ai/models` | ✓ | Model catalog `{version, defaults, models: AiModel[]}` from `AI_CATALOG_URL` (cached 1 h) or bundled `ai-catalog.json` |
+| POST | `/v1/ai/proxy/:provider/<upstream path>` | ✓ | Transparent BYOK proxy, streams the upstream response (SSE) back unchanged |
+
+```ts
+AiModel = { provider: 'anthropic'|'openai'|'gemini'|'openaiCompatible', id, label,
+            inputPerMTok, outputPerMTok, contextTokens, tools, tags: string[] }
+```
+
+Proxy request headers:
+
+| Header | Required | Meaning |
+|---|---|---|
+| `Authorization: Bearer <JWT>` | ✓ | Runner auth (never forwarded upstream) |
+| `x-provider-key` | ✓ (may be empty for `openaiCompatible`) | User's API key, injected as `x-api-key` (Anthropic), `x-goog-api-key` (Gemini) or `Authorization: Bearer` (OpenAI/compatible). Never stored, redacted from logs |
+| `x-provider-base-url` | for `openaiCompatible` | Upstream base URL; must be https and non-private unless `AI_ALLOW_PRIVATE_BASE_URLS=true` |
+| `anthropic-version`, `anthropic-beta`, `content-type`, `accept` | – | Forwarded as-is |
+
+Allowed upstream paths (anything else → `403 forbidden`):
+
+| provider | upstream | paths |
+|---|---|---|
+| `anthropic` | api.anthropic.com | `v1/messages`, `v1/messages/count_tokens` |
+| `openai` | api.openai.com | `v1/chat/completions`, `v1/embeddings` |
+| `openaiCompatible` | `x-provider-base-url` | `v1/chat/completions`, `v1/embeddings` |
+| `gemini` | generativelanguage.googleapis.com | `v1beta/models/<id>:{streamGenerateContent,generateContent,batchEmbedContents,countTokens}` (query string kept, e.g. `?alt=sse`) |
+
+Errors: `400 bad_request`, `403 forbidden`, `404 not_found` (unknown provider),
+`429 rate_limited` (`AI_RATE_LIMIT_PER_MINUTE`, default 120/user), `502 upstream_unreachable`.
+Upstream HTTP errors (e.g. 401 invalid key) are passed through with their body.
+Closing the client connection aborts the upstream request.
+
+### Why a transparent proxy (deviation from the original §5B)
+
+§5B described a Runner endpoint that normalizes all providers into one SSE
+format. Instead, normalization lives once in the Dart package `ai_connect`,
+and the Runner only forwards. Reasons: generated apps embed `ai_connect`
+without any Runner, so the Dart adapters must exist anyway; one implementation
+avoids two diverging translations; the proxy stays small and auditable. A
+normalized server-side endpoint can be added for a server-run Agent (Phase 5/7)
+if needed.
+
 ## Jobs
 
 One running job per workspace, FIFO queue, timeout `JOB_TIMEOUT_SECONDS`

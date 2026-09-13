@@ -10,6 +10,10 @@ import '../../core/runner_socket.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../../widgets/connection_badge.dart';
+import '../ai/ai_settings.dart';
+import '../ai/apply_dialog.dart';
+import '../ai/chat_controller.dart';
+import '../ai/chat_panel.dart';
 import '../preview/preview_controller.dart';
 import '../preview/preview_panel.dart';
 import '../terminal/terminal_panel.dart';
@@ -47,6 +51,16 @@ final previewControllerProvider = ChangeNotifierProvider.autoDispose.family<Prev
   return c;
 });
 
+final chatControllerProvider = ChangeNotifierProvider.family<ChatController, String>((ref, projectId) {
+  final factory = ref.watch(aiProviderFactory);
+  return ChatController(
+    projectId: projectId,
+    resolveProvider: factory,
+    loadHistory: () => ChatHistoryStore.load(projectId),
+    saveHistory: (rows) => ChatHistoryStore.save(projectId, rows),
+  );
+});
+
 class _ConnectedNotifier extends ValueNotifier<bool> {
   _ConnectedNotifier(this._state) : super(_state.value == SocketState.connected) {
     _state.addListener(_sync);
@@ -78,15 +92,60 @@ class WorkspaceScreen extends ConsumerStatefulWidget {
   ConsumerState<WorkspaceScreen> createState() => _WorkspaceScreenState();
 }
 
-enum _MobileTab { files, editor, terminal, preview }
+enum _MobileTab { files, editor, terminal, preview, ai }
+
+enum _SidePanel { preview, ai }
 
 class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   _MobileTab _mobileTab = _MobileTab.files;
   double _treeWidth = 260;
   double _terminalHeight = 240;
-  double _previewWidth = 440;
+  double _sideWidth = 440;
   bool _terminalOpen = false;
-  bool _previewOpen = false;
+  _SidePanel? _side;
+
+  void _toggleSide(_SidePanel panel) => setState(() {
+    _side = _side == panel ? null : panel;
+    _mobileTab = panel == _SidePanel.ai ? _MobileTab.ai : _MobileTab.preview;
+  });
+
+  ChatFileContext? _openFileContext() {
+    final f = ref.read(projectControllerProvider(widget.projectId)).activeFile;
+    return f == null ? null : ChatFileContext(f.path, f.controller.text);
+  }
+
+  /// Apply an AI code block: diff against the target file, then load it into
+  /// the editor (unsaved) so the user reviews and saves (§1.3).
+  Future<void> _applyCode(CodeSegment block) async {
+    final l = AppLocalizations.of(context);
+    final c = ref.read(projectControllerProvider(widget.projectId));
+    final path = block.path ?? c.activeFile?.path;
+    if (path == null) return _snack(l.applyNoTarget);
+
+    var exists = true;
+    try {
+      await c.open(path);
+    } on RunnerException catch (e) {
+      if (e.code != 'not_found') return _snack(l.error(e.message));
+      exists = false;
+    }
+    final tab = exists ? c.tabs.firstWhere((t) => t.path == path) : null;
+    if (!mounted) return;
+    final accepted = await showApplyDiff(context, path: path, oldText: tab?.controller.text ?? '', newText: block.code);
+    if (!accepted) return;
+    try {
+      if (tab == null) {
+        await c.createFile(ProjectPath.dirname(path), ProjectPath.basename(path));
+      }
+      final target = c.tabs.firstWhere((t) => t.path == path);
+      target.controller.text = block.code;
+      c.activate(c.tabs.indexOf(target));
+      if (mounted) setState(() => _mobileTab = _MobileTab.editor);
+      _snack(l.applied(path));
+    } on RunnerException catch (e) {
+      _snack(l.error(e.message));
+    }
+  }
 
   Future<void> _open(String path) async {
     final c = ref.read(projectControllerProvider(widget.projectId));
@@ -136,7 +195,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
   void _runWeb() {
     setState(() {
-      _previewOpen = true;
+      _side = _SidePanel.preview;
       _mobileTab = _MobileTab.preview;
     });
     ref.read(previewControllerProvider(widget.projectId)).run();
@@ -157,11 +216,18 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     final editor = EditorPane(controller: controller, onSave: _save);
     final terminalPanel = TerminalPanel(controller: terminals);
     final previewPanel = PreviewPanel(controller: preview);
+    final chatPanel = ChatPanel(
+      controller: ref.watch(chatControllerProvider(widget.projectId)),
+      openFile: _openFileContext,
+      onApply: _applyCode,
+    );
 
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.backquote, control: true): _toggleTerminal,
         const SingleActivator(LogicalKeyboardKey.f5): _runWeb,
+        const SingleActivator(LogicalKeyboardKey.keyL, control: true): () => _toggleSide(_SidePanel.ai),
+        const SingleActivator(LogicalKeyboardKey.keyL, meta: true): () => _toggleSide(_SidePanel.ai),
       },
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -197,9 +263,16 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   ),
                   IconButton(
                     tooltip: l.togglePreview,
-                    isSelected: _previewOpen,
+                    isSelected: _side == _SidePanel.preview,
                     icon: const Icon(Icons.phone_iphone),
-                    onPressed: () => setState(() => _previewOpen = !_previewOpen),
+                    onPressed: () => _toggleSide(_SidePanel.preview),
+                  ),
+                  IconButton(
+                    key: const Key('toggleAi'),
+                    tooltip: '${l.toggleAi} (Ctrl+L)',
+                    isSelected: _side == _SidePanel.ai,
+                    icon: const Icon(Icons.auto_awesome),
+                    onPressed: () => _toggleSide(_SidePanel.ai),
                   ),
                 ],
                 const ConnectionBadge(),
@@ -227,17 +300,40 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                           ],
                         ),
                       ),
-                      if (_previewOpen) ...[
+                      if (_side != null) ...[
                         _Splitter.vertical(
-                          onDrag: (d) => setState(() => _previewWidth = (_previewWidth - d).clamp(320, constraints.maxWidth * 0.6)),
+                          onDrag: (d) => setState(() => _sideWidth = (_sideWidth - d).clamp(320, constraints.maxWidth * 0.6)),
                         ),
-                        SizedBox(width: _previewWidth, child: previewPanel),
+                        SizedBox(
+                          width: _sideWidth,
+                          child: Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(6),
+                                child: SegmentedButton<_SidePanel>(
+                                  segments: [
+                                    ButtonSegment(value: _SidePanel.preview, icon: const Icon(Icons.phone_iphone), label: Text(l.preview)),
+                                    ButtonSegment(value: _SidePanel.ai, icon: const Icon(Icons.auto_awesome), label: Text(l.ai)),
+                                  ],
+                                  selected: {_side!},
+                                  onSelectionChanged: (s) => setState(() => _side = s.first),
+                                ),
+                              ),
+                              Expanded(
+                                child: IndexedStack(
+                                  index: _side!.index,
+                                  children: [previewPanel, chatPanel],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ],
                   )
                 : IndexedStack(
                     index: _mobileTab.index,
-                    children: [tree, editor, terminalPanel, previewPanel],
+                    children: [tree, editor, terminalPanel, previewPanel, chatPanel],
                   ),
             bottomNavigationBar: wide
                 ? null
@@ -252,6 +348,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       NavigationDestination(icon: const Icon(Icons.code), label: l.editor),
                       NavigationDestination(icon: const Icon(Icons.terminal), label: l.terminal),
                       NavigationDestination(icon: const Icon(Icons.phone_iphone), label: l.preview),
+                      NavigationDestination(icon: const Icon(Icons.auto_awesome), label: l.ai),
                     ],
                   ),
           );

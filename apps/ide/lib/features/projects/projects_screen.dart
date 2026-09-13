@@ -105,6 +105,11 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         actions: [
           const ConnectionBadge(),
           IconButton(
+            tooltip: l.aiSettings,
+            icon: const Icon(Icons.key),
+            onPressed: () => context.push('/settings'),
+          ),
+          IconButton(
             tooltip: l.signOut,
             icon: const Icon(Icons.logout),
             onPressed: () => ref.read(sessionProvider.notifier).signOut(),

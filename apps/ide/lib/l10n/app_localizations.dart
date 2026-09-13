@@ -487,6 +487,228 @@ abstract class AppLocalizations {
   /// In it, this message translates to:
   /// **'Premi «Avvia Web» per compilare l\'app e vederla qui. Ogni salvataggio aggiorna l\'anteprima.'**
   String get previewEmpty;
+
+  /// No description provided for @ai.
+  ///
+  /// In it, this message translates to:
+  /// **'AI'**
+  String get ai;
+
+  /// No description provided for @toggleAi.
+  ///
+  /// In it, this message translates to:
+  /// **'Mostra/nascondi pannello AI'**
+  String get toggleAi;
+
+  /// No description provided for @aiSettings.
+  ///
+  /// In it, this message translates to:
+  /// **'Chiavi API e modelli'**
+  String get aiSettings;
+
+  /// No description provided for @apiKeysHint.
+  ///
+  /// In it, this message translates to:
+  /// **'Le chiavi restano cifrate su questo dispositivo (archivio sicuro). Con il proxy attivo passano dal tuo Runner solo per la singola richiesta e non vengono salvate né registrate nei log.'**
+  String get apiKeysHint;
+
+  /// No description provided for @useRunnerProxy.
+  ///
+  /// In it, this message translates to:
+  /// **'Passa dal Runner (proxy)'**
+  String get useRunnerProxy;
+
+  /// No description provided for @useRunnerProxyHint.
+  ///
+  /// In it, this message translates to:
+  /// **'Consigliato. Disattiva per chiamare i provider direttamente da questo dispositivo.'**
+  String get useRunnerProxyHint;
+
+  /// No description provided for @useRunnerProxyWeb.
+  ///
+  /// In it, this message translates to:
+  /// **'Sul web è obbligatorio: il browser non può chiamare i provider direttamente.'**
+  String get useRunnerProxyWeb;
+
+  /// No description provided for @apiKey.
+  ///
+  /// In it, this message translates to:
+  /// **'Chiave API'**
+  String get apiKey;
+
+  /// No description provided for @apiKeyOptional.
+  ///
+  /// In it, this message translates to:
+  /// **'Chiave API (se richiesta)'**
+  String get apiKeyOptional;
+
+  /// No description provided for @replaceApiKey.
+  ///
+  /// In it, this message translates to:
+  /// **'Sostituisci chiave'**
+  String get replaceApiKey;
+
+  /// No description provided for @testKey.
+  ///
+  /// In it, this message translates to:
+  /// **'Prova'**
+  String get testKey;
+
+  /// No description provided for @testing.
+  ///
+  /// In it, this message translates to:
+  /// **'Prova in corso…'**
+  String get testing;
+
+  /// No description provided for @keyWorks.
+  ///
+  /// In it, this message translates to:
+  /// **'Funziona ✓ ({model})'**
+  String keyWorks(String model);
+
+  /// No description provided for @getKey.
+  ///
+  /// In it, this message translates to:
+  /// **'Ottieni una chiave'**
+  String get getKey;
+
+  /// No description provided for @addModelId.
+  ///
+  /// In it, this message translates to:
+  /// **'Aggiungi ID modello'**
+  String get addModelId;
+
+  /// No description provided for @selectModel.
+  ///
+  /// In it, this message translates to:
+  /// **'Scegli modello'**
+  String get selectModel;
+
+  /// No description provided for @keyPresent.
+  ///
+  /// In it, this message translates to:
+  /// **'chiave presente'**
+  String get keyPresent;
+
+  /// No description provided for @notConfigured.
+  ///
+  /// In it, this message translates to:
+  /// **'non configurato'**
+  String get notConfigured;
+
+  /// No description provided for @per1k.
+  ///
+  /// In it, this message translates to:
+  /// **'per 1k token (in/out)'**
+  String get per1k;
+
+  /// No description provided for @applyTo.
+  ///
+  /// In it, this message translates to:
+  /// **'Applica a {path}'**
+  String applyTo(String path);
+
+  /// No description provided for @noChanges.
+  ///
+  /// In it, this message translates to:
+  /// **'Nessuna differenza rispetto al file attuale.'**
+  String get noChanges;
+
+  /// No description provided for @accept.
+  ///
+  /// In it, this message translates to:
+  /// **'Accetta'**
+  String get accept;
+
+  /// No description provided for @reject.
+  ///
+  /// In it, this message translates to:
+  /// **'Rifiuta'**
+  String get reject;
+
+  /// No description provided for @apply.
+  ///
+  /// In it, this message translates to:
+  /// **'Applica'**
+  String get apply;
+
+  /// No description provided for @applied.
+  ///
+  /// In it, this message translates to:
+  /// **'Modifica applicata a {path}: controlla e salva.'**
+  String applied(String path);
+
+  /// No description provided for @applyNoTarget.
+  ///
+  /// In it, this message translates to:
+  /// **'Apri un file o chiedi all\'AI di indicare il percorso del file.'**
+  String get applyNoTarget;
+
+  /// No description provided for @clearChat.
+  ///
+  /// In it, this message translates to:
+  /// **'Svuota chat'**
+  String get clearChat;
+
+  /// No description provided for @chatEmpty.
+  ///
+  /// In it, this message translates to:
+  /// **'Chiedi qualcosa sul tuo progetto. Il file aperto viene inviato come contesto.'**
+  String get chatEmpty;
+
+  /// No description provided for @chatNoKeys.
+  ///
+  /// In it, this message translates to:
+  /// **'Per usare l\'AI inserisci almeno una chiave API (Claude, ChatGPT o Gemini).'**
+  String get chatNoKeys;
+
+  /// No description provided for @attachOpenFile.
+  ///
+  /// In it, this message translates to:
+  /// **'Allega il file aperto come contesto'**
+  String get attachOpenFile;
+
+  /// No description provided for @askAi.
+  ///
+  /// In it, this message translates to:
+  /// **'Chiedi all\'AI…  (Ctrl+Invio per inviare)'**
+  String get askAi;
+
+  /// No description provided for @send.
+  ///
+  /// In it, this message translates to:
+  /// **'Invia'**
+  String get send;
+
+  /// No description provided for @stop.
+  ///
+  /// In it, this message translates to:
+  /// **'Ferma'**
+  String get stop;
+
+  /// No description provided for @copied.
+  ///
+  /// In it, this message translates to:
+  /// **'Copiato'**
+  String get copied;
+
+  /// No description provided for @truncated.
+  ///
+  /// In it, this message translates to:
+  /// **'risposta troncata (limite token)'**
+  String get truncated;
+
+  /// No description provided for @refused.
+  ///
+  /// In it, this message translates to:
+  /// **'rifiutata dal modello'**
+  String get refused;
+
+  /// No description provided for @stopped.
+  ///
+  /// In it, this message translates to:
+  /// **'interrotta'**
+  String get stopped;
 }
 
 class _AppLocalizationsDelegate

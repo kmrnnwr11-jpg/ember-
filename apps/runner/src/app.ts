@@ -6,6 +6,7 @@ import fastifyStatic from '@fastify/static';
 import websocket from '@fastify/websocket';
 import { PathError, safeResolve } from './paths.js';
 import { PreviewService } from './preview.js';
+import { DEFAULT_UPSTREAMS, registerAiRoutes } from './ai.js';
 import { z } from 'zod';
 import { Authenticator, bearer, type AuthUser } from './auth.js';
 import type { Config } from './config.js';
@@ -28,6 +29,7 @@ declare module 'fastify' {
 export interface AppDeps {
   store?: Store;
   driver?: WorkspaceDriver;
+  aiUpstreams?: Partial<typeof DEFAULT_UPSTREAMS>;
 }
 
 export async function buildApp(
@@ -38,7 +40,7 @@ export async function buildApp(
     logger: {
       level: cfg.LOG_LEVEL,
       // Never log credentials (§4).
-      redact: ['req.headers.authorization', 'req.query.token', 'req.headers["x-provider-key"]'],
+      redact: ['req.headers.authorization', 'req.query.token', 'req.headers["x-provider-key"]', 'req.headers["x-provider-base-url"]'],
     },
     bodyLimit: cfg.MAX_WS_FILE_BYTES + 1024 * 64,
     // preview.<domain>/<ws>/<project>/… is served by the /preview route.
@@ -198,6 +200,10 @@ export async function buildApp(
       return { cancelled: jobs.cancel(job.id) };
     });
   });
+
+  // ---------------- AI (§5B) ----------------
+
+  await registerAiRoutes(app, { cfg, authenticate, upstreams: deps.aiUpstreams });
 
   // ---------------- WebSocket ----------------
 

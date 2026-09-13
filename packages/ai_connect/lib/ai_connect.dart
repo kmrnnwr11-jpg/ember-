@@ -1,5 +1,11 @@
-/// AI provider layer. Contracts are defined here in Phase 1 so the IDE can
-/// depend on them; the Anthropic/OpenAI/Gemini adapters land in Phase 3.
+/// AI provider layer for FlutterCursor and the apps it generates:
+/// Claude (Anthropic), ChatGPT (OpenAI), Gemini (Google) and any
+/// OpenAI-compatible server, with one streaming/tool-calling interface.
 library;
 
+export 'src/catalog.dart';
+export 'src/providers/anthropic.dart' show AnthropicProvider;
+export 'src/providers/gemini.dart' show GeminiProvider;
+export 'src/providers/openai.dart' show OpenAiProvider;
+export 'src/transport.dart' show AiEndpoint, SseEvent, parseSse, createStreamingClient;
 export 'src/types.dart';

@@ -1045,6 +1045,240 @@ abstract class AppLocalizations {
   /// In it, this message translates to:
   /// **'Salta i mockup e crea l\'app'**
   String get skipMockups;
+
+  /// No description provided for @playAskUpload.
+  ///
+  /// In it, this message translates to:
+  /// **'Vuoi caricare l\'app sul Google Play Store?'**
+  String get playAskUpload;
+
+  /// No description provided for @playYesUpload.
+  ///
+  /// In it, this message translates to:
+  /// **'Sì, carica sul Play Store'**
+  String get playYesUpload;
+
+  /// No description provided for @playNotNow.
+  ///
+  /// In it, this message translates to:
+  /// **'Non ora'**
+  String get playNotNow;
+
+  /// No description provided for @playFeeNotice.
+  ///
+  /// In it, this message translates to:
+  /// **'Serve un account sviluppatore Google Play Console. Costo: 25 \$ una sola volta (non è un abbonamento), pagati direttamente a Google, non a FlutterCursor.'**
+  String get playFeeNotice;
+
+  /// No description provided for @playPublishTitle.
+  ///
+  /// In it, this message translates to:
+  /// **'Pubblica su Google Play'**
+  String get playPublishTitle;
+
+  /// No description provided for @playStepAccount.
+  ///
+  /// In it, this message translates to:
+  /// **'Account Google Play Console'**
+  String get playStepAccount;
+
+  /// No description provided for @playOpenSignup.
+  ///
+  /// In it, this message translates to:
+  /// **'Crea account Play Console'**
+  String get playOpenSignup;
+
+  /// No description provided for @playHaveAccount.
+  ///
+  /// In it, this message translates to:
+  /// **'Ho già un account Play Console attivo'**
+  String get playHaveAccount;
+
+  /// No description provided for @next.
+  ///
+  /// In it, this message translates to:
+  /// **'Avanti'**
+  String get next;
+
+  /// No description provided for @playStepCreateApp.
+  ///
+  /// In it, this message translates to:
+  /// **'Crea l\'app nel Play Console'**
+  String get playStepCreateApp;
+
+  /// No description provided for @playCreateAppGuide.
+  ///
+  /// In it, this message translates to:
+  /// **'Google richiede questo passaggio a mano, solo la prima volta:\n1. Apri **Play Console** → **Crea app**\n2. Nome app, lingua predefinita **Italiano**, tipo **App**, **Gratuita**\n3. Accetta le dichiarazioni e premi **Crea app**\n\nIl package name verrà associato automaticamente al primo caricamento: usa quello qui sotto.'**
+  String get playCreateAppGuide;
+
+  /// No description provided for @playPackageName.
+  ///
+  /// In it, this message translates to:
+  /// **'Package name'**
+  String get playPackageName;
+
+  /// No description provided for @playOpenConsole.
+  ///
+  /// In it, this message translates to:
+  /// **'Apri Play Console'**
+  String get playOpenConsole;
+
+  /// No description provided for @playAppCreated.
+  ///
+  /// In it, this message translates to:
+  /// **'Ho creato l\'app nel Play Console'**
+  String get playAppCreated;
+
+  /// No description provided for @playStepConnect.
+  ///
+  /// In it, this message translates to:
+  /// **'Collega FlutterCursor a Google Play'**
+  String get playStepConnect;
+
+  /// No description provided for @playConnectGuide.
+  ///
+  /// In it, this message translates to:
+  /// **'Serve una **chiave di account di servizio** (una sola volta per tutte le tue app):\n1. Apri **Google Cloud** e attiva l\'API **Google Play Android Developer API**\n2. Vai su **Account di servizio** → **Crea account di servizio** → poi **Chiavi** → **Aggiungi chiave** → **JSON** (si scarica un file)\n3. Nel **Play Console** → **Utenti e autorizzazioni** → **Invita nuovi utenti** → incolla l\'email dell\'account di servizio → dai i permessi di **rilascio** per le tue app\n4. Apri il file JSON scaricato e **incolla qui tutto il contenuto**\n\nLa chiave resta salvata cifrata su questo dispositivo e viene usata solo per il caricamento.'**
+  String get playConnectGuide;
+
+  /// No description provided for @playOpenApiLibrary.
+  ///
+  /// In it, this message translates to:
+  /// **'Attiva API Google Play'**
+  String get playOpenApiLibrary;
+
+  /// No description provided for @playOpenServiceAccounts.
+  ///
+  /// In it, this message translates to:
+  /// **'Account di servizio'**
+  String get playOpenServiceAccounts;
+
+  /// No description provided for @playServiceAccountJson.
+  ///
+  /// In it, this message translates to:
+  /// **'Contenuto del file JSON dell\'account di servizio'**
+  String get playServiceAccountJson;
+
+  /// No description provided for @playStepListing.
+  ///
+  /// In it, this message translates to:
+  /// **'Scheda dello store e caricamento'**
+  String get playStepListing;
+
+  /// No description provided for @playGenerateWithAi.
+  ///
+  /// In it, this message translates to:
+  /// **'Genera scheda, privacy policy e risposte con l\'AI'**
+  String get playGenerateWithAi;
+
+  /// No description provided for @playTitle.
+  ///
+  /// In it, this message translates to:
+  /// **'Titolo (max 30)'**
+  String get playTitle;
+
+  /// No description provided for @playShortDescription.
+  ///
+  /// In it, this message translates to:
+  /// **'Descrizione breve (max 80)'**
+  String get playShortDescription;
+
+  /// No description provided for @playFullDescription.
+  ///
+  /// In it, this message translates to:
+  /// **'Descrizione completa'**
+  String get playFullDescription;
+
+  /// No description provided for @playReleaseNotes.
+  ///
+  /// In it, this message translates to:
+  /// **'Note di versione'**
+  String get playReleaseNotes;
+
+  /// No description provided for @playContactEmail.
+  ///
+  /// In it, this message translates to:
+  /// **'Email di contatto (obbligatoria su Play Store)'**
+  String get playContactEmail;
+
+  /// No description provided for @playPrivacyUrl.
+  ///
+  /// In it, this message translates to:
+  /// **'Link privacy policy'**
+  String get playPrivacyUrl;
+
+  /// No description provided for @playTrack.
+  ///
+  /// In it, this message translates to:
+  /// **'Dove pubblicare'**
+  String get playTrack;
+
+  /// No description provided for @playTrackInternal.
+  ///
+  /// In it, this message translates to:
+  /// **'Test interno (consigliato per iniziare)'**
+  String get playTrackInternal;
+
+  /// No description provided for @playTrackClosed.
+  ///
+  /// In it, this message translates to:
+  /// **'Test chiuso'**
+  String get playTrackClosed;
+
+  /// No description provided for @playTrackProduction.
+  ///
+  /// In it, this message translates to:
+  /// **'Produzione (pubblico)'**
+  String get playTrackProduction;
+
+  /// No description provided for @playUpload.
+  ///
+  /// In it, this message translates to:
+  /// **'Carica su Google Play'**
+  String get playUpload;
+
+  /// No description provided for @playStepFinish.
+  ///
+  /// In it, this message translates to:
+  /// **'Completa nel Play Console'**
+  String get playStepFinish;
+
+  /// No description provided for @playUploaded.
+  ///
+  /// In it, this message translates to:
+  /// **'✅ Caricata! Versione {version} sulla traccia «{track}». {draft}'**
+  String playUploaded(String version, String track, String draft);
+
+  /// No description provided for @playDraftNote.
+  ///
+  /// In it, this message translates to:
+  /// **'Poiché l\'app non è ancora mai stata pubblicata, Google l\'ha salvata come bozza: completa i passaggi qui sotto e premi «Invia per la revisione» nel Play Console.'**
+  String get playDraftNote;
+
+  /// No description provided for @playManualChecklist.
+  ///
+  /// In it, this message translates to:
+  /// **'Google richiede di confermare a mano queste voci nel Play Console (le risposte pronte sono qui sotto):\n- **Norme sulla privacy** → incolla il link: {privacyUrl}\n- **Sicurezza dei dati**\n- **Classificazione dei contenuti** (questionario)\n- **Pubblico di destinazione e contenuti**\n- **Annunci** e **Accesso all\'app** (se serve il login, fornisci un account di prova)\n- **Scheda dello store**: icona 512×512 e almeno 2 screenshot\n- Account personali nuovi: Google può richiedere un **test chiuso** con un numero minimo di tester prima della produzione'**
+  String playManualChecklist(String privacyUrl);
+
+  /// No description provided for @playDataSafety.
+  ///
+  /// In it, this message translates to:
+  /// **'Risposte per «Sicurezza dei dati»'**
+  String get playDataSafety;
+
+  /// No description provided for @playContentRating.
+  ///
+  /// In it, this message translates to:
+  /// **'Risposte per «Classificazione dei contenuti»'**
+  String get playContentRating;
+
+  /// No description provided for @playOtherDeclarations.
+  ///
+  /// In it, this message translates to:
+  /// **'Pubblico, annunci e accesso all\'app'**
+  String get playOtherDeclarations;
 }
 
 class _AppLocalizationsDelegate

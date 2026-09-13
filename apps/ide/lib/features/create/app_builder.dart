@@ -578,6 +578,14 @@ class AppBuilder extends ChangeNotifier {
 
   bool get androidBuilding => androidStatus == 'building';
 
+  /// The user answered "Not now" to "Upload to Play Store?".
+  bool playPromptDismissed = false;
+
+  void dismissPlayPrompt() {
+    playPromptDismissed = true;
+    notifyListeners();
+  }
+
   /// Runner-relative download path, e.g. `/artifacts/<ws>/<project>/app-release.apk`.
   String? get androidPath {
     final p = preview?.path;
@@ -590,6 +598,7 @@ class AppBuilder extends ChangeNotifier {
     if (running || androidBuilding) return;
     androidKind = kind;
     androidStatus = 'building';
+    playPromptDismissed = false;
     androidError = null;
     _cancelled = false;
     if (_cancelSignal.isCompleted) _cancelSignal = Completer<void>();

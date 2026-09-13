@@ -528,4 +528,130 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get skipMockups => 'Skip mockups and build the app';
+
+  @override
+  String get playAskUpload => 'Upload the app to Google Play Store?';
+
+  @override
+  String get playYesUpload => 'Yes, upload to Play Store';
+
+  @override
+  String get playNotNow => 'Not now';
+
+  @override
+  String get playFeeNotice =>
+      'You need a Google Play Console developer account. Cost: \$25 one time (not a subscription), paid directly to Google, not to FlutterCursor.';
+
+  @override
+  String get playPublishTitle => 'Publish to Google Play';
+
+  @override
+  String get playStepAccount => 'Google Play Console account';
+
+  @override
+  String get playOpenSignup => 'Create Play Console account';
+
+  @override
+  String get playHaveAccount => 'I already have an active Play Console account';
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get playStepCreateApp => 'Create the app in Play Console';
+
+  @override
+  String get playCreateAppGuide =>
+      'Google requires this step manually, only the first time:\n1. Open **Play Console** → **Create app**\n2. App name, default language, type **App**, **Free**\n3. Accept the declarations and press **Create app**\n\nThe package name is linked on the first upload: use the one below.';
+
+  @override
+  String get playPackageName => 'Package name';
+
+  @override
+  String get playOpenConsole => 'Open Play Console';
+
+  @override
+  String get playAppCreated => 'I created the app in Play Console';
+
+  @override
+  String get playStepConnect => 'Connect FlutterCursor to Google Play';
+
+  @override
+  String get playConnectGuide =>
+      'You need a **service account key** (once for all your apps):\n1. Open **Google Cloud** and enable **Google Play Android Developer API**\n2. **Service accounts** → **Create** → **Keys** → **Add key** → **JSON** (a file downloads)\n3. In **Play Console** → **Users and permissions** → **Invite new users** → paste the service account email → grant **release** permissions\n4. Open the downloaded JSON and **paste its whole content here**\n\nThe key stays encrypted on this device and is used only for uploads.';
+
+  @override
+  String get playOpenApiLibrary => 'Enable Google Play API';
+
+  @override
+  String get playOpenServiceAccounts => 'Service accounts';
+
+  @override
+  String get playServiceAccountJson => 'Service account JSON content';
+
+  @override
+  String get playStepListing => 'Store listing and upload';
+
+  @override
+  String get playGenerateWithAi =>
+      'Generate listing, privacy policy and answers with AI';
+
+  @override
+  String get playTitle => 'Title (max 30)';
+
+  @override
+  String get playShortDescription => 'Short description (max 80)';
+
+  @override
+  String get playFullDescription => 'Full description';
+
+  @override
+  String get playReleaseNotes => 'Release notes';
+
+  @override
+  String get playContactEmail => 'Contact email (required on Play Store)';
+
+  @override
+  String get playPrivacyUrl => 'Privacy policy link';
+
+  @override
+  String get playTrack => 'Where to publish';
+
+  @override
+  String get playTrackInternal => 'Internal testing (recommended first)';
+
+  @override
+  String get playTrackClosed => 'Closed testing';
+
+  @override
+  String get playTrackProduction => 'Production (public)';
+
+  @override
+  String get playUpload => 'Upload to Google Play';
+
+  @override
+  String get playStepFinish => 'Finish in Play Console';
+
+  @override
+  String playUploaded(String version, String track, String draft) {
+    return '✅ Uploaded! Version $version on track “$track”. $draft';
+  }
+
+  @override
+  String get playDraftNote =>
+      'Because the app was never published, Google saved it as a draft: complete the steps below and press “Send for review” in Play Console.';
+
+  @override
+  String playManualChecklist(String privacyUrl) {
+    return 'Google requires confirming these manually in Play Console (ready answers below):\n- **Privacy policy** → paste the link: $privacyUrl\n- **Data safety**\n- **Content rating** questionnaire\n- **Target audience and content**\n- **Ads** and **App access** (provide a test account if login is required)\n- **Store listing**: 512×512 icon and at least 2 screenshots\n- New personal accounts: Google may require **closed testing** with a minimum number of testers before production';
+  }
+
+  @override
+  String get playDataSafety => 'Answers for “Data safety”';
+
+  @override
+  String get playContentRating => 'Answers for “Content rating”';
+
+  @override
+  String get playOtherDeclarations => 'Audience, ads and app access';
 }

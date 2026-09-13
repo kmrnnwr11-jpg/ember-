@@ -546,6 +546,38 @@ class _ReadyCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(builder.androidKind == 'apk' ? l.apkInstallHint : l.aabHint, style: Theme.of(context).textTheme.bodySmall),
+                  if (builder.androidKind == 'aab' && !builder.playPromptDismissed) ...[
+                    const SizedBox(height: 12),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(l.playAskUpload, style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: 4),
+                            Text(l.playFeeNotice, style: Theme.of(context).textTheme.bodySmall),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              children: [
+                                FilledButton.icon(
+                                  key: const Key('goPublishPlay'),
+                                  onPressed: () => context.push(
+                                    '/projects/$projectId/play',
+                                    extra: [builder.prompt, ...builder.conversation.where((m) => m.role == 'user').skip(1).map((m) => m.text)].join('\n'),
+                                  ),
+                                  icon: const Icon(Icons.shop),
+                                  label: Text(l.playYesUpload),
+                                ),
+                                TextButton(onPressed: builder.dismissPlayPrompt, child: Text(l.playNotNow)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
                     key: const Key('backupKey'),

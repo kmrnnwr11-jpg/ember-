@@ -533,4 +533,133 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get skipMockups => 'Salta i mockup e crea l\'app';
+
+  @override
+  String get playAskUpload => 'Vuoi caricare l\'app sul Google Play Store?';
+
+  @override
+  String get playYesUpload => 'Sì, carica sul Play Store';
+
+  @override
+  String get playNotNow => 'Non ora';
+
+  @override
+  String get playFeeNotice =>
+      'Serve un account sviluppatore Google Play Console. Costo: 25 \$ una sola volta (non è un abbonamento), pagati direttamente a Google, non a FlutterCursor.';
+
+  @override
+  String get playPublishTitle => 'Pubblica su Google Play';
+
+  @override
+  String get playStepAccount => 'Account Google Play Console';
+
+  @override
+  String get playOpenSignup => 'Crea account Play Console';
+
+  @override
+  String get playHaveAccount => 'Ho già un account Play Console attivo';
+
+  @override
+  String get next => 'Avanti';
+
+  @override
+  String get playStepCreateApp => 'Crea l\'app nel Play Console';
+
+  @override
+  String get playCreateAppGuide =>
+      'Google richiede questo passaggio a mano, solo la prima volta:\n1. Apri **Play Console** → **Crea app**\n2. Nome app, lingua predefinita **Italiano**, tipo **App**, **Gratuita**\n3. Accetta le dichiarazioni e premi **Crea app**\n\nIl package name verrà associato automaticamente al primo caricamento: usa quello qui sotto.';
+
+  @override
+  String get playPackageName => 'Package name';
+
+  @override
+  String get playOpenConsole => 'Apri Play Console';
+
+  @override
+  String get playAppCreated => 'Ho creato l\'app nel Play Console';
+
+  @override
+  String get playStepConnect => 'Collega FlutterCursor a Google Play';
+
+  @override
+  String get playConnectGuide =>
+      'Serve una **chiave di account di servizio** (una sola volta per tutte le tue app):\n1. Apri **Google Cloud** e attiva l\'API **Google Play Android Developer API**\n2. Vai su **Account di servizio** → **Crea account di servizio** → poi **Chiavi** → **Aggiungi chiave** → **JSON** (si scarica un file)\n3. Nel **Play Console** → **Utenti e autorizzazioni** → **Invita nuovi utenti** → incolla l\'email dell\'account di servizio → dai i permessi di **rilascio** per le tue app\n4. Apri il file JSON scaricato e **incolla qui tutto il contenuto**\n\nLa chiave resta salvata cifrata su questo dispositivo e viene usata solo per il caricamento.';
+
+  @override
+  String get playOpenApiLibrary => 'Attiva API Google Play';
+
+  @override
+  String get playOpenServiceAccounts => 'Account di servizio';
+
+  @override
+  String get playServiceAccountJson =>
+      'Contenuto del file JSON dell\'account di servizio';
+
+  @override
+  String get playStepListing => 'Scheda dello store e caricamento';
+
+  @override
+  String get playGenerateWithAi =>
+      'Genera scheda, privacy policy e risposte con l\'AI';
+
+  @override
+  String get playTitle => 'Titolo (max 30)';
+
+  @override
+  String get playShortDescription => 'Descrizione breve (max 80)';
+
+  @override
+  String get playFullDescription => 'Descrizione completa';
+
+  @override
+  String get playReleaseNotes => 'Note di versione';
+
+  @override
+  String get playContactEmail =>
+      'Email di contatto (obbligatoria su Play Store)';
+
+  @override
+  String get playPrivacyUrl => 'Link privacy policy';
+
+  @override
+  String get playTrack => 'Dove pubblicare';
+
+  @override
+  String get playTrackInternal => 'Test interno (consigliato per iniziare)';
+
+  @override
+  String get playTrackClosed => 'Test chiuso';
+
+  @override
+  String get playTrackProduction => 'Produzione (pubblico)';
+
+  @override
+  String get playUpload => 'Carica su Google Play';
+
+  @override
+  String get playStepFinish => 'Completa nel Play Console';
+
+  @override
+  String playUploaded(String version, String track, String draft) {
+    return '✅ Caricata! Versione $version sulla traccia «$track». $draft';
+  }
+
+  @override
+  String get playDraftNote =>
+      'Poiché l\'app non è ancora mai stata pubblicata, Google l\'ha salvata come bozza: completa i passaggi qui sotto e premi «Invia per la revisione» nel Play Console.';
+
+  @override
+  String playManualChecklist(String privacyUrl) {
+    return 'Google richiede di confermare a mano queste voci nel Play Console (le risposte pronte sono qui sotto):\n- **Norme sulla privacy** → incolla il link: $privacyUrl\n- **Sicurezza dei dati**\n- **Classificazione dei contenuti** (questionario)\n- **Pubblico di destinazione e contenuti**\n- **Annunci** e **Accesso all\'app** (se serve il login, fornisci un account di prova)\n- **Scheda dello store**: icona 512×512 e almeno 2 screenshot\n- Account personali nuovi: Google può richiedere un **test chiuso** con un numero minimo di tester prima della produzione';
+  }
+
+  @override
+  String get playDataSafety => 'Risposte per «Sicurezza dei dati»';
+
+  @override
+  String get playContentRating =>
+      'Risposte per «Classificazione dei contenuti»';
+
+  @override
+  String get playOtherDeclarations => 'Pubblico, annunci e accesso all\'app';
 }

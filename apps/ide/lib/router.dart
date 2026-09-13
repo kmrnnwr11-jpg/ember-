@@ -7,6 +7,7 @@ import 'features/ai/settings_screen.dart';
 import 'features/auth/login_screen.dart';
 import 'features/create/create_app_screen.dart';
 import 'features/preview/fullscreen_app_screen.dart';
+import 'features/store/play_publish_screen.dart';
 import 'features/mockups/mockup_gallery_screen.dart';
 import 'features/editor/workspace_screen.dart';
 import 'features/projects/projects_screen.dart';
@@ -52,6 +53,13 @@ final routerProvider = Provider<GoRouter>((ref) {
               initialPanel: state.uri.queryParameters['panel'],
             ),
             routes: [
+              GoRoute(
+                path: 'play',
+                builder: (_, state) => PlayPublishScreen(
+                  projectId: state.pathParameters['projectId']!,
+                  appDescription: state.extra is String ? state.extra! as String : '',
+                ),
+              ),
               GoRoute(
                 path: 'create',
                 builder: (_, state) => CreateAppScreen(

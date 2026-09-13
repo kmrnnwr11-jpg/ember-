@@ -72,6 +72,16 @@ class RunnerApi {
   Future<Map<String, dynamic>> androidInfo(String projectId) =>
       _call(() => _dio.get('/v1/projects/$projectId/android-info'), (d) => d as Map<String, dynamic>);
 
+  /// Uploads the signed AAB to Google Play (edit → bundle → listing → track → commit).
+  Future<Map<String, dynamic>> publishToPlay(String projectId, Map<String, dynamic> body) => _call(
+    () => _dio.post('/v1/projects/$projectId/play/publish', data: body, options: Options(receiveTimeout: const Duration(minutes: 15), sendTimeout: const Duration(minutes: 2))),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Stores the privacy policy and returns its public path.
+  Future<String> savePrivacyPolicy(String projectId, String markdown, String appName) =>
+      _call(() => _dio.put('/v1/projects/$projectId/store/privacy', data: {'markdown': markdown, 'appName': appName}), (d) => d['path'] as String);
+
   Future<String> jobLog(String jobId) =>
       _call(() => _dio.get('/v1/jobs/$jobId'), (d) => d['log'] as String? ?? '');
 }

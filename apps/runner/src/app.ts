@@ -16,6 +16,8 @@ import { WatchHub } from './fs.js';
 import { JobManager, jobPublic } from './jobs.js';
 import { ARTIFACTS, Services, TEMPLATES, type SignedBuildPreparer } from './services.js';
 import { androidAppInfo, ensureUploadKey } from './signing.js';
+import { parseServiceAccount, PlayError, privacyHtml, publishToPlay } from './play.js';
+import { readFile as readFileAsync, writeFile as writeFileAsync, mkdir as mkdirAsync } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
 import { JsonStore, SupabaseStore, type Store } from './store.js';
 import { DockerDriver } from './workspaces/docker.js';
@@ -37,6 +39,7 @@ export interface AppDeps {
   prepareSigned?: SignedBuildPreparer;
   ensureKey?: typeof ensureUploadKey;
   androidInfo?: typeof androidAppInfo;
+  playFetch?: typeof fetch;
 }
 
 export async function buildApp(
@@ -47,7 +50,7 @@ export async function buildApp(
     logger: {
       level: cfg.LOG_LEVEL,
       // Never log credentials (§4).
-      redact: ['req.headers.authorization', 'req.query.token', 'req.headers["x-provider-key"]', 'req.headers["x-provider-base-url"]'],
+      redact: ['req.headers.authorization', 'req.query.token', 'req.headers["x-provider-key"]', 'req.headers["x-provider-base-url"]', 'req.body.serviceAccount'],
     },
     bodyLimit: cfg.MAX_WS_FILE_BYTES + 1024 * 64,
     // preview.<domain>/<ws>/<project>/… is served by the /preview route.
@@ -109,6 +112,18 @@ export async function buildApp(
     reply.header('Content-Disposition', `attachment; filename="${link.fileName}"`);
     reply.header('Cache-Control', 'no-store');
     return reply.sendFile(path.basename(link.keystorePath), path.dirname(link.keystorePath), { contentType: false });
+  });
+
+  // Public privacy policy page (the URL required by Google Play).
+  app.get('/privacy/:workspaceId/:projectId', async (req, reply) => {
+    const { workspaceId, projectId } = req.params as { workspaceId: string; projectId: string };
+    const project = await store.getProject(projectId);
+    if (!project || project.workspaceId !== workspaceId) return reply.status(404).type('text/html').send('<h1>Not found</h1>');
+    const raw = await readFileAsync(path.join(services.projectRoot(project), 'store', 'privacy_policy.md'), 'utf8').catch(() => null);
+    if (!raw) return reply.status(404).type('text/html').send('<h1>Privacy policy not published yet</h1>');
+    const appName = /^<!-- (.*) -->/.exec(raw)?.[1] ?? project.name;
+    reply.header('Cache-Control', 'public, max-age=300');
+    return reply.type('text/html; charset=utf-8').send(privacyHtml(`Privacy Policy – ${appName}`, raw.replace(/^<!-- .* -->\n/, '')));
   });
 
   // ---------------- Android artifacts (same capability-link model as preview) ----------------
@@ -240,6 +255,68 @@ export async function buildApp(
       for (const [t, v] of keyLinks) if (v.expires < Date.now()) keyLinks.delete(t);
       keyLinks.set(token, { keystorePath: key.keystorePath, fileName: `${project.name}-upload-keystore.jks`, expires });
       return { path: `/signing-download/${token}`, alias: key.alias, password: key.storePassword, expiresAt: new Date(expires).toISOString() };
+    });
+
+    // Publish the signed AAB to Google Play with the user's service account (not stored).
+    r.post('/v1/projects/:projectId/play/publish', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const body = z
+        .object({
+          serviceAccount: z.string().min(50).max(20000),
+          track: z.enum(['internal', 'alpha', 'beta', 'production']).default('internal'),
+          status: z.enum(['draft', 'completed']).default('completed'),
+          listing: z
+            .object({
+              language: z.string().default('it-IT'),
+              title: z.string().max(30).optional(),
+              shortDescription: z.string().max(80).optional(),
+              fullDescription: z.string().max(4000).optional(),
+            })
+            .optional(),
+          releaseNotes: z.object({ language: z.string().default('it-IT'), text: z.string().max(500) }).optional(),
+          contactEmail: z.string().email().optional(),
+        })
+        .parse(req.body);
+      const root = services.projectRoot(project);
+      const aabPath = path.join(root, ARTIFACTS['app-release.aab']!.rel);
+      if (!(await stat(aabPath).catch(() => null))) {
+        return reply.status(409).send({ code: 'not_ready', message: 'Generate the signed AAB first' });
+      }
+      const info = await (deps.androidInfo ?? androidAppInfo)(cfg, project.id, root, project.name);
+      if (!info.applicationId) return reply.status(409).send({ code: 'not_ready', message: 'Android package name not found' });
+      try {
+        const result = await publishToPlay(
+          {
+            serviceAccount: parseServiceAccount(body.serviceAccount),
+            packageName: info.applicationId,
+            aabPath,
+            track: body.track,
+            status: body.status,
+            listing: body.listing,
+            releaseNotes: body.releaseNotes,
+            contactEmail: body.contactEmail,
+          },
+          deps.playFetch ?? fetch,
+        );
+        return { ...result, packageName: info.applicationId };
+      } catch (e) {
+        if (e instanceof PlayError) {
+          return reply.status(e.code === 'bad_request' ? 400 : e.status && e.status < 500 ? 422 : 502).send({ code: e.code, message: e.message });
+        }
+        throw e;
+      }
+    });
+
+    // Save the AI-written privacy policy; served publicly at /privacy/<ws>/<project>.
+    r.put('/v1/projects/:projectId/store/privacy', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const { markdown, appName } = z.object({ markdown: z.string().min(50).max(60000), appName: z.string().max(80).optional() }).parse(req.body);
+      const dir = path.join(services.projectRoot(project), 'store');
+      await mkdirAsync(dir, { recursive: true });
+      await writeFileAsync(path.join(dir, 'privacy_policy.md'), `<!-- ${appName ?? project.name} -->\n${markdown}`);
+      return { path: `/privacy/${project.workspaceId}/${project.id}` };
     });
 
     r.get('/v1/projects/:projectId/android-info', async (req) => {

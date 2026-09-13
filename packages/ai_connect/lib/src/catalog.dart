@@ -75,6 +75,8 @@ const builtInCatalog = <AiModel>[
   AiModel(provider: AiProviderId.openai, id: 'gpt-5', label: 'GPT-5', inputPerMTok: 1.25, outputPerMTok: 10, contextTokens: 400000),
   AiModel(provider: AiProviderId.openai, id: 'gpt-5-mini', label: 'GPT-5 mini', inputPerMTok: 0.25, outputPerMTok: 2, contextTokens: 400000, tags: ['fast', 'autocomplete']),
   AiModel(provider: AiProviderId.openai, id: 'text-embedding-3-small', label: 'text-embedding-3-small', inputPerMTok: 0.02, outputPerMTok: 0, tools: false, tags: ['embeddings']),
+  AiModel(provider: AiProviderId.xai, id: 'grok-4', label: 'Grok 4', inputPerMTok: 3, outputPerMTok: 15, contextTokens: 256000),
+  AiModel(provider: AiProviderId.xai, id: 'grok-3-mini', label: 'Grok 3 mini', inputPerMTok: 0.30, outputPerMTok: 0.50, contextTokens: 131072, tags: ['fast']),
   AiModel(provider: AiProviderId.gemini, id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', inputPerMTok: 1.25, outputPerMTok: 10, contextTokens: 1000000),
   AiModel(provider: AiProviderId.gemini, id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', inputPerMTok: 0.30, outputPerMTok: 2.50, contextTokens: 1000000, tags: ['fast', 'autocomplete']),
   AiModel(provider: AiProviderId.gemini, id: 'gemini-embedding-001', label: 'Gemini Embedding', inputPerMTok: 0.15, outputPerMTok: 0, tools: false, tags: ['embeddings']),
@@ -86,4 +88,5 @@ AiProvider createProvider(AiProviderId provider, AiEndpoint endpoint) => switch 
   AiProviderId.openai => OpenAiProvider(endpoint),
   AiProviderId.openaiCompatible => OpenAiProvider(endpoint, compatible: true),
   AiProviderId.gemini => GeminiProvider(endpoint),
+  AiProviderId.xai => OpenAiProvider.xai(endpoint),
 };

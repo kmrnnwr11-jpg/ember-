@@ -114,6 +114,12 @@ final runnerApiProvider = FutureProvider<RunnerApi>((ref) async {
   return RunnerApi(session.runnerUrl, token: await session.token());
 });
 
+/// Runner capabilities (`GET /v1/health`), e.g. whether Claude Code is usable.
+final runnerHealthProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final api = await ref.watch(runnerApiProvider.future);
+  return api.health();
+});
+
 final runnerSocketProvider = Provider<RunnerSocket>((ref) {
   final session = ref.watch(sessionProvider).value;
   if (session == null) throw StateError('not signed in');

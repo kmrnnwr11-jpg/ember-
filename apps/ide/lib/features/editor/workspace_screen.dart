@@ -82,9 +82,12 @@ final _projectProvider = FutureProvider.autoDispose.family<Project, String>((ref
 /// Responsive IDE shell: tree | editor + terminal | preview on wide screens,
 /// bottom navigation on phones.
 class WorkspaceScreen extends ConsumerStatefulWidget {
-  const WorkspaceScreen({super.key, required this.projectId});
+  const WorkspaceScreen({super.key, required this.projectId, this.initialPanel});
 
   final String projectId;
+
+  /// `preview` or `ai` to open that side panel on arrival.
+  final String? initialPanel;
 
   static const wideBreakpoint = 840.0;
 
@@ -103,6 +106,19 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   double _sideWidth = 440;
   bool _terminalOpen = false;
   _SidePanel? _side;
+
+  @override
+  void initState() {
+    super.initState();
+    switch (widget.initialPanel) {
+      case 'preview':
+        _side = _SidePanel.preview;
+        _mobileTab = _MobileTab.preview;
+      case 'ai':
+        _side = _SidePanel.ai;
+        _mobileTab = _MobileTab.ai;
+    }
+  }
 
   void _toggleSide(_SidePanel panel) => setState(() {
     _side = _side == panel ? null : panel;

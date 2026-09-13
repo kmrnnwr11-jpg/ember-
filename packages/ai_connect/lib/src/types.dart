@@ -3,6 +3,7 @@ enum AiProviderId {
   anthropic('Anthropic', 'Claude'),
   openai('OpenAI', 'ChatGPT'),
   gemini('Google', 'Gemini'),
+  xai('xAI', 'Grok'),
   openaiCompatible('OpenAI-compatible', 'Ollama / OpenRouter / Groq');
 
   const AiProviderId(this.vendor, this.product);

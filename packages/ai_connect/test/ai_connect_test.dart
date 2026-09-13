@@ -161,6 +161,17 @@ void main() {
     });
   });
 
+  test('Grok (xAI) uses Chat Completions at api.x.ai with max_tokens', () async {
+    final cap = Capture();
+    final p = createProvider(AiProviderId.xai, const AiEndpoint.direct(apiKey: 'xai-k')) as OpenAiProvider;
+    final grok = OpenAiProvider.xai(const AiEndpoint.direct(apiKey: 'xai-k'), client: cap.client('data: [DONE]\n\n'));
+    expect(p.id, AiProviderId.xai);
+    await collect(grok.chat(model: 'grok-4', messages: const [AiMessage.user('hi')]));
+    expect(cap.request!.url.toString(), 'https://api.x.ai/v1/chat/completions');
+    expect(cap.request!.headers['authorization'], 'Bearer xai-k');
+    expect(cap.body!['max_tokens'], 16000);
+  });
+
   group('Gemini', () {
     test('streams text + function call, maps finish reason and usage', () async {
       final cap = Capture();

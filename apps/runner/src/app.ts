@@ -7,6 +7,7 @@ import websocket from '@fastify/websocket';
 import { PathError, safeResolve } from './paths.js';
 import { PreviewService } from './preview.js';
 import { DEFAULT_UPSTREAMS, registerAiRoutes } from './ai.js';
+import { ClaudeCodeEngine } from './agent_cli.js';
 import { z } from 'zod';
 import { Authenticator, bearer, type AuthUser } from './auth.js';
 import type { Config } from './config.js';
@@ -30,6 +31,7 @@ export interface AppDeps {
   store?: Store;
   driver?: WorkspaceDriver;
   aiUpstreams?: Partial<typeof DEFAULT_UPSTREAMS>;
+  claudeCode?: ClaudeCodeEngine;
 }
 
 export async function buildApp(
@@ -57,6 +59,7 @@ export async function buildApp(
   const auth = new Authenticator(cfg);
   const hub = new WatchHub();
   const preview = new PreviewService(cfg, services, hub);
+  const claudeCode = deps.claudeCode ?? new ClaudeCodeEngine(cfg);
 
   await app.register(cors, {
     origin: cfg.CORS_ORIGINS === '*' ? true : cfg.CORS_ORIGINS.split(',').map((s) => s.trim()),
@@ -86,6 +89,7 @@ export async function buildApp(
 
   app.addHook('onClose', async () => {
     preview.stopAll();
+    claudeCode.cancelAll();
     await hub.closeAll();
   });
 
@@ -139,7 +143,8 @@ export async function buildApp(
     driver: driver.kind,
     store: cfg.supabaseEnabled ? 'supabase' : 'json',
     devAuth: cfg.DEV_AUTH,
-    version: '0.1.0',
+    version: '0.2.0',
+    engines: { claudeCode: await claudeCode.isAvailable() },
   }));
 
   app.post('/v1/auth/dev-login', async (req, reply) => {
@@ -216,7 +221,7 @@ export async function buildApp(
       socket.close(4401, 'unauthorized');
       return;
     }
-    new Session(socket, user, services, hub, preview, req.log);
+    new Session(socket, user, services, hub, preview, claudeCode, req.log);
   });
 
   return { app, services, preview };

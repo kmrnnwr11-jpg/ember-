@@ -42,3 +42,12 @@
 - The compatible-URL SSRF check does not resolve DNS; production Runners need egress filtering.
 - Editor: minimap and multi-cursor are not provided by re_editor 0.8; evaluate in Phase 4.
 - Only the `empty` template exists (templates package in Phase 6).
+
+## "Crea App" (§1B) — first version, brought forward on request
+
+- Home: "Descrivi la tua app" + engine choice (Gemini, Claude Code, Claude, ChatGPT, Grok) → project created → build screen.
+- API engines: generate files (fenced blocks with paths, write allowlist, package name enforced) → `flutter pub get` → `flutter analyze` → up to 3 AI fix rounds → web build → preview. Follow-up "change" prompts.
+- Claude Code engine: Runner runs the local `claude` CLI headless in the project (prompt via stdin, restricted tools, no MCP), streams progress as `agent.event`; then web build.
+- Verified live with Claude Code: "Acqua di oggi" app, 9 files, analyze clean, 2 tests passing, preview served (≈4.5 min).
+- Not yet: 5 mockup styles, "give me the prompt" mode, step-by-step mode, resume after app restart, push notification, summary/clarifying questions.
+- Local workspaces now default to `C:\FlutterCursor\workspaces` in dev so Claude Code does not inherit unrelated CLAUDE.md files from the user's home directory.

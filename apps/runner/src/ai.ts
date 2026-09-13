@@ -6,18 +6,20 @@ import { fileURLToPath } from 'node:url';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Config } from './config.js';
 
-export type ProviderId = 'anthropic' | 'openai' | 'gemini' | 'openaiCompatible';
+export type ProviderId = 'anthropic' | 'openai' | 'gemini' | 'xai' | 'openaiCompatible';
 
 export const DEFAULT_UPSTREAMS: Record<Exclude<ProviderId, 'openaiCompatible'>, string> = {
   anthropic: 'https://api.anthropic.com',
   openai: 'https://api.openai.com',
   gemini: 'https://generativelanguage.googleapis.com',
+  xai: 'https://api.x.ai',
 };
 
 /** Only these upstream paths may be proxied (no arbitrary provider API access). */
 const ALLOWED_PATHS: Record<ProviderId, RegExp> = {
   anthropic: /^v1\/messages(\/count_tokens)?$/,
   openai: /^v1\/(chat\/completions|embeddings)$/,
+  xai: /^v1\/chat\/completions$/,
   openaiCompatible: /^v1\/(chat\/completions|embeddings)$/,
   gemini: /^v1beta\/models\/[\w.-]+:(streamGenerateContent|generateContent|batchEmbedContents|countTokens)$/,
 };

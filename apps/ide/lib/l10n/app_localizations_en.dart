@@ -336,4 +336,94 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get stopped => 'stopped';
+
+  @override
+  String get badgeFreeTier => 'free*';
+
+  @override
+  String get badgeSubscription => 'subscription';
+
+  @override
+  String get badgePaid => 'paid';
+
+  @override
+  String needsKey(String name) {
+    return 'Needs a $name API key: add it in settings.';
+  }
+
+  @override
+  String get claudeCodeUnavailable =>
+      'Claude Code is not available on this Runner (it must be installed and logged in on the Runner\'s PC).';
+
+  @override
+  String get appPromptHint =>
+      'E.g.: a recipe app with photos, shopping list and cooking timer, warm colors…';
+
+  @override
+  String get chooseAi => 'Which AI?';
+
+  @override
+  String get createApp => 'Create app';
+
+  @override
+  String get openEditor => 'Editor';
+
+  @override
+  String get describeYourApp => 'Describe your app';
+
+  @override
+  String get describeYourAppHint =>
+      'Say what it should do and look like: the AI builds the complete app, checks errors and shows it to you. (*Gemini: Google\'s free tier with daily limits)';
+
+  @override
+  String get improveApp => 'Want to change something?';
+
+  @override
+  String get improveAppHint => 'E.g.: add dark mode, make photos bigger…';
+
+  @override
+  String get applyChange => 'Apply change';
+
+  @override
+  String get buildLog => 'Details';
+
+  @override
+  String get stepClaudeCode => 'Claude Code writes and verifies the code';
+
+  @override
+  String stepWriting(int count) {
+    return 'Writing code ($count files)';
+  }
+
+  @override
+  String get stepDependencies => 'Installing dependencies';
+
+  @override
+  String get stepChecking => 'Checking for errors';
+
+  @override
+  String stepFixing(int round) {
+    return 'Fixing errors (attempt $round)';
+  }
+
+  @override
+  String get stepBuilding => 'Building the app';
+
+  @override
+  String get stepReady => 'Ready';
+
+  @override
+  String get appReadyTitle => 'Your app is ready 🎉';
+
+  @override
+  String get openApp => 'Open app';
+
+  @override
+  String get viewCode => 'View code';
+
+  @override
+  String get buildCancelled => 'Build stopped';
+
+  @override
+  String get buildFailedTitle => 'I couldn\'t finish the app';
 }

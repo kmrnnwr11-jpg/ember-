@@ -40,6 +40,7 @@ class AiEndpoint {
     AiProviderId.anthropic: 'https://api.anthropic.com',
     AiProviderId.openai: 'https://api.openai.com',
     AiProviderId.gemini: 'https://generativelanguage.googleapis.com',
+    AiProviderId.xai: 'https://api.x.ai',
   };
 
   String baseFor(AiProviderId provider) {

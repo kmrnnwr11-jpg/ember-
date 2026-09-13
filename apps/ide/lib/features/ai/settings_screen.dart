@@ -11,6 +11,7 @@ const _keyPages = {
   AiProviderId.anthropic: 'https://console.anthropic.com/settings/keys',
   AiProviderId.openai: 'https://platform.openai.com/api-keys',
   AiProviderId.gemini: 'https://aistudio.google.com/apikey',
+  AiProviderId.xai: 'https://console.x.ai',
 };
 
 class AiSettingsScreen extends ConsumerWidget {
@@ -30,7 +31,7 @@ class AiSettingsScreen extends ConsumerWidget {
           children: [
             Text(l.apiKeysHint, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 16),
-            for (final p in [AiProviderId.anthropic, AiProviderId.openai, AiProviderId.gemini])
+            for (final p in [AiProviderId.gemini, AiProviderId.anthropic, AiProviderId.openai, AiProviderId.xai])
               _KeyTile(provider: p, settings: s),
             _CompatibleTile(settings: s),
             const Divider(height: 32),

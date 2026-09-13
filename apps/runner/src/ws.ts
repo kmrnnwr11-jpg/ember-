@@ -2,6 +2,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { WebSocket } from 'ws';
 import type { AuthUser } from './auth.js';
 import type { FsChange, WatchHub } from './fs.js';
+import type { AgentEvent, AgentRun, ClaudeCodeEngine } from './agent_cli.js';
 import { jobPublic, type Job } from './jobs.js';
 import type { PreviewInfo, PreviewService } from './preview.js';
 import { PtySessions } from './pty.js';
@@ -52,6 +53,14 @@ export class Session {
   private readonly onPreviewFailed = (ownerId: string, projectId: string, jobId: string) => {
     if (ownerId === this.user.id) this.send({ type: 'preview.failed', payload: { projectId, jobId } });
   };
+  private readonly onAgentEvent = (run: AgentRun, event: AgentEvent) => {
+    if (run.ownerId === this.user.id) {
+      this.send({ type: 'agent.event', payload: { runId: run.id, projectId: run.projectId, event: { ...event } } });
+    }
+  };
+  private readonly onAgentStatus = (run: AgentRun) => {
+    if (run.ownerId === this.user.id) this.send({ type: 'agent.status', payload: { ...run } });
+  };
   private readonly ptys = new PtySessions(
     (ptyId, data) => this.send({ type: 'pty.output', payload: { ptyId, data } }),
     (ptyId, exitCode) => this.send({ type: 'pty.exit', payload: { ptyId, exitCode } }),
@@ -63,8 +72,11 @@ export class Session {
     private readonly services: Services,
     private readonly hub: WatchHub,
     private readonly preview: PreviewService,
+    private readonly claudeCode: ClaudeCodeEngine,
     private readonly log: FastifyBaseLogger,
   ) {
+    claudeCode.on('event', this.onAgentEvent);
+    claudeCode.on('status', this.onAgentStatus);
     hub.on('change', this.onFsChange);
     services.jobs.on('status', this.onJobStatus);
     services.jobs.on('log', this.onJobLog);
@@ -94,6 +106,8 @@ export class Session {
     this.preview.off('ready', this.onPreviewReady);
     this.preview.off('building', this.onPreviewBuilding);
     this.preview.off('failed', this.onPreviewFailed);
+    this.claudeCode.off('event', this.onAgentEvent);
+    this.claudeCode.off('status', this.onAgentStatus);
     this.ptys.closeAll();
     for (const release of this.watches.values()) release();
     this.watches.clear();
@@ -218,6 +232,23 @@ export class Session {
       case 'preview.status': {
         const { project } = await this.services.ownedProject(uid, str(p.projectId, 'projectId'));
         return { ...(await this.preview.info(project)) };
+      }
+      case 'agent.start': {
+        if (p.engine !== 'claude-code') throw Object.assign(new Error('unsupported engine'), { code: 'bad_request' });
+        if (!(await this.claudeCode.isAvailable())) {
+          throw Object.assign(new Error('Claude Code is not available on this Runner'), { code: 'unsupported' });
+        }
+        const { fs, project } = await this.services.projectFs(uid, str(p.projectId, 'projectId'));
+        const prompt = str(p.prompt, 'prompt');
+        if (!prompt.trim() || prompt.length > 20000) throw Object.assign(new Error('prompt must be 1-20000 characters'), { code: 'bad_request' });
+        if (this.claudeCode.activeFor(project.id)) throw Object.assign(new Error('an agent is already running on this project'), { code: 'bad_request' });
+        const run = this.claudeCode.start({ ownerId: uid, projectId: project.id, cwd: fs.root, prompt, resume: p.resume === true });
+        return { ...run };
+      }
+      case 'agent.cancel': {
+        const run = this.claudeCode.get(str(p.runId, 'runId'));
+        if (!run || run.ownerId !== uid) throw Object.assign(new Error('run not found'), { code: 'not_found' });
+        return { cancelled: this.claudeCode.cancel(run.id) };
       }
       case 'job.cancel': {
         const job = this.services.ownedJob(uid, str(p.jobId, 'jobId'));

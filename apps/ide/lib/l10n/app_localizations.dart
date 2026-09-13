@@ -709,6 +709,168 @@ abstract class AppLocalizations {
   /// In it, this message translates to:
   /// **'interrotta'**
   String get stopped;
+
+  /// No description provided for @badgeFreeTier.
+  ///
+  /// In it, this message translates to:
+  /// **'gratis*'**
+  String get badgeFreeTier;
+
+  /// No description provided for @badgeSubscription.
+  ///
+  /// In it, this message translates to:
+  /// **'abbonamento'**
+  String get badgeSubscription;
+
+  /// No description provided for @badgePaid.
+  ///
+  /// In it, this message translates to:
+  /// **'a pagamento'**
+  String get badgePaid;
+
+  /// No description provided for @needsKey.
+  ///
+  /// In it, this message translates to:
+  /// **'Serve una chiave API {name}: aggiungila nelle impostazioni.'**
+  String needsKey(String name);
+
+  /// No description provided for @claudeCodeUnavailable.
+  ///
+  /// In it, this message translates to:
+  /// **'Claude Code non è disponibile su questo Runner (serve Claude Code installato e con login sul PC del Runner).'**
+  String get claudeCodeUnavailable;
+
+  /// No description provided for @appPromptHint.
+  ///
+  /// In it, this message translates to:
+  /// **'Es.: un\'app di ricette con foto, lista della spesa e timer di cottura, colori caldi…'**
+  String get appPromptHint;
+
+  /// No description provided for @chooseAi.
+  ///
+  /// In it, this message translates to:
+  /// **'Con quale AI?'**
+  String get chooseAi;
+
+  /// No description provided for @createApp.
+  ///
+  /// In it, this message translates to:
+  /// **'Crea app'**
+  String get createApp;
+
+  /// No description provided for @openEditor.
+  ///
+  /// In it, this message translates to:
+  /// **'Editor'**
+  String get openEditor;
+
+  /// No description provided for @describeYourApp.
+  ///
+  /// In it, this message translates to:
+  /// **'Descrivi la tua app'**
+  String get describeYourApp;
+
+  /// No description provided for @describeYourAppHint.
+  ///
+  /// In it, this message translates to:
+  /// **'Scrivi cosa deve fare e come deve essere: l\'AI crea l\'app completa, controlla gli errori e te la mostra. (*Gemini: quota gratuita di Google con limiti giornalieri)'**
+  String get describeYourAppHint;
+
+  /// No description provided for @improveApp.
+  ///
+  /// In it, this message translates to:
+  /// **'Vuoi cambiare qualcosa?'**
+  String get improveApp;
+
+  /// No description provided for @improveAppHint.
+  ///
+  /// In it, this message translates to:
+  /// **'Es.: aggiungi la modalità scura, metti le foto più grandi…'**
+  String get improveAppHint;
+
+  /// No description provided for @applyChange.
+  ///
+  /// In it, this message translates to:
+  /// **'Applica modifica'**
+  String get applyChange;
+
+  /// No description provided for @buildLog.
+  ///
+  /// In it, this message translates to:
+  /// **'Dettagli'**
+  String get buildLog;
+
+  /// No description provided for @stepClaudeCode.
+  ///
+  /// In it, this message translates to:
+  /// **'Claude Code scrive e verifica il codice'**
+  String get stepClaudeCode;
+
+  /// No description provided for @stepWriting.
+  ///
+  /// In it, this message translates to:
+  /// **'Scrittura del codice ({count} file)'**
+  String stepWriting(int count);
+
+  /// No description provided for @stepDependencies.
+  ///
+  /// In it, this message translates to:
+  /// **'Installazione dipendenze'**
+  String get stepDependencies;
+
+  /// No description provided for @stepChecking.
+  ///
+  /// In it, this message translates to:
+  /// **'Controllo errori'**
+  String get stepChecking;
+
+  /// No description provided for @stepFixing.
+  ///
+  /// In it, this message translates to:
+  /// **'Correzione errori (tentativo {round})'**
+  String stepFixing(int round);
+
+  /// No description provided for @stepBuilding.
+  ///
+  /// In it, this message translates to:
+  /// **'Compilazione dell\'app'**
+  String get stepBuilding;
+
+  /// No description provided for @stepReady.
+  ///
+  /// In it, this message translates to:
+  /// **'Pronta'**
+  String get stepReady;
+
+  /// No description provided for @appReadyTitle.
+  ///
+  /// In it, this message translates to:
+  /// **'La tua app è pronta 🎉'**
+  String get appReadyTitle;
+
+  /// No description provided for @openApp.
+  ///
+  /// In it, this message translates to:
+  /// **'Apri app'**
+  String get openApp;
+
+  /// No description provided for @viewCode.
+  ///
+  /// In it, this message translates to:
+  /// **'Vedi codice'**
+  String get viewCode;
+
+  /// No description provided for @buildCancelled.
+  ///
+  /// In it, this message translates to:
+  /// **'Creazione interrotta'**
+  String get buildCancelled;
+
+  /// No description provided for @buildFailedTitle.
+  ///
+  /// In it, this message translates to:
+  /// **'Non sono riuscito a completare l\'app'**
+  String get buildFailedTitle;
 }
 
 class _AppLocalizationsDelegate

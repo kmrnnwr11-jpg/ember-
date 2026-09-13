@@ -26,14 +26,26 @@
   "statusReady": "Pronto",
   "statusError": "Errore",
   "creatingProject": "Creazione di {name}",
-  "@creatingProject": { "placeholders": { "name": { "type": "String" } } },
+  "@creatingProject": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "files": "File",
   "editor": "Editor",
   "newFile": "Nuovo file",
   "newFolder": "Nuova cartella",
   "fileName": "Nome",
   "deleteConfirm": "Eliminare {path}?",
-  "@deleteConfirm": { "placeholders": { "path": { "type": "String" } } },
+  "@deleteConfirm": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "save": "Salva",
   "saved": "Salvato",
   "unsavedChanges": "Modifiche non salvate",
@@ -41,14 +53,26 @@
   "noFileOpen": "Apri un file dall'albero a sinistra.",
   "conflictTitle": "File modificato altrove",
   "conflictBody": "{path} è cambiato sul Runner dopo che l'hai aperto.",
-  "@conflictBody": { "placeholders": { "path": { "type": "String" } } },
+  "@conflictBody": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "reload": "Ricarica",
   "overwrite": "Sovrascrivi",
   "connected": "Connesso",
   "connecting": "Connessione…",
   "disconnected": "Disconnesso",
   "error": "Errore: {message}",
-  "@error": { "placeholders": { "message": { "type": "String" } } },
+  "@error": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "binaryFile": "File binario o troppo grande: non modificabile nell'editor.",
   "terminal": "Terminale",
   "newTerminal": "Nuovo terminale",
@@ -82,7 +106,13 @@
   "testKey": "Prova",
   "testing": "Prova in corso…",
   "keyWorks": "Funziona ✓ ({model})",
-  "@keyWorks": { "placeholders": { "model": { "type": "String" } } },
+  "@keyWorks": {
+    "placeholders": {
+      "model": {
+        "type": "String"
+      }
+    }
+  },
   "getKey": "Ottieni una chiave",
   "addModelId": "Aggiungi ID modello",
   "selectModel": "Scegli modello",
@@ -90,13 +120,25 @@
   "notConfigured": "non configurato",
   "per1k": "per 1k token (in/out)",
   "applyTo": "Applica a {path}",
-  "@applyTo": { "placeholders": { "path": { "type": "String" } } },
+  "@applyTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "noChanges": "Nessuna differenza rispetto al file attuale.",
   "accept": "Accetta",
   "reject": "Rifiuta",
   "apply": "Applica",
   "applied": "Modifica applicata a {path}: controlla e salva.",
-  "@applied": { "placeholders": { "path": { "type": "String" } } },
+  "@applied": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "applyNoTarget": "Apri un file o chiedi all'AI di indicare il percorso del file.",
   "clearChat": "Svuota chat",
   "chatEmpty": "Chiedi qualcosa sul tuo progetto. Il file aperto viene inviato come contesto.",
@@ -108,5 +150,53 @@
   "copied": "Copiato",
   "truncated": "risposta troncata (limite token)",
   "refused": "rifiutata dal modello",
-  "stopped": "interrotta"
+  "stopped": "interrotta",
+  "badgeFreeTier": "gratis*",
+  "badgeSubscription": "abbonamento",
+  "badgePaid": "a pagamento",
+  "needsKey": "Serve una chiave API {name}: aggiungila nelle impostazioni.",
+  "@needsKey": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "claudeCodeUnavailable": "Claude Code non è disponibile su questo Runner (serve Claude Code installato e con login sul PC del Runner).",
+  "appPromptHint": "Es.: un'app di ricette con foto, lista della spesa e timer di cottura, colori caldi…",
+  "chooseAi": "Con quale AI?",
+  "createApp": "Crea app",
+  "openEditor": "Editor",
+  "describeYourApp": "Descrivi la tua app",
+  "describeYourAppHint": "Scrivi cosa deve fare e come deve essere: l'AI crea l'app completa, controlla gli errori e te la mostra. (*Gemini: quota gratuita di Google con limiti giornalieri)",
+  "improveApp": "Vuoi cambiare qualcosa?",
+  "improveAppHint": "Es.: aggiungi la modalità scura, metti le foto più grandi…",
+  "applyChange": "Applica modifica",
+  "buildLog": "Dettagli",
+  "stepClaudeCode": "Claude Code scrive e verifica il codice",
+  "stepWriting": "Scrittura del codice ({count} file)",
+  "@stepWriting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stepDependencies": "Installazione dipendenze",
+  "stepChecking": "Controllo errori",
+  "stepFixing": "Correzione errori (tentativo {round})",
+  "@stepFixing": {
+    "placeholders": {
+      "round": {
+        "type": "int"
+      }
+    }
+  },
+  "stepBuilding": "Compilazione dell'app",
+  "stepReady": "Pronta",
+  "appReadyTitle": "La tua app è pronta 🎉",
+  "openApp": "Apri app",
+  "viewCode": "Vedi codice",
+  "buildCancelled": "Creazione interrotta",
+  "buildFailedTitle": "Non sono riuscito a completare l'app"
 }

@@ -9,15 +9,21 @@ import 'anthropic.dart' show completionSystemPrompt, completionUserPrompt, strip
 /// ChatGPT and OpenAI-compatible servers (Ollama, OpenRouter, Groq, …) via
 /// Chat Completions — the most widely implemented streaming dialect.
 class OpenAiProvider implements AiProvider {
-  OpenAiProvider(this.endpoint, {this.compatible = false, http.Client? client})
-    : _client = client ?? createStreamingClient();
+  OpenAiProvider(this.endpoint, {this.compatible = false, AiProviderId? providerId, http.Client? client})
+    : _id = providerId ?? (compatible ? AiProviderId.openaiCompatible : AiProviderId.openai),
+      _client = client ?? createStreamingClient();
+
+  /// Grok (xAI) speaks the same Chat Completions dialect.
+  OpenAiProvider.xai(AiEndpoint endpoint, {http.Client? client})
+    : this(endpoint, compatible: true, providerId: AiProviderId.xai, client: client);
 
   final AiEndpoint endpoint;
   final bool compatible;
+  final AiProviderId _id;
   final http.Client _client;
 
   @override
-  AiProviderId get id => compatible ? AiProviderId.openaiCompatible : AiProviderId.openai;
+  AiProviderId get id => _id;
 
   Map<String, String> get _headers =>
       endpoint.headers({if (endpoint.apiKey.isNotEmpty) 'authorization': 'Bearer ${endpoint.apiKey}'});
@@ -25,7 +31,7 @@ class OpenAiProvider implements AiProvider {
   String get _v1 {
     final base = endpoint.baseFor(id);
     // Compatible base URLs are often given with /v1 already (e.g. http://localhost:11434/v1).
-    return !endpoint.proxied && compatible && base.endsWith('/v1') ? base : '$base/v1';
+    return !endpoint.proxied && _id == AiProviderId.openaiCompatible && base.endsWith('/v1') ? base : '$base/v1';
   }
 
   static List<Map<String, dynamic>> encodeMessages(List<AiMessage> messages, String? system) => [

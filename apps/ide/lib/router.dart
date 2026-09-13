@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'core/session.dart';
 import 'features/ai/settings_screen.dart';
 import 'features/auth/login_screen.dart';
+import 'features/create/create_app_screen.dart';
 import 'features/editor/workspace_screen.dart';
 import 'features/projects/projects_screen.dart';
 
@@ -38,7 +39,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: ':projectId',
-            builder: (_, state) => WorkspaceScreen(projectId: state.pathParameters['projectId']!),
+            builder: (_, state) => WorkspaceScreen(
+              projectId: state.pathParameters['projectId']!,
+              initialPanel: state.uri.queryParameters['panel'],
+            ),
+            routes: [
+              GoRoute(
+                path: 'create',
+                builder: (_, state) => CreateAppScreen(
+                  projectId: state.pathParameters['projectId']!,
+                  args: state.extra is CreateAppArgs ? state.extra as CreateAppArgs : null,
+                ),
+              ),
+            ],
           ),
         ],
       ),

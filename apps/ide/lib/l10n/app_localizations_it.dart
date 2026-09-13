@@ -338,4 +338,95 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get stopped => 'interrotta';
+
+  @override
+  String get badgeFreeTier => 'gratis*';
+
+  @override
+  String get badgeSubscription => 'abbonamento';
+
+  @override
+  String get badgePaid => 'a pagamento';
+
+  @override
+  String needsKey(String name) {
+    return 'Serve una chiave API $name: aggiungila nelle impostazioni.';
+  }
+
+  @override
+  String get claudeCodeUnavailable =>
+      'Claude Code non è disponibile su questo Runner (serve Claude Code installato e con login sul PC del Runner).';
+
+  @override
+  String get appPromptHint =>
+      'Es.: un\'app di ricette con foto, lista della spesa e timer di cottura, colori caldi…';
+
+  @override
+  String get chooseAi => 'Con quale AI?';
+
+  @override
+  String get createApp => 'Crea app';
+
+  @override
+  String get openEditor => 'Editor';
+
+  @override
+  String get describeYourApp => 'Descrivi la tua app';
+
+  @override
+  String get describeYourAppHint =>
+      'Scrivi cosa deve fare e come deve essere: l\'AI crea l\'app completa, controlla gli errori e te la mostra. (*Gemini: quota gratuita di Google con limiti giornalieri)';
+
+  @override
+  String get improveApp => 'Vuoi cambiare qualcosa?';
+
+  @override
+  String get improveAppHint =>
+      'Es.: aggiungi la modalità scura, metti le foto più grandi…';
+
+  @override
+  String get applyChange => 'Applica modifica';
+
+  @override
+  String get buildLog => 'Dettagli';
+
+  @override
+  String get stepClaudeCode => 'Claude Code scrive e verifica il codice';
+
+  @override
+  String stepWriting(int count) {
+    return 'Scrittura del codice ($count file)';
+  }
+
+  @override
+  String get stepDependencies => 'Installazione dipendenze';
+
+  @override
+  String get stepChecking => 'Controllo errori';
+
+  @override
+  String stepFixing(int round) {
+    return 'Correzione errori (tentativo $round)';
+  }
+
+  @override
+  String get stepBuilding => 'Compilazione dell\'app';
+
+  @override
+  String get stepReady => 'Pronta';
+
+  @override
+  String get appReadyTitle => 'La tua app è pronta 🎉';
+
+  @override
+  String get openApp => 'Apri app';
+
+  @override
+  String get viewCode => 'Vedi codice';
+
+  @override
+  String get buildCancelled => 'Creazione interrotta';
+
+  @override
+  String get buildFailedTitle => 'Non sono riuscito a completare l\'app';
 }

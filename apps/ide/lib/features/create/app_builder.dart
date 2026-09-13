@@ -1,0 +1,523 @@
+import 'dart:async';
+
+import 'package:ai_connect/ai_connect.dart';
+import 'package:flutter/foundation.dart';
+import 'package:ide_core/ide_core.dart';
+
+import '../editor/project_controller.dart' show RunnerRequest;
+
+/// Which AI builds the app (§1B "Crea App").
+enum BuildEngine {
+  gemini(AiProviderId.gemini, 'gemini-2.5-flash', 65536),
+  openai(AiProviderId.openai, 'gpt-5', 64000),
+  xai(AiProviderId.xai, 'grok-4', 32000),
+  claude(AiProviderId.anthropic, 'claude-opus-5', 64000),
+  claudeCode(null, null, 0);
+
+  const BuildEngine(this.provider, this.defaultModel, this.maxTokens);
+  final AiProviderId? provider;
+  final String? defaultModel;
+  final int maxTokens;
+
+  bool get isCli => this == claudeCode;
+}
+
+enum BuildPhase { idle, generating, dependencies, checking, fixing, building, ready, failed, cancelled }
+
+class BuildLogLine {
+  const BuildLogLine(this.text, {this.kind = 'info'});
+  final String text;
+
+  /// `info` | `file` | `tool` | `error` | `ai`.
+  final String kind;
+}
+
+const appBuildSystemPrompt = '''
+You are an expert Flutter engineer generating a COMPLETE, WORKING Flutter app from the user's description.
+The project was just created with `flutter create`; you replace its content.
+
+Output format (strict):
+- Output every file as a fenced code block whose info string is the language followed by the project-relative path, e.g.
+```dart lib/main.dart
+...complete file...
+```
+- Always include `pubspec.yaml` (keep `name:` unchanged, sdk constraint `^3.9.0`, `flutter: uses-material-design: true`) and `lib/main.dart`.
+- Include `test/widget_test.dart` with a small passing test that matches your app.
+- Only write files under lib/, test/, assets/ or pubspec.yaml. Every file must be complete: no placeholders, no "...", no TODO in place of logic.
+- Before the files, write at most 3 short lines describing the app. No text after the last file.
+
+App quality:
+- Real app, not a demo: several screens with navigation, state management, local persistence (shared_preferences) where data should survive restarts, loading/empty/error states, Material 3 theme with a coherent color scheme.
+- All UI text in the same language as the user's request.
+- Must compile for web and Android. Prefer pure-Dart packages from pub.dev with well-known stable versions; do not use packages that only work on mobile unless you provide a web fallback. Avoid code generation (no build_runner).
+- Keep it to at most ~15 files and make sure every import resolves.''';
+
+String fixPrompt(String original, Map<String, String> files, String problems) {
+  final buf = StringBuffer()
+    ..writeln('The app requested was:')
+    ..writeln(original)
+    ..writeln()
+    ..writeln('Current project files:');
+  files.forEach((path, content) {
+    buf
+      ..writeln('```${ProjectPath.languageOf(path)} $path')
+      ..writeln(content)
+      ..writeln('```');
+  });
+  buf
+    ..writeln()
+    ..writeln('Running the Flutter toolchain reported these problems:')
+    ..writeln(problems)
+    ..writeln()
+    ..writeln('Fix them. Output ONLY the complete corrected content of every file you change, in the same fenced format with paths. Do not output unchanged files.');
+  return buf.toString();
+}
+
+String improvePrompt(String original, Map<String, String> files, String change) {
+  final buf = StringBuffer()
+    ..writeln('The app was built from this request:')
+    ..writeln(original)
+    ..writeln()
+    ..writeln('Current project files:');
+  files.forEach((path, content) {
+    buf
+      ..writeln('```${ProjectPath.languageOf(path)} $path')
+      ..writeln(content)
+      ..writeln('```');
+  });
+  buf
+    ..writeln()
+    ..writeln('The user now asks for this change:')
+    ..writeln(change)
+    ..writeln()
+    ..writeln('Apply it. Output ONLY the complete content of every file you create or change, in the same fenced format with paths.');
+  return buf.toString();
+}
+
+/// Orchestrates "prompt → working app → preview" for one project.
+///
+/// API engines: generate files → pub get → analyze → fix loop (max
+/// [maxFixRounds]) → web build. Claude Code: the CLI edits and verifies the
+/// project itself on the Runner, then the web build runs.
+class AppBuilder extends ChangeNotifier {
+  AppBuilder({
+    required this.projectId,
+    required this.projectName,
+    required RunnerRequest request,
+    required Stream<WsFrame> events,
+    required Future<String> Function(String jobId) fetchJobLog,
+    required Future<AiProvider> Function(AiModel model) resolveProvider,
+    this.maxFixRounds = 3,
+    this.jobTimeout = const Duration(minutes: 15),
+  }) : _request = request,
+       _events = events,
+       _fetchJobLog = fetchJobLog,
+       _resolve = resolveProvider;
+
+  final String projectId;
+  final String projectName;
+  final RunnerRequest _request;
+  final Stream<WsFrame> _events;
+  final Future<String> Function(String jobId) _fetchJobLog;
+  final Future<AiProvider> Function(AiModel model) _resolve;
+  final int maxFixRounds;
+  final Duration jobTimeout;
+
+  BuildPhase phase = BuildPhase.idle;
+  BuildEngine? engine;
+  AiModel? model;
+  String prompt = '';
+  final List<BuildLogLine> log = [];
+  final StringBuffer liveText = StringBuffer();
+  final Set<String> writtenFiles = {};
+  int fixRound = 0;
+  double costUsd = 0;
+  String? error;
+  PreviewInfo? preview;
+  String? summary;
+
+  bool _cancelled = false;
+  Completer<void> _cancelSignal = Completer<void>();
+
+  /// Waits for [f] unless the build is cancelled first.
+  Future<T> _orCancel<T>(Future<T> f) async {
+    await Future.any<Object?>([f, _cancelSignal.future]);
+    _checkCancelled();
+    return f;
+  }
+  StreamSubscription<AiEvent>? _aiSub;
+  String? _currentJobId;
+  String? _agentRunId;
+
+  bool get running => const {BuildPhase.generating, BuildPhase.dependencies, BuildPhase.checking, BuildPhase.fixing, BuildPhase.building}.contains(phase);
+
+  void _log(String text, {String kind = 'info'}) {
+    log.add(BuildLogLine(text, kind: kind));
+    if (log.length > 2000) log.removeRange(0, log.length - 2000);
+    notifyListeners();
+  }
+
+  void _setPhase(BuildPhase p) {
+    phase = p;
+    notifyListeners();
+  }
+
+  /// Starts a build from scratch.
+  Future<void> build({required String prompt, required BuildEngine engine, AiModel? model}) =>
+      _run(prompt: prompt, engine: engine, model: model, change: null);
+
+  /// Applies a follow-up change to an already built app.
+  Future<void> improve(String change) {
+    final e = engine;
+    if (e == null) return Future.value();
+    return _run(prompt: prompt, engine: e, model: model, change: change);
+  }
+
+  Future<void> _run({required String prompt, required BuildEngine engine, AiModel? model, String? change}) async {
+    if (running) return;
+    this.prompt = prompt;
+    this.engine = engine;
+    this.model = model;
+    _cancelled = false;
+    _cancelSignal = Completer<void>();
+    error = null;
+    fixRound = 0;
+    liveText.clear();
+    if (change == null) {
+      log.clear();
+      writtenFiles.clear();
+      costUsd = 0;
+      preview = null;
+    }
+    try {
+      if (engine.isCli) {
+        await _runClaudeCode(change ?? prompt, resume: change != null);
+      } else {
+        await _runApiEngine(change: change);
+      }
+      if (_cancelled) return;
+      await _buildPreview();
+      if (_cancelled) return;
+      _setPhase(BuildPhase.ready);
+      _log('App pronta ✓', kind: 'info');
+    } on _Cancelled {
+      _setPhase(BuildPhase.cancelled);
+    } catch (e) {
+      if (_cancelled) {
+        _setPhase(BuildPhase.cancelled);
+        return;
+      }
+      error = e is AiException ? e.message : (e is RunnerException ? e.message : e.toString());
+      _log(error!, kind: 'error');
+      _setPhase(BuildPhase.failed);
+    }
+  }
+
+  void _checkCancelled() {
+    if (_cancelled) throw const _Cancelled();
+  }
+
+  // ---------------------------------------------------------------- API engines
+
+  Future<void> _runApiEngine({String? change}) async {
+    final m = model;
+    if (m == null) throw const AiException('Nessun modello selezionato');
+    final provider = await _resolve(m);
+    final maxTokens = engine!.maxTokens;
+
+    _setPhase(BuildPhase.generating);
+    final String userMessage;
+    if (change == null) {
+      _log('Scrivo il codice con ${m.label}…');
+      userMessage = '$prompt\n\n(Project package name: $projectName)';
+    } else {
+      _log('Applico la modifica con ${m.label}: $change');
+      userMessage = improvePrompt(prompt, await _readProjectFiles(), change);
+    }
+    var files = await _generate(provider, m, userMessage, maxTokens);
+    if (files.isEmpty) throw const AiException("L'AI non ha prodotto file: riprova o cambia modello.");
+    await _writeFiles(files, removeDefaultTest: change == null);
+
+    while (true) {
+      _checkCancelled();
+      final problems = await _verify();
+      if (problems == null) return;
+      if (fixRound >= maxFixRounds) {
+        throw AiException('Restano errori dopo $maxFixRounds tentativi di correzione:\n$problems');
+      }
+      fixRound++;
+      _setPhase(BuildPhase.fixing);
+      _log('Correggo gli errori (tentativo $fixRound di $maxFixRounds)…');
+      files = await _generate(provider, m, fixPrompt(prompt, await _readProjectFiles(), problems), maxTokens);
+      if (files.isEmpty) throw AiException("L'AI non ha proposto correzioni per:\n$problems");
+      await _writeFiles(files, removeDefaultTest: false);
+    }
+  }
+
+  /// Streams one generation and returns the complete files it contains.
+  Future<Map<String, String>> _generate(AiProvider provider, AiModel m, String userMessage, int maxTokens) async {
+    liveText.clear();
+    var input = 0, output = 0;
+    String? stop;
+    String? streamError;
+    final done = Completer<void>();
+    _aiSub = provider
+        .chat(model: m.id, system: appBuildSystemPrompt, maxTokens: maxTokens, messages: [AiMessage.user(userMessage)])
+        .listen(
+          (e) {
+            switch (e) {
+              case AiTextDelta(:final text):
+                liveText.write(text);
+                notifyListeners();
+              case AiUsage(:final inputTokens, :final outputTokens):
+                if (inputTokens > 0) input = inputTokens;
+                if (outputTokens > 0) output = outputTokens;
+              case AiStop(:final reason):
+                stop = reason;
+              case AiError(:final message):
+                streamError = message;
+              case AiToolCall():
+                break;
+            }
+          },
+          onDone: () => done.isCompleted ? null : done.complete(),
+          onError: (Object e) {
+            streamError = e.toString();
+            if (!done.isCompleted) done.complete();
+          },
+        );
+    await _orCancel(done.future);
+    _aiSub = null;
+    costUsd += m.estimateCost(input, output) ?? 0;
+    if (streamError != null) throw AiException(streamError!);
+
+    final segments = CodeBlocks.parse(liveText.toString());
+    summary ??= segments.whereType<TextSegment>().firstOrNull?.markdown.trim();
+    final files = <String, String>{};
+    for (final s in segments.whereType<CodeSegment>()) {
+      final path = s.path;
+      if (path == null) continue;
+      if (!s.complete) {
+        _log('File incompleto ignorato: $path', kind: 'error');
+        continue;
+      }
+      if (!BuildSupport.isWritableByAi(path)) {
+        _log('Percorso non consentito ignorato: $path', kind: 'error');
+        continue;
+      }
+      files[path] = s.code.endsWith('\n') ? s.code : '${s.code}\n';
+    }
+    if (stop == 'max_tokens') {
+      _log('Risposta troncata dal limite di token: i file incompleti verranno ricreati nella correzione.', kind: 'error');
+    }
+    if (stop == 'refusal') throw const AiException('Il modello ha rifiutato la richiesta.');
+    return files;
+  }
+
+  Future<void> _writeFiles(Map<String, String> files, {required bool removeDefaultTest}) async {
+    for (final entry in files.entries) {
+      _checkCancelled();
+      var content = entry.value;
+      if (entry.key == 'pubspec.yaml') content = BuildSupport.enforcePackageName(content, projectName);
+      await _request(MsgType.fsWrite, {'projectId': projectId, 'path': entry.key, 'content': content});
+      writtenFiles.add(entry.key);
+      _log(entry.key, kind: 'file');
+    }
+    // The template's test references `MyApp`, which generated apps rarely keep.
+    if (removeDefaultTest && !files.containsKey('test/widget_test.dart')) {
+      try {
+        await _request(MsgType.fsDelete, {'projectId': projectId, 'path': 'test/widget_test.dart'});
+      } on RunnerException catch (e) {
+        if (e.code != 'not_found') rethrow;
+      }
+    }
+  }
+
+  /// Runs pub get + analyze. Returns a problem report, or null if clean.
+  Future<String?> _verify() async {
+    _setPhase(BuildPhase.dependencies);
+    _log('Installo le dipendenze (flutter pub get)…');
+    final pub = await _runJob('pub_get');
+    if (pub.status != 'succeeded') {
+      final tail = _tail(await _fetchJobLog(pub.jobId), 60);
+      _log('flutter pub get non riuscito', kind: 'error');
+      return 'flutter pub get failed:\n$tail';
+    }
+    _setPhase(BuildPhase.checking);
+    _log('Controllo errori (flutter analyze)…');
+    final analyze = await _runJob('analyze');
+    final logText = await _fetchJobLog(analyze.jobId);
+    final errors = BuildSupport.errorsOnly(logText);
+    if (errors.isEmpty) {
+      if (analyze.status == 'succeeded' || analyze.exitCode == 0) {
+        _log('Nessun errore ✓');
+        return null;
+      }
+      return 'flutter analyze failed:\n${_tail(logText, 60)}';
+    }
+    _log('${errors.length} errori trovati', kind: 'error');
+    return errors.take(40).map((e) => e.toString()).join('\n');
+  }
+
+  /// Starts a job and waits for it. Listens *before* starting: a job that
+  /// fails instantly can report its final status before the start reply.
+  Future<JobStatus> _runJob(String kind) async {
+    final finished = <String, JobStatus>{};
+    String? wanted;
+    final c = Completer<JobStatus>();
+    final sub = _events.where((f) => f.type == MsgType.jobStatus).listen((f) {
+      final s = JobStatus.fromJson(f.payload);
+      if (!s.isDone) return;
+      if (s.jobId == wanted) {
+        if (!c.isCompleted) c.complete(s);
+      } else {
+        finished[s.jobId] = s;
+      }
+    });
+    try {
+      final started = JobStatus.fromJson(await _request(MsgType.jobStart, {'projectId': projectId, 'kind': kind}));
+      _currentJobId = wanted = started.jobId;
+      final early = started.isDone ? started : finished[started.jobId];
+      if (early != null) return early;
+      return await _orCancel(c.future.timeout(jobTimeout));
+    } finally {
+      _currentJobId = null;
+      await sub.cancel();
+    }
+  }
+
+  Future<Map<String, String>> _readProjectFiles() async {
+    final out = <String, String>{};
+    Future<void> walk(String dir) async {
+      final res = await _request(MsgType.fsList, {'projectId': projectId, 'path': dir});
+      for (final raw in res['entries'] as List) {
+        final e = FsEntry.fromJson(raw as Map<String, dynamic>);
+        if (e.isDir) {
+          await walk(e.path);
+        } else if (e.path.endsWith('.dart') || e.path.endsWith('.yaml') || e.path.endsWith('.json') || e.path.endsWith('.arb')) {
+          final f = await _request(MsgType.fsRead, {'projectId': projectId, 'path': e.path});
+          out[e.path] = f['content'] as String;
+        }
+      }
+    }
+
+    await walk('lib');
+    try {
+      await walk('test');
+    } on RunnerException {
+      // no test dir
+    }
+    final pubspec = await _request(MsgType.fsRead, {'projectId': projectId, 'path': 'pubspec.yaml'});
+    out['pubspec.yaml'] = pubspec['content'] as String;
+    return out;
+  }
+
+  // --------------------------------------------------------------- Claude Code
+
+  Future<void> _runClaudeCode(String text, {required bool resume}) async {
+    _setPhase(BuildPhase.generating);
+    _log(resume ? 'Claude Code applica la modifica…' : 'Claude Code costruisce l\'app sul PC…');
+    final done = Completer<String>();
+    // Frames that arrive before agent.start replies are buffered, then replayed.
+    final early = <WsFrame>[];
+    late void Function(WsFrame) handle;
+    final sub = _events.listen((f) {
+      if (f.type != MsgType.agentEvent && f.type != MsgType.agentStatus) return;
+      if (_agentRunId == null) {
+        early.add(f);
+      } else {
+        handle(f);
+      }
+    });
+    handle = (f) {
+      if (f.type == MsgType.agentEvent && f.payload['runId'] == _agentRunId) {
+        final ev = f.payload['event'] as Map<String, dynamic>;
+        switch (ev['kind']) {
+          case 'text':
+            _log((ev['text'] as String).trim(), kind: 'ai');
+          case 'tool':
+            final name = ev['name'] as String;
+            final summary = ev['summary'] as String? ?? '';
+            if (name == 'Write' || name == 'Edit' || name == 'MultiEdit') writtenFiles.add(summary);
+            if (name == 'Bash' && summary.contains('analyze')) _setPhase(BuildPhase.checking);
+            if (name == 'Bash' && summary.contains('pub get')) _setPhase(BuildPhase.dependencies);
+            _log('$name ${summary.isEmpty ? '' : summary}', kind: name == 'Bash' ? 'tool' : 'file');
+          case 'result':
+            final cost = ev['costUsd'];
+            if (cost is num) costUsd += cost.toDouble();
+            if (ev['ok'] == true) summary = ev['message'] as String?;
+          case 'error':
+            _log(ev['message'] as String, kind: 'error');
+        }
+      } else if (f.type == MsgType.agentStatus && f.payload['id'] == _agentRunId) {
+        final status = f.payload['status'] as String;
+        if (status != 'running' && !done.isCompleted) done.complete(status);
+      }
+    };
+    try {
+      final run = await _request(MsgType.agentStart, {
+        'projectId': projectId,
+        'engine': 'claude-code',
+        'prompt': text,
+        'resume': resume,
+      });
+      _agentRunId = run['id'] as String;
+      for (final f in early) {
+        handle(f);
+      }
+      early.clear();
+      final status = await _orCancel(done.future.timeout(const Duration(hours: 1)));
+      if (status != 'succeeded') throw const AiException('Claude Code non ha completato l\'app: controlla il log.');
+    } finally {
+      await sub.cancel();
+      _agentRunId = null;
+    }
+  }
+
+  // ------------------------------------------------------------------- preview
+
+  Future<void> _buildPreview() async {
+    _setPhase(BuildPhase.building);
+    _log('Compilo l\'app per il web (circa 30 secondi)…');
+    final c = Completer<WsFrame>();
+    final sub = _events
+        .where((f) => (f.type == MsgType.previewReady || f.type == MsgType.previewFailed) && f.payload['projectId'] == projectId)
+        .listen((f) => c.isCompleted ? null : c.complete(f));
+    try {
+      final res = await _request(MsgType.previewStart, {'projectId': projectId, 'autoRebuild': true});
+      _currentJobId = (res['job'] as Map<String, dynamic>)['jobId'] as String;
+      final f = await _orCancel(c.future.timeout(jobTimeout));
+      if (f.type == MsgType.previewFailed) {
+        final tail = _tail(await _fetchJobLog(f.payload['jobId'] as String), 40);
+        throw AiException('La compilazione web non è riuscita:\n$tail');
+      }
+      preview = PreviewInfo.fromJson(f.payload);
+    } finally {
+      _currentJobId = null;
+      await sub.cancel();
+    }
+  }
+
+  Future<void> cancel() async {
+    if (!running) return;
+    _cancelled = true;
+    if (!_cancelSignal.isCompleted) _cancelSignal.complete();
+    unawaited(_aiSub?.cancel());
+    _aiSub = null;
+    final job = _currentJobId;
+    if (job != null) unawaited(_request(MsgType.jobCancel, {'jobId': job}).catchError((_) => <String, dynamic>{}));
+    final run = _agentRunId;
+    if (run != null) unawaited(_request(MsgType.agentCancel, {'runId': run}).catchError((_) => <String, dynamic>{}));
+    _log('Interrotto', kind: 'error');
+    _setPhase(BuildPhase.cancelled);
+  }
+
+  static String _tail(String s, int lines) {
+    final all = s.trimRight().split('\n');
+    return all.length <= lines ? all.join('\n') : all.sublist(all.length - lines).join('\n');
+  }
+}
+
+class _Cancelled implements Exception {
+  const _Cancelled();
+}

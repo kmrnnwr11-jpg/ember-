@@ -8,6 +8,9 @@ import 'package:ide_core/ide_core.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../../widgets/connection_badge.dart';
+import '../create/app_builder.dart';
+import '../create/create_app_screen.dart';
+import 'package:ai_connect/ai_connect.dart';
 
 /// The user's default workspace (created on first use).
 final workspaceProvider = FutureProvider<Workspace>((ref) async {
@@ -49,10 +52,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     super.dispose();
   }
 
-  Future<void> _create() async {
+  bool _creating = false;
+
+  /// Creates the Flutter project, then opens the "describe your app" flow.
+  Future<void> _createProject(String name, {CreateAppArgs? args}) async {
     final l = AppLocalizations.of(context);
-    final name = await showDialog<String>(context: context, builder: (_) => const _NewProjectDialog());
-    if (name == null || !mounted) return;
+    setState(() => _creating = true);
     try {
       final api = await ref.read(runnerApiProvider.future);
       final ws = await ref.read(workspaceProvider.future);
@@ -65,10 +70,25 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         builder: (_) => JobLogDialog(title: l.creatingProject(project.name), jobId: job.jobId),
       );
       ref.invalidate(projectsProvider);
-      if (ok == true && mounted) context.go('/projects/${project.id}');
+      if (ok == true && mounted) context.go('/projects/${project.id}/create', extra: args);
     } on RunnerException catch (e) {
       if (mounted) _snack(l.error(e.message));
+    } finally {
+      if (mounted) setState(() => _creating = false);
     }
+  }
+
+  Future<void> _create() async {
+    final name = await showDialog<String>(context: context, builder: (_) => const _NewProjectDialog());
+    if (name == null || !mounted) return;
+    await _createProject(name);
+  }
+
+  void _createFromPrompt(String prompt, BuildEngine engine, AiModel? model) {
+    _createProject(
+      BuildSupport.projectNameFromPrompt(prompt),
+      args: CreateAppArgs(prompt: prompt, engine: engine, modelKey: model?.key),
+    );
   }
 
   Future<void> _delete(Project p) async {
@@ -133,14 +153,39 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
               Center(child: TextButton(onPressed: () => ref.invalidate(workspaceProvider), child: Text(l.retry))),
             ],
           ),
-          data: (list) => list.isEmpty
-              ? ListView(children: [const SizedBox(height: 120), Center(child: Text(l.noProjects))])
-              : ListView.separated(
+          data: (list) => ListView.separated(
                   padding: const EdgeInsets.only(bottom: 96),
-                  itemCount: list.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
-                  itemBuilder: (_, i) {
-                    final p = list[i];
+                  itemCount: list.length + 1,
+                  separatorBuilder: (_, i) => i == 0 ? const SizedBox.shrink() : const Divider(height: 1),
+                  itemBuilder: (_, index) {
+                    if (index == 0) {
+                      return Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 820),
+                          child: Card(
+                            margin: const EdgeInsets.all(12),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(l.describeYourApp, style: Theme.of(context).textTheme.titleLarge),
+                                  const SizedBox(height: 4),
+                                  Text(l.describeYourAppHint, style: Theme.of(context).textTheme.bodySmall),
+                                  const SizedBox(height: 12),
+                                  AppPromptComposer(busy: _creating, onSubmit: _createFromPrompt),
+                                  if (list.isNotEmpty) ...[
+                                    const SizedBox(height: 16),
+                                    Text(l.projects, style: Theme.of(context).textTheme.titleMedium),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    final p = list[index - 1];
                     final (label, icon) = switch (p.status) {
                       'ready' => (l.statusReady, Icons.folder_outlined),
                       'creating' => (l.statusCreating, Icons.hourglass_top),

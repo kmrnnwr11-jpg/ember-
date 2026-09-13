@@ -21,6 +21,8 @@ abstract final class MsgType {
   static const previewReload = 'preview.reload';
   static const previewStop = 'preview.stop';
   static const previewStatus = 'preview.status';
+  static const agentStart = 'agent.start';
+  static const agentCancel = 'agent.cancel';
   static const ping = 'ping';
 
   // Responses
@@ -38,6 +40,7 @@ abstract final class MsgType {
   static const jobStatus = 'job.status';
   static const analyzeResult = 'analyze.result';
   static const agentEvent = 'agent.event';
+  static const agentStatus = 'agent.status';
   static const pong = 'pong';
 }
 

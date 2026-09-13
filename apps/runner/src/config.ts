@@ -42,6 +42,14 @@ const schema = z.object({
   AI_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().default(120),
   /** Allow http:// and private/loopback OpenAI-compatible base URLs (e.g. local Ollama). Dev only. */
   AI_ALLOW_PRIVATE_BASE_URLS: bool,
+
+  /** Claude Code CLI engine for "Crea App" (local driver only). */
+  CLAUDE_CODE_ENABLED: z
+    .string()
+    .optional()
+    .transform((v) => v !== 'false' && v !== '0'),
+  CLAUDE_BIN: z.string().default(''),
+  CLAUDE_CODE_MAX_TURNS: z.coerce.number().int().default(80),
   VAULT_MASTER_KEY: z.string().default(''),
 });
 

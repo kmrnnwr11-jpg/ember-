@@ -196,5 +196,13 @@
   "playManualChecklist": "Google requires confirming these manually in Play Console (ready answers below):\n- **Privacy policy** → paste the link: {privacyUrl}\n- **Data safety**\n- **Content rating** questionnaire\n- **Target audience and content**\n- **Ads** and **App access** (provide a test account if login is required)\n- **Store listing**: 512×512 icon and at least 2 screenshots\n- New personal accounts: Google may require **closed testing** with a minimum number of testers before production",
   "playDataSafety": "Answers for “Data safety”",
   "playContentRating": "Answers for “Content rating”",
-  "playOtherDeclarations": "Audience, ads and app access"
+  "playOtherDeclarations": "Audience, ads and app access",
+  "assistantTitle": "AI assistant",
+  "assistantFree": "Free",
+  "assistantEmpty": "Hi! Ask me anything: app ideas, how to publish on Play Store, how to set up login and databases…",
+  "assistantUnconfigured": "The free assistant is not active on this server yet (the Runner's Gemini key is missing).",
+  "assistantHint": "Ask a question…",
+  "assistantSuggest1": "What app can I build for my shop?",
+  "assistantSuggest2": "How do I publish an app on Play Store?",
+  "assistantSuggest3": "How does Google login work?"
 }

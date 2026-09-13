@@ -17,13 +17,15 @@ class AiEndpoint {
     : proxied = false,
       _baseUrl = baseUrl,
       runnerUrl = null,
-      runnerToken = null;
+      runnerToken = null,
+      proxyPath = null;
 
   const AiEndpoint.proxy({
     required this.apiKey,
     required String this.runnerUrl,
     required this.runnerToken,
     String? baseUrl,
+    this.proxyPath,
   }) : proxied = true,
        _baseUrl = baseUrl;
 
@@ -31,6 +33,9 @@ class AiEndpoint {
   final bool proxied;
   final String? runnerUrl;
   final String? runnerToken;
+
+  /// Runner path replacing `proxy/<provider>` (e.g. `assistant` for the free server-key assistant).
+  final String? proxyPath;
 
   /// Upstream base URL override (required for OpenAI-compatible providers).
   final String? _baseUrl;
@@ -44,7 +49,7 @@ class AiEndpoint {
   };
 
   String baseFor(AiProviderId provider) {
-    if (proxied) return '${runnerUrl!.replaceAll(RegExp(r'/+$'), '')}/v1/ai/proxy/${provider.name}';
+    if (proxied) return '${runnerUrl!.replaceAll(RegExp(r'/+$'), '')}/v1/ai/${proxyPath ?? 'proxy/${provider.name}'}';
     final base = _baseUrl ?? defaultBaseUrls[provider];
     if (base == null) throw const AiException('baseUrl is required for OpenAI-compatible providers');
     return base.replaceAll(RegExp(r'/+$'), '');

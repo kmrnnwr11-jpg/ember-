@@ -127,10 +127,61 @@ export async function registerAiRoutes(app: FastifyInstance, opts: AiRouteOption
   const upstreams = { ...DEFAULT_UPSTREAMS, ...opts.upstreams };
   const limiter = new RateLimiter(cfg.AI_RATE_LIMIT_PER_MINUTE);
 
+  // Free assistant: daily message counter per user (resets at UTC midnight).
+  const assistantUsage = new Map<string, number>();
+  const assistantKey = (userId: string) => `${userId}|${new Date().toISOString().slice(0, 10)}`;
+
   await app.register(async (r) => {
     r.addHook('preHandler', authenticate);
 
     r.get('/v1/ai/models', async () => loadCatalog(cfg, fetchImpl));
+
+    r.get('/v1/ai/assistant/status', async (req) => ({
+      enabled: cfg.GEMINI_API_KEY !== '',
+      model: cfg.ASSISTANT_MODEL,
+      dailyLimit: cfg.ASSISTANT_DAILY_LIMIT,
+      used: assistantUsage.get(assistantKey(req.user.id)) ?? 0,
+    }));
+
+    // Gemini streaming with the server's key, for the free in-app assistant only.
+    r.post('/v1/ai/assistant/*', async (req, reply) => {
+      const { '*': rest } = req.params as { '*': string };
+      if (!cfg.GEMINI_API_KEY) {
+        return reply.status(503).send({ code: 'assistant_unconfigured', message: 'The free assistant is not configured on this Runner (GEMINI_API_KEY missing)' });
+      }
+      const allowed = `v1beta/models/${cfg.ASSISTANT_MODEL}:streamGenerateContent`;
+      if (rest !== allowed) return reply.status(403).send({ code: 'forbidden', message: `assistant only allows ${allowed}` });
+      const k = assistantKey(req.user.id);
+      const used = assistantUsage.get(k) ?? 0;
+      if (used >= cfg.ASSISTANT_DAILY_LIMIT) {
+        return reply.status(429).send({ code: 'rate_limited', message: `Limite giornaliero dell'assistente gratuito raggiunto (${cfg.ASSISTANT_DAILY_LIMIT} messaggi). Riprova domani.` });
+      }
+      assistantUsage.set(k, used + 1);
+      const body = (req.body ?? {}) as { generationConfig?: Record<string, unknown> };
+      // Cap output to keep the free tier sustainable.
+      body.generationConfig = { ...(body.generationConfig ?? {}), maxOutputTokens: Math.min(Number(body.generationConfig?.maxOutputTokens ?? 4096), 4096) };
+      const abort = new AbortController();
+      req.raw.on('close', () => {
+        if (!reply.raw.writableEnded) abort.abort();
+      });
+      try {
+        const upstream = await fetchImpl(`${upstreams.gemini}/${allowed}?alt=sse`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-goog-api-key': cfg.GEMINI_API_KEY },
+          body: JSON.stringify(body),
+          signal: abort.signal,
+        });
+        reply.status(upstream.status);
+        const ct = upstream.headers.get('content-type');
+        if (ct) reply.header('content-type', ct);
+        reply.header('cache-control', 'no-cache');
+        if (!upstream.body) return reply.send();
+        return reply.send(Readable.fromWeb(upstream.body as import('node:stream/web').ReadableStream));
+      } catch (e) {
+        if ((e as Error).name === 'AbortError') return reply;
+        return reply.status(502).send({ code: 'upstream_unreachable', message: 'Gemini unreachable' });
+      }
+    });
 
     r.post('/v1/ai/proxy/:provider/*', async (req, reply) => {
       const { provider, '*': rest } = req.params as { provider: string; '*': string };

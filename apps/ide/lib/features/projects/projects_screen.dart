@@ -8,6 +8,7 @@ import 'package:ide_core/ide_core.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../../widgets/connection_badge.dart';
+import '../assistant/home_assistant.dart';
 import '../create/app_builder.dart';
 import '../create/create_app_screen.dart';
 import 'package:ai_connect/ai_connect.dart';
@@ -53,6 +54,14 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   }
 
   bool _creating = false;
+  bool _assistantOpen = true;
+
+  void _openAssistantFullScreen() {
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      fullscreenDialog: true,
+      builder: (ctx) => Scaffold(body: SafeArea(child: HomeAssistantPanel(onClose: () => Navigator.of(ctx).pop()))),
+    ));
+  }
 
   /// Creates the Flutter project, then opens the "describe your app" flow.
   Future<void> _createProject(String name, {CreateAppArgs? args}) async {
@@ -117,11 +126,22 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     final l = AppLocalizations.of(context);
     final projects = ref.watch(projectsProvider);
 
-    return Scaffold(
+    final scaffold = Scaffold(
       appBar: AppBar(
         title: Text(l.projects),
         actions: [
           const ConnectionBadge(),
+          Builder(
+            builder: (context) => IconButton(
+              key: const Key('toggleAssistant'),
+              tooltip: l.assistantTitle,
+              isSelected: _assistantOpen,
+              icon: const Icon(Icons.support_agent),
+              onPressed: () => MediaQuery.of(context).size.width >= 1000
+                  ? setState(() => _assistantOpen = !_assistantOpen)
+                  : _openAssistantFullScreen(),
+            ),
+          ),
           IconButton(
             tooltip: l.aiSettings,
             icon: const Icon(Icons.key),
@@ -205,6 +225,19 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 ),
         ),
       ),
+    );
+    return LayoutBuilder(
+      builder: (context, box) {
+        final wide = box.maxWidth >= 1000;
+        if (!wide || !_assistantOpen) return scaffold;
+        return Row(
+          children: [
+            Expanded(child: scaffold),
+            const VerticalDivider(width: 1),
+            SizedBox(width: (box.maxWidth * 0.3).clamp(340.0, 460.0), child: const HomeAssistantPanel()),
+          ],
+        );
+      },
     );
   }
 }

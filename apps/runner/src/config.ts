@@ -43,6 +43,11 @@ const schema = z.object({
   /** Allow http:// and private/loopback OpenAI-compatible base URLs (e.g. local Ollama). Dev only. */
   AI_ALLOW_PRIVATE_BASE_URLS: bool,
 
+  /** Server-side Gemini key for the free home assistant (users need no key). */
+  GEMINI_API_KEY: z.string().default(''),
+  ASSISTANT_MODEL: z.string().default('gemini-2.5-flash'),
+  ASSISTANT_DAILY_LIMIT: z.coerce.number().int().default(100),
+
   /** Claude Code CLI engine for "Crea App" (local driver only). */
   CLAUDE_CODE_ENABLED: z
     .string()

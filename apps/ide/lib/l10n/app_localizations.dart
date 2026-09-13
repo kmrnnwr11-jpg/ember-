@@ -1279,6 +1279,54 @@ abstract class AppLocalizations {
   /// In it, this message translates to:
   /// **'Pubblico, annunci e accesso all\'app'**
   String get playOtherDeclarations;
+
+  /// No description provided for @assistantTitle.
+  ///
+  /// In it, this message translates to:
+  /// **'Assistente AI'**
+  String get assistantTitle;
+
+  /// No description provided for @assistantFree.
+  ///
+  /// In it, this message translates to:
+  /// **'Gratis'**
+  String get assistantFree;
+
+  /// No description provided for @assistantEmpty.
+  ///
+  /// In it, this message translates to:
+  /// **'Ciao! Chiedimi qualsiasi cosa: idee per la tua app, come pubblicarla sul Play Store, come configurare login e database…'**
+  String get assistantEmpty;
+
+  /// No description provided for @assistantUnconfigured.
+  ///
+  /// In it, this message translates to:
+  /// **'L\'assistente gratuito non è ancora attivo su questo server (manca la chiave Gemini del Runner).'**
+  String get assistantUnconfigured;
+
+  /// No description provided for @assistantHint.
+  ///
+  /// In it, this message translates to:
+  /// **'Scrivi una domanda…'**
+  String get assistantHint;
+
+  /// No description provided for @assistantSuggest1.
+  ///
+  /// In it, this message translates to:
+  /// **'Che app posso creare per il mio negozio?'**
+  String get assistantSuggest1;
+
+  /// No description provided for @assistantSuggest2.
+  ///
+  /// In it, this message translates to:
+  /// **'Come pubblico un\'app sul Play Store?'**
+  String get assistantSuggest2;
+
+  /// No description provided for @assistantSuggest3.
+  ///
+  /// In it, this message translates to:
+  /// **'Come funziona il login con Google?'**
+  String get assistantSuggest3;
 }
 
 class _AppLocalizationsDelegate

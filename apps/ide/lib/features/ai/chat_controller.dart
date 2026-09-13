@@ -90,7 +90,10 @@ class ChatController extends ChangeNotifier {
     required ProviderResolver resolveProvider,
     Future<List<Map<String, dynamic>>> Function()? loadHistory,
     Future<void> Function(List<Map<String, dynamic>>)? saveHistory,
+    this.systemPrompt = chatSystemPrompt,
+    bool attachFiles = true,
   }) : _resolve = resolveProvider,
+       attachOpenFile = attachFiles,
        _save = saveHistory {
     if (loadHistory != null) {
       loadHistory().then((rows) {
@@ -108,7 +111,8 @@ class ChatController extends ChangeNotifier {
 
   final List<ChatEntry> entries = [];
   AiModel? model;
-  bool attachOpenFile = true;
+  bool attachOpenFile;
+  final String systemPrompt;
   StreamSubscription<AiEvent>? _sub;
   Completer<void>? _done;
 
@@ -169,7 +173,7 @@ class ChatController extends ChangeNotifier {
 
     final done = _done = Completer<void>();
     _sub = provider
-        .chat(model: m.id, system: chatSystemPrompt, messages: buildMessages(history, text.trim(), file))
+        .chat(model: m.id, system: systemPrompt, messages: buildMessages(history, text.trim(), file))
         .listen(
           (event) {
             switch (event) {

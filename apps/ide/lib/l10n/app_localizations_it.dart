@@ -662,4 +662,30 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get playOtherDeclarations => 'Pubblico, annunci e accesso all\'app';
+
+  @override
+  String get assistantTitle => 'Assistente AI';
+
+  @override
+  String get assistantFree => 'Gratis';
+
+  @override
+  String get assistantEmpty =>
+      'Ciao! Chiedimi qualsiasi cosa: idee per la tua app, come pubblicarla sul Play Store, come configurare login e database…';
+
+  @override
+  String get assistantUnconfigured =>
+      'L\'assistente gratuito non è ancora attivo su questo server (manca la chiave Gemini del Runner).';
+
+  @override
+  String get assistantHint => 'Scrivi una domanda…';
+
+  @override
+  String get assistantSuggest1 => 'Che app posso creare per il mio negozio?';
+
+  @override
+  String get assistantSuggest2 => 'Come pubblico un\'app sul Play Store?';
+
+  @override
+  String get assistantSuggest3 => 'Come funziona il login con Google?';
 }

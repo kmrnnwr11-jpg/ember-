@@ -136,3 +136,44 @@ describe('validateCompatibleBaseUrl', () => {
     expect(validateCompatibleBaseUrl('http://localhost:11434/v1', dev)).toBe('http://localhost:11434');
   });
 });
+
+describe('free assistant', () => {
+  it('uses the server Gemini key, restricts the model and enforces a daily limit', async () => {
+    const seen: Array<{ url: string; key: string | null; body: string }> = [];
+    const fakeFetch = (async (url: string | URL | Request, init?: RequestInit) => {
+      seen.push({ url: String(url), key: new Headers(init?.headers).get('x-goog-api-key'), body: String(init?.body) });
+      return new Response('data: {"candidates":[{"content":{"parts":[{"text":"Ciao"}]}}]}\n\n', { status: 200, headers: { 'content-type': 'text/event-stream' } });
+    }) as typeof fetch;
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'fc-asst-'));
+    const cfg = loadConfig({ DEV_AUTH: 'true', DATA_DIR: tmp, WORKSPACES_ROOT: path.join(tmp, 'ws'), LOG_LEVEL: 'silent', GEMINI_API_KEY: 'server-key', ASSISTANT_DAILY_LIMIT: '2' });
+    const { buildApp } = await import('./app.js');
+    const { app } = await buildApp(cfg);
+    const { registerAiRoutes } = await import('./ai.js');
+    void registerAiRoutes;
+    await app.close();
+    // Build a minimal app with injected fetch for the assistant route.
+    const Fastify = (await import('fastify')).default;
+    const small = Fastify();
+    small.decorateRequest('user', null as never);
+    await (await import('./ai.js')).registerAiRoutes(small, {
+      cfg,
+      authenticate: async (req) => void ((req as { user: unknown }).user = { id: 'u1' }),
+      fetchImpl: fakeFetch,
+    });
+    const call = () => small.inject({ method: 'POST', url: '/v1/ai/assistant/v1beta/models/gemini-2.5-flash:streamGenerateContent', payload: { contents: [], generationConfig: { maxOutputTokens: 99999 } } });
+    const r1 = await call();
+    expect(r1.statusCode).toBe(200);
+    expect(r1.body).toContain('Ciao');
+    expect(seen[0]!.key).toBe('server-key');
+    expect(seen[0]!.url).toContain('gemini-2.5-flash:streamGenerateContent?alt=sse');
+    expect(JSON.parse(seen[0]!.body).generationConfig.maxOutputTokens).toBe(4096);
+    expect((await call()).statusCode).toBe(200);
+    expect((await call()).statusCode).toBe(429);
+    const wrongModel = await small.inject({ method: 'POST', url: '/v1/ai/assistant/v1beta/models/gemini-2.5-pro:streamGenerateContent', payload: {} });
+    expect(wrongModel.statusCode).toBe(403);
+    const status = await small.inject({ method: 'GET', url: '/v1/ai/assistant/status' });
+    expect(status.json()).toMatchObject({ enabled: true, dailyLimit: 2, used: 2 });
+    await small.close();
+    await rm(tmp, { recursive: true, force: true });
+  });
+});

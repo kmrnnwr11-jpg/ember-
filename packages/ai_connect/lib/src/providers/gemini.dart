@@ -79,7 +79,7 @@ class GeminiProvider implements AiProvider {
   }) => guardStream(() async* {
     final res = await postStream(
       _client,
-      Uri.parse('${endpoint.baseFor(id)}/v1beta/models/$model:streamGenerateContent?alt=sse'),
+      Uri.parse('${endpoint.baseFor(id)}/v1beta/models/$model:streamGenerateContent${endpoint.proxyPath == null ? '?alt=sse' : ''}'),
       _headers,
       buildBody(messages: messages, system: system, tools: tools, maxTokens: maxTokens),
     );

@@ -50,7 +50,7 @@ const schema = z.object({
     .transform((v) => v !== 'false' && v !== '0'),
   CLAUDE_BIN: z.string().default(''),
   KEYTOOL_BIN: z.string().default(''),
-  CLAUDE_CODE_MAX_TURNS: z.coerce.number().int().default(80),
+  CLAUDE_CODE_MAX_TURNS: z.coerce.number().int().default(150),
   CLAUDE_CODE_MODEL_FAST: z.string().default('sonnet'),
   CLAUDE_CODE_MODEL_BEST: z.string().default('opus'),
   VAULT_MASTER_KEY: z.string().default(''),

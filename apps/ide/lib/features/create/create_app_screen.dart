@@ -2,6 +2,7 @@ import 'package:ai_connect/ai_connect.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ide_core/ide_core.dart';
@@ -36,6 +37,13 @@ final appBuilderProvider = ChangeNotifierProvider.family<AppBuilder, (String, St
     events: socket.events,
     fetchJobLog: (jobId) async => (await ref.read(runnerApiProvider.future)).jobLog(jobId),
     resolveProvider: ref.read(aiProviderFactory),
+    androidInfo: () async {
+      final info = await (await ref.read(runnerApiProvider.future)).androidInfo(projectId);
+      return 'ANDROID APP INFO (use for Firebase Android app and Google Sign-In):\n'
+          '- package name: ${info['applicationId']}\n'
+          '- SHA-1 release (Play/upload key): ${info['sha1Release']}\n'
+          '- SHA-1 debug: ${info['sha1Debug']}';
+    },
   );
 });
 
@@ -272,28 +280,39 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                       const SizedBox(height: 12),
                       if (b.phase == BuildPhase.ready) _ReadyCard(builder: b, projectId: project.id),
                       if (b.phase == BuildPhase.failed || b.phase == BuildPhase.cancelled) _FailedCard(builder: b, projectId: project.id),
+                      if (b.conversation.length > 1) ...[
+                        const SizedBox(height: 12),
+                        for (final msg in b.conversation.skip(1)) _ChatBubble(role: msg.role, text: msg.text),
+                      ],
+                      if (b.running && b.conversation.length > 1 && b.conversation.last.role == 'user')
+                        const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Align(alignment: Alignment.centerLeft, child: SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                        ),
                       if (b.phase == BuildPhase.ready || b.phase == BuildPhase.failed) ...[
                         const SizedBox(height: 12),
                         Text(l.improveApp, style: Theme.of(context).textTheme.titleMedium),
                         const SizedBox(height: 6),
                         TextField(
+                          key: const Key('nextRequest'),
                           controller: _change,
                           minLines: 2,
-                          maxLines: 6,
+                          maxLines: 8,
                           decoration: InputDecoration(hintText: l.improveAppHint, border: const OutlineInputBorder()),
                         ),
                         const SizedBox(height: 8),
                         Align(
                           alignment: Alignment.centerRight,
                           child: FilledButton.icon(
+                            key: const Key('sendRequest'),
                             onPressed: () {
                               final text = _change.text.trim();
                               if (text.isEmpty) return;
                               _change.clear();
                               b.improve(text);
                             },
-                            icon: const Icon(Icons.auto_fix_high),
-                            label: Text(l.applyChange),
+                            icon: const Icon(Icons.send),
+                            label: Text(l.send),
                           ),
                         ),
                       ],
@@ -326,6 +345,39 @@ final _projectByIdProvider = FutureProvider.autoDispose.family<Project, String>(
   final api = await ref.watch(runnerApiProvider.future);
   return api.project(id);
 });
+
+class _ChatBubble extends StatelessWidget {
+  const _ChatBubble({required this.role, required this.text});
+  final String role;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final user = role == 'user';
+    return Align(
+      alignment: user ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.all(12),
+        constraints: const BoxConstraints(maxWidth: 680),
+        decoration: BoxDecoration(
+          color: user ? scheme.primaryContainer : scheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: user
+            ? SelectableText(text)
+            : MarkdownBody(
+                data: text,
+                selectable: true,
+                onTapLink: (_, href, _) {
+                  if (href != null) launchUrl(Uri.parse(href), mode: LaunchMode.externalApplication);
+                },
+              ),
+      ),
+    );
+  }
+}
 
 class _PromptCard extends StatelessWidget {
   const _PromptCard({required this.prompt, required this.engine, required this.model, this.designName});
@@ -425,7 +477,7 @@ class _ReadyCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(l.appReadyTitle, style: Theme.of(context).textTheme.titleLarge),
-                if (builder.summary != null) ...[const SizedBox(height: 8), Text(builder.summary!, maxLines: 8, overflow: TextOverflow.ellipsis)],
+                
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,

@@ -156,6 +156,27 @@ export function bumpBuildNumber(pubspec: string): { text: string; version: strin
   return { text: pubspec.replace(re, `version: ${next}`), version: next };
 }
 
+/** SHA-1 of a keystore entry via keytool, or null. */
+export async function keystoreSha1(keystore: string, alias: string, password: string, keytool: string): Promise<string | null> {
+  if (!existsSync(keystore)) return null;
+  const res = await run(keytool, ['-list', '-v', '-keystore', keystore, '-alias', alias, '-storepass', password]);
+  const m = /SHA1:\s*([0-9A-F:]{59})/i.exec(res.output);
+  return res.code === 0 && m ? m[1]!.toUpperCase() : null;
+}
+
+/** Package name + SHA-1s needed for Firebase Android apps and Google Sign-In. */
+export async function androidAppInfo(cfg: Config, projectId: string, projectRoot: string, appName: string) {
+  const keytool = resolveKeytool(cfg);
+  let applicationId: string | null = null;
+  const gradle = path.join(projectRoot, 'android', 'app', 'build.gradle.kts');
+  if (existsSync(gradle)) applicationId = /applicationId\s*=\s*"([^"]+)"/.exec(await readFile(gradle, 'utf8'))?.[1] ?? null;
+  const key = await ensureUploadKey(cfg, projectId, appName, keytool);
+  const release = await keystoreSha1(key.keystorePath, key.alias, key.storePassword, keytool);
+  const home = process.env.USERPROFILE ?? process.env.HOME ?? '';
+  const debug = await keystoreSha1(path.join(home, '.android', 'debug.keystore'), 'androiddebugkey', 'android', keytool);
+  return { applicationId, sha1Release: release, sha1Debug: debug };
+}
+
 /** Prepares a project for a signed release build; returns env vars for Gradle. */
 export async function prepareSignedBuild(cfg: Config, projectId: string, projectRoot: string, appName: string): Promise<{ env: Record<string, string>; version: string }> {
   const gradle = path.join(projectRoot, 'android', 'app', 'build.gradle.kts');

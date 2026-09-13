@@ -86,6 +86,7 @@ void main() {
       'App ricette.\n```yaml pubspec.yaml\nname: ricette\ndependencies:\n  flutter:\n    sdk: flutter\n```\n```dart lib/main.dart\nvoid main() { BROKEN; }\n```\n```dart android/app/x.kt\nnope\n```',
       '```dart lib/main.dart\nvoid main() {}\n```',
     ]);
+    const androidInfo = 'ANDROID APP INFO: package dev.x.demo_app, SHA-1 AA:BB';
     final b = AppBuilder(
       projectId: 'p1',
       projectName: 'demo_app',
@@ -93,6 +94,7 @@ void main() {
       events: runner.events.stream,
       fetchJobLog: (id) async => runner.jobLogs[id] ?? '',
       resolveProvider: (_) async => provider,
+      androidInfo: () async => androidInfo,
     );
 
     await b.build(prompt: 'Crea un\'app di ricette', engine: BuildEngine.gemini, model: gemini);
@@ -109,6 +111,10 @@ void main() {
     expect(provider.prompts[1], contains('```dart lib/main.dart'));
     expect(b.costUsd, greaterThan(0));
     expect(b.summary, 'App ricette.');
+    expect(provider.prompts.first, contains(androidInfo));
+    expect(b.conversation.map((m) => m.role), ['user', 'assistant']);
+    expect(b.conversation.first.text, "Crea un'app di ricette");
+    expect(b.conversation.last.text, 'App ricette.');
   });
 
   test('gives up after max fix rounds with a clear error', () async {

@@ -15,7 +15,7 @@ import { errorPayload, httpStatus } from './errors.js';
 import { WatchHub } from './fs.js';
 import { JobManager, jobPublic } from './jobs.js';
 import { ARTIFACTS, Services, TEMPLATES, type SignedBuildPreparer } from './services.js';
-import { ensureUploadKey } from './signing.js';
+import { androidAppInfo, ensureUploadKey } from './signing.js';
 import { randomBytes } from 'node:crypto';
 import { JsonStore, SupabaseStore, type Store } from './store.js';
 import { DockerDriver } from './workspaces/docker.js';
@@ -36,6 +36,7 @@ export interface AppDeps {
   claudeCode?: ClaudeCodeEngine;
   prepareSigned?: SignedBuildPreparer;
   ensureKey?: typeof ensureUploadKey;
+  androidInfo?: typeof androidAppInfo;
 }
 
 export async function buildApp(
@@ -239,6 +240,12 @@ export async function buildApp(
       for (const [t, v] of keyLinks) if (v.expires < Date.now()) keyLinks.delete(t);
       keyLinks.set(token, { keystorePath: key.keystorePath, fileName: `${project.name}-upload-keystore.jks`, expires });
       return { path: `/signing-download/${token}`, alias: key.alias, password: key.storePassword, expiresAt: new Date(expires).toISOString() };
+    });
+
+    r.get('/v1/projects/:projectId/android-info', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      return (deps.androidInfo ?? androidAppInfo)(cfg, project.id, services.projectRoot(project), project.name);
     });
 
     r.get('/v1/jobs/:jobId', async (req) => {

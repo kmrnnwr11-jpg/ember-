@@ -779,13 +779,13 @@ abstract class AppLocalizations {
   /// No description provided for @improveApp.
   ///
   /// In it, this message translates to:
-  /// **'Vuoi cambiare qualcosa?'**
+  /// **'Cosa vuoi aggiungere o migliorare?'**
   String get improveApp;
 
   /// No description provided for @improveAppHint.
   ///
   /// In it, this message translates to:
-  /// **'Es.: aggiungi la modalità scura, metti le foto più grandi…'**
+  /// **'Descrivi le prossime funzioni o modifiche, es.: aggiungi le videochiamate, il login con Google, le stanze private… Puoi anche incollare qui le chiavi che ti chiede l\'AI.'**
   String get improveAppHint;
 
   /// No description provided for @applyChange.

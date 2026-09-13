@@ -33,24 +33,30 @@ class BuildLogLine {
 }
 
 const appBuildSystemPrompt = '''
-You are an expert Flutter engineer generating a COMPLETE, WORKING Flutter app from the user's description.
-The project was just created with `flutter create`; you replace its content.
+You are an expert Flutter engineer building a real app for a non-technical user who talks to you through a phone chat.
+The project was created with `flutter create`; you replace/extend its content. Follow-up messages are change requests on the same app: keep what works and extend it.
 
 Output format (strict):
-- Output every file as a fenced code block whose info string is the language followed by the project-relative path, e.g.
+- Output every created or changed file as a fenced code block whose info string is the language followed by the project-relative path, e.g.
 ```dart lib/main.dart
 ...complete file...
 ```
-- Always include `pubspec.yaml` (keep `name:` unchanged, sdk constraint `^3.9.0`, `flutter: uses-material-design: true`) and `lib/main.dart`.
-- Include `test/widget_test.dart` with a small passing test that matches your app.
+- On the first build always include `pubspec.yaml` (keep `name:` unchanged, sdk constraint `^3.9.0`, `flutter: uses-material-design: true`), `lib/main.dart` and `test/widget_test.dart` (minimal test that compiles).
 - Only write files under lib/, test/, assets/ or pubspec.yaml. Every file must be complete: no placeholders, no "...", no TODO in place of logic.
-- Before the files, write at most 3 short lines describing the app. No text after the last file.
+- AFTER the last file, write the reply to the user (in their language, Markdown):
+## Fatto
+- what now works
+## Da configurare
+numbered step-by-step instructions for every external service still missing: full URL to open, what account/project to create, what to click, which values to copy and exactly what to paste back in the chat. Use the ANDROID APP INFO when provided (package name, SHA-1). Write "Niente da configurare" if nothing is needed.
+## Prossimi passi suggeriti
+- 2-4 concrete ideas
+Then one professional question inviting the next request.
 
-App quality:
-- Build exactly what was asked, working and polished, with a clean Material 3 theme. Match the size of the app to the request: a simple request (e.g. a calculator) is a simple app in 1-3 files; add navigation, persistence (shared_preferences) and extra screens only when the request needs them. Do not invent features.
-- All UI text in the same language as the user's request.
-- Must compile for web and Android. Prefer pure-Dart packages from pub.dev with well-known stable versions; do not use packages that only work on mobile unless you provide a web fallback. Avoid code generation (no build_runner).
-- Use as few files as the app needs (never more than ~15) and make sure every import resolves.''';
+What to build:
+- A complete, real product for the kind of app requested, not a single screen or a demo. For product-type apps include the core feature set users expect (e.g. a chat/dating app like Badoo: sign-up/login with email and Google, profile with photo, discovery/user list, conversations, private 1-to-1 chats and private rooms, real-time messages, logout). Simple utilities stay simple.
+- Large extras not requested (video calls, payments…) are suggested in "Prossimi passi", not built.
+- Real integrations only: Firebase Auth (email + Google Sign-In), Cloud Firestore, Firebase Storage, Agora or Jitsi for video, Firebase Messaging, Stripe, Google Maps. Never invent keys: keep all keys in lib/config/app_config.dart with empty defaults, initialize services only when configured, and show an in-app "Configurazione necessaria" screen describing what is missing so the app still runs. Initialize Firebase with FirebaseOptions from AppConfig (no flutterfire CLI). When the user pastes keys, write them into AppConfig.
+- UI text in the user's language, polished Material 3 (or the APPROVED DESIGN when given). Must compile for web and Android; avoid code generation (no build_runner). Make sure every import resolves.''';
 
 String fixPrompt(String original, Map<String, String> files, String problems) {
   final buf = StringBuffer()
@@ -69,7 +75,7 @@ String fixPrompt(String original, Map<String, String> files, String problems) {
     ..writeln('Running the Flutter toolchain reported these problems:')
     ..writeln(problems)
     ..writeln()
-    ..writeln('Fix them. Output ONLY the complete corrected content of every file you change, in the same fenced format with paths. Do not output unchanged files.');
+    ..writeln('Fix them. Output ONLY the complete corrected content of every file you change, in the same fenced format with paths. Do not output unchanged files. No reply sections.');
   return buf.toString();
 }
 
@@ -90,7 +96,7 @@ String improvePrompt(String original, Map<String, String> files, String change) 
     ..writeln('The user now asks for this change:')
     ..writeln(change)
     ..writeln()
-    ..writeln('Apply it. Output ONLY the complete content of every file you create or change, in the same fenced format with paths.');
+    ..writeln('Apply it. Output the complete content of every file you create or change, in the same fenced format with paths, then the reply sections (Fatto / Da configurare / Prossimi passi suggeriti).');
   return buf.toString();
 }
 
@@ -107,6 +113,7 @@ class AppBuilder extends ChangeNotifier {
     required Stream<WsFrame> events,
     required Future<String> Function(String jobId) fetchJobLog,
     required Future<AiProvider> Function(AiModel model) resolveProvider,
+    this.androidInfo,
     this.maxFixRounds = 3,
     this.jobTimeout = const Duration(minutes: 15),
   }) : _request = request,
@@ -120,6 +127,9 @@ class AppBuilder extends ChangeNotifier {
   final Stream<WsFrame> _events;
   final Future<String> Function(String jobId) _fetchJobLog;
   final Future<AiProvider> Function(AiModel model) _resolve;
+
+  /// Returns a text block with package name and SHA-1s (for Firebase/Google Sign-In).
+  final Future<String?> Function()? androidInfo;
   final int maxFixRounds;
   final Duration jobTimeout;
 
@@ -142,9 +152,23 @@ class AppBuilder extends ChangeNotifier {
   /// Claude Code only: `fast` (default) or `best`.
   String quality = 'fast';
 
+  /// The chat with the user: their requests and the AI's replies (Markdown).
+  final List<({String role, String text})> conversation = [];
+
   /// Chosen mockup brief (hidden from the UI, sent to the AI).
   String? design;
   String? designName;
+
+  String? _replyText;
+
+  Future<String> _androidBlock() async {
+    try {
+      final info = await androidInfo?.call();
+      return info == null ? '' : '\n\n$info';
+    } catch (_) {
+      return '';
+    }
+  }
 
   bool _cancelled = false;
   Completer<void> _cancelSignal = Completer<void>();
@@ -209,16 +233,23 @@ class AppBuilder extends ChangeNotifier {
       writtenFiles.clear();
       costUsd = 0;
       preview = null;
+      conversation
+        ..clear()
+        ..add((role: 'user', text: prompt));
+    } else {
+      conversation.add((role: 'user', text: change));
     }
+    _replyText = null;
     try {
       if (engine.isCli) {
-        await _runClaudeCode(change ?? '$prompt${design ?? ''}', resume: change != null);
+        await _runClaudeCode('${change ?? '$prompt${design ?? ''}'}${await _androidBlock()}', resume: change != null);
       } else {
         await _runApiEngine(change: change);
       }
       if (_cancelled) return;
       await _buildPreview();
       if (_cancelled) return;
+      conversation.add((role: 'assistant', text: _replyText?.trim().isNotEmpty == true ? _replyText!.trim() : 'App aggiornata ✓'));
       _setPhase(BuildPhase.ready);
       _log('App pronta ✓', kind: 'info');
     } on _Cancelled {
@@ -229,6 +260,7 @@ class AppBuilder extends ChangeNotifier {
         return;
       }
       error = e is AiException ? e.message : (e is RunnerException ? e.message : e.toString());
+      conversation.add((role: 'assistant', text: '⚠️ $error'));
       _log(error!, kind: 'error');
       _setPhase(BuildPhase.failed);
     }
@@ -250,12 +282,15 @@ class AppBuilder extends ChangeNotifier {
     final String userMessage;
     if (change == null) {
       _log('Scrivo il codice con ${m.label}…');
-      userMessage = '$prompt${design ?? ''}\n\n(Project package name: $projectName)';
+      userMessage = '$prompt${design ?? ''}\n\n(Project package name: $projectName)${await _androidBlock()}';
     } else {
       _log('Applico la modifica con ${m.label}: $change');
-      userMessage = improvePrompt(prompt, await _readProjectFiles(), change);
+      userMessage = '${improvePrompt(prompt, await _readProjectFiles(), change)}${await _androidBlock()}';
     }
     var files = await _generate(provider, m, userMessage, maxTokens);
+    // The prose around the files is the reply shown in the chat.
+    final reply = CodeBlocks.parse(liveText.toString()).whereType<TextSegment>().map((t) => t.markdown.trim()).where((t) => t.isNotEmpty).join('\n\n');
+    if (reply.isNotEmpty) _replyText = reply;
     if (files.isEmpty) throw const AiException("L'AI non ha prodotto file: riprova o cambia modello.");
     await _writeFiles(files, removeDefaultTest: change == null);
 
@@ -474,7 +509,10 @@ class AppBuilder extends ChangeNotifier {
           case 'result':
             final cost = ev['costUsd'];
             if (cost is num) costUsd += cost.toDouble();
-            if (ev['ok'] == true) summary = ev['message'] as String?;
+            if (ev['ok'] == true) {
+              summary = ev['message'] as String?;
+              _replyText = summary;
+            }
           case 'error':
             _log(ev['message'] as String, kind: 'error');
         }

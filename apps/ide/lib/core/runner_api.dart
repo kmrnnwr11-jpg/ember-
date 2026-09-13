@@ -68,6 +68,10 @@ class RunnerApi {
   Future<Map<String, dynamic>> signingLink(String projectId) =>
       _call(() => _dio.post('/v1/projects/$projectId/signing/link'), (d) => d as Map<String, dynamic>);
 
+  /// Android package name + SHA-1 fingerprints (release upload key, debug key).
+  Future<Map<String, dynamic>> androidInfo(String projectId) =>
+      _call(() => _dio.get('/v1/projects/$projectId/android-info'), (d) => d as Map<String, dynamic>);
+
   Future<String> jobLog(String jobId) =>
       _call(() => _dio.get('/v1/jobs/$jobId'), (d) => d['log'] as String? ?? '');
 }

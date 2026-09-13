@@ -378,11 +378,11 @@ class AppLocalizationsIt extends AppLocalizations {
       'Scrivi cosa deve fare e come deve essere: l\'AI crea l\'app completa, controlla gli errori e te la mostra. (*Gemini: quota gratuita di Google con limiti giornalieri)';
 
   @override
-  String get improveApp => 'Vuoi cambiare qualcosa?';
+  String get improveApp => 'Cosa vuoi aggiungere o migliorare?';
 
   @override
   String get improveAppHint =>
-      'Es.: aggiungi la modalità scura, metti le foto più grandi…';
+      'Descrivi le prossime funzioni o modifiche, es.: aggiungi le videochiamate, il login con Google, le stanze private… Puoi anche incollare qui le chiavi che ti chiede l\'AI.';
 
   @override
   String get applyChange => 'Applica modifica';

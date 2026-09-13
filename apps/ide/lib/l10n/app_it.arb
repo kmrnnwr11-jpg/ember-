@@ -198,5 +198,28 @@
   "openApp": "Apri app",
   "viewCode": "Vedi codice",
   "buildCancelled": "Creazione interrotta",
-  "buildFailedTitle": "Non sono riuscito a completare l'app"
+  "buildFailedTitle": "Non sono riuscito a completare l'app",
+  "bestQuality": "Qualità massima",
+  "bestQualityOn": "Modello più potente: più lento, per app complesse",
+  "bestQualityOff": "Veloce (consigliato): ideale per la maggior parte delle app",
+  "androidFileQuestion": "Vuoi il file per Android?",
+  "androidFileHint": "APK: da installare sul telefono. AAB: da caricare sulla Google Play Console. Entrambi firmati.",
+  "generateApk": "Genera APK",
+  "generateAab": "Genera AAB",
+  "androidBuilding": "Genero {kind}… la prima volta può richiedere 3-5 minuti.",
+  "downloadApk": "Scarica e installa APK",
+  "downloadAab": "Scarica AAB",
+  "apkInstallHint": "APK firmato. Se Android lo chiede, consenti l'installazione da questa fonte.",
+  "aabHint": "AAB firmato con la chiave di caricamento di questa app: pronto per la Google Play Console. Il numero di versione sale da solo a ogni build.",
+  "androidFailed": "Generazione non riuscita:",
+  "@androidBuilding": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "backupSigningKey": "Salva chiave di firma",
+  "backupSigningKeyHint": "Conserva il file della chiave e la password in un posto sicuro (es. Google Drive): servono per pubblicare gli aggiornamenti di questa app sul Play Store. Il link funziona una sola volta per 10 minuti.",
+  "downloadKeystore": "Scarica file chiave"
 }

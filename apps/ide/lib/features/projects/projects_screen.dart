@@ -84,10 +84,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     await _createProject(name);
   }
 
-  void _createFromPrompt(String prompt, BuildEngine engine, AiModel? model) {
+  void _createFromPrompt(String prompt, BuildEngine engine, AiModel? model, String quality) {
     _createProject(
       BuildSupport.projectNameFromPrompt(prompt),
-      args: CreateAppArgs(prompt: prompt, engine: engine, modelKey: model?.key),
+      args: CreateAppArgs(prompt: prompt, engine: engine, modelKey: model?.key, quality: quality),
     );
   }
 

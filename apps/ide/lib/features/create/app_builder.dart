@@ -47,10 +47,10 @@ Output format (strict):
 - Before the files, write at most 3 short lines describing the app. No text after the last file.
 
 App quality:
-- Real app, not a demo: several screens with navigation, state management, local persistence (shared_preferences) where data should survive restarts, loading/empty/error states, Material 3 theme with a coherent color scheme.
+- Build exactly what was asked, working and polished, with a clean Material 3 theme. Match the size of the app to the request: a simple request (e.g. a calculator) is a simple app in 1-3 files; add navigation, persistence (shared_preferences) and extra screens only when the request needs them. Do not invent features.
 - All UI text in the same language as the user's request.
 - Must compile for web and Android. Prefer pure-Dart packages from pub.dev with well-known stable versions; do not use packages that only work on mobile unless you provide a web fallback. Avoid code generation (no build_runner).
-- Keep it to at most ~15 files and make sure every import resolves.''';
+- Use as few files as the app needs (never more than ~15) and make sure every import resolves.''';
 
 String fixPrompt(String original, Map<String, String> files, String problems) {
   final buf = StringBuffer()
@@ -136,6 +136,12 @@ class AppBuilder extends ChangeNotifier {
   PreviewInfo? preview;
   String? summary;
 
+  /// Latest action reported by Claude Code (e.g. "Write lib/main.dart").
+  String? currentAction;
+
+  /// Claude Code only: `fast` (default) or `best`.
+  String quality = 'fast';
+
   bool _cancelled = false;
   Completer<void> _cancelSignal = Completer<void>();
 
@@ -163,8 +169,10 @@ class AppBuilder extends ChangeNotifier {
   }
 
   /// Starts a build from scratch.
-  Future<void> build({required String prompt, required BuildEngine engine, AiModel? model}) =>
-      _run(prompt: prompt, engine: engine, model: model, change: null);
+  Future<void> build({required String prompt, required BuildEngine engine, AiModel? model, String quality = 'fast'}) {
+    this.quality = quality;
+    return _run(prompt: prompt, engine: engine, model: model, change: null);
+  }
 
   /// Applies a follow-up change to an already built app.
   Future<void> improve(String change) {
@@ -439,8 +447,16 @@ class AppBuilder extends ChangeNotifier {
             final name = ev['name'] as String;
             final summary = ev['summary'] as String? ?? '';
             if (name == 'Write' || name == 'Edit' || name == 'MultiEdit') writtenFiles.add(summary);
-            if (name == 'Bash' && summary.contains('analyze')) _setPhase(BuildPhase.checking);
-            if (name == 'Bash' && summary.contains('pub get')) _setPhase(BuildPhase.dependencies);
+            // The CLI interleaves writing, pub get and analyze: show the live action
+            // instead of jumping between step rows.
+            currentAction = switch (name) {
+              'Write' => 'Scrive $summary',
+              'Edit' || 'MultiEdit' => 'Modifica $summary',
+              'Read' || 'Glob' || 'Grep' => 'Legge $summary',
+              'Bash' when summary.contains('pub get') => 'Installa le dipendenze',
+              'Bash' when summary.contains('analyze') => 'Controlla gli errori',
+              _ => '$name $summary',
+            };
             _log('$name ${summary.isEmpty ? '' : summary}', kind: name == 'Bash' ? 'tool' : 'file');
           case 'result':
             final cost = ev['costUsd'];
@@ -460,6 +476,7 @@ class AppBuilder extends ChangeNotifier {
         'engine': 'claude-code',
         'prompt': text,
         'resume': resume,
+        'quality': quality,
       });
       _agentRunId = run['id'] as String;
       for (final f in early) {
@@ -477,6 +494,7 @@ class AppBuilder extends ChangeNotifier {
   // ------------------------------------------------------------------- preview
 
   Future<void> _buildPreview() async {
+    currentAction = null;
     _setPhase(BuildPhase.building);
     _log('Compilo l\'app per il web (circa 30 secondi)…');
     final c = Completer<WsFrame>();
@@ -496,6 +514,51 @@ class AppBuilder extends ChangeNotifier {
       _currentJobId = null;
       await sub.cancel();
     }
+  }
+
+  // ------------------------------------------------------------ Android files
+
+  /// `apk` or `aab` while/after building; null if never requested.
+  String? androidKind;
+
+  /// `building` | `ready` | `failed`.
+  String? androidStatus;
+  String? androidError;
+
+  bool get androidBuilding => androidStatus == 'building';
+
+  /// Runner-relative download path, e.g. `/artifacts/<ws>/<project>/app-release.apk`.
+  String? get androidPath {
+    final p = preview?.path;
+    if (p == null || androidStatus != 'ready' || androidKind == null) return null;
+    return '${p.replaceFirst('/preview/', '/artifacts/')}app-release.$androidKind';
+  }
+
+  /// Builds a release APK (installable) or AAB (Play Store) for the finished app.
+  Future<void> buildAndroid(String kind) async {
+    if (running || androidBuilding) return;
+    androidKind = kind;
+    androidStatus = 'building';
+    androidError = null;
+    _cancelled = false;
+    if (_cancelSignal.isCompleted) _cancelSignal = Completer<void>();
+    _log(kind == 'apk' ? "Genero l'APK (la prima volta può richiedere alcuni minuti)…" : "Genero l'AAB per il Play Store…");
+    notifyListeners();
+    try {
+      final job = await _runJob(kind == 'apk' ? 'build_apk' : 'build_aab');
+      if (job.status != 'succeeded') {
+        androidError = _tail(await _fetchJobLog(job.jobId), 30);
+        androidStatus = 'failed';
+        _log('Generazione ${kind.toUpperCase()} non riuscita', kind: 'error');
+      } else {
+        androidStatus = 'ready';
+        _log('${kind.toUpperCase()} pronto ✓');
+      }
+    } catch (e) {
+      androidError = e is RunnerException ? e.message : e.toString();
+      androidStatus = 'failed';
+    }
+    notifyListeners();
   }
 
   Future<void> cancel() async {

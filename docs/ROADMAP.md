@@ -51,3 +51,12 @@
 - Verified live with Claude Code: "Acqua di oggi" app, 9 files, analyze clean, 2 tests passing, preview served (≈4.5 min).
 - Not yet: 5 mockup styles, "give me the prompt" mode, step-by-step mode, resume after app restart, push notification, summary/clarifying questions.
 - Local workspaces now default to `C:\FlutterCursor\workspaces` in dev so Claude Code does not inherit unrelated CLAUDE.md files from the user's home directory.
+
+## Speed + signed Android builds
+
+- Claude Code "fast" mode (default): Sonnet at medium effort, scope-matched prompt, `flutter test/run/build` blocked (a hung `flutter_tester` was the main slowdown). "Best quality" toggle uses Opus at high effort.
+- Build screen shows Claude Code's live action instead of a stuck step row.
+- After an app is ready the user is asked for **APK** or **AAB**. Both are release builds signed with a per-app upload key (PKCS12, generated with keytool, stored under `WORKSPACES_ROOT/.signing/<projectId>`, password AES-GCM-encrypted when `VAULT_MASTER_KEY` is set). Secrets reach Gradle only via `FC_KEYSTORE_*` env vars; `build.gradle.kts` is patched to read them. `versionCode` is bumped on every signed build.
+- Verified live: signed AAB (40 MB, 83 s), certificate `CN=<app>, O=FlutterCursor`, version bumped to `+2`.
+- Upload-key backup: one-time 10-minute download link + alias/password shown in the app.
+- iOS/IPA: not possible on the Windows Runner (needs macOS + Xcode + Apple Developer account); planned via a macOS CI (Codemagic / GitHub Actions) in Phase 6.

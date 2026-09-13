@@ -871,6 +871,102 @@ abstract class AppLocalizations {
   /// In it, this message translates to:
   /// **'Non sono riuscito a completare l\'app'**
   String get buildFailedTitle;
+
+  /// No description provided for @bestQuality.
+  ///
+  /// In it, this message translates to:
+  /// **'Qualità massima'**
+  String get bestQuality;
+
+  /// No description provided for @bestQualityOn.
+  ///
+  /// In it, this message translates to:
+  /// **'Modello più potente: più lento, per app complesse'**
+  String get bestQualityOn;
+
+  /// No description provided for @bestQualityOff.
+  ///
+  /// In it, this message translates to:
+  /// **'Veloce (consigliato): ideale per la maggior parte delle app'**
+  String get bestQualityOff;
+
+  /// No description provided for @androidFileQuestion.
+  ///
+  /// In it, this message translates to:
+  /// **'Vuoi il file per Android?'**
+  String get androidFileQuestion;
+
+  /// No description provided for @androidFileHint.
+  ///
+  /// In it, this message translates to:
+  /// **'APK: da installare sul telefono. AAB: da caricare sulla Google Play Console. Entrambi firmati.'**
+  String get androidFileHint;
+
+  /// No description provided for @generateApk.
+  ///
+  /// In it, this message translates to:
+  /// **'Genera APK'**
+  String get generateApk;
+
+  /// No description provided for @generateAab.
+  ///
+  /// In it, this message translates to:
+  /// **'Genera AAB'**
+  String get generateAab;
+
+  /// No description provided for @androidBuilding.
+  ///
+  /// In it, this message translates to:
+  /// **'Genero {kind}… la prima volta può richiedere 3-5 minuti.'**
+  String androidBuilding(String kind);
+
+  /// No description provided for @downloadApk.
+  ///
+  /// In it, this message translates to:
+  /// **'Scarica e installa APK'**
+  String get downloadApk;
+
+  /// No description provided for @downloadAab.
+  ///
+  /// In it, this message translates to:
+  /// **'Scarica AAB'**
+  String get downloadAab;
+
+  /// No description provided for @apkInstallHint.
+  ///
+  /// In it, this message translates to:
+  /// **'APK firmato. Se Android lo chiede, consenti l\'installazione da questa fonte.'**
+  String get apkInstallHint;
+
+  /// No description provided for @aabHint.
+  ///
+  /// In it, this message translates to:
+  /// **'AAB firmato con la chiave di caricamento di questa app: pronto per la Google Play Console. Il numero di versione sale da solo a ogni build.'**
+  String get aabHint;
+
+  /// No description provided for @androidFailed.
+  ///
+  /// In it, this message translates to:
+  /// **'Generazione non riuscita:'**
+  String get androidFailed;
+
+  /// No description provided for @backupSigningKey.
+  ///
+  /// In it, this message translates to:
+  /// **'Salva chiave di firma'**
+  String get backupSigningKey;
+
+  /// No description provided for @backupSigningKeyHint.
+  ///
+  /// In it, this message translates to:
+  /// **'Conserva il file della chiave e la password in un posto sicuro (es. Google Drive): servono per pubblicare gli aggiornamenti di questa app sul Play Store. Il link funziona una sola volta per 10 minuti.'**
+  String get backupSigningKeyHint;
+
+  /// No description provided for @downloadKeystore.
+  ///
+  /// In it, this message translates to:
+  /// **'Scarica file chiave'**
+  String get downloadKeystore;
 }
 
 class _AppLocalizationsDelegate

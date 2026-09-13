@@ -5,6 +5,7 @@ import type { Config } from './config.js';
 import { FsError, ProjectFs } from './fs.js';
 import type { Job, JobKind, JobManager } from './jobs.js';
 import { validateProjectName } from './paths.js';
+import { prepareSignedBuild } from './signing.js';
 import type { ProjectRow, Store, WorkspaceRow } from './store.js';
 import type { WorkspaceDriver } from './workspaces/driver.js';
 
@@ -22,7 +23,17 @@ const JOB_COMMANDS: Partial<Record<JobKind, string[]>> = {
   pub_get: ['pub', 'get'],
   analyze: ['analyze', '--no-fatal-infos', '--no-fatal-warnings'],
   test: ['test', '--reporter', 'expanded'],
+  build_apk: ['build', 'apk', '--release'],
+  build_aab: ['build', 'appbundle', '--release'],
 };
+
+/** Downloadable Android artifacts, relative to the project root. */
+export const ARTIFACTS: Record<string, { rel: string; contentType: string }> = {
+  'app-release.apk': { rel: 'build/app/outputs/flutter-apk/app-release.apk', contentType: 'application/vnd.android.package-archive' },
+  'app-release.aab': { rel: 'build/app/outputs/bundle/release/app-release.aab', contentType: 'application/octet-stream' },
+};
+
+export type SignedBuildPreparer = typeof prepareSignedBuild;
 
 export class Services {
   constructor(
@@ -30,6 +41,7 @@ export class Services {
     readonly store: Store,
     readonly driver: WorkspaceDriver,
     readonly jobs: JobManager,
+    private readonly prepareSigned: SignedBuildPreparer = prepareSignedBuild,
   ) {
     jobs.on('status', (job) => void this.onJobStatus(job));
   }
@@ -142,6 +154,15 @@ export class Services {
     const { project } = await this.projectFs(ownerId, projectId);
     const args = typeof kind === 'string' ? JOB_COMMANDS[kind as JobKind] : undefined;
     if (!args) throw new FsError('bad_job', `unsupported job kind; available: ${Object.keys(JOB_COMMANDS).join(', ')}`);
+    let env: Record<string, string> | undefined;
+    if (kind === 'build_apk' || kind === 'build_aab') {
+      // Signed release for Play Console: upload key + bumped versionCode.
+      try {
+        env = (await this.prepareSigned(this.cfg, project.id, this.projectRoot(project), project.name)).env;
+      } catch (e) {
+        throw new FsError('signing_failed', (e as Error).message);
+      }
+    }
     return this.jobs.enqueue({
       kind: kind as JobKind,
       ownerId,
@@ -150,6 +171,7 @@ export class Services {
       cwd: `${PROJECTS_DIR}/${project.name}`,
       cmd: 'flutter',
       args,
+      env,
     });
   }
 

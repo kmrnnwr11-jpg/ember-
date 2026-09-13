@@ -36,6 +36,12 @@ class FakeDriver implements WorkspaceDriver {
     };
   }
   async exec(id: string, cmd: string, args: string[], opts: ExecOptions) {
+    if (cmd === 'flutter' && args[0] === 'build' && args[1] === 'apk') {
+      const dir = path.join(this.hostRoot(id), opts.cwd, 'build', 'app', 'outputs', 'flutter-apk');
+      await mkdir(dir, { recursive: true });
+      await writeFile(path.join(dir, 'app-release.apk'), 'PK-fake-apk');
+      return 0;
+    }
     if (cmd === 'flutter' && args[0] === 'build' && args[1] === 'web') {
       const dir = path.join(this.hostRoot(id), opts.cwd, 'build', 'web');
       await mkdir(dir, { recursive: true });
@@ -138,7 +144,15 @@ describe('Runner API (phase 1 acceptance)', () => {
   beforeAll(async () => {
     tmp = await mkdtemp(path.join(os.tmpdir(), 'fc-app-'));
     const cfg = loadConfig({ DEV_AUTH: 'true', DATA_DIR: tmp, WORKSPACES_ROOT: path.join(tmp, 'ws'), LOG_LEVEL: 'silent' });
-    const { app } = await buildApp(cfg, { driver: new FakeDriver(path.join(tmp, 'ws')) });
+    const { app } = await buildApp(cfg, {
+      driver: new FakeDriver(path.join(tmp, 'ws')),
+      prepareSigned: async () => ({ env: { FC_KEYSTORE_PATH: 'x' }, version: '1.0.0+2' }),
+      ensureKey: async () => {
+        const keystorePath = path.join(tmp, 'k.jks');
+        await writeFile(keystorePath, 'KEYSTORE');
+        return { alias: 'upload', storePassword: 'pw', keystorePath, createdAt: '' };
+      },
+    });
     await app.listen({ port: 0, host: '127.0.0.1' });
     base = `127.0.0.1:${(app.server.address() as AddressInfo).port}`;
     close = () => app.close();
@@ -257,6 +271,27 @@ describe('Runner API (phase 1 acceptance)', () => {
     const previewStatus = await req('preview.status', { projectId: project.id });
     expect(previewStatus.payload.built).toBe(true);
     await req('preview.stop', { projectId: project.id });
+
+    // ---- Android APK build + download ----
+    const apkUrl = `http://${base}/artifacts/${ws.id}/${project.id}/app-release.apk`;
+    expect((await fetch(apkUrl)).status).toBe(404);
+    const apkJob = await req('job.start', { projectId: project.id, kind: 'build_apk' });
+    await waitEvent((f) => f.type === 'job.status' && f.payload.jobId === apkJob.payload.jobId && f.payload.status === 'succeeded');
+    const apk = await fetch(apkUrl);
+    expect(apk.status).toBe(200);
+    expect(apk.headers.get('content-type')).toBe('application/vnd.android.package-archive');
+    expect(apk.headers.get('content-disposition')).toContain('counter-release.apk');
+    expect(await apk.text()).toBe('PK-fake-apk');
+    expect((await fetch(`http://${base}/artifacts/${ws.id}/${project.id}/secrets.txt`)).status).toBe(404);
+
+    // ---- upload key backup link (one-time) ----
+    const { json: link } = await http('POST', `/v1/projects/${project.id}/signing/link`, token);
+    expect(link.alias).toBe('upload');
+    expect(link.password).toBe('pw');
+    const keyRes = await fetch(`http://${base}${link.path}`);
+    expect(await keyRes.text()).toBe('KEYSTORE');
+    expect((await fetch(`http://${base}${link.path}`)).status).toBe(404);
+    expect((await http('POST', `/v1/projects/${project.id}/signing/link`, other)).status).toBe(404);
     sock.close();
 
     // "persists after refresh": a brand-new connection sees the saved content

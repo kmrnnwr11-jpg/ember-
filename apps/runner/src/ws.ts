@@ -242,7 +242,14 @@ export class Session {
         const prompt = str(p.prompt, 'prompt');
         if (!prompt.trim() || prompt.length > 20000) throw Object.assign(new Error('prompt must be 1-20000 characters'), { code: 'bad_request' });
         if (this.claudeCode.activeFor(project.id)) throw Object.assign(new Error('an agent is already running on this project'), { code: 'bad_request' });
-        const run = this.claudeCode.start({ ownerId: uid, projectId: project.id, cwd: fs.root, prompt, resume: p.resume === true });
+        const run = this.claudeCode.start({
+          ownerId: uid,
+          projectId: project.id,
+          cwd: fs.root,
+          prompt,
+          resume: p.resume === true,
+          quality: p.quality === 'best' ? 'best' : 'fast',
+        });
         return { ...run };
       }
       case 'agent.cancel': {

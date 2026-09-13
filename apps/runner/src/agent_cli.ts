@@ -22,15 +22,20 @@ export interface AgentRun {
 }
 
 /** System prompt appended to Claude Code for "Crea App" builds. */
-export const CLAUDE_CODE_BUILD_PROMPT = `You are building a complete Flutter app inside the current directory, which is a fresh \`flutter create\` project.
-Rules:
-- Implement the user's request as a complete, working app (not a demo): navigation, state, local persistence where useful, loading/empty/error states, Material 3 theme.
+export const CLAUDE_CODE_BUILD_PROMPT = `You are building a Flutter app inside the current directory, which is a fresh \`flutter create\` project. The user is waiting on a phone: be FAST.
+Scope:
+- Build exactly what the user asked, working and polished, with a clean Material 3 look. Match the size of the app to the request: a simple request (e.g. a calculator) gets a simple app in 1-3 files. Do not add features, screens or persistence the user did not ask for.
 - Use the same language as the user's request for all UI text.
-- The app must run on the web and on Android: prefer pure-Dart packages; if a feature needs native-only APIs, add a web fallback.
-- Edit pubspec.yaml for dependencies, then run \`flutter pub get\`.
-- Replace test/widget_test.dart so it matches your app (or make it a trivial passing test).
-- Run \`flutter analyze\` and fix every error until it reports no errors. Do not run \`flutter run\` or start servers.
-- Stay inside this directory. When finished, reply with a short summary of what you built.`;
+- The app must run on the web and on Android: prefer Flutter SDK widgets and pure-Dart packages; add dependencies only if really needed.
+Speed rules:
+- Do not explore: the project is the standard template (lib/main.dart, pubspec.yaml, test/widget_test.dart). Write files directly with Write.
+- Only if you added dependencies, run \`flutter pub get\` once.
+- Replace test/widget_test.dart with a minimal test that compiles against your app.
+- At the end run \`flutter analyze\` once; if it reports errors, fix them and re-run until clean. Do not run \`flutter test\`, \`flutter run\` or builds.
+- Stay inside this directory. Finish with 2-3 short lines describing the app, in the user's language.`;
+
+/** `fast` = Sonnet at medium effort (default); `best` = Opus at high effort. */
+export type BuildQuality = 'fast' | 'best';
 
 /** Locates the Claude Code executable (native binary on Windows npm installs). */
 export function resolveClaudeBin(cfg: Config): string {
@@ -126,7 +131,8 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
     return this.runs.get(runId);
   }
 
-  start(opts: { ownerId: string; projectId: string; cwd: string; prompt: string; resume?: boolean }): AgentRun {
+  start(opts: { ownerId: string; projectId: string; cwd: string; prompt: string; resume?: boolean; quality?: BuildQuality }): AgentRun {
+    const best = opts.quality === 'best';
     const run: AgentRun = {
       id: nanoid(12),
       ownerId: opts.ownerId,
@@ -140,9 +146,12 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
       '-p',
       '--output-format', 'stream-json',
       '--verbose',
+      '--model', best ? this.cfg.CLAUDE_CODE_MODEL_BEST : this.cfg.CLAUDE_CODE_MODEL_FAST,
+      '--effort', best ? 'high' : 'medium',
       '--permission-mode', 'acceptEdits',
       '--allowedTools', 'Read', 'Write', 'Edit', 'MultiEdit', 'Glob', 'Grep', 'TodoWrite', 'Bash(flutter:*)', 'Bash(dart:*)',
-      '--disallowedTools', 'WebFetch', 'WebSearch', 'Task',
+      // Tests and run/build commands are slow and can hang; the Runner builds the preview itself.
+      '--disallowedTools', 'WebFetch', 'WebSearch', 'Task', 'Bash(flutter test:*)', 'Bash(flutter run:*)', 'Bash(flutter build:*)',
       '--strict-mcp-config',
       '--max-turns', String(this.cfg.CLAUDE_CODE_MAX_TURNS),
       '--append-system-prompt', CLAUDE_CODE_BUILD_PROMPT,

@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import { nanoid } from 'nanoid';
 import type { WorkspaceDriver } from './workspaces/driver.js';
 
-export type JobKind = 'create' | 'pub_get' | 'analyze' | 'test' | 'build_web' | 'build_apk';
+export type JobKind = 'create' | 'pub_get' | 'analyze' | 'test' | 'build_web' | 'build_apk' | 'build_aab';
 export type JobState = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
 
 export interface JobSpec {
@@ -13,6 +13,8 @@ export interface JobSpec {
   cwd: string;
   cmd: string;
   args: string[];
+  /** Extra environment (e.g. signing secrets). Never logged or returned to clients. */
+  env?: Record<string, string>;
 }
 
 export interface Job extends JobSpec {
@@ -137,6 +139,7 @@ export class JobManager extends EventEmitter<JobEvents> {
     try {
       const code = await this.driver.exec(job.workspaceId, job.cmd, job.args, {
         cwd: job.cwd,
+        env: job.env,
         signal: ctrl.signal,
         onStdout: (c) => this.append(job, 'stdout', c),
         onStderr: (c) => this.append(job, 'stderr', c),

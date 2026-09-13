@@ -426,4 +426,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get buildFailedTitle => 'I couldn\'t finish the app';
+
+  @override
+  String get bestQuality => 'Best quality';
+
+  @override
+  String get bestQualityOn => 'Most capable model: slower, for complex apps';
+
+  @override
+  String get bestQualityOff => 'Fast (recommended): right for most apps';
+
+  @override
+  String get androidFileQuestion => 'Do you want the Android file?';
+
+  @override
+  String get androidFileHint =>
+      'APK: install on a phone. AAB: upload to Google Play Console. Both signed.';
+
+  @override
+  String get generateApk => 'Build APK';
+
+  @override
+  String get generateAab => 'Build AAB';
+
+  @override
+  String androidBuilding(String kind) {
+    return 'Building $kind… the first time can take 3-5 minutes.';
+  }
+
+  @override
+  String get downloadApk => 'Download & install APK';
+
+  @override
+  String get downloadAab => 'Download AAB';
+
+  @override
+  String get apkInstallHint =>
+      'Signed APK. If Android asks, allow installs from this source.';
+
+  @override
+  String get aabHint =>
+      'AAB signed with this app\'s upload key: ready for Google Play Console. The version code increases on every build.';
+
+  @override
+  String get androidFailed => 'Build failed:';
+
+  @override
+  String get backupSigningKey => 'Save signing key';
+
+  @override
+  String get backupSigningKeyHint =>
+      'Keep the key file and password somewhere safe (e.g. Google Drive): you need them to publish updates of this app on Google Play. The link works once, for 10 minutes.';
+
+  @override
+  String get downloadKeystore => 'Download key file';
 }

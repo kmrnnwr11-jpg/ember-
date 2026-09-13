@@ -429,4 +429,60 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get buildFailedTitle => 'Non sono riuscito a completare l\'app';
+
+  @override
+  String get bestQuality => 'Qualità massima';
+
+  @override
+  String get bestQualityOn =>
+      'Modello più potente: più lento, per app complesse';
+
+  @override
+  String get bestQualityOff =>
+      'Veloce (consigliato): ideale per la maggior parte delle app';
+
+  @override
+  String get androidFileQuestion => 'Vuoi il file per Android?';
+
+  @override
+  String get androidFileHint =>
+      'APK: da installare sul telefono. AAB: da caricare sulla Google Play Console. Entrambi firmati.';
+
+  @override
+  String get generateApk => 'Genera APK';
+
+  @override
+  String get generateAab => 'Genera AAB';
+
+  @override
+  String androidBuilding(String kind) {
+    return 'Genero $kind… la prima volta può richiedere 3-5 minuti.';
+  }
+
+  @override
+  String get downloadApk => 'Scarica e installa APK';
+
+  @override
+  String get downloadAab => 'Scarica AAB';
+
+  @override
+  String get apkInstallHint =>
+      'APK firmato. Se Android lo chiede, consenti l\'installazione da questa fonte.';
+
+  @override
+  String get aabHint =>
+      'AAB firmato con la chiave di caricamento di questa app: pronto per la Google Play Console. Il numero di versione sale da solo a ogni build.';
+
+  @override
+  String get androidFailed => 'Generazione non riuscita:';
+
+  @override
+  String get backupSigningKey => 'Salva chiave di firma';
+
+  @override
+  String get backupSigningKeyHint =>
+      'Conserva il file della chiave e la password in un posto sicuro (es. Google Drive): servono per pubblicare gli aggiornamenti di questa app sul Play Store. Il link funziona una sola volta per 10 minuti.';
+
+  @override
+  String get downloadKeystore => 'Scarica file chiave';
 }

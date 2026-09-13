@@ -14,7 +14,9 @@ import type { Config } from './config.js';
 import { errorPayload, httpStatus } from './errors.js';
 import { WatchHub } from './fs.js';
 import { JobManager, jobPublic } from './jobs.js';
-import { Services, TEMPLATES } from './services.js';
+import { ARTIFACTS, Services, TEMPLATES, type SignedBuildPreparer } from './services.js';
+import { ensureUploadKey } from './signing.js';
+import { randomBytes } from 'node:crypto';
 import { JsonStore, SupabaseStore, type Store } from './store.js';
 import { DockerDriver } from './workspaces/docker.js';
 import type { WorkspaceDriver } from './workspaces/driver.js';
@@ -32,6 +34,8 @@ export interface AppDeps {
   driver?: WorkspaceDriver;
   aiUpstreams?: Partial<typeof DEFAULT_UPSTREAMS>;
   claudeCode?: ClaudeCodeEngine;
+  prepareSigned?: SignedBuildPreparer;
+  ensureKey?: typeof ensureUploadKey;
 }
 
 export async function buildApp(
@@ -55,7 +59,9 @@ export async function buildApp(
   const store = deps.store ?? (cfg.supabaseEnabled ? new SupabaseStore(cfg) : new JsonStore(cfg.DATA_DIR));
   const driver = deps.driver ?? (cfg.WORKSPACE_DRIVER === 'docker' ? new DockerDriver(cfg) : new LocalDriver(cfg));
   const jobs = new JobManager(driver, cfg.JOB_TIMEOUT_SECONDS);
-  const services = new Services(cfg, store, driver, jobs);
+  const services = new Services(cfg, store, driver, jobs, deps.prepareSigned);
+  const ensureKey = deps.ensureKey ?? ensureUploadKey;
+  const keyLinks = new Map<string, { keystorePath: string; fileName: string; expires: number }>();
   const auth = new Authenticator(cfg);
   const hub = new WatchHub();
   const preview = new PreviewService(cfg, services, hub);
@@ -91,6 +97,33 @@ export async function buildApp(
     preview.stopAll();
     claudeCode.cancelAll();
     await hub.closeAll();
+  });
+
+  app.get('/signing-download/:token', async (req, reply) => {
+    const { token } = req.params as { token: string };
+    const link = keyLinks.get(token);
+    keyLinks.delete(token);
+    if (!link || link.expires < Date.now()) return reply.status(404).send({ code: 'not_found', message: 'link expired' });
+    reply.header('Content-Type', 'application/octet-stream');
+    reply.header('Content-Disposition', `attachment; filename="${link.fileName}"`);
+    reply.header('Cache-Control', 'no-store');
+    return reply.sendFile(path.basename(link.keystorePath), path.dirname(link.keystorePath), { contentType: false });
+  });
+
+  // ---------------- Android artifacts (same capability-link model as preview) ----------------
+
+  app.get('/artifacts/:workspaceId/:projectId/:file', async (req, reply) => {
+    const { workspaceId, projectId, file } = req.params as { workspaceId: string; projectId: string; file: string };
+    const artifact = ARTIFACTS[file];
+    const project = await store.getProject(projectId);
+    if (!artifact || !project || project.workspaceId !== workspaceId) return reply.status(404).send({ code: 'not_found', message: 'artifact not found' });
+    const root = services.projectRoot(project);
+    const st = await stat(path.join(root, artifact.rel)).catch(() => null);
+    if (!st) return reply.status(404).send({ code: 'not_found', message: 'not built yet' });
+    reply.header('Content-Type', artifact.contentType);
+    reply.header('Content-Disposition', `attachment; filename="${project.name}-${file.replace('app-', '')}"`);
+    reply.header('Cache-Control', 'no-cache');
+    return reply.sendFile(artifact.rel, root, { contentType: false });
   });
 
   // ---------------- preview (public by unguessable ids, §2) ----------------
@@ -191,6 +224,18 @@ export async function buildApp(
       const { projectId } = req.params as { projectId: string };
       await services.deleteProject(req.user.id, projectId);
       return reply.status(204).send();
+    });
+
+    // Upload-key backup: returns alias + password and a one-time, 10-minute download link.
+    r.post('/v1/projects/:projectId/signing/link', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const key = await ensureKey(cfg, project.id, project.name);
+      const token = randomBytes(24).toString('base64url');
+      const expires = Date.now() + 10 * 60_000;
+      for (const [t, v] of keyLinks) if (v.expires < Date.now()) keyLinks.delete(t);
+      keyLinks.set(token, { keystorePath: key.keystorePath, fileName: `${project.name}-upload-keystore.jks`, expires });
+      return { path: `/signing-download/${token}`, alias: key.alias, password: key.storePassword, expiresAt: new Date(expires).toISOString() };
     });
 
     r.get('/v1/jobs/:jobId', async (req) => {

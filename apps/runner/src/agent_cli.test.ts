@@ -59,6 +59,8 @@ describe('ClaudeCodeEngine', () => {
     expect(spawned!.args).toContain('--strict-mcp-config');
     expect(spawned!.args).toContain('Bash(flutter:*)');
     expect(spawned!.args).not.toContain('Bash');
+    const a = spawned!.args;
+    expect([a[a.indexOf('--model') + 1], a[a.indexOf('--effort') + 1]]).toEqual(['sonnet', 'medium']);
     expect(spawned!.args.join(' ')).not.toContain('ricette');
     await new Promise((r) => setTimeout(r, 5));
     expect(child.input).toBe('app ricette "con" $foto');

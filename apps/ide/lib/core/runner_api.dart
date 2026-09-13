@@ -64,6 +64,10 @@ class RunnerApi {
 
   Future<void> deleteProject(String id) => _call(() => _dio.delete('/v1/projects/$id'), (_) {});
 
+  /// Upload-key backup: `{path, alias, password, expiresAt}` (one-time link, 10 min).
+  Future<Map<String, dynamic>> signingLink(String projectId) =>
+      _call(() => _dio.post('/v1/projects/$projectId/signing/link'), (d) => d as Map<String, dynamic>);
+
   Future<String> jobLog(String jobId) =>
       _call(() => _dio.get('/v1/jobs/$jobId'), (d) => d['log'] as String? ?? '');
 }

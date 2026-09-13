@@ -128,5 +128,21 @@
   "openApp": "Open app",
   "viewCode": "View code",
   "buildCancelled": "Build stopped",
-  "buildFailedTitle": "I couldn't finish the app"
+  "buildFailedTitle": "I couldn't finish the app",
+  "bestQuality": "Best quality",
+  "bestQualityOn": "Most capable model: slower, for complex apps",
+  "bestQualityOff": "Fast (recommended): right for most apps",
+  "androidFileQuestion": "Do you want the Android file?",
+  "androidFileHint": "APK: install on a phone. AAB: upload to Google Play Console. Both signed.",
+  "generateApk": "Build APK",
+  "generateAab": "Build AAB",
+  "androidBuilding": "Building {kind}… the first time can take 3-5 minutes.",
+  "downloadApk": "Download & install APK",
+  "downloadAab": "Download AAB",
+  "apkInstallHint": "Signed APK. If Android asks, allow installs from this source.",
+  "aabHint": "AAB signed with this app's upload key: ready for Google Play Console. The version code increases on every build.",
+  "androidFailed": "Build failed:",
+  "backupSigningKey": "Save signing key",
+  "backupSigningKeyHint": "Keep the key file and password somewhere safe (e.g. Google Drive): you need them to publish updates of this app on Google Play. The link works once, for 10 minutes.",
+  "downloadKeystore": "Download key file"
 }

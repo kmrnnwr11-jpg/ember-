@@ -14,10 +14,11 @@ import 'app_builder.dart';
 
 /// Arguments passed when arriving from the home prompt.
 class CreateAppArgs {
-  const CreateAppArgs({required this.prompt, required this.engine, this.modelKey});
+  const CreateAppArgs({required this.prompt, required this.engine, this.modelKey, this.quality = 'fast'});
   final String prompt;
   final BuildEngine engine;
   final String? modelKey;
+  final String quality;
 }
 
 /// One builder per project, kept alive so a build continues if the user navigates away.
@@ -62,7 +63,7 @@ List<EngineOption> engineOptions(AppLocalizations l, AiSettings s, bool claudeCo
 class AppPromptComposer extends ConsumerStatefulWidget {
   const AppPromptComposer({super.key, required this.onSubmit, this.initialPrompt = '', this.busy = false, this.buttonLabel});
 
-  final void Function(String prompt, BuildEngine engine, AiModel? model) onSubmit;
+  final void Function(String prompt, BuildEngine engine, AiModel? model, String quality) onSubmit;
   final String initialPrompt;
   final bool busy;
   final String? buttonLabel;
@@ -75,6 +76,7 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
   late final _text = TextEditingController(text: widget.initialPrompt);
   BuildEngine? _engine;
   AiModel? _model;
+  bool _best = false;
 
   @override
   void dispose() {
@@ -102,7 +104,7 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
 
     void submit() {
       if (_text.text.trim().isEmpty || !option.available || widget.busy) return;
-      widget.onSubmit(_text.text.trim(), engine, model);
+      widget.onSubmit(_text.text.trim(), engine, model, _best ? 'best' : 'fast');
     }
 
     return Column(
@@ -155,6 +157,14 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
             ],
           ),
         ],
+        if (engine == BuildEngine.claudeCode && option.available)
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l.bestQuality),
+            subtitle: Text(_best ? l.bestQualityOn : l.bestQualityOff),
+            value: _best,
+            onChanged: (v) => setState(() => _best = v),
+          ),
         if (models.length > 1 && option.available) ...[
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
@@ -212,7 +222,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
         : catalog.where((m) => m.key == args.modelKey).firstOrNull ??
             catalog.where((m) => m.provider == args.engine.provider && m.id == args.engine.defaultModel).firstOrNull ??
             catalog.where((m) => m.provider == args.engine.provider).firstOrNull;
-    b.build(prompt: args.prompt, engine: args.engine, model: model);
+    b.build(prompt: args.prompt, engine: args.engine, model: model, quality: args.quality);
   }
 
   @override
@@ -250,7 +260,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                       const SizedBox(height: 4),
                       Text(l.describeYourAppHint),
                       const SizedBox(height: 16),
-                      AppPromptComposer(onSubmit: (prompt, engine, model) => b.build(prompt: prompt, engine: engine, model: model)),
+                      AppPromptComposer(onSubmit: (prompt, engine, model, quality) => b.build(prompt: prompt, engine: engine, model: model, quality: quality)),
                     ] else ...[
                       _PromptCard(prompt: b.prompt, engine: b.engine, model: b.model),
                       const SizedBox(height: 12),
@@ -348,7 +358,12 @@ class _Steps extends StatelessWidget {
     final b = builder;
     final order = [BuildPhase.generating, BuildPhase.dependencies, BuildPhase.checking, BuildPhase.building, BuildPhase.ready];
     final labels = {
-      BuildPhase.generating: b.engine == BuildEngine.claudeCode ? l.stepClaudeCode : l.stepWriting(b.writtenFiles.length),
+      BuildPhase.generating: b.engine == BuildEngine.claudeCode
+          ? [
+              '${l.stepClaudeCode} (${b.writtenFiles.length} file)',
+              if (b.currentAction != null) b.currentAction!,
+            ].join('\n')
+          : l.stepWriting(b.writtenFiles.length),
       BuildPhase.dependencies: l.stepDependencies,
       BuildPhase.checking: b.fixRound > 0 ? l.stepFixing(b.fixRound) : l.stepChecking,
       BuildPhase.building: l.stepBuilding,
@@ -430,12 +445,110 @@ class _ReadyCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                const Divider(height: 32),
+                Text(l.androidFileQuestion, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(l.androidFileHint, style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.tonalIcon(
+                      key: const Key('buildApk'),
+                      onPressed: builder.androidBuilding ? null : () => builder.buildAndroid('apk'),
+                      icon: const Icon(Icons.android),
+                      label: Text(l.generateApk),
+                    ),
+                    FilledButton.tonalIcon(
+                      key: const Key('buildAab'),
+                      onPressed: builder.androidBuilding ? null : () => builder.buildAndroid('aab'),
+                      icon: const Icon(Icons.shop),
+                      label: Text(l.generateAab),
+                    ),
+                  ],
+                ),
+                if (builder.androidBuilding) ...[
+                  const SizedBox(height: 12),
+                  const LinearProgressIndicator(),
+                  const SizedBox(height: 6),
+                  Text(l.androidBuilding(builder.androidKind!.toUpperCase())),
+                ],
+                if (builder.androidStatus == 'ready' && session != null && builder.androidPath != null) ...[
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    key: const Key('downloadAndroid'),
+                    onPressed: () => launchUrl(
+                      Uri.parse('${session.runnerUrl}${builder.androidPath}'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    icon: const Icon(Icons.download),
+                    label: Text(builder.androidKind == 'apk' ? l.downloadApk : l.downloadAab),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(builder.androidKind == 'apk' ? l.apkInstallHint : l.aabHint, style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    key: const Key('backupKey'),
+                    onPressed: () => _showKeyBackup(context, ref, projectId, session.runnerUrl),
+                    icon: const Icon(Icons.key),
+                    label: Text(l.backupSigningKey),
+                  ),
+                ],
+                if (builder.androidStatus == 'failed') ...[
+                  const SizedBox(height: 12),
+                  Text(l.androidFailed, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  if (builder.androidError != null)
+                    SelectableText(builder.androidError!, maxLines: 10, style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
+                ],
               ],
             ),
           ),
         );
       },
     );
+  }
+}
+
+Future<void> _showKeyBackup(BuildContext context, WidgetRef ref, String projectId, String runnerUrl) async {
+  final l = AppLocalizations.of(context);
+  try {
+    final info = await (await ref.read(runnerApiProvider.future)).signingLink(projectId);
+    if (!context.mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text(l.backupSigningKey),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.backupSigningKeyHint),
+            const SizedBox(height: 12),
+            SelectableText('Alias: ${info['alias']}'),
+            Row(
+              children: [
+                Expanded(child: SelectableText('Password: ${info['password']}')),
+                IconButton(
+                  icon: const Icon(Icons.copy, size: 18),
+                  onPressed: () => Clipboard.setData(ClipboardData(text: info['password'] as String)),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(d), child: Text(l.close)),
+          FilledButton.icon(
+            onPressed: () => launchUrl(Uri.parse('$runnerUrl${info['path']}'), mode: LaunchMode.externalApplication),
+            icon: const Icon(Icons.download),
+            label: Text(l.downloadKeystore),
+          ),
+        ],
+      ),
+    );
+  } on RunnerException catch (e) {
+    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.error(e.message))));
   }
 }
 
@@ -466,7 +579,7 @@ class _FailedCard extends StatelessWidget {
               spacing: 8,
               children: [
                 FilledButton.icon(
-                  onPressed: () => builder.build(prompt: builder.prompt, engine: builder.engine!, model: builder.model),
+                  onPressed: () => builder.build(prompt: builder.prompt, engine: builder.engine!, model: builder.model, quality: builder.quality),
                   icon: const Icon(Icons.refresh),
                   label: Text(l.retry),
                 ),

@@ -13,6 +13,7 @@ import '../../widgets/ember_logo.dart';
 import '../assistant/home_assistant.dart';
 import '../create/app_builder.dart';
 import '../create/create_app_screen.dart';
+import '../create/reference_app.dart';
 import 'package:ai_connect/ai_connect.dart';
 
 /// The user's default workspace (created on first use).
@@ -96,8 +97,16 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   }
 
   /// Describe → see 5 style mockups full screen → choose → build (§1B).
-  void _createFromPrompt(String prompt, BuildEngine engine, AiModel? model, String quality) {
-    context.push('/mockups', extra: CreateAppArgs(prompt: prompt, engine: engine, modelKey: model?.key, quality: quality));
+  Future<void> _createFromPrompt(String prompt, BuildEngine engine, AiModel? model, String quality) async {
+    // "Make an app like X": study X on the Play Store first, then design and build the same features.
+    ReferenceApp? reference;
+    try {
+      final api = await ref.read(runnerApiProvider.future);
+      if (!mounted) return;
+      reference = await pickReferenceApp(context, api, prompt);
+    } catch (_) {}
+    if (!mounted) return;
+    context.push('/mockups', extra: CreateAppArgs(prompt: prompt, engine: engine, modelKey: model?.key, quality: quality, reference: reference?.brief()));
   }
 
   Future<void> _delete(Project p) async {

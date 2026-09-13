@@ -41,7 +41,7 @@ class AppSessionStore {
 
 /// Arguments passed when arriving from the home prompt.
 class CreateAppArgs {
-  const CreateAppArgs({required this.prompt, required this.engine, this.modelKey, this.quality = 'fast', this.design, this.designName});
+  const CreateAppArgs({required this.prompt, required this.engine, this.modelKey, this.quality = 'fast', this.design, this.designName, this.reference});
   final String prompt;
   final BuildEngine engine;
   final String? modelKey;
@@ -50,6 +50,9 @@ class CreateAppArgs {
   /// Design brief from the chosen mockup, appended to the build instructions.
   final String? design;
   final String? designName;
+
+  /// Brief of a Play Store app to take as a model (see [ReferenceApp.brief]).
+  final String? reference;
 }
 
 /// One builder per project, kept alive so a build continues if the user navigates away.

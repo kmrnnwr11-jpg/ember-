@@ -260,5 +260,9 @@
   "actPubGet": "Installation des dépendances",
   "actAnalyze": "Vérification des erreurs",
   "forgeTitle": "Ember invoque votre app",
-  "forgeFiles": "{count} fichiers invoqués"
+  "forgeFiles": "{count} fichiers invoqués",
+  "researchingApp": "Analyse de « {name} » sur Google Play…",
+  "pickReferenceApp": "De quelle app parlez-vous ?",
+  "pickReferenceAppHint": "Ember étudiera ses fonctions sur Google Play et créera une app qui fait la même chose, avec votre propre nom et design.",
+  "referenceNone": "Aucune, continuer sans"
 }

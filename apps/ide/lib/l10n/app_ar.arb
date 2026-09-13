@@ -260,5 +260,9 @@
   "actPubGet": "تثبيت الاعتماديات",
   "actAnalyze": "التحقق من الأخطاء",
   "forgeTitle": "Ember يستدعي تطبيقك",
-  "forgeFiles": "تم استدعاء {count} ملفات"
+  "forgeFiles": "تم استدعاء {count} ملفات",
+  "researchingApp": "جارٍ دراسة «{name}» على Google Play…",
+  "pickReferenceApp": "أي تطبيق تقصد؟",
+  "pickReferenceAppHint": "سيدرس Ember ميزاته على Google Play وينشئ تطبيقًا يقوم بالشيء نفسه، باسمك وتصميمك الخاص.",
+  "referenceNone": "لا شيء منها، تابع بدون"
 }

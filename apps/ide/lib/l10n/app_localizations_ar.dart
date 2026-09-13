@@ -881,4 +881,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String forgeFiles(int count) {
     return 'تم استدعاء $count ملفات';
   }
+
+  @override
+  String researchingApp(String name) {
+    return 'جارٍ دراسة «$name» على Google Play…';
+  }
+
+  @override
+  String get pickReferenceApp => 'أي تطبيق تقصد؟';
+
+  @override
+  String get pickReferenceAppHint =>
+      'سيدرس Ember ميزاته على Google Play وينشئ تطبيقًا يقوم بالشيء نفسه، باسمك وتصميمك الخاص.';
+
+  @override
+  String get referenceNone => 'لا شيء منها، تابع بدون';
 }

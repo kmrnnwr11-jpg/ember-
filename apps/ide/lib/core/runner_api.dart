@@ -68,6 +68,16 @@ class RunnerApi {
   Future<Map<String, dynamic>> signingLink(String projectId) =>
       _call(() => _dio.post('/v1/projects/$projectId/signing/link'), (d) => d as Map<String, dynamic>);
 
+  /// Play Store apps matching a name (id, title, developer, icon, summary).
+  Future<List<Map<String, dynamic>>> searchPlayApps(String query, {String lang = 'it'}) => _call(
+    () => _dio.get('/v1/research/play/search', queryParameters: {'q': query, 'lang': lang}),
+    (d) => ((d as Map<String, dynamic>)['apps'] as List).cast<Map<String, dynamic>>(),
+  );
+
+  /// Full Play Store listing of one app.
+  Future<Map<String, dynamic>> playApp(String id, {String lang = 'it'}) =>
+      _call(() => _dio.get('/v1/research/play/app', queryParameters: {'id': id, 'lang': lang}), (d) => d as Map<String, dynamic>);
+
   /// Android package name + SHA-1 fingerprints (release upload key, debug key).
   Future<Map<String, dynamic>> androidInfo(String projectId) =>
       _call(() => _dio.get('/v1/projects/$projectId/android-info'), (d) => d as Map<String, dynamic>);

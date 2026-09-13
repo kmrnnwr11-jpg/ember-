@@ -892,4 +892,19 @@ class AppLocalizationsIt extends AppLocalizations {
   String forgeFiles(int count) {
     return '$count file evocati';
   }
+
+  @override
+  String researchingApp(String name) {
+    return 'Studio “$name” su Google Play…';
+  }
+
+  @override
+  String get pickReferenceApp => 'Quale app intendi?';
+
+  @override
+  String get pickReferenceAppHint =>
+      'Ember studierà le sue funzioni su Google Play e creerà un\'app che fa le stesse cose, con nome e grafica tuoi.';
+
+  @override
+  String get referenceNone => 'Nessuna di queste, continua senza';
 }

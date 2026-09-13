@@ -499,5 +499,16 @@
         "type": "int"
       }
     }
+  },
+  "researchingApp": "Studying “{name}” on Google Play…",
+  "pickReferenceApp": "Which app do you mean?",
+  "pickReferenceAppHint": "Ember will study its features on Google Play and build an app that does the same, with your own name and design.",
+  "referenceNone": "None of these, continue without",
+  "@researchingApp": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

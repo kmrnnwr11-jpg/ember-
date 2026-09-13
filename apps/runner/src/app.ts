@@ -7,6 +7,7 @@ import websocket from '@fastify/websocket';
 import { PathError, safeResolve } from './paths.js';
 import { PreviewService } from './preview.js';
 import { DEFAULT_UPSTREAMS, registerAiRoutes } from './ai.js';
+import { registerResearchRoutes } from './research.js';
 import { ClaudeCodeEngine, detectClis } from './agent_cli.js';
 import { z } from 'zod';
 import { Authenticator, bearer, type AuthUser } from './auth.js';
@@ -341,6 +342,7 @@ export async function buildApp(
   // ---------------- AI (§5B) ----------------
 
   await registerAiRoutes(app, { cfg, authenticate, upstreams: deps.aiUpstreams });
+  await registerResearchRoutes(app, { authenticate, fetchImpl: deps.playFetch });
 
   // ---------------- WebSocket ----------------
 

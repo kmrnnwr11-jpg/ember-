@@ -1669,6 +1669,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} files summoned'**
   String forgeFiles(int count);
+
+  /// No description provided for @researchingApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Studying “{name}” on Google Play…'**
+  String researchingApp(String name);
+
+  /// No description provided for @pickReferenceApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Which app do you mean?'**
+  String get pickReferenceApp;
+
+  /// No description provided for @pickReferenceAppHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember will study its features on Google Play and build an app that does the same, with your own name and design.'**
+  String get pickReferenceAppHint;
+
+  /// No description provided for @referenceNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None of these, continue without'**
+  String get referenceNone;
 }
 
 class _AppLocalizationsDelegate

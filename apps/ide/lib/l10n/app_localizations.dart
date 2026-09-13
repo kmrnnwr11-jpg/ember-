@@ -761,7 +761,7 @@ abstract class AppLocalizations {
   /// No description provided for @createApp.
   ///
   /// In en, this message translates to:
-  /// **'Summon app'**
+  /// **'Ember App'**
   String get createApp;
 
   /// No description provided for @openEditor.

@@ -109,7 +109,7 @@
   "claudeCodeUnavailable": "Claude Code غير متاح على هذا Runner (يجب أن يكون مثبّتًا ومسجّل الدخول على كمبيوتر Runner).",
   "appPromptHint": "مثال: تطبيق وصفات مع صور وقائمة تسوّق ومؤقّت…",
   "chooseAi": "اختر المحرّك",
-  "createApp": "استدعِ التطبيق",
+  "createApp": "Ember App",
   "openEditor": "المحرر",
   "describeYourApp": "استدعِ تطبيقك",
   "describeYourAppHint": "صِف ما يجب أن يفعله وكيف يجب أن يبدو. يكتبه Ember ويتحقق منه ويعرضه لك. (*Gemini: حصة Google المجانية بحدود يومية)",

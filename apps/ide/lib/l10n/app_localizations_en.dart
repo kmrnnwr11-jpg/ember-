@@ -363,7 +363,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chooseAi => 'Choose the engine';
 
   @override
-  String get createApp => 'Summon app';
+  String get createApp => 'Ember App';
 
   @override
   String get openEditor => 'Editor';

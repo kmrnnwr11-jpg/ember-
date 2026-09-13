@@ -109,7 +109,7 @@
   "claudeCodeUnavailable": "Claude Code non è disponibile su questo Runner (serve Claude Code installato e con login sul PC del Runner).",
   "appPromptHint": "Es.: un'app di ricette con foto, lista della spesa e timer…",
   "chooseAi": "Scegli il motore",
-  "createApp": "Evoca l'app",
+  "createApp": "Ember App",
   "openEditor": "Editor",
   "describeYourApp": "Evoca la tua app",
   "describeYourAppHint": "Descrivi cosa deve fare e come deve essere. Ember la scrive, la verifica e te la mostra. (*Gemini: quota gratuita di Google con limiti giornalieri)",

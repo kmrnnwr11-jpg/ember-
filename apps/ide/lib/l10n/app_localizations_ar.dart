@@ -362,7 +362,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get chooseAi => 'اختر المحرّك';
 
   @override
-  String get createApp => 'استدعِ التطبيق';
+  String get createApp => 'Ember App';
 
   @override
   String get openEditor => 'المحرر';

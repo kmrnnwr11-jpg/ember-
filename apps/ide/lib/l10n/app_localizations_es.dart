@@ -366,7 +366,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get chooseAi => 'Elige el motor';
 
   @override
-  String get createApp => 'Invocar app';
+  String get createApp => 'Ember App';
 
   @override
   String get openEditor => 'Editor';

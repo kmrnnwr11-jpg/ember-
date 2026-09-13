@@ -199,7 +199,7 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
           onPressed: _text.text.trim().isEmpty || !option.available || widget.busy ? null : submit,
           icon: widget.busy
               ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Icon(Icons.rocket_launch_outlined),
+              : const Icon(Icons.local_fire_department),
           label: Padding(padding: const EdgeInsets.all(12), child: Text(widget.buttonLabel ?? l.createApp)),
         ),
       ],

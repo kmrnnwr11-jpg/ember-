@@ -47,10 +47,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get signOut => 'Esci';
 
   @override
-  String get projects => 'Progetti';
+  String get projects => 'Le tue app';
 
   @override
-  String get noProjects => 'Nessun progetto. Creane uno per iniziare.';
+  String get noProjects => 'Nessuna app evocata. Descrivine una qui sopra.';
 
   @override
   String get newProject => 'Nuovo progetto';
@@ -359,23 +359,23 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get appPromptHint =>
-      'Es.: un\'app di ricette con foto, lista della spesa e timer di cottura, colori caldi…';
+      'Es.: un\'app di ricette con foto, lista della spesa e timer…';
 
   @override
-  String get chooseAi => 'Con quale AI?';
+  String get chooseAi => 'Scegli il motore';
 
   @override
-  String get createApp => 'Crea app';
+  String get createApp => 'Evoca l\'app';
 
   @override
   String get openEditor => 'Editor';
 
   @override
-  String get describeYourApp => 'Descrivi la tua app';
+  String get describeYourApp => 'Evoca la tua app';
 
   @override
   String get describeYourAppHint =>
-      'Scrivi cosa deve fare e come deve essere: l\'AI crea l\'app completa, controlla gli errori e te la mostra. (*Gemini: quota gratuita di Google con limiti giornalieri)';
+      'Descrivi cosa deve fare e come deve essere. Ember la scrive, la verifica e te la mostra. (*Gemini: quota gratuita di Google con limiti giornalieri)';
 
   @override
   String get improveApp => 'Cosa vuoi aggiungere o migliorare?';
@@ -431,15 +431,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String get buildFailedTitle => 'Non sono riuscito a completare l\'app';
 
   @override
-  String get bestQuality => 'Qualità massima';
+  String get bestQuality => 'Potenza massima';
 
   @override
   String get bestQualityOn =>
-      'Modello più potente: più lento, per app complesse';
+      'Il motore più potente: più lento, per app complesse';
 
   @override
   String get bestQualityOff =>
-      'Veloce (consigliato): ideale per la maggior parte delle app';
+      'Veloce (consigliato): va bene per la maggior parte delle app';
 
   @override
   String get androidFileQuestion => 'Vuoi il file per Android?';

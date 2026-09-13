@@ -102,7 +102,7 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
                       padding: const EdgeInsets.all(16),
                       children: [
                         const SizedBox(height: 24),
-                        const EmberMark(size: 96),
+                        const Center(child: EmberMark(size: 96)),
                         const SizedBox(height: 12),
                         Text(enabled ? l.assistantEmpty : l.assistantUnconfigured, textAlign: TextAlign.center),
                         const SizedBox(height: 16),

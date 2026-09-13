@@ -179,13 +179,13 @@ abstract class AppLocalizations {
   /// No description provided for @projects.
   ///
   /// In en, this message translates to:
-  /// **'Projects'**
+  /// **'Your apps'**
   String get projects;
 
   /// No description provided for @noProjects.
   ///
   /// In en, this message translates to:
-  /// **'No projects yet. Create one to get started.'**
+  /// **'No apps summoned yet. Describe one above.'**
   String get noProjects;
 
   /// No description provided for @newProject.
@@ -749,19 +749,19 @@ abstract class AppLocalizations {
   /// No description provided for @appPromptHint.
   ///
   /// In en, this message translates to:
-  /// **'E.g.: a recipe app with photos, shopping list and cooking timer, warm colors…'**
+  /// **'E.g.: a recipe app with photos, shopping list and cooking timer…'**
   String get appPromptHint;
 
   /// No description provided for @chooseAi.
   ///
   /// In en, this message translates to:
-  /// **'Which AI?'**
+  /// **'Choose the engine'**
   String get chooseAi;
 
   /// No description provided for @createApp.
   ///
   /// In en, this message translates to:
-  /// **'Create app'**
+  /// **'Summon app'**
   String get createApp;
 
   /// No description provided for @openEditor.
@@ -773,13 +773,13 @@ abstract class AppLocalizations {
   /// No description provided for @describeYourApp.
   ///
   /// In en, this message translates to:
-  /// **'Describe your app'**
+  /// **'Summon your app'**
   String get describeYourApp;
 
   /// No description provided for @describeYourAppHint.
   ///
   /// In en, this message translates to:
-  /// **'Say what it should do and look like: the AI builds the complete app, checks errors and shows it to you. (*Gemini: Google\'s free tier with daily limits)'**
+  /// **'Describe what it should do and how it should look. Ember writes it, checks it and shows it to you. (*Gemini: Google\'s free tier with daily limits)'**
   String get describeYourAppHint;
 
   /// No description provided for @improveApp.
@@ -881,13 +881,13 @@ abstract class AppLocalizations {
   /// No description provided for @bestQuality.
   ///
   /// In en, this message translates to:
-  /// **'Best quality'**
+  /// **'Maximum power'**
   String get bestQuality;
 
   /// No description provided for @bestQualityOn.
   ///
   /// In en, this message translates to:
-  /// **'Most capable model: slower, for complex apps'**
+  /// **'Most powerful engine: slower, for complex apps'**
   String get bestQualityOn;
 
   /// No description provided for @bestQualityOff.

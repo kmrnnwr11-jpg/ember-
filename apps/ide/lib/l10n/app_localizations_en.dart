@@ -46,10 +46,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signOut => 'Sign out';
 
   @override
-  String get projects => 'Projects';
+  String get projects => 'Your apps';
 
   @override
-  String get noProjects => 'No projects yet. Create one to get started.';
+  String get noProjects => 'No apps summoned yet. Describe one above.';
 
   @override
   String get newProject => 'New project';
@@ -357,23 +357,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appPromptHint =>
-      'E.g.: a recipe app with photos, shopping list and cooking timer, warm colors…';
+      'E.g.: a recipe app with photos, shopping list and cooking timer…';
 
   @override
-  String get chooseAi => 'Which AI?';
+  String get chooseAi => 'Choose the engine';
 
   @override
-  String get createApp => 'Create app';
+  String get createApp => 'Summon app';
 
   @override
   String get openEditor => 'Editor';
 
   @override
-  String get describeYourApp => 'Describe your app';
+  String get describeYourApp => 'Summon your app';
 
   @override
   String get describeYourAppHint =>
-      'Say what it should do and look like: the AI builds the complete app, checks errors and shows it to you. (*Gemini: Google\'s free tier with daily limits)';
+      'Describe what it should do and how it should look. Ember writes it, checks it and shows it to you. (*Gemini: Google\'s free tier with daily limits)';
 
   @override
   String get improveApp => 'What would you like to add or improve?';
@@ -429,10 +429,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get buildFailedTitle => 'I couldn\'t finish the app';
 
   @override
-  String get bestQuality => 'Best quality';
+  String get bestQuality => 'Maximum power';
 
   @override
-  String get bestQualityOn => 'Most capable model: slower, for complex apps';
+  String get bestQualityOn => 'Most powerful engine: slower, for complex apps';
 
   @override
   String get bestQualityOff => 'Fast (recommended): right for most apps';

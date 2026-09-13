@@ -195,10 +195,17 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                   Text(l.describeYourAppHint, style: Theme.of(context).textTheme.bodySmall),
                                   const SizedBox(height: 12),
                                   AppPromptComposer(busy: _creating, onSubmit: _createFromPrompt),
-                                  if (list.isNotEmpty) ...[
-                                    const SizedBox(height: 16),
-                                    Text(l.projects, style: Theme.of(context).textTheme.titleMedium),
-                                  ],
+                                  const SizedBox(height: 16),
+                                  if (list.isNotEmpty)
+                                    Text(l.projects, style: Theme.of(context).textTheme.titleMedium)
+                                  else
+                                    Column(
+                                      children: [
+                                        const EmberMark(size: 72),
+                                        const SizedBox(height: 6),
+                                        Text(l.noProjects, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyMedium),
+                                      ],
+                                    ),
                                 ],
                               ),
                             ),
@@ -215,7 +222,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                     return ListTile(
                       leading: Icon(icon),
                       title: Text(p.name),
-                      subtitle: Text('$label · ${p.template}'),
+                      subtitle: Text(label),
                       enabled: p.isReady,
                       onTap: p.isReady ? () => context.go('/projects/${p.id}') : null,
                       trailing: IconButton(

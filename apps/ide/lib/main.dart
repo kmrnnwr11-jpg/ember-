@@ -7,6 +7,7 @@ import 'core/env.dart';
 import 'core/locale.dart';
 import 'l10n/app_localizations.dart';
 import 'router.dart';
+import 'widgets/ember_logo.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,10 +20,51 @@ Future<void> main() async {
 class FlutterCursorApp extends ConsumerWidget {
   const FlutterCursorApp({super.key});
 
-  static ThemeData _theme(Brightness b) => ThemeData(
-    colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3B82F6), brightness: b),
-    visualDensity: VisualDensity.adaptivePlatformDensity,
-  );
+  static ThemeData _theme(Brightness b) {
+    final dark = b == Brightness.dark;
+    final scheme = ColorScheme.fromSeed(seedColor: emberRed, brightness: b, dynamicSchemeVariant: DynamicSchemeVariant.fidelity).copyWith(
+      primary: dark ? emberRed : emberBlood,
+      onPrimary: Colors.white,
+      surface: dark ? const Color(0xFF0B0506) : null,
+      surfaceContainerLow: dark ? const Color(0xFF120809) : null,
+      surfaceContainer: dark ? const Color(0xFF160A0C) : null,
+      surfaceContainerHigh: dark ? const Color(0xFF1D0E10) : null,
+      surfaceContainerHighest: dark ? const Color(0xFF261316) : null,
+      outline: dark ? const Color(0xFF5A2A30) : null,
+      outlineVariant: dark ? const Color(0xFF34191C) : null,
+    );
+    final base = ThemeData(colorScheme: scheme, visualDensity: VisualDensity.adaptivePlatformDensity);
+    const display = TextStyle(fontFamily: 'ChakraPetch', fontWeight: FontWeight.w700, letterSpacing: 0.4);
+    return base.copyWith(
+      scaffoldBackgroundColor: scheme.surface,
+      textTheme: base.textTheme.copyWith(
+        headlineSmall: base.textTheme.headlineSmall?.merge(display),
+        headlineMedium: base.textTheme.headlineMedium?.merge(display),
+        titleLarge: base.textTheme.titleLarge?.merge(display),
+        titleMedium: base.textTheme.titleMedium?.merge(display.copyWith(fontWeight: FontWeight.w600)),
+      ),
+      appBarTheme: AppBarTheme(backgroundColor: scheme.surface, surfaceTintColor: Colors.transparent),
+      cardTheme: CardThemeData(
+        color: scheme.surfaceContainerLow,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: scheme.outlineVariant)),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: scheme.primary, width: 1.6)),
+      ),
+      chipTheme: base.chipTheme.copyWith(
+        selectedColor: scheme.primary.withValues(alpha: 0.22),
+        side: BorderSide(color: scheme.outline),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: scheme.primary,
+          foregroundColor: Colors.white,
+          textStyle: const TextStyle(fontFamily: 'ChakraPetch', fontWeight: FontWeight.w700, fontSize: 16, letterSpacing: 1),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

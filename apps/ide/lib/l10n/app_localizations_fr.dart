@@ -47,11 +47,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get signOut => 'Se déconnecter';
 
   @override
-  String get projects => 'Projets';
+  String get projects => 'Vos apps';
 
   @override
-  String get noProjects =>
-      'Aucun projet pour l\'instant. Créez-en un pour commencer.';
+  String get noProjects => 'Aucune app invoquée. Décrivez-en une ci-dessus.';
 
   @override
   String get newProject => 'Nouveau projet';
@@ -361,23 +360,23 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get appPromptHint =>
-      'Ex. : une app de recettes avec photos, liste de courses et minuteur de cuisson, couleurs chaudes…';
+      'Ex. : une app de recettes avec photos, liste de courses et minuteur…';
 
   @override
-  String get chooseAi => 'Avec quelle IA ?';
+  String get chooseAi => 'Choisissez le moteur';
 
   @override
-  String get createApp => 'Créer l\'app';
+  String get createApp => 'Invoquer l\'app';
 
   @override
   String get openEditor => 'Éditeur';
 
   @override
-  String get describeYourApp => 'Décrivez votre app';
+  String get describeYourApp => 'Invoquez votre app';
 
   @override
   String get describeYourAppHint =>
-      'Dites ce qu\'elle doit faire et à quoi elle doit ressembler : l\'IA crée l\'app complète, vérifie les erreurs et vous la montre. (*Gemini : quota gratuit de Google avec limites quotidiennes)';
+      'Décrivez ce qu\'elle doit faire et à quoi elle doit ressembler. Ember l\'écrit, la vérifie et vous la montre. (*Gemini : quota gratuit de Google avec limites quotidiennes)';
 
   @override
   String get improveApp => 'Que voulez-vous ajouter ou améliorer ?';
@@ -433,11 +432,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get buildFailedTitle => 'Je n\'ai pas pu terminer l\'app';
 
   @override
-  String get bestQuality => 'Qualité maximale';
+  String get bestQuality => 'Puissance maximale';
 
   @override
   String get bestQualityOn =>
-      'Modèle le plus puissant : plus lent, pour les apps complexes';
+      'Le moteur le plus puissant : plus lent, pour les apps complexes';
 
   @override
   String get bestQualityOff =>

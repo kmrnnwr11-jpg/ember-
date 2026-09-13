@@ -47,10 +47,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get signOut => 'تسجيل الخروج';
 
   @override
-  String get projects => 'المشاريع';
+  String get projects => 'تطبيقاتك';
 
   @override
-  String get noProjects => 'لا توجد مشاريع بعد. أنشئ مشروعًا للبدء.';
+  String get noProjects => 'لم تستدعِ أي تطبيق بعد. صِف واحدًا في الأعلى.';
 
   @override
   String get newProject => 'مشروع جديد';
@@ -356,24 +356,23 @@ class AppLocalizationsAr extends AppLocalizations {
       'Claude Code غير متاح على هذا Runner (يجب أن يكون مثبّتًا ومسجّل الدخول على كمبيوتر Runner).';
 
   @override
-  String get appPromptHint =>
-      'مثال: تطبيق وصفات مع صور وقائمة تسوّق ومؤقّت طبخ، بألوان دافئة…';
+  String get appPromptHint => 'مثال: تطبيق وصفات مع صور وقائمة تسوّق ومؤقّت…';
 
   @override
-  String get chooseAi => 'بأي ذكاء اصطناعي؟';
+  String get chooseAi => 'اختر المحرّك';
 
   @override
-  String get createApp => 'إنشاء التطبيق';
+  String get createApp => 'استدعِ التطبيق';
 
   @override
   String get openEditor => 'المحرر';
 
   @override
-  String get describeYourApp => 'صِف تطبيقك';
+  String get describeYourApp => 'استدعِ تطبيقك';
 
   @override
   String get describeYourAppHint =>
-      'اكتب ما يجب أن يفعله وكيف يجب أن يبدو: ينشئ الذكاء الاصطناعي التطبيق كاملًا ويتحقق من الأخطاء ويعرضه لك. (*Gemini: حصة Google المجانية بحدود يومية)';
+      'صِف ما يجب أن يفعله وكيف يجب أن يبدو. يكتبه Ember ويتحقق منه ويعرضه لك. (*Gemini: حصة Google المجانية بحدود يومية)';
 
   @override
   String get improveApp => 'ماذا تريد أن تضيف أو تحسّن؟';
@@ -429,10 +428,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get buildFailedTitle => 'لم أتمكن من إكمال التطبيق';
 
   @override
-  String get bestQuality => 'أعلى جودة';
+  String get bestQuality => 'أقصى قوة';
 
   @override
-  String get bestQualityOn => 'النموذج الأقوى: أبطأ، للتطبيقات المعقدة';
+  String get bestQualityOn => 'أقوى محرّك: أبطأ، للتطبيقات المعقدة';
 
   @override
   String get bestQualityOff => 'سريع (موصى به): مناسب لمعظم التطبيقات';

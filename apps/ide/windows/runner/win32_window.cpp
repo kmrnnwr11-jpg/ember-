@@ -150,7 +150,8 @@ bool Win32Window::Create(const std::wstring& title,
 }
 
 bool Win32Window::Show() {
-  return ShowWindow(window_handle_, SW_SHOWNORMAL);
+  // Open maximized: fits the screen above the taskbar so bottom buttons stay visible.
+  return ShowWindow(window_handle_, SW_SHOWMAXIMIZED);
 }
 
 // static

@@ -179,10 +179,38 @@ describe('free assistant', () => {
     const once = await small.inject({ method: 'POST', url: '/v1/ai/builder/v1beta/models/gemini-2.5-flash:generateContent', payload: {} });
     expect(once.statusCode).toBe(200);
     expect(seen.at(-1)!.url.endsWith(':generateContent')).toBe(true);
-    expect((await small.inject({ method: 'POST', url: '/v1/ai/builder/v1beta/models/gemini-9-ultra:generateContent', payload: {} })).statusCode).toBe(403);
+    expect((await small.inject({ method: 'POST', url: '/v1/ai/builder/v1beta/models/gemini-2.5-flash-preview-tts:generateContent', payload: {} })).statusCode).toBe(403);
     expect((await small.inject({ method: 'POST', url: '/v1/ai/builder/v1beta/files:upload', payload: {} })).statusCode).toBe(403);
     const status = await small.inject({ method: 'GET', url: '/v1/ai/assistant/status' });
     expect(status.json()).toMatchObject({ enabled: true, dailyLimit: 2, used: 2 });
+    await small.close();
+    await rm(tmp, { recursive: true, force: true });
+  });
+});
+
+describe('server Gemini fallback', () => {
+  it('retries an overloaded model, then falls back to the next Gemini model', async () => {
+    const urls: string[] = [];
+    const fakeFetch = (async (url: string | URL | Request) => {
+      urls.push(String(url));
+      if (String(url).includes('gemini-2.5-flash:')) return new Response('{"error":{"message":"high demand"}}', { status: 503 });
+      return new Response('data: {"candidates":[{"content":{"parts":[{"text":"ok"}]}}]}\n\n', { status: 200, headers: { 'content-type': 'text/event-stream' } });
+    }) as typeof fetch;
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'fc-fb-'));
+    const cfg = loadConfig({ DEV_AUTH: 'true', DATA_DIR: tmp, WORKSPACES_ROOT: path.join(tmp, 'ws'), LOG_LEVEL: 'silent', GEMINI_API_KEY: 'server-key' });
+    const Fastify = (await import('fastify')).default;
+    const small = Fastify();
+    small.decorateRequest('user', null as never);
+    await (await import('./ai.js')).registerAiRoutes(small, {
+      cfg,
+      authenticate: async (req) => void ((req as { user: unknown }).user = { id: 'u1' }),
+      fetchImpl: fakeFetch,
+    });
+    const r = await small.inject({ method: 'POST', url: '/v1/ai/builder/v1beta/models/gemini-2.5-flash:streamGenerateContent', payload: {} });
+    expect(r.statusCode).toBe(200);
+    expect(r.body).toContain('ok');
+    expect(urls.filter((u) => u.includes('gemini-2.5-flash:'))).toHaveLength(2);
+    expect(urls.at(-1)).toContain('gemini-flash-latest:streamGenerateContent');
     await small.close();
     await rm(tmp, { recursive: true, force: true });
   });

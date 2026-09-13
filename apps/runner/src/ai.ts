@@ -7,7 +7,10 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Config } from './config.js';
 
 /** Gemini models the server key may be used for when building apps. */
-const BUILDER_MODELS = new Set(['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro']);
+const isBuilderModel = (m: string) => /^gemini-[\w.-]+$/.test(m) && !/(tts|image|robotics|computer-use|transcribe|embedding)/.test(m);
+
+/** Tried in order when the requested Gemini model is overloaded, rate limited or retired. */
+const GEMINI_FALLBACKS = ['gemini-flash-latest', 'gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash-lite'];
 
 export type ProviderId = 'anthropic' | 'openai' | 'gemini' | 'xai' | 'openaiCompatible';
 
@@ -151,7 +154,7 @@ export async function registerAiRoutes(app: FastifyInstance, opts: AiRouteOption
     const serverGemini = async (
       req: import('fastify').FastifyRequest,
       reply: import('fastify').FastifyReply,
-      opts: { path: string; stream: boolean; maxOutputTokens: number; usage: Map<string, number>; limit: number; limitMessage: string },
+      opts: { path: string; stream: boolean; maxOutputTokens: number; usage: Map<string, number>; limit: number; limitMessage: string; retryDelayMs?: number },
     ) => {
       if (!cfg.GEMINI_API_KEY) {
         return reply.status(503).send({ code: 'assistant_unconfigured', message: 'Gemini is not configured on this Runner (GEMINI_API_KEY missing)' });
@@ -171,12 +174,25 @@ export async function registerAiRoutes(app: FastifyInstance, opts: AiRouteOption
         if (!reply.raw.writableEnded) abort.abort();
       });
       try {
-        const upstream = await fetchImpl(`${upstreams.gemini}/${opts.path}${opts.stream ? '?alt=sse' : ''}`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json', 'x-goog-api-key': cfg.GEMINI_API_KEY },
-          body: JSON.stringify(body),
-          signal: abort.signal,
-        });
+        // Gemini often answers 503 "high demand" or 429: retry, then fall back to lighter models.
+        const requested = /models\/([^:]+):/.exec(opts.path)?.[1] ?? '';
+        const chain = [requested, ...GEMINI_FALLBACKS.filter((m) => m !== requested)];
+        let upstream!: Response;
+        attempts: for (const model of chain) {
+          for (let attempt = 0; attempt < 2; attempt++) {
+            upstream = await fetchImpl(`${upstreams.gemini}/${opts.path.replace(`models/${requested}:`, `models/${model}:`)}${opts.stream ? '?alt=sse' : ''}`, {
+              method: 'POST',
+              headers: { 'content-type': 'application/json', 'x-goog-api-key': cfg.GEMINI_API_KEY },
+              body: JSON.stringify(body),
+              signal: abort.signal,
+            });
+            if (![404, 429, 500, 502, 503, 504].includes(upstream.status)) break attempts;
+            await upstream.body?.cancel();
+            // Retired (404) or out of quota (429): switch model right away; overloaded: retry once.
+            if (upstream.status === 404 || upstream.status === 429) break;
+            if (attempt === 0) await new Promise((r) => setTimeout(r, opts.retryDelayMs ?? 1500));
+          }
+        }
         reply.status(upstream.status);
         const ct = upstream.headers.get('content-type');
         if (ct) reply.header('content-type', ct);
@@ -208,7 +224,7 @@ export async function registerAiRoutes(app: FastifyInstance, opts: AiRouteOption
     r.post('/v1/ai/builder/*', async (req, reply) => {
       const { '*': rest } = req.params as { '*': string };
       const m = /^v1beta\/models\/(gemini-[\w.-]+):(streamGenerateContent|generateContent)$/.exec(rest);
-      if (!m || !BUILDER_MODELS.has(m[1] ?? '')) return reply.status(403).send({ code: 'forbidden', message: `path not allowed: ${rest}` });
+      if (!m || !isBuilderModel(m[1] ?? '')) return reply.status(403).send({ code: 'forbidden', message: `path not allowed: ${rest}` });
       return serverGemini(req, reply, {
         path: rest,
         stream: m[2] === 'streamGenerateContent',

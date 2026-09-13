@@ -47,6 +47,8 @@ const schema = z.object({
   GEMINI_API_KEY: z.string().default(''),
   ASSISTANT_MODEL: z.string().default('gemini-2.5-flash'),
   ASSISTANT_DAILY_LIMIT: z.coerce.number().int().default(100),
+  /** Gemini requests per user per day when building apps on the server key. */
+  BUILDER_DAILY_LIMIT: z.coerce.number().int().default(200),
 
   /** Claude Code CLI engine for "Crea App" (local driver only). */
   CLAUDE_CODE_ENABLED: z

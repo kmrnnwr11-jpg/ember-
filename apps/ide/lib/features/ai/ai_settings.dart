@@ -139,12 +139,34 @@ final aiCatalogProvider = FutureProvider<List<AiModel>>((ref) async {
 });
 
 /// Builds a provider for [model] from the current settings and session.
+/// Whether the Runner offers Gemini on its own key (no user key needed).
+bool serverGeminiAvailable(Map<String, dynamic>? health) => (health?['engines'] as Map?)?['serverGemini'] == true;
+
+Future<Map<String, dynamic>?> _health(Ref ref) async {
+  try {
+    return await ref.read(runnerHealthProvider.future);
+  } catch (_) {
+    return null;
+  }
+}
+
+/// A provider is usable with the user's key, or Gemini through the Runner.
+bool canUseProvider(AiSettings s, AiProviderId p, Map<String, dynamic>? health) =>
+    s.isConfigured(p) || (p == AiProviderId.gemini && serverGeminiAvailable(health));
+
 final aiProviderFactory = Provider<Future<AiProvider> Function(AiModel model)>((ref) {
   return (model) async {
     final settings = await ref.read(aiSettingsProvider.future);
     final session = ref.read(sessionProvider).value;
     final key = settings.keys[model.provider] ?? '';
     if (!settings.isConfigured(model.provider)) {
+      // No personal key: Gemini runs on the Runner's key, so users never need one.
+      if (model.provider == AiProviderId.gemini && session != null && serverGeminiAvailable(await _health(ref))) {
+        return createProvider(
+          model.provider,
+          AiEndpoint.proxy(apiKey: '', runnerUrl: session.runnerUrl, runnerToken: await session.token(), proxyPath: 'builder'),
+        );
+      }
       throw AiException('No API key configured for ${model.provider.vendor}');
     }
     final baseUrl = model.provider == AiProviderId.openaiCompatible ? settings.compatibleBaseUrl : null;

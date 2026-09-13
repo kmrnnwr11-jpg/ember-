@@ -64,9 +64,9 @@ class EngineOption {
   final String? reason;
 }
 
-List<EngineOption> engineOptions(AppLocalizations l, AiSettings s, bool claudeCodeAvailable) => [
+List<EngineOption> engineOptions(AppLocalizations l, AiSettings s, bool claudeCodeAvailable, {bool serverGemini = false}) => [
   EngineOption(BuildEngine.gemini, 'Gemini', l.badgeFreeTier, Icons.auto_awesome,
-      available: s.isConfigured(AiProviderId.gemini), reason: l.needsKey('Gemini')),
+      available: serverGemini || s.isConfigured(AiProviderId.gemini), reason: l.needsKey('Gemini')),
   EngineOption(BuildEngine.claudeCode, 'Claude Code', l.badgeSubscription, Icons.terminal,
       available: claudeCodeAvailable, reason: l.claudeCodeUnavailable),
   EngineOption(BuildEngine.claude, 'Claude', l.badgePaid, Icons.psychology_outlined,
@@ -109,7 +109,7 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
     final health = ref.watch(runnerHealthProvider).value;
     final claudeCode = (health?['engines'] as Map?)?['claudeCode'] == true;
     final catalog = ref.watch(aiCatalogProvider).value ?? builtInCatalog;
-    final options = engineOptions(l, settings, claudeCode);
+    final options = engineOptions(l, settings, claudeCode, serverGemini: serverGeminiAvailable(health));
 
     final engine = _engine ?? options.firstWhere((o) => o.available, orElse: () => options.first).engine;
     final option = options.firstWhere((o) => o.engine == engine);

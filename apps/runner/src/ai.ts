@@ -6,6 +6,9 @@ import { fileURLToPath } from 'node:url';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Config } from './config.js';
 
+/** Gemini models the server key may be used for when building apps. */
+const BUILDER_MODELS = new Set(['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro']);
+
 export type ProviderId = 'anthropic' | 'openai' | 'gemini' | 'xai' | 'openaiCompatible';
 
 export const DEFAULT_UPSTREAMS: Record<Exclude<ProviderId, 'openaiCompatible'>, string> = {
@@ -129,6 +132,7 @@ export async function registerAiRoutes(app: FastifyInstance, opts: AiRouteOption
 
   // Free assistant: daily message counter per user (resets at UTC midnight).
   const assistantUsage = new Map<string, number>();
+  const builderUsage = new Map<string, number>();
   const assistantKey = (userId: string) => `${userId}|${new Date().toISOString().slice(0, 10)}`;
 
   await app.register(async (r) => {
@@ -143,29 +147,31 @@ export async function registerAiRoutes(app: FastifyInstance, opts: AiRouteOption
       used: assistantUsage.get(assistantKey(req.user.id)) ?? 0,
     }));
 
-    // Gemini streaming with the server's key, for the free in-app assistant only.
-    r.post('/v1/ai/assistant/*', async (req, reply) => {
-      const { '*': rest } = req.params as { '*': string };
+    /** Forwards a Gemini call using the server's key; `used`/`limit` enforce a per-user daily quota. */
+    const serverGemini = async (
+      req: import('fastify').FastifyRequest,
+      reply: import('fastify').FastifyReply,
+      opts: { path: string; stream: boolean; maxOutputTokens: number; usage: Map<string, number>; limit: number; limitMessage: string },
+    ) => {
       if (!cfg.GEMINI_API_KEY) {
-        return reply.status(503).send({ code: 'assistant_unconfigured', message: 'The free assistant is not configured on this Runner (GEMINI_API_KEY missing)' });
+        return reply.status(503).send({ code: 'assistant_unconfigured', message: 'Gemini is not configured on this Runner (GEMINI_API_KEY missing)' });
       }
-      const allowed = `v1beta/models/${cfg.ASSISTANT_MODEL}:streamGenerateContent`;
-      if (rest !== allowed) return reply.status(403).send({ code: 'forbidden', message: `assistant only allows ${allowed}` });
       const k = assistantKey(req.user.id);
-      const used = assistantUsage.get(k) ?? 0;
-      if (used >= cfg.ASSISTANT_DAILY_LIMIT) {
-        return reply.status(429).send({ code: 'rate_limited', message: `Limite giornaliero dell'assistente gratuito raggiunto (${cfg.ASSISTANT_DAILY_LIMIT} messaggi). Riprova domani.` });
-      }
-      assistantUsage.set(k, used + 1);
+      const used = opts.usage.get(k) ?? 0;
+      if (used >= opts.limit) return reply.status(429).send({ code: 'rate_limited', message: opts.limitMessage });
+      opts.usage.set(k, used + 1);
       const body = (req.body ?? {}) as { generationConfig?: Record<string, unknown> };
       // Cap output to keep the free tier sustainable.
-      body.generationConfig = { ...(body.generationConfig ?? {}), maxOutputTokens: Math.min(Number(body.generationConfig?.maxOutputTokens ?? 4096), 4096) };
+      body.generationConfig = {
+        ...(body.generationConfig ?? {}),
+        maxOutputTokens: Math.min(Number(body.generationConfig?.maxOutputTokens ?? opts.maxOutputTokens), opts.maxOutputTokens),
+      };
       const abort = new AbortController();
       req.raw.on('close', () => {
         if (!reply.raw.writableEnded) abort.abort();
       });
       try {
-        const upstream = await fetchImpl(`${upstreams.gemini}/${allowed}?alt=sse`, {
+        const upstream = await fetchImpl(`${upstreams.gemini}/${opts.path}${opts.stream ? '?alt=sse' : ''}`, {
           method: 'POST',
           headers: { 'content-type': 'application/json', 'x-goog-api-key': cfg.GEMINI_API_KEY },
           body: JSON.stringify(body),
@@ -181,6 +187,36 @@ export async function registerAiRoutes(app: FastifyInstance, opts: AiRouteOption
         if ((e as Error).name === 'AbortError') return reply;
         return reply.status(502).send({ code: 'upstream_unreachable', message: 'Gemini unreachable' });
       }
+    };
+
+    // Gemini streaming with the server's key, for the free in-app assistant only.
+    r.post('/v1/ai/assistant/*', async (req, reply) => {
+      const { '*': rest } = req.params as { '*': string };
+      const allowed = `v1beta/models/${cfg.ASSISTANT_MODEL}:streamGenerateContent`;
+      if (cfg.GEMINI_API_KEY && rest !== allowed) return reply.status(403).send({ code: 'forbidden', message: `assistant only allows ${allowed}` });
+      return serverGemini(req, reply, {
+        path: allowed,
+        stream: true,
+        maxOutputTokens: 4096,
+        usage: assistantUsage,
+        limit: cfg.ASSISTANT_DAILY_LIMIT,
+        limitMessage: `Limite giornaliero dell'assistente gratuito raggiunto (${cfg.ASSISTANT_DAILY_LIMIT} messaggi). Riprova domani.`,
+      });
+    });
+
+    // App building with Gemini on the server's key: users need no API key of their own.
+    r.post('/v1/ai/builder/*', async (req, reply) => {
+      const { '*': rest } = req.params as { '*': string };
+      const m = /^v1beta\/models\/(gemini-[\w.-]+):(streamGenerateContent|generateContent)$/.exec(rest);
+      if (!m || !BUILDER_MODELS.has(m[1] ?? '')) return reply.status(403).send({ code: 'forbidden', message: `path not allowed: ${rest}` });
+      return serverGemini(req, reply, {
+        path: rest,
+        stream: m[2] === 'streamGenerateContent',
+        maxOutputTokens: 65536,
+        usage: builderUsage,
+        limit: cfg.BUILDER_DAILY_LIMIT,
+        limitMessage: `Daily limit of free Gemini generations reached (${cfg.BUILDER_DAILY_LIMIT}). Try again tomorrow or add your own API key.`,
+      });
     });
 
     r.post('/v1/ai/proxy/:provider/*', async (req, reply) => {

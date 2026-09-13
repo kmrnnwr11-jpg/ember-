@@ -171,6 +171,16 @@ describe('free assistant', () => {
     expect((await call()).statusCode).toBe(429);
     const wrongModel = await small.inject({ method: 'POST', url: '/v1/ai/assistant/v1beta/models/gemini-2.5-pro:streamGenerateContent', payload: {} });
     expect(wrongModel.statusCode).toBe(403);
+    // App building on the server key: allowed Gemini models only, higher output cap, non-stream supported.
+    const build = await small.inject({ method: 'POST', url: '/v1/ai/builder/v1beta/models/gemini-2.5-pro:streamGenerateContent', payload: { generationConfig: { maxOutputTokens: 999999 } } });
+    expect(build.statusCode).toBe(200);
+    expect(seen.at(-1)!.key).toBe('server-key');
+    expect(JSON.parse(seen.at(-1)!.body).generationConfig.maxOutputTokens).toBe(65536);
+    const once = await small.inject({ method: 'POST', url: '/v1/ai/builder/v1beta/models/gemini-2.5-flash:generateContent', payload: {} });
+    expect(once.statusCode).toBe(200);
+    expect(seen.at(-1)!.url.endsWith(':generateContent')).toBe(true);
+    expect((await small.inject({ method: 'POST', url: '/v1/ai/builder/v1beta/models/gemini-9-ultra:generateContent', payload: {} })).statusCode).toBe(403);
+    expect((await small.inject({ method: 'POST', url: '/v1/ai/builder/v1beta/files:upload', payload: {} })).statusCode).toBe(403);
     const status = await small.inject({ method: 'GET', url: '/v1/ai/assistant/status' });
     expect(status.json()).toMatchObject({ enabled: true, dailyLimit: 2, used: 2 });
     await small.close();

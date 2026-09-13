@@ -100,8 +100,8 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     final settings = await ref.read(aiSettingsProvider.future);
     final catalog = await ref.read(aiCatalogProvider.future);
     final model = catalog.firstWhere(
-      (m) => m.tags.contains('fast') && settings.isConfigured(m.provider),
-      orElse: () => catalog.firstWhere((m) => settings.isConfigured(m.provider), orElse: () => throw const AiException('Nessuna AI configurata')),
+      (m) => m.tags.contains('fast') && canUseProvider(settings, m.provider, health),
+      orElse: () => catalog.firstWhere((m) => canUseProvider(settings, m.provider, health), orElse: () => throw const AiException('Nessuna AI configurata')),
     );
     return apiCompleter(ref.read(aiProviderFactory), model);
   }

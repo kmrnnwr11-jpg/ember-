@@ -25,6 +25,11 @@ class FlutterCursorApp extends ConsumerWidget {
     final scheme = ColorScheme.fromSeed(seedColor: emberRed, brightness: b, dynamicSchemeVariant: DynamicSchemeVariant.fidelity).copyWith(
       primary: dark ? emberRed : emberBlood,
       onPrimary: Colors.white,
+      // Dark containers with white text: no large red surfaces (chat bubbles, selected items).
+      primaryContainer: dark ? const Color(0xFF221114) : null,
+      onPrimaryContainer: dark ? Colors.white : null,
+      secondaryContainer: dark ? const Color(0xFF221114) : null,
+      onSecondaryContainer: dark ? Colors.white : null,
       surface: dark ? const Color(0xFF0B0506) : null,
       surfaceContainerLow: dark ? const Color(0xFF120809) : null,
       surfaceContainer: dark ? const Color(0xFF160A0C) : null,

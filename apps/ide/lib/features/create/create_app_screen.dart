@@ -406,11 +406,12 @@ class _ChatBubble extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         constraints: const BoxConstraints(maxWidth: 680),
         decoration: BoxDecoration(
-          color: user ? scheme.primaryContainer : scheme.surfaceContainerHigh,
+          color: user ? scheme.surfaceContainerHighest : scheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: scheme.outlineVariant),
         ),
         child: user
-            ? SelectableText(text)
+            ? SelectableText(text, style: const TextStyle(color: Colors.white))
             : MarkdownBody(
                 data: text,
                 selectable: true,

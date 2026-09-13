@@ -142,6 +142,10 @@ class AppBuilder extends ChangeNotifier {
   /// Claude Code only: `fast` (default) or `best`.
   String quality = 'fast';
 
+  /// Chosen mockup brief (hidden from the UI, sent to the AI).
+  String? design;
+  String? designName;
+
   bool _cancelled = false;
   Completer<void> _cancelSignal = Completer<void>();
 
@@ -169,8 +173,17 @@ class AppBuilder extends ChangeNotifier {
   }
 
   /// Starts a build from scratch.
-  Future<void> build({required String prompt, required BuildEngine engine, AiModel? model, String quality = 'fast'}) {
+  Future<void> build({
+    required String prompt,
+    required BuildEngine engine,
+    AiModel? model,
+    String quality = 'fast',
+    String? design,
+    String? designName,
+  }) {
     this.quality = quality;
+    this.design = design;
+    this.designName = designName;
     return _run(prompt: prompt, engine: engine, model: model, change: null);
   }
 
@@ -199,7 +212,7 @@ class AppBuilder extends ChangeNotifier {
     }
     try {
       if (engine.isCli) {
-        await _runClaudeCode(change ?? prompt, resume: change != null);
+        await _runClaudeCode(change ?? '$prompt${design ?? ''}', resume: change != null);
       } else {
         await _runApiEngine(change: change);
       }
@@ -237,7 +250,7 @@ class AppBuilder extends ChangeNotifier {
     final String userMessage;
     if (change == null) {
       _log('Scrivo il codice con ${m.label}…');
-      userMessage = '$prompt\n\n(Project package name: $projectName)';
+      userMessage = '$prompt${design ?? ''}\n\n(Project package name: $projectName)';
     } else {
       _log('Applico la modifica con ${m.label}: $change');
       userMessage = improvePrompt(prompt, await _readProjectFiles(), change);

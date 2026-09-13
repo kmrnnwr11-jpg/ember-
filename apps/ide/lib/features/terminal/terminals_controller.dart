@@ -6,10 +6,32 @@ import 'package:xterm/xterm.dart';
 
 import '../editor/project_controller.dart' show RunnerRequest;
 
+/// What to open in a new terminal tab.
+class TerminalProfile {
+  const TerminalProfile({required this.id, required this.title, this.shell, this.command});
+
+  final String id;
+  final String title;
+
+  /// `cmd` | `powershell` | `bash`; null = Runner default.
+  final String? shell;
+
+  /// Command typed after the shell starts (e.g. `claude`).
+  final String? command;
+
+  static const cmd = TerminalProfile(id: 'cmd', title: 'cmd', shell: 'cmd');
+  static const powershell = TerminalProfile(id: 'powershell', title: 'PowerShell', shell: 'powershell');
+  static const bash = TerminalProfile(id: 'bash', title: 'bash', shell: 'bash');
+  static const claude = TerminalProfile(id: 'claude', title: 'Claude Code', command: 'claude');
+  static const codex = TerminalProfile(id: 'codex', title: 'Codex (GPT)', command: 'codex');
+  static const gemini = TerminalProfile(id: 'gemini', title: 'Gemini CLI', command: 'gemini');
+}
+
 class TerminalSession {
-  TerminalSession(this.title) : terminal = Terminal(maxLines: 10000);
+  TerminalSession(this.title, {this.profile = TerminalProfile.cmd}) : terminal = Terminal(maxLines: 10000);
 
   final String title;
+  final TerminalProfile profile;
   final Terminal terminal;
   String? ptyId;
   bool exited = false;
@@ -42,8 +64,9 @@ class TerminalsController extends ChangeNotifier {
 
   TerminalSession? get activeSession => active >= 0 && active < sessions.length ? sessions[active] : null;
 
-  Future<TerminalSession> open() async {
-    final s = TerminalSession('${++_counter}');
+  Future<TerminalSession> open([TerminalProfile? profile]) async {
+    _counter++;
+    final s = profile == null ? TerminalSession('$_counter') : TerminalSession(profile.title, profile: profile);
     sessions.add(s);
     active = sessions.length - 1;
     notifyListeners();
@@ -58,6 +81,8 @@ class TerminalsController extends ChangeNotifier {
         'projectId': projectId,
         'cols': t.viewWidth,
         'rows': t.viewHeight,
+        if (s.profile.shell != null) 'shell': s.profile.shell,
+        if (s.profile.command != null) 'command': s.profile.command,
       });
       s
         ..ptyId = res['ptyId'] as String
@@ -93,6 +118,13 @@ class TerminalsController extends ChangeNotifier {
   void send(String data) {
     final s = activeSession;
     if (s != null) _input(s, data);
+  }
+
+  /// Pastes text (bracketed paste when the running program enabled it).
+  void paste(String text) {
+    final s = activeSession;
+    if (s == null || text.isEmpty) return;
+    s.terminal.paste(text);
   }
 
   void toggleCtrl() {

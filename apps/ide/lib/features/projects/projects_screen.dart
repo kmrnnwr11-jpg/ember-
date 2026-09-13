@@ -84,11 +84,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     await _createProject(name);
   }
 
+  /// Describe → see 5 style mockups full screen → choose → build (§1B).
   void _createFromPrompt(String prompt, BuildEngine engine, AiModel? model, String quality) {
-    _createProject(
-      BuildSupport.projectNameFromPrompt(prompt),
-      args: CreateAppArgs(prompt: prompt, engine: engine, modelKey: model?.key, quality: quality),
-    );
+    context.push('/mockups', extra: CreateAppArgs(prompt: prompt, engine: engine, modelKey: model?.key, quality: quality));
   }
 
   Future<void> _delete(Project p) async {

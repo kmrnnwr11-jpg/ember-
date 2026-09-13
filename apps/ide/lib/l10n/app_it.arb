@@ -223,5 +223,37 @@
   "backupSigningKeyHint": "Conserva il file della chiave e la password in un posto sicuro (es. Google Drive): servono per pubblicare gli aggiornamenti di questa app sul Play Store. Il link funziona una sola volta per 10 minuti.",
   "downloadKeystore": "Scarica file chiave",
   "fullscreenExitHint": "Scorri o premi indietro per tornare a FlutterCursor",
-  "runFullscreen": "Avvia a schermo intero"
+  "runFullscreen": "Avvia a schermo intero",
+  "cliNotInstalled": "non installato sul Runner ({name})",
+  "terminalCliHint": "Claude Code, Codex e Gemini usano il login fatto sul PC del Runner. La prima volta segui le istruzioni nel terminale per accedere.",
+  "@cliNotInstalled": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "generatingMockups": "Creo 5 stili grafici…",
+  "designingStyle": "Disegno lo stile «{style}»…",
+  "chooseMockup": "Scegli questo",
+  "editMockup": "Modifica questo mockup",
+  "editMockupHint": "Es.: più scuro, bottoni arrotondati, logo rosa…",
+  "newMockups": "Nuovi mockup (5 stili diversi)",
+  "previousMockups": "Mockup precedenti",
+  "mockupSet": "Serie {n}",
+  "skipMockups": "Salta i mockup e crea l'app",
+  "@designingStyle": {
+    "placeholders": {
+      "style": {
+        "type": "String"
+      }
+    }
+  },
+  "@mockupSet": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  }
 }

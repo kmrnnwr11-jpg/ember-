@@ -1,7 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:xterm/xterm.dart';
 
+import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import 'terminals_controller.dart';
 
@@ -30,13 +33,7 @@ class TerminalPanel extends StatelessWidget {
               _Tabs(controller: controller),
               Expanded(
                 child: s == null
-                    ? Center(
-                        child: FilledButton.tonalIcon(
-                          onPressed: controller.open,
-                          icon: const Icon(Icons.terminal),
-                          label: Text(l.newTerminal),
-                        ),
-                      )
+                    ? Center(child: SingleChildScrollView(padding: const EdgeInsets.all(16), child: _Launcher(controller: controller)))
                     : Stack(
                         children: [
                           TerminalView(
@@ -114,13 +111,7 @@ class _Tabs extends StatelessWidget {
               },
             ),
           ),
-          IconButton(
-            tooltip: l.newTerminal,
-            iconSize: 18,
-            color: Colors.white70,
-            icon: const Icon(Icons.add),
-            onPressed: controller.open,
-          ),
+          _NewTerminalMenu(controller: controller),
         ],
       ),
     );
@@ -174,9 +165,94 @@ class _KeyBar extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         children: [
           key('Ctrl', controller.toggleCtrl, active: ctrl),
+          key('⏎', () => controller.send('\r')),
+          key('^C', () => controller.send('\x03')),
           for (final (label, seq) in _keys) key(label, () => controller.send(seq)),
+          key('📋', () async {
+            final data = await Clipboard.getData(Clipboard.kTextPlain);
+            final text = data?.text;
+            if (text != null) controller.paste(text);
+          }),
         ],
       ),
+    );
+  }
+}
+
+
+List<(TerminalProfile, IconData, String?)> _profiles(Map<String, dynamic>? health) {
+  final shells = (health?['shells'] as List?)?.cast<String>() ?? const ['cmd', 'powershell'];
+  final cli = (health?['cli'] as Map?) ?? const {};
+  return [
+    if (shells.contains('cmd')) (TerminalProfile.cmd, Icons.terminal, null),
+    if (shells.contains('powershell')) (TerminalProfile.powershell, Icons.terminal, null),
+    if (shells.contains('bash')) (TerminalProfile.bash, Icons.terminal, null),
+    (TerminalProfile.claude, Icons.auto_awesome, cli['claude'] == true ? null : 'claude'),
+    (TerminalProfile.codex, Icons.chat_bubble_outline, cli['codex'] == true ? null : 'codex'),
+    (TerminalProfile.gemini, Icons.diamond_outlined, cli['gemini'] == true ? null : 'gemini'),
+  ];
+}
+
+class _NewTerminalMenu extends ConsumerWidget {
+  const _NewTerminalMenu({required this.controller});
+  final TerminalsController controller;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final profiles = _profiles(ref.watch(runnerHealthProvider).value);
+    return PopupMenuButton<TerminalProfile>(
+      key: const Key('newTerminalMenu'),
+      tooltip: l.newTerminal,
+      icon: const Icon(Icons.add, size: 18, color: Colors.white70),
+      onSelected: controller.open,
+      itemBuilder: (_) => [
+        for (final (p, icon, missing) in profiles)
+          PopupMenuItem(
+            value: p,
+            enabled: missing == null,
+            child: ListTile(
+              dense: true,
+              leading: Icon(icon),
+              title: Text(p.title),
+              subtitle: missing == null ? null : Text(l.cliNotInstalled(missing)),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _Launcher extends ConsumerWidget {
+  const _Launcher({required this.controller});
+  final TerminalsController controller;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final profiles = _profiles(ref.watch(runnerHealthProvider).value);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(l.newTerminal, style: const TextStyle(color: Colors.white70, fontSize: 16)),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
+          children: [
+            for (final (p, icon, missing) in profiles)
+              FilledButton.tonalIcon(
+                key: Key('term_${p.id}'),
+                onPressed: missing == null ? () => controller.open(p) : null,
+                icon: Icon(icon),
+                label: Text(p.title),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(l.terminalCliHint, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+      ],
     );
   }
 }

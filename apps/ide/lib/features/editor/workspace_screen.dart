@@ -201,12 +201,10 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   void _toggleTerminal() {
-    final t = ref.read(terminalsControllerProvider(widget.projectId));
     setState(() {
       _terminalOpen = !_terminalOpen;
       _mobileTab = _MobileTab.terminal;
     });
-    if (_terminalOpen && t.sessions.isEmpty) t.open();
   }
 
   void _runWeb() {
@@ -357,7 +355,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     selectedIndex: _mobileTab.index,
                     onDestinationSelected: (i) {
                       setState(() => _mobileTab = _MobileTab.values[i]);
-                      if (_MobileTab.values[i] == _MobileTab.terminal && terminals.sessions.isEmpty) terminals.open();
                     },
                     destinations: [
                       NavigationDestination(icon: const Icon(Icons.folder_outlined), label: l.files),

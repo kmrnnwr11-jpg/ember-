@@ -16,10 +16,13 @@ export interface PtyHandle {
   kill(): void;
 }
 
+export type ShellKind = 'default' | 'cmd' | 'powershell' | 'bash';
+
 export interface PtyOptions {
   cwd: string;
   cols: number;
   rows: number;
+  shell?: ShellKind;
 }
 
 /**

@@ -6,6 +6,7 @@ import type { AgentEvent, AgentRun, ClaudeCodeEngine } from './agent_cli.js';
 import { jobPublic, type Job } from './jobs.js';
 import type { PreviewInfo, PreviewService } from './preview.js';
 import { PtySessions } from './pty.js';
+import type { PtyHandle, ShellKind } from './workspaces/driver.js';
 import type { Services } from './services.js';
 import { errorPayload } from './errors.js';
 
@@ -27,6 +28,30 @@ const str = (v: unknown, field: string): string => {
 
 const dim = (v: unknown, fallback: number): number =>
   typeof v === 'number' && Number.isFinite(v) ? Math.max(2, Math.min(500, Math.floor(v))) : fallback;
+
+/**
+ * Types [command] once the shell shows its prompt (cmd `>`, PowerShell `PS …>`,
+ * bash `$`/`#`). Writing too early gets mangled by ConPTY, and Enter must be a
+ * separate write or PowerShell treats the line as incomplete. Falls back after 5 s.
+ */
+export function typeWhenPromptReady(handle: PtyHandle, command: string, fallbackMs = 5000) {
+  let buf = '';
+  let sent = false;
+  const send = () => {
+    if (sent) return;
+    sent = true;
+    clearTimeout(timer);
+    handle.write(command);
+    setTimeout(() => handle.write('\r'), 150);
+  };
+  const timer = setTimeout(send, fallbackMs);
+  handle.onData((d) => {
+    if (sent) return;
+    buf = (buf + d).slice(-400);
+    const plain = buf.replace(/\x1b\[[0-9;?]*[A-Za-z]|\x1b\][^\x07]*\x07/g, '');
+    if (/[>$#]\s*$/.test(plain)) send();
+  });
+}
 
 /** One authenticated IDE connection. Protocol: docs/API.md §WebSocket. */
 export class Session {
@@ -195,12 +220,21 @@ export class Session {
       }
       case 'pty.open': {
         const { project } = await this.services.projectFs(uid, str(p.projectId, 'projectId'));
+        const shell = ['cmd', 'powershell', 'bash'].includes(p.shell as string) ? (p.shell as ShellKind) : 'default';
+        const command = typeof p.command === 'string' ? p.command.trim() : '';
+        if (command && !/^[\w .:/=-]{1,200}$/.test(command)) {
+          throw Object.assign(new Error('invalid start command'), { code: 'bad_request' });
+        }
         const handle = await this.services.driver.openPty(project.workspaceId, {
           cwd: `projects/${project.name}`,
           cols: dim(p.cols, 80),
           rows: dim(p.rows, 24),
+          shell,
         });
-        return { ptyId: this.ptys.add(project.id, handle) };
+        const ptyId = this.ptys.add(project.id, handle);
+        // Optional start command (e.g. `claude`, `codex`, `gemini`), typed as if by the user.
+        if (command) typeWhenPromptReady(handle, command);
+        return { ptyId };
       }
       case 'pty.input': {
         const e = this.ptys.get(str(p.ptyId, 'ptyId'));
@@ -251,6 +285,15 @@ export class Session {
           quality: p.quality === 'best' ? 'best' : 'fast',
         });
         return { ...run };
+      }
+      case 'agent.complete': {
+        if (!(await this.claudeCode.isAvailable())) {
+          throw Object.assign(new Error('Claude Code is not available on this Runner'), { code: 'unsupported' });
+        }
+        const prompt = str(p.prompt, 'prompt');
+        const system = str(p.system, 'system');
+        if (prompt.length > 60000 || system.length > 20000) throw Object.assign(new Error('prompt too long'), { code: 'bad_request' });
+        return await this.claudeCode.complete({ prompt, system, quality: p.quality === 'best' ? 'best' : 'fast' });
       }
       case 'agent.cancel': {
         const run = this.claudeCode.get(str(p.runId, 'runId'));

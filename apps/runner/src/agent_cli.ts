@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import { nanoid } from 'nanoid';
@@ -51,6 +51,23 @@ function summarizeToolInput(name: string, input: Record<string, unknown>): strin
   const p = (input.file_path ?? input.path ?? input.pattern ?? '') as string;
   if (name === 'Bash') return String(input.command ?? '').slice(0, 200);
   return typeof p === 'string' ? p.replace(/\\/g, '/').split('/').slice(-3).join('/') : '';
+}
+
+let cliCache: { at: number; value: Record<string, boolean> } | null = null;
+
+/** Which AI CLIs are on PATH (cached 5 min): claude (Claude Code), codex (ChatGPT), gemini. */
+export async function detectClis(): Promise<Record<string, boolean>> {
+  if (cliCache && Date.now() - cliCache.at < 300_000) return cliCache.value;
+  const which = process.platform === 'win32' ? 'where.exe' : 'which';
+  const check = (name: string) =>
+    new Promise<boolean>((resolve) => {
+      const p = spawn(which, [name], { windowsHide: true });
+      p.on('error', () => resolve(false));
+      p.on('close', (code) => resolve(code === 0));
+    });
+  const [claude, codex, gemini] = await Promise.all([check('claude'), check('codex'), check('gemini')]);
+  cliCache = { at: Date.now(), value: { claude, codex, gemini } };
+  return cliCache.value;
 }
 
 /** Parses one stream-json line from `claude -p --output-format stream-json`. */
@@ -195,6 +212,50 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
       this.emit('status', run);
     });
     return run;
+  }
+
+  /**
+   * One-shot text generation with the machine's Claude login (no tools, no
+   * project access), e.g. design mockups. Runs in a neutral directory so no
+   * CLAUDE.md or project context is loaded.
+   */
+  complete(opts: { prompt: string; system: string; quality?: BuildQuality; timeoutMs?: number }): Promise<{ text: string; costUsd: number | null }> {
+    const best = opts.quality === 'best';
+    const cwd = path.resolve(this.cfg.WORKSPACES_ROOT, '.tmp');
+    mkdirSync(cwd, { recursive: true });
+    const args = [
+      '-p',
+      '--output-format', 'json',
+      '--model', best ? this.cfg.CLAUDE_CODE_MODEL_BEST : this.cfg.CLAUDE_CODE_MODEL_FAST,
+      '--effort', best ? 'medium' : 'low',
+      '--tools', '',
+      '--strict-mcp-config',
+      '--max-turns', '1',
+      '--system-prompt', opts.system,
+    ];
+    return new Promise((resolve, reject) => {
+      const child = this.spawnImpl(resolveClaudeBin(this.cfg), args, { cwd, windowsHide: true, env: { ...process.env, CI: '1' } });
+      let out = '';
+      let err = '';
+      const timer = setTimeout(() => {
+        child.kill();
+        reject(new Error('Claude Code timed out'));
+      }, opts.timeoutMs ?? 300_000);
+      child.stdout?.setEncoding('utf8').on('data', (c: string) => (out += c));
+      child.stderr?.setEncoding('utf8').on('data', (c: string) => (err = (err + c).slice(-2000)));
+      child.on('error', (e) => (clearTimeout(timer), reject(e)));
+      child.on('close', (code) => {
+        clearTimeout(timer);
+        try {
+          const j = JSON.parse(out.trim().split('\n').pop() ?? '{}') as { result?: string; is_error?: boolean; total_cost_usd?: number };
+          if (code !== 0 || j.is_error || typeof j.result !== 'string') throw new Error(j.result || err.trim() || `exit ${code}`);
+          resolve({ text: j.result, costUsd: typeof j.total_cost_usd === 'number' ? j.total_cost_usd : null });
+        } catch (e) {
+          reject(new Error(`Claude Code: ${(e as Error).message}`.slice(0, 1000)));
+        }
+      });
+      child.stdin?.end(opts.prompt);
+    });
   }
 
   cancel(runId: string): boolean {

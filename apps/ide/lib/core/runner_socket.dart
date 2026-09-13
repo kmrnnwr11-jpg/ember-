@@ -114,7 +114,7 @@ class RunnerSocket {
   void _send(WsFrame f) => _channel?.sink.add(f.encode());
 
   /// Sends a request and returns the `ok` payload; throws [RunnerException].
-  Future<Map<String, dynamic>> request(String type, Map<String, dynamic> payload) async {
+  Future<Map<String, dynamic>> request(String type, Map<String, dynamic> payload, {Duration? timeout}) async {
     if (state.value != SocketState.connected) {
       if (state.value == SocketState.disconnected) unawaited(connect());
       await _connected.future.timeout(
@@ -126,7 +126,7 @@ class RunnerSocket {
     final completer = Completer<Map<String, dynamic>>();
     _pending[id] = completer;
     _send(WsFrame(id: id, type: type, payload: payload));
-    return completer.future.timeout(requestTimeout, onTimeout: () {
+    return completer.future.timeout(timeout ?? requestTimeout, onTimeout: () {
       _pending.remove(id);
       throw RunnerException('timeout', '$type timed out');
     });

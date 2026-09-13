@@ -979,6 +979,72 @@ abstract class AppLocalizations {
   /// In it, this message translates to:
   /// **'Avvia a schermo intero'**
   String get runFullscreen;
+
+  /// No description provided for @cliNotInstalled.
+  ///
+  /// In it, this message translates to:
+  /// **'non installato sul Runner ({name})'**
+  String cliNotInstalled(String name);
+
+  /// No description provided for @terminalCliHint.
+  ///
+  /// In it, this message translates to:
+  /// **'Claude Code, Codex e Gemini usano il login fatto sul PC del Runner. La prima volta segui le istruzioni nel terminale per accedere.'**
+  String get terminalCliHint;
+
+  /// No description provided for @generatingMockups.
+  ///
+  /// In it, this message translates to:
+  /// **'Creo 5 stili grafici…'**
+  String get generatingMockups;
+
+  /// No description provided for @designingStyle.
+  ///
+  /// In it, this message translates to:
+  /// **'Disegno lo stile «{style}»…'**
+  String designingStyle(String style);
+
+  /// No description provided for @chooseMockup.
+  ///
+  /// In it, this message translates to:
+  /// **'Scegli questo'**
+  String get chooseMockup;
+
+  /// No description provided for @editMockup.
+  ///
+  /// In it, this message translates to:
+  /// **'Modifica questo mockup'**
+  String get editMockup;
+
+  /// No description provided for @editMockupHint.
+  ///
+  /// In it, this message translates to:
+  /// **'Es.: più scuro, bottoni arrotondati, logo rosa…'**
+  String get editMockupHint;
+
+  /// No description provided for @newMockups.
+  ///
+  /// In it, this message translates to:
+  /// **'Nuovi mockup (5 stili diversi)'**
+  String get newMockups;
+
+  /// No description provided for @previousMockups.
+  ///
+  /// In it, this message translates to:
+  /// **'Mockup precedenti'**
+  String get previousMockups;
+
+  /// No description provided for @mockupSet.
+  ///
+  /// In it, this message translates to:
+  /// **'Serie {n}'**
+  String mockupSet(int n);
+
+  /// No description provided for @skipMockups.
+  ///
+  /// In it, this message translates to:
+  /// **'Salta i mockup e crea l\'app'**
+  String get skipMockups;
 }
 
 class _AppLocalizationsDelegate

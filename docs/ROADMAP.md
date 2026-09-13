@@ -60,3 +60,11 @@
 - Verified live: signed AAB (40 MB, 83 s), certificate `CN=<app>, O=FlutterCursor`, version bumped to `+2`.
 - Upload-key backup: one-time 10-minute download link + alias/password shown in the app.
 - iOS/IPA: not possible on the Windows Runner (needs macOS + Xcode + Apple Developer account); planned via a macOS CI (Codemagic / GitHub Actions) in Phase 6.
+
+## Terminal CLIs + mockups
+
+- Terminal: new-tab menu with cmd / PowerShell (bash on Linux) and one-tap **Claude Code**, **Codex (GPT)**, **Gemini CLI**. The start command is typed only after the shell prompt appears (ConPTY mangles early input; Enter is a separate write). Mobile key bar adds Enter, Ctrl+C and Paste (bracketed paste). `GET /v1/health` reports `shells` and `cli`.
+- Verified live through the Runner PTY: `claude --version` 2.1.263, `codex --version` 0.144.1, `gemini --version` 0.59.0 (installed), `flutter --version` in PowerShell, interactive Claude Code TUI renders its trust prompt.
+- Mockups (§1B step 3) shown right after the description, before any project is created: 5 clearly different styles generated in parallel as self-contained HTML (fast: ~1 min for all five) and shown full screen, swipe between them. Actions: Choose, Edit this (prompted change), New mockups (next 5 styles from a pool of 15, previous sets kept), Skip. The chosen mockup's palette/typography/HTML is appended to the build instructions. Deviation from the spec's "mockups as Flutter widgets": HTML is ~5× faster than compiling five Flutter previews; the build then implements the chosen design in Flutter.
+- Claude Code one-shot `agent.complete` (no tools, neutral cwd) used for mockups when the engine is Claude Code; API engines use `ai_connect`.
+- Verified live: "Dark premium" recipe-app mockup in 57 s, 15.7 KB HTML, 3 screens.

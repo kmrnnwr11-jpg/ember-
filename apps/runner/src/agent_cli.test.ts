@@ -96,3 +96,20 @@ describe('ClaudeCodeEngine', () => {
     expect(await new ClaudeCodeEngine(loadConfig({ DEV_AUTH: 'true', CLAUDE_CODE_ENABLED: 'false' })).isAvailable()).toBe(false);
   });
 });
+
+describe('typeWhenPromptReady', () => {
+  it('waits for the shell prompt, then types the command and Enter separately', async () => {
+    const { typeWhenPromptReady } = await import('./ws.js');
+    const writes: string[] = [];
+    let onData: (d: string) => void = () => {};
+    typeWhenPromptReady({ onData: (cb) => void (onData = cb), onExit: () => {}, write: (d) => void writes.push(d), resize: () => {}, kill: () => {} }, 'claude', 5000);
+    onData('Microsoft Windows [Version 10.0]\r\n');
+    expect(writes).toEqual([]);
+    onData('\x1b[?25hC:\ws\proj>');
+    expect(writes).toEqual(['claude']);
+    await new Promise((r) => setTimeout(r, 200));
+    expect(writes).toEqual(['claude', '\r']);
+    onData('more>');
+    expect(writes.length).toBe(2);
+  });
+});

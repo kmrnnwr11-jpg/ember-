@@ -28,13 +28,18 @@ export class LocalDriver implements WorkspaceDriver {
   async openPty(workspaceId: string, opts: PtyOptions): Promise<PtyHandle> {
     await this.ensure(workspaceId);
     const win = process.platform === 'win32';
-    const shell = win ? 'powershell.exe' : (process.env.SHELL ?? 'bash');
-    const p = nodePty.spawn(shell, win ? ['-NoLogo'] : ['-l'], {
+    const kind = opts.shell ?? 'default';
+    const [shell, args] = win
+      ? kind === 'powershell'
+        ? ['powershell.exe', ['-NoLogo']]
+        : ['cmd.exe', []]
+      : [kind === 'bash' || kind === 'default' ? (process.env.SHELL ?? 'bash') : 'bash', ['-l']];
+    const p = nodePty.spawn(shell, args as string[], {
       name: 'xterm-256color',
       cols: opts.cols,
       rows: opts.rows,
       cwd: safeResolve(this.hostRoot(workspaceId), opts.cwd),
-      env: { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor' } as Record<string, string>,
+      env: { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor', FORCE_COLOR: '1' } as Record<string, string>,
     });
     return {
       onData: (cb) => void p.onData(cb),

@@ -23,6 +23,7 @@ abstract final class MsgType {
   static const previewStatus = 'preview.status';
   static const agentStart = 'agent.start';
   static const agentCancel = 'agent.cancel';
+  static const agentComplete = 'agent.complete';
   static const ping = 'ping';
 
   // Responses

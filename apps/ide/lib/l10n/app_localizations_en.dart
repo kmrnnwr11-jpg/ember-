@@ -487,4 +487,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get runFullscreen => 'Run full screen';
+
+  @override
+  String cliNotInstalled(String name) {
+    return 'not installed on the Runner ($name)';
+  }
+
+  @override
+  String get terminalCliHint =>
+      'Claude Code, Codex and Gemini use the login on the Runner\'s machine. The first time, follow the instructions in the terminal to sign in.';
+
+  @override
+  String get generatingMockups => 'Creating 5 visual styles…';
+
+  @override
+  String designingStyle(String style) {
+    return 'Designing “$style”…';
+  }
+
+  @override
+  String get chooseMockup => 'Choose this';
+
+  @override
+  String get editMockup => 'Edit this mockup';
+
+  @override
+  String get editMockupHint => 'E.g.: darker, rounded buttons, pink logo…';
+
+  @override
+  String get newMockups => 'New mockups (5 different styles)';
+
+  @override
+  String get previousMockups => 'Previous mockups';
+
+  @override
+  String mockupSet(int n) {
+    return 'Set $n';
+  }
+
+  @override
+  String get skipMockups => 'Skip mockups and build the app';
 }

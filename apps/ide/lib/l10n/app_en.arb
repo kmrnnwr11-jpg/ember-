@@ -146,5 +146,16 @@
   "backupSigningKeyHint": "Keep the key file and password somewhere safe (e.g. Google Drive): you need them to publish updates of this app on Google Play. The link works once, for 10 minutes.",
   "downloadKeystore": "Download key file",
   "fullscreenExitHint": "Swipe or press back to return to FlutterCursor",
-  "runFullscreen": "Run full screen"
+  "runFullscreen": "Run full screen",
+  "cliNotInstalled": "not installed on the Runner ({name})",
+  "terminalCliHint": "Claude Code, Codex and Gemini use the login on the Runner's machine. The first time, follow the instructions in the terminal to sign in.",
+  "generatingMockups": "Creating 5 visual styles…",
+  "designingStyle": "Designing “{style}”…",
+  "chooseMockup": "Choose this",
+  "editMockup": "Edit this mockup",
+  "editMockupHint": "E.g.: darker, rounded buttons, pink logo…",
+  "newMockups": "New mockups (5 different styles)",
+  "previousMockups": "Previous mockups",
+  "mockupSet": "Set {n}",
+  "skipMockups": "Skip mockups and build the app"
 }

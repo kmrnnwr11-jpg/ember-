@@ -7,7 +7,7 @@ import websocket from '@fastify/websocket';
 import { PathError, safeResolve } from './paths.js';
 import { PreviewService } from './preview.js';
 import { DEFAULT_UPSTREAMS, registerAiRoutes } from './ai.js';
-import { ClaudeCodeEngine } from './agent_cli.js';
+import { ClaudeCodeEngine, detectClis } from './agent_cli.js';
 import { z } from 'zod';
 import { Authenticator, bearer, type AuthUser } from './auth.js';
 import type { Config } from './config.js';
@@ -178,6 +178,9 @@ export async function buildApp(
     devAuth: cfg.DEV_AUTH,
     version: '0.2.0',
     engines: { claudeCode: await claudeCode.isAvailable() },
+    // AI CLIs usable from the integrated terminal (local driver: host PATH).
+    cli: driver.kind === 'local' ? await detectClis() : {},
+    shells: process.platform === 'win32' ? ['cmd', 'powershell'] : ['bash'],
   }));
 
   app.post('/v1/auth/dev-login', async (req, reply) => {

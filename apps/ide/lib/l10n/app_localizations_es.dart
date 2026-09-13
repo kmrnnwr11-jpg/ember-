@@ -888,10 +888,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get actAnalyze => 'Comprobando errores';
 
   @override
-  String get forgeTitle => 'Forjando tu app';
+  String get forgeTitle => 'Ember está invocando tu app';
 
   @override
   String forgeFiles(int count) {
-    return '$count archivos forjados';
+    return '$count archivos invocados';
   }
 }

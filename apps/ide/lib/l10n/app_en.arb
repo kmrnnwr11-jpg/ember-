@@ -491,8 +491,8 @@
   },
   "actPubGet": "Installing dependencies",
   "actAnalyze": "Checking for errors",
-  "forgeTitle": "Forging your app",
-  "forgeFiles": "{count} files forged",
+  "forgeTitle": "Ember is summoning your app",
+  "forgeFiles": "{count} files summoned",
   "@forgeFiles": {
     "placeholders": {
       "count": {

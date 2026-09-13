@@ -877,10 +877,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actAnalyze => 'Checking for errors';
 
   @override
-  String get forgeTitle => 'Forging your app';
+  String get forgeTitle => 'Ember is summoning your app';
 
   @override
   String forgeFiles(int count) {
-    return '$count files forged';
+    return '$count files summoned';
   }
 }

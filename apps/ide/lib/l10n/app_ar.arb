@@ -259,6 +259,6 @@
   "actReads": "قراءة {file}",
   "actPubGet": "تثبيت الاعتماديات",
   "actAnalyze": "التحقق من الأخطاء",
-  "forgeTitle": "جارٍ صهر تطبيقك",
-  "forgeFiles": "تم صهر {count} ملفات"
+  "forgeTitle": "Ember يستدعي تطبيقك",
+  "forgeFiles": "تم استدعاء {count} ملفات"
 }

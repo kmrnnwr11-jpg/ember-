@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../widgets/ember_logo.dart';
 import 'app_builder.dart';
 
 /// Dramatic "the machine is doing the impossible" view shown while an app is being built:
@@ -100,7 +101,7 @@ class _ForgeViewState extends State<ForgeView> with SingleTickerProviderStateMix
       borderRadius: BorderRadius.circular(16),
       child: Container(
         height: 460,
-        color: const Color(0xFF020805),
+        color: const Color(0xFF070102),
         child: ValueListenableBuilder<double>(
           valueListenable: _t,
           builder: (context, t, _) => Stack(
@@ -113,27 +114,33 @@ class _ForgeViewState extends State<ForgeView> with SingleTickerProviderStateMix
                 left: 0,
                 right: 0,
                 top: ((t * 0.35) % 1) * 460,
-                child: Container(height: 2, color: const Color(0x3300FFAA)),
+                child: Container(height: 2, color: const Color(0x33FF1A2E)),
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _Glitch(text: l.forgeTitle.toUpperCase(), t: t, size: 22),
+                    Row(
+                      children: [
+                        const EmberMark(size: 40),
+                        const SizedBox(width: 10),
+                        Expanded(child: _Glitch(text: l.forgeTitle.toUpperCase(), t: t, size: 22)),
+                      ],
+                    ),
                     const SizedBox(height: 6),
                     Text(
                       '> ${widget.status}',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF7CFFCB), fontSize: 13),
+                      style: const TextStyle(fontFamily: 'monospace', color: Color(0xFFFF8A95), fontSize: 13),
                     ),
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: const Color(0xAA000000),
-                        border: Border.all(color: const Color(0x5500FF99)),
+                        border: Border.all(color: const Color(0x55FF1A2E)),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
@@ -147,14 +154,14 @@ class _ForgeViewState extends State<ForgeView> with SingleTickerProviderStateMix
                               style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontSize: 11,
-                                color: Color.lerp(const Color(0x2200FF88), const Color(0xAA00FF88), i / 14),
+                                color: Color.lerp(const Color(0x22FF2A3D), const Color(0xAAFF2A3D), i / 14),
                               ),
                             ),
                           Text(
                             '$_typing${(t * 3).floor().isEven ? '█' : ' '}',
                             maxLines: 1,
                             overflow: TextOverflow.clip,
-                            style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Color(0xFFB6FFE0), fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Color(0xFFFFD6DB), fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -164,7 +171,7 @@ class _ForgeViewState extends State<ForgeView> with SingleTickerProviderStateMix
                       children: [
                         Text(
                           l.forgeFiles(b.writtenFiles.length),
-                          style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF99), fontSize: 12),
+                          style: const TextStyle(fontFamily: 'monospace', color: Color(0xFFFF1A2E), fontSize: 12),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -172,8 +179,8 @@ class _ForgeViewState extends State<ForgeView> with SingleTickerProviderStateMix
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
                               minHeight: 4,
-                              color: const Color(0xFF00FF99),
-                              backgroundColor: const Color(0x2200FF99),
+                              color: const Color(0xFFFF1A2E),
+                              backgroundColor: const Color(0x22FF1A2E),
                             ),
                           ),
                         ),
@@ -243,7 +250,7 @@ class _RainPainter extends CustomPainter {
             style: TextStyle(
               fontSize: 12,
               fontFamily: 'monospace',
-              color: (head ? const Color(0xFFE0FFF0) : const Color(0xFF00FF7A)).withValues(alpha: alpha),
+              color: (head ? const Color(0xFFFFE0E4) : const Color(0xFFFF1A2E)).withValues(alpha: alpha),
             ),
           ),
           textDirection: TextDirection.ltr,
@@ -270,13 +277,13 @@ class _CorePainter extends CustomPainter {
       c,
       r * 2.4,
       Paint()
-        ..shader = RadialGradient(colors: [const Color(0x5500FFAA), const Color(0x0000FFAA)]).createShader(Rect.fromCircle(center: c, radius: r * 2.4)),
+        ..shader = RadialGradient(colors: [const Color(0x55FF1A2E), const Color(0x00FF1A2E)]).createShader(Rect.fromCircle(center: c, radius: r * 2.4)),
     );
     canvas.drawCircle(
       c,
       r,
       Paint()
-        ..shader = RadialGradient(colors: const [Color(0xFFFFFFFF), Color(0xFF00FFB0), Color(0x0000FF60)], stops: const [0, 0.35, 1])
+        ..shader = RadialGradient(colors: const [Color(0xFFFFE0E4), Color(0xFFFF3A4A), Color(0x00FF0020)], stops: const [0, 0.35, 1])
             .createShader(Rect.fromCircle(center: c, radius: r)),
     );
     // Orbiting rings.
@@ -284,7 +291,7 @@ class _CorePainter extends CustomPainter {
       final paint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5
-        ..color = const Color(0xFF00FF99).withValues(alpha: 0.5 - i * 0.12);
+        ..color = const Color(0xFFFF1A2E).withValues(alpha: 0.5 - i * 0.12);
       canvas.save();
       canvas.translate(c.dx, c.dy);
       canvas.rotate(t * (0.8 + i * 0.55) * (i.isEven ? 1 : -1));
@@ -294,7 +301,7 @@ class _CorePainter extends CustomPainter {
     // Lightning sparks.
     final rng = math.Random((t * 12).floor());
     final spark = Paint()
-      ..color = const Color(0xCCB0FFE8)
+      ..color = const Color(0xCCFFB0B8)
       ..strokeWidth = 1.2;
     for (var k = 0; k < 3; k++) {
       var p = c;
@@ -328,7 +335,7 @@ class _Glitch extends StatelessWidget {
       children: [
         if (burst) Transform.translate(offset: Offset(dx, 0), child: Text(text, style: style(const Color(0xAAFF0055)))),
         if (burst) Transform.translate(offset: Offset(-dx, 1), child: Text(text, style: style(const Color(0xAA00E5FF)))),
-        Text(text, style: style(const Color(0xFFEFFFF7)).copyWith(shadows: const [Shadow(color: Color(0xFF00FF99), blurRadius: 14)])),
+        Text(text, style: style(const Color(0xFFFFEFF1)).copyWith(shadows: const [Shadow(color: Color(0xFFFF1A2E), blurRadius: 14)])),
       ],
     );
   }

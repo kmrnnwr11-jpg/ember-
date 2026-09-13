@@ -259,6 +259,6 @@
   "actReads": "Lecture de {file}",
   "actPubGet": "Installation des dépendances",
   "actAnalyze": "Vérification des erreurs",
-  "forgeTitle": "Forge de votre app",
-  "forgeFiles": "{count} fichiers forgés"
+  "forgeTitle": "Ember invoque votre app",
+  "forgeFiles": "{count} fichiers invoqués"
 }

@@ -875,10 +875,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get actAnalyze => 'التحقق من الأخطاء';
 
   @override
-  String get forgeTitle => 'جارٍ صهر تطبيقك';
+  String get forgeTitle => 'Ember يستدعي تطبيقك';
 
   @override
   String forgeFiles(int count) {
-    return 'تم صهر $count ملفات';
+    return 'تم استدعاء $count ملفات';
   }
 }

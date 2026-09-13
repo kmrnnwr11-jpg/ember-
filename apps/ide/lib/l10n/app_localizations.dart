@@ -1661,13 +1661,13 @@ abstract class AppLocalizations {
   /// No description provided for @forgeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Forging your app'**
+  /// **'Ember is summoning your app'**
   String get forgeTitle;
 
   /// No description provided for @forgeFiles.
   ///
   /// In en, this message translates to:
-  /// **'{count} files forged'**
+  /// **'{count} files summoned'**
   String forgeFiles(int count);
 }
 

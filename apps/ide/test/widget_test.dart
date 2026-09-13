@@ -108,8 +108,9 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
-    expect(find.text('FlutterCursor'), findsOneWidget);
+    // The Ember mark animates forever, so pump frames instead of settling.
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('EMBER'), findsOneWidget);
     expect(find.text('Accedi'), findsWidgets);
     await tester.tap(find.byKey(const Key('signIn')));
     await tester.pump();

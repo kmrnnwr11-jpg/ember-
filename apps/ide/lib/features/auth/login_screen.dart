@@ -5,6 +5,7 @@ import '../../core/env.dart';
 import '../../core/locale.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import '../../widgets/ember_logo.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -65,9 +66,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(Icons.code, size: 56, color: theme.colorScheme.primary),
-                    const SizedBox(height: 12),
-                    Text(l.appTitle, textAlign: TextAlign.center, style: theme.textTheme.headlineMedium),
+                    const Center(child: EmberMark(size: 110)),
+                    const SizedBox(height: 8),
+                    const Center(child: EmberWordmark(size: 38, center: true)),
                     const SizedBox(height: 4),
                     Text(l.loginSubtitle, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
                     const SizedBox(height: 32),

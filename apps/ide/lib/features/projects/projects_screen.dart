@@ -9,6 +9,7 @@ import '../../core/locale.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../../widgets/connection_badge.dart';
+import '../../widgets/ember_logo.dart';
 import '../assistant/home_assistant.dart';
 import '../create/app_builder.dart';
 import '../create/create_app_screen.dart';
@@ -129,7 +130,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
     final scaffold = Scaffold(
       appBar: AppBar(
-        title: Text(l.projects),
+        title: const EmberLockup(size: 18, subtitle: false),
         actions: [
           const ConnectionBadge(),
           const LanguageButton(),

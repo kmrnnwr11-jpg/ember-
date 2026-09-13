@@ -9,7 +9,7 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'FlutterCursor';
+  String get appTitle => 'Ember – App Maker';
 
   @override
   String get loginTitle => 'تسجيل الدخول';

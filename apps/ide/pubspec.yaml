@@ -40,3 +40,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+  fonts:
+    - family: Nosifer
+      fonts:
+        - asset: assets/fonts/Nosifer-Regular.ttf

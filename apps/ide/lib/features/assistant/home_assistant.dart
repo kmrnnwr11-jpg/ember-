@@ -9,10 +9,11 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../ai/chat_controller.dart';
+import '../../widgets/ember_logo.dart';
 
 const assistantSystemPrompt = '''
-You are the FlutterCursor assistant, a friendly expert helping non-technical people create and publish mobile apps.
-Help with: app ideas and features, how to use FlutterCursor (describe app → mockups → build → changes in chat → APK/AAB → Play Store), Google Play Console and App Store steps, Firebase/Supabase/Google Sign-In setup, costs, privacy policy and GDPR basics, and general questions.
+You are Ember, the assistant inside the Ember app maker, a friendly expert helping non-technical people create and publish mobile apps.
+Help with: app ideas and features, how to use Ember (describe app → mockups → build → changes in chat → APK/AAB → Play Store), Google Play Console and App Store steps, Firebase/Supabase/Google Sign-In setup, costs, privacy policy and GDPR basics, and general questions.
 Answer in the user's language, concisely, with short steps and real links when useful. Be honest when something needs a paid account (e.g. Google Play Console 25 USD one-time, Apple Developer 99 USD/year) and say who is paid.''';
 
 /// Free home assistant: Gemini through the Runner's own key (no user key needed).
@@ -80,7 +81,7 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
             decoration: BoxDecoration(border: Border(bottom: BorderSide(color: scheme.outlineVariant))),
             child: Row(
               children: [
-                Icon(Icons.auto_awesome, color: scheme.primary, size: 20),
+                const EmberMark(size: 30),
                 const SizedBox(width: 8),
                 Expanded(child: Text(l.assistantTitle, style: Theme.of(context).textTheme.titleSmall)),
                 Container(
@@ -101,7 +102,7 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
                       padding: const EdgeInsets.all(16),
                       children: [
                         const SizedBox(height: 24),
-                        Icon(Icons.support_agent, size: 48, color: scheme.primary),
+                        const EmberMark(size: 96),
                         const SizedBox(height: 12),
                         Text(enabled ? l.assistantEmpty : l.assistantUnconfigured, textAlign: TextAlign.center),
                         const SizedBox(height: 16),

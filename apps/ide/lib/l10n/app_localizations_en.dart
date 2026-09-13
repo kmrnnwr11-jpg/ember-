@@ -483,8 +483,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get downloadKeystore => 'Download key file';
 
   @override
-  String get fullscreenExitHint =>
-      'Swipe or press back to return to FlutterCursor';
+  String get fullscreenExitHint => 'Swipe or press back to return to Ember';
 
   @override
   String get runFullscreen => 'Run full screen';
@@ -540,7 +539,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playFeeNotice =>
-      'You need a Google Play Console developer account. Cost: \$25 one time (not a subscription), paid directly to Google, not to FlutterCursor.';
+      'You need a Google Play Console developer account. Cost: \$25 one time (not a subscription), paid directly to Google, not to Ember.';
 
   @override
   String get playPublishTitle => 'Publish to Google Play';
@@ -574,7 +573,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playAppCreated => 'I created the app in Play Console';
 
   @override
-  String get playStepConnect => 'Connect FlutterCursor to Google Play';
+  String get playStepConnect => 'Connect Ember to Google Play';
 
   @override
   String get playConnectGuide =>
@@ -656,21 +655,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playOtherDeclarations => 'Audience, ads and app access';
 
   @override
-  String get assistantTitle => 'AI assistant';
+  String get assistantTitle => 'Ask Ember';
 
   @override
   String get assistantFree => 'Free';
 
   @override
   String get assistantEmpty =>
-      'Hi! Ask me anything: app ideas, how to publish on Play Store, how to set up login and databases…';
+      'Hi, I\'m Ember! Ask me anything: app ideas, how to publish on Play Store, how to set up login and databases…';
 
   @override
   String get assistantUnconfigured =>
       'The free assistant is not active on this server yet (the Runner\'s Gemini key is missing).';
 
   @override
-  String get assistantHint => 'Ask a question…';
+  String get assistantHint => 'Ask Ember anything…';
 
   @override
   String get assistantSuggest1 => 'What app can I build for my shop?';

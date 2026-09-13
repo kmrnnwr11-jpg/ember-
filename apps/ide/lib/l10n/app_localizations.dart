@@ -977,7 +977,7 @@ abstract class AppLocalizations {
   /// No description provided for @fullscreenExitHint.
   ///
   /// In en, this message translates to:
-  /// **'Swipe or press back to return to FlutterCursor'**
+  /// **'Swipe or press back to return to Ember'**
   String get fullscreenExitHint;
 
   /// No description provided for @runFullscreen.
@@ -1073,7 +1073,7 @@ abstract class AppLocalizations {
   /// No description provided for @playFeeNotice.
   ///
   /// In en, this message translates to:
-  /// **'You need a Google Play Console developer account. Cost: \$25 one time (not a subscription), paid directly to Google, not to FlutterCursor.'**
+  /// **'You need a Google Play Console developer account. Cost: \$25 one time (not a subscription), paid directly to Google, not to Ember.'**
   String get playFeeNotice;
 
   /// No description provided for @playPublishTitle.
@@ -1139,7 +1139,7 @@ abstract class AppLocalizations {
   /// No description provided for @playStepConnect.
   ///
   /// In en, this message translates to:
-  /// **'Connect FlutterCursor to Google Play'**
+  /// **'Connect Ember to Google Play'**
   String get playStepConnect;
 
   /// No description provided for @playConnectGuide.
@@ -1289,7 +1289,7 @@ abstract class AppLocalizations {
   /// No description provided for @assistantTitle.
   ///
   /// In en, this message translates to:
-  /// **'AI assistant'**
+  /// **'Ask Ember'**
   String get assistantTitle;
 
   /// No description provided for @assistantFree.
@@ -1301,7 +1301,7 @@ abstract class AppLocalizations {
   /// No description provided for @assistantEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Hi! Ask me anything: app ideas, how to publish on Play Store, how to set up login and databases…'**
+  /// **'Hi, I\'m Ember! Ask me anything: app ideas, how to publish on Play Store, how to set up login and databases…'**
   String get assistantEmpty;
 
   /// No description provided for @assistantUnconfigured.
@@ -1313,7 +1313,7 @@ abstract class AppLocalizations {
   /// No description provided for @assistantHint.
   ///
   /// In en, this message translates to:
-  /// **'Ask a question…'**
+  /// **'Ask Ember anything…'**
   String get assistantHint;
 
   /// No description provided for @assistantSuggest1.

@@ -488,7 +488,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get fullscreenExitHint =>
-      'Scorri o premi indietro per tornare a FlutterCursor';
+      'Scorri o premi indietro per tornare a Ember';
 
   @override
   String get runFullscreen => 'Avvia a schermo intero';
@@ -545,7 +545,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get playFeeNotice =>
-      'Serve un account sviluppatore Google Play Console. Costo: 25 \$ una sola volta (non è un abbonamento), pagati direttamente a Google, non a FlutterCursor.';
+      'Serve un account sviluppatore Google Play Console. Costo: 25 \$ una sola volta (non è un abbonamento), pagati direttamente a Google, non a Ember.';
 
   @override
   String get playPublishTitle => 'Pubblica su Google Play';
@@ -579,7 +579,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playAppCreated => 'Ho creato l\'app nel Play Console';
 
   @override
-  String get playStepConnect => 'Collega FlutterCursor a Google Play';
+  String get playStepConnect => 'Collega Ember a Google Play';
 
   @override
   String get playConnectGuide =>
@@ -664,21 +664,21 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playOtherDeclarations => 'Pubblico, annunci e accesso all\'app';
 
   @override
-  String get assistantTitle => 'Assistente AI';
+  String get assistantTitle => 'Chiedi a Ember';
 
   @override
   String get assistantFree => 'Gratis';
 
   @override
   String get assistantEmpty =>
-      'Ciao! Chiedimi qualsiasi cosa: idee per la tua app, come pubblicarla sul Play Store, come configurare login e database…';
+      'Ciao, sono Ember! Chiedimi quello che vuoi: idee per la tua app, come pubblicarla sul Play Store, come configurare login e database…';
 
   @override
   String get assistantUnconfigured =>
       'L\'assistente gratuito non è ancora attivo su questo server (manca la chiave Gemini del Runner).';
 
   @override
-  String get assistantHint => 'Scrivi una domanda…';
+  String get assistantHint => 'Chiedi qualcosa a Ember…';
 
   @override
   String get assistantSuggest1 => 'Che app posso creare per il mio negozio?';

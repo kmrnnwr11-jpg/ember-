@@ -139,7 +139,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
               key: const Key('toggleAssistant'),
               tooltip: l.assistantTitle,
               isSelected: _assistantOpen,
-              icon: const Icon(Icons.support_agent),
+              icon: const EmberMark(size: 28, animate: false),
               onPressed: () => MediaQuery.of(context).size.width >= 1000
                   ? setState(() => _assistantOpen = !_assistantOpen)
                   : _openAssistantFullScreen(),

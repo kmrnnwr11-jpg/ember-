@@ -487,8 +487,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get downloadKeystore => 'Descargar archivo de clave';
 
   @override
-  String get fullscreenExitHint =>
-      'Desliza o pulsa atrás para volver a FlutterCursor';
+  String get fullscreenExitHint => 'Desliza o pulsa atrás para volver a Ember';
 
   @override
   String get runFullscreen => 'Ejecutar a pantalla completa';
@@ -545,7 +544,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get playFeeNotice =>
-      'Necesitas una cuenta de desarrollador de Google Play Console. Coste: 25 \$ una sola vez (no es una suscripción), pagados directamente a Google, no a FlutterCursor.';
+      'Necesitas una cuenta de desarrollador de Google Play Console. Coste: 25 \$ una sola vez (no es una suscripción), pagados directamente a Google, no a Ember.';
 
   @override
   String get playPublishTitle => 'Publicar en Google Play';
@@ -579,7 +578,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get playAppCreated => 'He creado la app en Play Console';
 
   @override
-  String get playStepConnect => 'Conecta FlutterCursor con Google Play';
+  String get playStepConnect => 'Conecta Ember con Google Play';
 
   @override
   String get playConnectGuide =>
@@ -664,21 +663,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get playOtherDeclarations => 'Público, anuncios y acceso a la app';
 
   @override
-  String get assistantTitle => 'Asistente IA';
+  String get assistantTitle => 'Pregunta a Ember';
 
   @override
   String get assistantFree => 'Gratis';
 
   @override
   String get assistantEmpty =>
-      '¡Hola! Pregúntame lo que quieras: ideas para tu app, cómo publicarla en Play Store, cómo configurar el inicio de sesión y las bases de datos…';
+      '¡Hola, soy Ember! Pregúntame lo que quieras: ideas para tu app, cómo publicarla en Play Store, cómo configurar el inicio de sesión y las bases de datos…';
 
   @override
   String get assistantUnconfigured =>
       'El asistente gratuito aún no está activo en este servidor (falta la clave de Gemini del Runner).';
 
   @override
-  String get assistantHint => 'Escribe una pregunta…';
+  String get assistantHint => 'Pregunta lo que quieras a Ember…';
 
   @override
   String get assistantSuggest1 => '¿Qué app puedo crear para mi tienda?';

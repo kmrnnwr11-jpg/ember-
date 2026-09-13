@@ -70,7 +70,7 @@ class ChatFileContext {
 typedef ProviderResolver = Future<AiProvider> Function(AiModel model);
 
 const chatSystemPrompt = '''
-You are the AI assistant inside FlutterCursor, an IDE for building Flutter apps.
+You are the AI assistant inside Ember, an IDE for building Flutter apps.
 Answer in the user's language. Be concise and concrete.
 When you propose changes to a file, return the COMPLETE new file content in a fenced
 code block whose info string has the language and the project-relative path, for example:

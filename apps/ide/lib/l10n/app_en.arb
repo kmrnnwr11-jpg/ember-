@@ -490,5 +490,14 @@
     }
   },
   "actPubGet": "Installing dependencies",
-  "actAnalyze": "Checking for errors"
+  "actAnalyze": "Checking for errors",
+  "forgeTitle": "Forging your app",
+  "forgeFiles": "{count} files forged",
+  "@forgeFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

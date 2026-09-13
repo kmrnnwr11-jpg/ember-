@@ -1657,6 +1657,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Checking for errors'**
   String get actAnalyze;
+
+  /// No description provided for @forgeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forging your app'**
+  String get forgeTitle;
+
+  /// No description provided for @forgeFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} files forged'**
+  String forgeFiles(int count);
 }
 
 class _AppLocalizationsDelegate

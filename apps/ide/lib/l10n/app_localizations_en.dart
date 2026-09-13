@@ -876,4 +876,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actAnalyze => 'Checking for errors';
+
+  @override
+  String get forgeTitle => 'Forging your app';
+
+  @override
+  String forgeFiles(int count) {
+    return '$count files forged';
+  }
 }

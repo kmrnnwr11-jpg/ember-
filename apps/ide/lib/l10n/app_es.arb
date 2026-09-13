@@ -258,5 +258,7 @@
   "actEdits": "Editando {file}",
   "actReads": "Leyendo {file}",
   "actPubGet": "Instalando dependencias",
-  "actAnalyze": "Comprobando errores"
+  "actAnalyze": "Comprobando errores",
+  "forgeTitle": "Forjando tu app",
+  "forgeFiles": "{count} archivos forjados"
 }

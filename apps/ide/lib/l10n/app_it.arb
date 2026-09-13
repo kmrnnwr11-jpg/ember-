@@ -258,5 +258,7 @@
   "actEdits": "Modifica {file}",
   "actReads": "Legge {file}",
   "actPubGet": "Installa le dipendenze",
-  "actAnalyze": "Controlla gli errori"
+  "actAnalyze": "Controlla gli errori",
+  "forgeTitle": "Sto forgiando la tua app",
+  "forgeFiles": "{count} file forgiati"
 }

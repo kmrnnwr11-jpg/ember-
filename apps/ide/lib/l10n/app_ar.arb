@@ -258,5 +258,7 @@
   "actEdits": "تعديل {file}",
   "actReads": "قراءة {file}",
   "actPubGet": "تثبيت الاعتماديات",
-  "actAnalyze": "التحقق من الأخطاء"
+  "actAnalyze": "التحقق من الأخطاء",
+  "forgeTitle": "جارٍ صهر تطبيقك",
+  "forgeFiles": "تم صهر {count} ملفات"
 }

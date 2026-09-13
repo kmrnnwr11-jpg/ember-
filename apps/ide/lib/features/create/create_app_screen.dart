@@ -13,6 +13,7 @@ import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../ai/ai_settings.dart';
 import 'app_builder.dart';
+import 'forge_view.dart';
 
 /// Arguments passed when arriving from the home prompt.
 class CreateAppArgs {
@@ -434,6 +435,7 @@ class _Steps extends StatelessWidget {
     final current = b.phase == BuildPhase.fixing ? BuildPhase.checking : b.phase;
     final currentIndex = order.indexOf(current);
     final terminalFail = b.phase == BuildPhase.failed || b.phase == BuildPhase.cancelled;
+    if (b.running) return ForgeView(builder: b, status: labels[current] ?? '');
 
     return Card(
       child: Padding(

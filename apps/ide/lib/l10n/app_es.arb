@@ -271,12 +271,17 @@
   "forgeElapsed": "{time} transcurridos",
   "forgeBackground": "Puedes apagar la pantalla o usar otras apps: Ember sigue trabajando y termina la app.",
   "buyCredits": "Comprar créditos API",
-  "getSubscription": "Suscribirse",
+  "getSubscription": "Comprar suscripción",
   "connectSubscription": "Conectar mi suscripción",
   "accessTitle": "Acceso y pagos",
   "accessPaidOutside": "Los pagos se hacen en el sitio del proveedor, no en Ember.",
   "subscriptionNotConnected": "{name} no está conectado: inicia sesión con tu suscripción en el PC del Runner.",
   "connectHowTo": "Ember usa tu propia suscripción {plan}, con la sesión iniciada en el PC donde se ejecuta el Runner (sin clave API ni costes extra).\n\n1. En ese PC abre una terminal (o la de Ember).\n2. Ejecuta: {command}\n3. Completa el inicio de sesión en el navegador con tu cuenta.\n\nVuelve aquí: el motor se activa en un minuto.",
   "connectPersonalNote": "Las suscripciones son personales: úsalas para tus apps, no para crear apps para otras personas.",
-  "grokNoCli": "Las suscripciones de Grok (SuperGrok) aún no se pueden conectar a otras apps: usa una clave API de xAI."
+  "grokNoCli": "Las suscripciones de Grok (SuperGrok) aún no se pueden conectar a otras apps: usa una clave API de xAI.",
+  "subscriptionConnected": "Conectado con tu suscripción {plan}: sin clave API ni costes extra.",
+  "haveSubscription": "¿Ya tienes {plan}?",
+  "subscriptionReadyUse": "Crea con {engine} usando tu suscripción, sin comprar créditos API.",
+  "subscriptionConnectFirst": "Conéctala una vez para crear con {engine} sin costes extra.",
+  "useSubscription": "Usarla"
 }

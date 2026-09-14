@@ -927,7 +927,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get buyCredits => 'Buy API credits';
 
   @override
-  String get getSubscription => 'Get a subscription';
+  String get getSubscription => 'Buy a subscription';
 
   @override
   String get connectSubscription => 'Connect my subscription';
@@ -956,4 +956,27 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get grokNoCli =>
       'Grok subscriptions (SuperGrok) cannot be connected to other apps yet: use an xAI API key.';
+
+  @override
+  String subscriptionConnected(String plan) {
+    return 'Connected with your $plan subscription: no API key and no extra cost.';
+  }
+
+  @override
+  String haveSubscription(String plan) {
+    return 'Already have $plan?';
+  }
+
+  @override
+  String subscriptionReadyUse(String engine) {
+    return 'Build with $engine on your subscription, without buying API credits.';
+  }
+
+  @override
+  String subscriptionConnectFirst(String engine) {
+    return 'Connect it once to build with $engine at no extra cost.';
+  }
+
+  @override
+  String get useSubscription => 'Use it';
 }

@@ -211,7 +211,15 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
           ),
         ],
         const SizedBox(height: 8),
-        AccessLinks(engine: engine),
+        AccessLinks(
+          engine: engine,
+          connected: option.available,
+          subscriptionReady: (e) => options.any((o) => o.engine == e && o.available),
+          onUseSubscription: (e) => setState(() {
+            _engine = e;
+            _model = null;
+          }),
+        ),
         if (engine == BuildEngine.claudeCode && option.available)
           SwitchListTile(
             contentPadding: EdgeInsets.zero,

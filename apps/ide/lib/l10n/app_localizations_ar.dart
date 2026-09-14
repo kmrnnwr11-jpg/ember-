@@ -925,7 +925,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get buyCredits => 'شراء أرصدة API';
 
   @override
-  String get getSubscription => 'اشترك';
+  String get getSubscription => 'اشترِ اشتراكًا';
 
   @override
   String get connectSubscription => 'اربط اشتراكي';
@@ -954,4 +954,27 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get grokNoCli =>
       'لا يمكن ربط اشتراكات Grok (SuperGrok) بتطبيقات أخرى بعد: استخدم مفتاح API من xAI.';
+
+  @override
+  String subscriptionConnected(String plan) {
+    return 'متصل باشتراكك في $plan: بدون مفتاح API وبدون تكلفة إضافية.';
+  }
+
+  @override
+  String haveSubscription(String plan) {
+    return 'هل لديك $plan بالفعل؟';
+  }
+
+  @override
+  String subscriptionReadyUse(String engine) {
+    return 'أنشئ باستخدام $engine عبر اشتراكك، دون شراء أرصدة API.';
+  }
+
+  @override
+  String subscriptionConnectFirst(String engine) {
+    return 'اربطه مرة واحدة لتنشئ باستخدام $engine دون تكلفة إضافية.';
+  }
+
+  @override
+  String get useSubscription => 'استخدمه';
 }

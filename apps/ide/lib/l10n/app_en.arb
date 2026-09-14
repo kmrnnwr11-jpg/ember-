@@ -548,7 +548,7 @@
     }
   },
   "buyCredits": "Buy API credits",
-  "getSubscription": "Get a subscription",
+  "getSubscription": "Buy a subscription",
   "connectSubscription": "Connect my subscription",
   "accessTitle": "Access & payments",
   "accessPaidOutside": "Payments happen on the provider's site, not in Ember.",
@@ -569,6 +569,39 @@
         "type": "String"
       },
       "command": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionConnected": "Connected with your {plan} subscription: no API key and no extra cost.",
+  "haveSubscription": "Already have {plan}?",
+  "subscriptionReadyUse": "Build with {engine} on your subscription, without buying API credits.",
+  "subscriptionConnectFirst": "Connect it once to build with {engine} at no extra cost.",
+  "useSubscription": "Use it",
+  "@subscriptionConnected": {
+    "placeholders": {
+      "plan": {
+        "type": "String"
+      }
+    }
+  },
+  "@haveSubscription": {
+    "placeholders": {
+      "plan": {
+        "type": "String"
+      }
+    }
+  },
+  "@subscriptionReadyUse": {
+    "placeholders": {
+      "engine": {
+        "type": "String"
+      }
+    }
+  },
+  "@subscriptionConnectFirst": {
+    "placeholders": {
+      "engine": {
         "type": "String"
       }
     }

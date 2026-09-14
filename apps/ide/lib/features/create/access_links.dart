@@ -51,8 +51,20 @@ void _open(String url) => launchUrl(Uri.parse(url), mode: LaunchMode.externalApp
 
 /// "Get API key · Buy credits · Subscribe" (API engines) or "Subscribe · Connect" (subscription engines).
 class AccessLinks extends StatelessWidget {
-  const AccessLinks({super.key, required this.engine});
+  const AccessLinks({super.key, required this.engine, this.connected = false, this.subscriptionReady, this.onUseSubscription});
   final BuildEngine engine;
+
+  /// The selected engine is usable right now (key present / subscription logged in).
+  final bool connected;
+
+  /// Whether a subscription engine is already logged in on the Runner.
+  final bool Function(BuildEngine engine)? subscriptionReady;
+
+  /// Switches the composer to a subscription engine.
+  final void Function(BuildEngine engine)? onUseSubscription;
+
+  /// API engine → the engine that runs on the same company's subscription.
+  static const subscriptionOf = {BuildEngine.openai: BuildEngine.codex, BuildEngine.claude: BuildEngine.claudeCode, BuildEngine.gemini: BuildEngine.geminiCli};
 
   @override
   Widget build(BuildContext context) {
@@ -60,10 +72,37 @@ class AccessLinks extends StatelessWidget {
     final a = engineAccess[engine];
     if (a == null) return const SizedBox.shrink();
     final muted = Theme.of(context).textTheme.bodySmall;
+    final sub = subscriptionOf[engine];
+    // Subscription already logged in: nothing to buy, just say so.
+    if (engine.isCli && connected) {
+      return Row(
+        children: [
+          const Icon(Icons.check_circle, color: Colors.green, size: 18),
+          const SizedBox(width: 6),
+          Expanded(child: Text(l.subscriptionConnected(a.planName!), style: muted)),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('${l.accessTitle} — ${l.accessPaidOutside}', style: muted),
+        if (sub != null && onUseSubscription != null) ...[
+          const SizedBox(height: 6),
+          Card(
+            margin: EdgeInsets.zero,
+            child: ListTile(
+              dense: true,
+              leading: const Icon(Icons.workspace_premium_outlined),
+              title: Text(l.haveSubscription(engineAccess[sub]!.planName!)),
+              subtitle: Text(subscriptionReady?.call(sub) == true ? l.subscriptionReadyUse(sub.cliLabel) : l.subscriptionConnectFirst(sub.cliLabel)),
+              trailing: FilledButton(
+                onPressed: () => subscriptionReady?.call(sub) == true ? onUseSubscription!(sub) : showConnectSubscription(context, sub),
+                child: Text(subscriptionReady?.call(sub) == true ? l.useSubscription : l.connectSubscription),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 4),
         Wrap(
           spacing: 8,

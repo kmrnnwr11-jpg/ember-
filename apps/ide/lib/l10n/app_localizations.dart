@@ -1733,7 +1733,7 @@ abstract class AppLocalizations {
   /// No description provided for @getSubscription.
   ///
   /// In en, this message translates to:
-  /// **'Get a subscription'**
+  /// **'Buy a subscription'**
   String get getSubscription;
 
   /// No description provided for @connectSubscription.
@@ -1777,6 +1777,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Grok subscriptions (SuperGrok) cannot be connected to other apps yet: use an xAI API key.'**
   String get grokNoCli;
+
+  /// No description provided for @subscriptionConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected with your {plan} subscription: no API key and no extra cost.'**
+  String subscriptionConnected(String plan);
+
+  /// No description provided for @haveSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have {plan}?'**
+  String haveSubscription(String plan);
+
+  /// No description provided for @subscriptionReadyUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Build with {engine} on your subscription, without buying API credits.'**
+  String subscriptionReadyUse(String engine);
+
+  /// No description provided for @subscriptionConnectFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect it once to build with {engine} at no extra cost.'**
+  String subscriptionConnectFirst(String engine);
+
+  /// No description provided for @useSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Use it'**
+  String get useSubscription;
 }
 
 class _AppLocalizationsDelegate

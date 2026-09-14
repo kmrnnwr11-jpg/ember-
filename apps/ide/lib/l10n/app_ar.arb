@@ -271,12 +271,17 @@
   "forgeElapsed": "مضى {time}",
   "forgeBackground": "يمكنك إطفاء الشاشة أو استخدام تطبيقات أخرى: يواصل Ember العمل وينهي التطبيق.",
   "buyCredits": "شراء أرصدة API",
-  "getSubscription": "اشترك",
+  "getSubscription": "اشترِ اشتراكًا",
   "connectSubscription": "اربط اشتراكي",
   "accessTitle": "الوصول والمدفوعات",
   "accessPaidOutside": "تتم المدفوعات على موقع المزوّد، وليس داخل Ember.",
   "subscriptionNotConnected": "{name} غير متصل: سجّل الدخول باشتراكك على كمبيوتر Runner.",
   "connectHowTo": "يستخدم Ember اشتراكك الخاص في {plan}، مع تسجيل الدخول على الكمبيوتر الذي يعمل عليه Runner (بدون مفتاح API وبدون تكلفة إضافية).\n\n1. على ذلك الكمبيوتر افتح طرفية (أو طرفية Ember).\n2. نفّذ: {command}\n3. أكمل تسجيل الدخول في المتصفح بحسابك.\n\nعد إلى هنا: سيتفعّل المحرّك خلال دقيقة.",
   "connectPersonalNote": "الاشتراكات شخصية: استخدمها لتطبيقاتك، لا لإنشاء تطبيقات لأشخاص آخرين.",
-  "grokNoCli": "لا يمكن ربط اشتراكات Grok (SuperGrok) بتطبيقات أخرى بعد: استخدم مفتاح API من xAI."
+  "grokNoCli": "لا يمكن ربط اشتراكات Grok (SuperGrok) بتطبيقات أخرى بعد: استخدم مفتاح API من xAI.",
+  "subscriptionConnected": "متصل باشتراكك في {plan}: بدون مفتاح API وبدون تكلفة إضافية.",
+  "haveSubscription": "هل لديك {plan} بالفعل؟",
+  "subscriptionReadyUse": "أنشئ باستخدام {engine} عبر اشتراكك، دون شراء أرصدة API.",
+  "subscriptionConnectFirst": "اربطه مرة واحدة لتنشئ باستخدام {engine} دون تكلفة إضافية.",
+  "useSubscription": "استخدمه"
 }

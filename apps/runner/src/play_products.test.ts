@@ -1,0 +1,55 @@
+import { describe, expect, it } from 'vitest';
+import { explainProductError, syncProducts, toMicros, toMoney, validateProduct } from './play_products.js';
+import { generateKeyPairSync } from 'node:crypto';
+
+const key = generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
+const sa = { client_email: 'ember@test.iam.gserviceaccount.com', private_key: key };
+
+describe('Play products', () => {
+  it('converts prices', () => {
+    expect(toMoney('4.99', 'eur')).toEqual({ currencyCode: 'EUR', units: '4', nanos: 990000000 });
+    expect(toMicros('39,9')).toBe('39900000');
+  });
+
+  it('validates specs', () => {
+    expect(validateProduct({ id: 'premium_monthly', type: 'subscription', title: 'Premium', description: '', price: '4.99', currency: 'EUR', period: 'P1M' })).toBeNull();
+    expect(validateProduct({ id: 'Premium!', type: 'inapp', title: 'x', description: '', price: '1', currency: 'EUR' })).toContain('id');
+    expect(validateProduct({ id: 'p', type: 'subscription', title: 'x', description: '', price: '1', currency: 'EUR' })).toContain('period');
+  });
+
+  it('creates a one-time product and an active subscription', async () => {
+    const calls: Array<{ method: string; url: string }> = [];
+    const fake = (async (url: string | URL | Request, init?: RequestInit) => {
+      const u = String(url);
+      calls.push({ method: init?.method ?? 'GET', url: u });
+      if (u.includes('oauth2')) return new Response('{"access_token":"t"}', { status: 200 });
+      if (u.endsWith('pricing:convertRegionPrices')) {
+        return new Response(JSON.stringify({ convertedRegionPrices: { IT: { regionCode: 'IT', price: { currencyCode: 'EUR', units: '4', nanos: 990000000 } } }, convertedOtherRegionsPrice: { usdPrice: {}, eurPrice: {} } }), { status: 200 });
+      }
+      return new Response('{}', { status: 200 });
+    }) as typeof fetch;
+    const results = await syncProducts(
+      {
+        serviceAccount: sa,
+        packageName: 'com.demo.app',
+        products: [
+          { id: 'coins_100', type: 'inapp', title: '100 coins', description: 'Coins', price: '0.99', currency: 'EUR' },
+          { id: 'premium', type: 'subscription', title: 'Premium', description: 'All features', price: '4.99', currency: 'EUR', period: 'P1M' },
+        ],
+      },
+      fake,
+    );
+    expect(results).toEqual([
+      { id: 'coins_100', ok: true, status: 'active' },
+      { id: 'premium', ok: true, status: 'active' },
+    ]);
+    expect(calls.some((c) => c.method === 'PUT' && c.url.includes('/inappproducts/coins_100?autoConvertMissingPrices=true'))).toBe(true);
+    expect(calls.some((c) => c.method === 'PATCH' && c.url.includes('/subscriptions/premium?'))).toBe(true);
+    expect(calls.some((c) => c.url.endsWith('/basePlans/monthly:activate'))).toBe(true);
+  });
+
+  it('explains the usual Google errors', () => {
+    expect(explainProductError(403, 'The caller does not have permission')).toContain('Manage orders and subscriptions');
+    expect(explainProductError(400, 'This app does not have BILLING permission')).toContain('upload the AAB');
+  });
+});

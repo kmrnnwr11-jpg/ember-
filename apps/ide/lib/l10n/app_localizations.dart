@@ -1819,6 +1819,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to Ember'**
   String get backToEmber;
+
+  /// No description provided for @productsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'In-app purchases to activate on Google Play'**
+  String get productsTitle;
+
+  /// No description provided for @productsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember creates and activates these products in Play Console for you, with prices converted for every country.'**
+  String get productsHint;
+
+  /// No description provided for @productsActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create and activate on Play Console'**
+  String get productsActivate;
+
+  /// No description provided for @productsNeedKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Google Play first (service account key): open the publish steps.'**
+  String get productsNeedKey;
+
+  /// No description provided for @productsBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'Before activating, once per account/app:\n1. Play Console → Setup → Payments profile (bank account, tax info)\n2. Upload this app\'s AAB to internal testing (Google requires a version with billing)\n3. Users and permissions → give the service account \"Manage orders and subscriptions\"'**
+  String get productsBefore;
+
+  /// No description provided for @productsOpenPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments profile'**
+  String get productsOpenPayments;
+
+  /// No description provided for @productsUploadFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload AAB'**
+  String get productsUploadFirst;
+
+  /// No description provided for @productsActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active on Google Play ✓'**
+  String get productsActive;
+
+  /// No description provided for @productPerPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} / {period}'**
+  String productPerPeriod(String price, String period);
+
+  /// No description provided for @productTrial.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}-day free trial'**
+  String productTrial(int days);
 }
 
 class _AppLocalizationsDelegate

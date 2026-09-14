@@ -285,5 +285,15 @@
   "subscriptionConnectFirst": "Connectez-le une fois pour créer avec {engine} sans coût supplémentaire.",
   "useSubscription": "L'utiliser",
   "bResumeChat": "Reprendre la création interrompue là où elle s'est arrêtée",
-  "backToEmber": "Retour à Ember"
+  "backToEmber": "Retour à Ember",
+  "productsTitle": "Achats intégrés à activer sur Google Play",
+  "productsHint": "Ember crée et active ces produits dans Play Console pour vous, avec les prix convertis pour chaque pays.",
+  "productsActivate": "Créer et activer sur Play Console",
+  "productsNeedKey": "Connectez d'abord Google Play (clé du compte de service) : ouvrez les étapes de publication.",
+  "productsBefore": "Avant d'activer, une seule fois par compte/app :\n1. Play Console → Configuration → Profil de paiement (compte bancaire, infos fiscales)\n2. Importez l'AAB de cette app en test interne (Google exige une version avec facturation)\n3. Utilisateurs et autorisations → donnez au compte de service « Gérer les commandes et les abonnements »",
+  "productsOpenPayments": "Profil de paiement",
+  "productsUploadFirst": "Importer l'AAB",
+  "productsActive": "Actif sur Google Play ✓",
+  "productPerPeriod": "{price} / {period}",
+  "productTrial": "essai gratuit de {days} jours"
 }

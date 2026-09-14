@@ -986,4 +986,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backToEmber => 'Back to Ember';
+
+  @override
+  String get productsTitle => 'In-app purchases to activate on Google Play';
+
+  @override
+  String get productsHint =>
+      'Ember creates and activates these products in Play Console for you, with prices converted for every country.';
+
+  @override
+  String get productsActivate => 'Create and activate on Play Console';
+
+  @override
+  String get productsNeedKey =>
+      'Connect Google Play first (service account key): open the publish steps.';
+
+  @override
+  String get productsBefore =>
+      'Before activating, once per account/app:\n1. Play Console → Setup → Payments profile (bank account, tax info)\n2. Upload this app\'s AAB to internal testing (Google requires a version with billing)\n3. Users and permissions → give the service account \"Manage orders and subscriptions\"';
+
+  @override
+  String get productsOpenPayments => 'Payments profile';
+
+  @override
+  String get productsUploadFirst => 'Upload AAB';
+
+  @override
+  String get productsActive => 'Active on Google Play ✓';
+
+  @override
+  String productPerPeriod(String price, String period) {
+    return '$price / $period';
+  }
+
+  @override
+  String productTrial(int days) {
+    return '$days-day free trial';
+  }
 }

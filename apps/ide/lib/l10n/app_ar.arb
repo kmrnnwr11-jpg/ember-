@@ -285,5 +285,15 @@
   "subscriptionConnectFirst": "اربطه مرة واحدة لتنشئ باستخدام {engine} دون تكلفة إضافية.",
   "useSubscription": "استخدمه",
   "bResumeChat": "تابِع الإنشاء المتوقف من حيث توقف",
-  "backToEmber": "العودة إلى Ember"
+  "backToEmber": "العودة إلى Ember",
+  "productsTitle": "عمليات الشراء داخل التطبيق لتفعيلها على Google Play",
+  "productsHint": "ينشئ Ember هذه المنتجات ويفعّلها في Play Console نيابةً عنك، مع تحويل الأسعار لكل دولة.",
+  "productsActivate": "أنشئ وفعّل على Play Console",
+  "productsNeedKey": "اربط Google Play أولًا (مفتاح حساب الخدمة): افتح خطوات النشر.",
+  "productsBefore": "قبل التفعيل، مرة واحدة لكل حساب/تطبيق:\n1. Play Console ← الإعداد ← ملف الدفعات (الحساب البنكي والبيانات الضريبية)\n2. ارفع ملف AAB لهذا التطبيق إلى الاختبار الداخلي (تشترط Google نسخة تتضمن الفوترة)\n3. المستخدمون والأذونات ← امنح حساب الخدمة إذن «إدارة الطلبات والاشتراكات»",
+  "productsOpenPayments": "ملف الدفعات",
+  "productsUploadFirst": "رفع AAB",
+  "productsActive": "مفعّل على Google Play ✓",
+  "productPerPeriod": "{price} / {period}",
+  "productTrial": "تجربة مجانية لمدة {days} يومًا"
 }

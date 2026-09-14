@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import { syncProducts } from './play_products.js';
 import { cliLogins, cliModels } from './subscription_clis.js';
 import { mkdir, stat } from 'node:fs/promises';
 import path from 'node:path';
@@ -307,6 +308,45 @@ export async function buildApp(
         if (e instanceof PlayError) {
           return reply.status(e.code === 'bad_request' ? 400 : e.status && e.status < 500 ? 422 : 502).send({ code: e.code, message: e.message });
         }
+        throw e;
+      }
+    });
+
+    // Create/activate in-app products and subscriptions for the app on Google Play.
+    r.post('/v1/projects/:projectId/play/products', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const body = z
+        .object({
+          serviceAccount: z.string().min(50).max(20000),
+          products: z
+            .array(
+              z.object({
+                id: z.string().min(1).max(139),
+                type: z.enum(['inapp', 'subscription']),
+                title: z.string().min(1).max(55),
+                description: z.string().max(200).default(''),
+                price: z.string().min(1).max(12),
+                currency: z.string().length(3).default('EUR'),
+                period: z.string().max(5).optional(),
+                freeTrialDays: z.number().int().min(0).max(90).optional(),
+                language: z.string().max(10).optional(),
+              }),
+            )
+            .min(1)
+            .max(30),
+        })
+        .parse(req.body);
+      const info = await (deps.androidInfo ?? androidAppInfo)(cfg, project.id, services.projectRoot(project), project.name);
+      if (!info.applicationId) return reply.status(409).send({ code: 'not_ready', message: 'Android package name not found' });
+      try {
+        const results = await syncProducts(
+          { serviceAccount: parseServiceAccount(body.serviceAccount), packageName: info.applicationId, products: body.products },
+          deps.playFetch ?? fetch,
+        );
+        return { packageName: info.applicationId, results };
+      } catch (e) {
+        if (e instanceof PlayError) return reply.status(e.code === 'bad_request' ? 400 : 422).send({ code: e.code, message: e.message });
         throw e;
       }
     });

@@ -17,6 +17,7 @@ import '../../l10n/app_localizations.dart';
 import '../ai/ai_settings.dart';
 import '../../widgets/ember_logo.dart';
 import 'access_links.dart';
+import 'products_card.dart';
 import 'app_builder.dart';
 import 'forge_view.dart';
 
@@ -360,6 +361,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                       _Steps(builder: b),
                       const SizedBox(height: 12),
                       if (b.phase == BuildPhase.ready) _ReadyCard(builder: b, projectId: project.id),
+                      if (b.phase == BuildPhase.ready && b.products.isNotEmpty) ProductsCard(builder: b, projectId: project.id),
                       if (b.phase == BuildPhase.failed || b.phase == BuildPhase.cancelled) _FailedCard(builder: b, projectId: project.id),
                       if (b.conversation.length > 1) ...[
                         const SizedBox(height: 12),

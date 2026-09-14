@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:ai_connect/ai_connect.dart';
 import 'package:flutter/widgets.dart';
@@ -68,6 +69,7 @@ numbered step-by-step instructions for every external service still missing: ful
 Then one professional question inviting the next request.
 
 What to build:
+- PAYMENTS (only when the user asks for paid features, subscriptions, premium, packs or coins): implement Google Play Billing with the `in_app_purchase` package: a polished paywall screen with the products and prices loaded from the store, buy, restore purchases, pending/error states, entitlement saved locally that unlocks the paid features, and complete purchases (consumables for coins/packs). On web show that purchases are available in the Android app. Keep product ids in lib/config/monetization.dart. At the very end of the final reply add ONE line starting with EMBER_PRODUCTS: followed by a compact JSON array of every product the app uses, e.g. EMBER_PRODUCTS: [{"id":"premium_monthly","type":"subscription","title":"Premium","description":"All features","price":"4.99","currency":"EUR","period":"P1M","freeTrialDays":7},{"id":"coins_100","type":"inapp","title":"100 coins","description":"Coin pack","price":"0.99","currency":"EUR"}] (ids lowercase a-z 0-9 _ ; period P1W/P1M/P3M/P6M/P1Y; prices the user asked for, otherwise sensible ones). Omit the line when the app has no purchases.
 - A complete, real product for the kind of app requested, not a single screen or a demo. For product-type apps include the core feature set users expect (e.g. a chat/dating app like Badoo: sign-up/login with email and Google, profile with photo, discovery/user list, conversations, private 1-to-1 chats and private rooms, real-time messages, logout). Simple utilities stay simple.
 - Large extras not requested (video calls, payments…) are suggested in "Prossimi passi", not built.
 - Real integrations only: Firebase Auth (email + Google Sign-In), Cloud Firestore, Firebase Storage, Agora or Jitsi for video, Firebase Messaging, Stripe, Google Maps. Never invent keys: keep all keys in lib/config/app_config.dart with empty defaults, initialize services only when configured, and show an in-app "Configurazione necessaria" screen describing what is missing so the app still runs. Initialize Firebase with FirebaseOptions from AppConfig (no flutterfire CLI). When the user pastes keys, write them into AppConfig.
@@ -178,6 +180,22 @@ class AppBuilder extends ChangeNotifier {
   String? error;
   PreviewInfo? preview;
   String? summary;
+
+  /// Play products the AI declared (`EMBER_PRODUCTS: [...]`), to activate on Google Play.
+  List<Map<String, dynamic>> products = [];
+
+  static final _productsRe = RegExp(r'^\s*EMBER_PRODUCTS:\s*(\[.*\])\s*$', multiLine: true);
+
+  /// Removes the EMBER_PRODUCTS line from a reply and keeps the products.
+  String _takeProducts(String reply) {
+    final m = _productsRe.firstMatch(reply);
+    if (m == null) return reply;
+    try {
+      final list = (jsonDecode(m.group(1)!) as List).whereType<Map<String, dynamic>>().toList();
+      if (list.isNotEmpty) products = list;
+    } catch (_) {}
+    return reply.replaceFirst(_productsRe, '').trim();
+  }
 
   /// Files the AI announced it will write (`PLAN_FILES: n`), when known.
   int? expectedFiles;
@@ -346,6 +364,7 @@ class AppBuilder extends ChangeNotifier {
     'design': design,
     'designName': designName,
     'status': _status,
+    'products': products,
     'pending': _pending,
     'conversation': [
       for (final m in conversation.length > 60 ? conversation.sublist(conversation.length - 60) : conversation) {'role': m.role, 'text': m.text},
@@ -369,6 +388,7 @@ class AppBuilder extends ChangeNotifier {
       ]);
     if (conversation.isEmpty) conversation.add((role: 'user', text: prompt));
     _pending = session['pending'] as String?;
+    products = (session['products'] as List? ?? const []).whereType<Map<String, dynamic>>().toList();
     _status = session['status'] as String? ?? 'done';
     _cancelled = false;
     _cancelSignal = Completer<void>();
@@ -430,7 +450,7 @@ class AppBuilder extends ChangeNotifier {
     var files = await _generate(provider, m, userMessage, maxTokens);
     // The prose around the files is the reply shown in the chat.
     final reply = CodeBlocks.parse(liveText.toString()).whereType<TextSegment>().map((t) => t.markdown.replaceAll(_planRe, '').trim()).where((t) => t.isNotEmpty).join('\n\n');
-    if (reply.isNotEmpty) _replyText = reply;
+    if (reply.isNotEmpty) _replyText = _takeProducts(reply);
     if (files.isEmpty) throw AiException(strings.bNoFiles);
     await _writeFiles(files, removeDefaultTest: change == null);
 
@@ -663,7 +683,7 @@ class AppBuilder extends ChangeNotifier {
             if (cost is num) costUsd += cost.toDouble();
             if (ev['ok'] == true) {
               summary = ev['message'] as String?;
-              _replyText = summary;
+              _replyText = summary == null ? null : _takeProducts(summary!);
             }
           case 'error':
             _log(ev['message'] as String, kind: 'error');

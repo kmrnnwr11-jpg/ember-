@@ -83,6 +83,12 @@ class RunnerApi {
       _call(() => _dio.get('/v1/projects/$projectId/android-info'), (d) => d as Map<String, dynamic>);
 
   /// Uploads the signed AAB to Google Play (edit → bundle → listing → track → commit).
+  /// Creates and activates in-app products / subscriptions on Google Play.
+  Future<Map<String, dynamic>> syncPlayProducts(String projectId, String serviceAccount, List<Map<String, dynamic>> products) => _call(
+    () => _dio.post('/v1/projects/$projectId/play/products', data: {'serviceAccount': serviceAccount, 'products': products}, options: Options(receiveTimeout: const Duration(minutes: 5))),
+    (d) => d as Map<String, dynamic>,
+  );
+
   Future<Map<String, dynamic>> publishToPlay(String projectId, Map<String, dynamic> body) => _call(
     () => _dio.post('/v1/projects/$projectId/play/publish', data: body, options: Options(receiveTimeout: const Duration(minutes: 15), sendTimeout: const Duration(minutes: 2))),
     (d) => d as Map<String, dynamic>,

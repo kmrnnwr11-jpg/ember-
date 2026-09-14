@@ -2173,6 +2173,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Set the real AdMob IDs'**
   String get adsChat;
+
+  /// No description provided for @pubNothingUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was uploaded to Google Play: press \"Upload to Google Play\" in the next screen and wait for the confirmation, then come back.'**
+  String get pubNothingUploaded;
+
+  /// No description provided for @upListing.
+  ///
+  /// In en, this message translates to:
+  /// **'✓ Store listing (title and descriptions): {languages}'**
+  String upListing(String languages);
+
+  /// No description provided for @upNoListing.
+  ///
+  /// In en, this message translates to:
+  /// **'✗ Store listing not written (title and descriptions were empty)'**
+  String get upNoListing;
+
+  /// No description provided for @upIcon.
+  ///
+  /// In en, this message translates to:
+  /// **'✓ 512×512 icon'**
+  String get upIcon;
+
+  /// No description provided for @upNoIcon.
+  ///
+  /// In en, this message translates to:
+  /// **'✗ Icon missing: choose a logo in \"App logo\" first'**
+  String get upNoIcon;
+
+  /// No description provided for @upFeature.
+  ///
+  /// In en, this message translates to:
+  /// **'✓ 1024×500 banner'**
+  String get upFeature;
+
+  /// No description provided for @upNoFeature.
+  ///
+  /// In en, this message translates to:
+  /// **'✗ Banner missing: choose a logo in \"App logo\" first'**
+  String get upNoFeature;
+
+  /// No description provided for @upShots.
+  ///
+  /// In en, this message translates to:
+  /// **'✓ {count} phone screenshots'**
+  String upShots(int count);
+
+  /// No description provided for @upNoShots.
+  ///
+  /// In en, this message translates to:
+  /// **'✗ Screenshots missing: take them in \"Play Store screenshots\" first'**
+  String get upNoShots;
 }
 
 class _AppLocalizationsDelegate

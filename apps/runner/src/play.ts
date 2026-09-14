@@ -70,6 +70,8 @@ export interface PublishResult {
   status: ReleaseStatus;
   /** True when Google required a draft release because the app was never published. */
   downgradedToDraft: boolean;
+  /** Listing languages written and graphics uploaded, so the client can say exactly what changed. */
+  uploaded: { languages: string[]; listing: boolean; icon: boolean; featureGraphic: boolean; screenshots: number };
 }
 
 type Fetch = typeof fetch;
@@ -153,14 +155,23 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
   const bundle = (await upload.json()) as { versionCode?: number };
   if (typeof bundle.versionCode !== 'number') throw new PlayError('play_api_error', 'Google Play did not return a versionCode for the bundle');
 
+  // The main store listing is the app's DEFAULT language: write there too, otherwise Play Console shows it empty.
+  const details = await json('GET', `${base}/details`).catch(() => ({}) as Record<string, unknown>);
+  const defaultLanguage = typeof details.defaultLanguage === 'string' ? details.defaultLanguage : undefined;
+  const languages = [...new Set([defaultLanguage, input.listing?.language].filter((x): x is string => !!x))];
+  const uploaded = { languages: [] as string[], listing: false, icon: false, featureGraphic: false, screenshots: 0 };
   if (input.listing && (input.listing.title || input.listing.shortDescription || input.listing.fullDescription)) {
     const l = input.listing;
-    await json('PUT', `${base}/listings/${encodeURIComponent(l.language)}`, {
-      language: l.language,
-      ...(l.title ? { title: l.title.slice(0, 30) } : {}),
-      ...(l.shortDescription ? { shortDescription: l.shortDescription.slice(0, 80) } : {}),
-      ...(l.fullDescription ? { fullDescription: l.fullDescription.slice(0, 4000) } : {}),
-    });
+    for (const lang of languages) {
+      await json('PUT', `${base}/listings/${encodeURIComponent(lang)}`, {
+        language: lang,
+        ...(l.title ? { title: l.title.slice(0, 30) } : {}),
+        ...(l.shortDescription ? { shortDescription: l.shortDescription.slice(0, 80) } : {}),
+        ...(l.fullDescription ? { fullDescription: l.fullDescription.slice(0, 4000) } : {}),
+      });
+      uploaded.languages.push(lang);
+    }
+    uploaded.listing = true;
   }
   if (input.contactEmail) {
     await json('PATCH', `${base}/details`, { contactEmail: input.contactEmail });
@@ -168,23 +179,25 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
 
   // Icon, feature graphic and phone screenshots for the listing language.
   const images = input.images;
-  if (images && input.listing) {
-    const lang = encodeURIComponent(input.listing.language);
-    const put = async (type: string, files: string[]) => {
-      if (files.length === 0) return;
-      await json('DELETE', `${base}/listings/${lang}/${type}`);
+  if (images && languages.length > 0 && uploaded.listing) {
+    const put = async (lang: string, type: string, files: string[]) => {
+      if (files.length === 0) return 0;
+      await json('DELETE', `${base}/listings/${encodeURIComponent(lang)}/${type}`);
       for (const f of files) {
-        const res = await fetchImpl(`${UPLOAD}/${pkg}/edits/${encodeURIComponent(editId)}/listings/${lang}/${type}?uploadType=media`, {
+        const res = await fetchImpl(`${UPLOAD}/${pkg}/edits/${encodeURIComponent(editId)}/listings/${encodeURIComponent(lang)}/${type}?uploadType=media`, {
           method: 'POST',
           headers: { ...auth, 'content-type': 'image/png' },
           body: await readFile(f),
         });
         if (!res.ok) throw await googleError(res);
       }
+      return files.length;
     };
-    await put('icon', images.icon ? [images.icon] : []);
-    await put('featureGraphic', images.featureGraphic ? [images.featureGraphic] : []);
-    await put('phoneScreenshots', (images.phoneScreenshots ?? []).slice(0, 8));
+    for (const lang of languages) {
+      uploaded.icon = (await put(lang, 'icon', images.icon ? [images.icon] : [])) > 0 || uploaded.icon;
+      uploaded.featureGraphic = (await put(lang, 'featureGraphic', images.featureGraphic ? [images.featureGraphic] : [])) > 0 || uploaded.featureGraphic;
+      uploaded.screenshots = Math.max(uploaded.screenshots, await put(lang, 'phoneScreenshots', (images.phoneScreenshots ?? []).slice(0, 8)));
+    }
   }
 
   const release = (status: ReleaseStatus) => ({
@@ -216,7 +229,7 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
       throw e;
     }
   }
-  return { editId, versionCode: bundle.versionCode, track: input.track, status, downgradedToDraft };
+  return { editId, versionCode: bundle.versionCode, track: input.track, status, downgradedToDraft, uploaded };
 }
 
 /** Minimal, safe Markdown → HTML for hosted privacy policies (headings, lists, bold, links, paragraphs). */

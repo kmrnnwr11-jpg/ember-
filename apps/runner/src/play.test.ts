@@ -26,6 +26,7 @@ function fakeGoogle(opts: { draftOnly?: boolean; missingApp?: boolean } = {}) {
     if (url.includes('oauth2.googleapis.com/token')) return ok({ access_token: 'ya29.test' });
     if (opts.missingApp && url.endsWith('/edits')) return new Response(JSON.stringify({ error: { message: 'Package not found' } }), { status: 404 });
     if (url.endsWith('/edits')) return ok({ id: 'edit123' });
+    if (url.endsWith('/details') && (init?.method ?? 'GET') === 'GET') return ok({ defaultLanguage: 'en-US' });
     if (url.includes('/bundles?uploadType=media')) return ok({ versionCode: 7, sha256: 'x' });
     if (url.includes('/tracks/')) {
       const status = (body as { releases: Array<{ status: string }> }).releases[0]!.status;
@@ -69,19 +70,21 @@ describe('Google Play publishing', () => {
       },
       g.impl,
     );
-    expect(r).toEqual({ editId: 'edit123', versionCode: 7, track: 'internal', status: 'completed', downgradedToDraft: false });
+    expect(r).toEqual({ editId: 'edit123', versionCode: 7, track: 'internal', status: 'completed', downgradedToDraft: false, uploaded: { languages: ['en-US', 'it-IT'], listing: true, icon: false, featureGraphic: false, screenshots: 0 } });
     const token = g.calls[0]!;
     expect(String(token.body)).toContain('grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer');
     expect(g.calls.map((c) => `${c.method} ${c.url.replace(/^https:\/\/[^/]+/, '')}`)).toEqual([
       'POST /token',
       'POST /androidpublisher/v3/applications/dev.fluttercursor.app.chat/edits',
       'POST /upload/androidpublisher/v3/applications/dev.fluttercursor.app.chat/edits/edit123/bundles?uploadType=media',
+      'GET /androidpublisher/v3/applications/dev.fluttercursor.app.chat/edits/edit123/details',
+      'PUT /androidpublisher/v3/applications/dev.fluttercursor.app.chat/edits/edit123/listings/en-US',
       'PUT /androidpublisher/v3/applications/dev.fluttercursor.app.chat/edits/edit123/listings/it-IT',
       'PUT /androidpublisher/v3/applications/dev.fluttercursor.app.chat/edits/edit123/tracks/internal',
       'POST /androidpublisher/v3/applications/dev.fluttercursor.app.chat/edits/edit123:commit',
     ]);
-    expect((g.calls[3]!.body as { title: string }).title.length).toBeLessThanOrEqual(30);
-    expect(g.calls[4]!.body).toMatchObject({ track: 'internal', releases: [{ versionCodes: ['7'], status: 'completed', releaseNotes: [{ text: 'Prima versione' }] }] });
+    expect((g.calls[4]!.body as { title: string }).title.length).toBeLessThanOrEqual(30);
+    expect(g.calls[6]!.body).toMatchObject({ track: 'internal', releases: [{ versionCodes: ['7'], status: 'completed', releaseNotes: [{ text: 'Prima versione' }] }] });
   });
 
   it('falls back to a draft release for never-published apps', async () => {

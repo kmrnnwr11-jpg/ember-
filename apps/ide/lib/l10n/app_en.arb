@@ -718,5 +718,28 @@
         "type": "String"
       }
     }
+  },
+  "pubNothingUploaded": "Nothing was uploaded to Google Play: press \"Upload to Google Play\" in the next screen and wait for the confirmation, then come back.",
+  "upListing": "✓ Store listing (title and descriptions): {languages}",
+  "upNoListing": "✗ Store listing not written (title and descriptions were empty)",
+  "upIcon": "✓ 512×512 icon",
+  "upNoIcon": "✗ Icon missing: choose a logo in \"App logo\" first",
+  "upFeature": "✓ 1024×500 banner",
+  "upNoFeature": "✗ Banner missing: choose a logo in \"App logo\" first",
+  "upShots": "✓ {count} phone screenshots",
+  "upNoShots": "✗ Screenshots missing: take them in \"Play Store screenshots\" first",
+  "@upListing": {
+    "placeholders": {
+      "languages": {
+        "type": "String"
+      }
+    }
+  },
+  "@upShots": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

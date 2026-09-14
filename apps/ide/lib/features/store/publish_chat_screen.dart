@@ -15,6 +15,7 @@ import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../../widgets/ember_logo.dart';
 import '../ai/chat_controller.dart';
+import 'play_publish_screen.dart' show uploadSummary;
 
 /// Free questions while publishing, answered by Ember (Gemini on the Runner key).
 final publishAssistantProvider = ChangeNotifierProvider.family<ChatController, String>((ref, projectId) {
@@ -54,6 +55,7 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
   String? _busyText;
   String? _error;
   bool _manualInvite = false;
+  Map<String, dynamic>? _uploadResult;
   final _input = TextEditingController();
   final _scroll = ScrollController();
 
@@ -200,12 +202,19 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
       case _Step.upload:
         return (text: l.pubUpload, actions: [
           btn(l.pubPrepareUpload, () async {
-            await context.push('/projects/${widget.projectId}/play/details', extra: widget.appDescription);
-            if (mounted) _go(_Step.finish);
+            final result = await context.push<Map<String, dynamic>?>('/projects/${widget.projectId}/play/details', extra: widget.appDescription);
+            if (!mounted) return;
+            if (result == null) {
+              // Nothing reached Google Play: never claim success.
+              setState(() => _error = l.pubNothingUploaded);
+              return;
+            }
+            setState(() => _uploadResult = result);
+            await _go(_Step.finish);
           }, primary: true),
         ]);
       case _Step.finish:
-        return (text: l.pubFinish, actions: [
+        return (text: _uploadResult == null ? l.pubFinish : '${l.playUploaded('${_uploadResult!['versionCode']}', '${_uploadResult!['track']}', _uploadResult!['downgradedToDraft'] == true ? l.playDraftNote : '')}\n\n${uploadSummary(l, _uploadResult!)}\n\n${l.pubFinish}', actions: [
           btn(l.playOpenConsole, () => _open('https://play.google.com/console')),
           btn(l.pubReviewAnswers, () => context.push('/projects/${widget.projectId}/play/details', extra: widget.appDescription)),
         ]);

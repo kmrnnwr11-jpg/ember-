@@ -34,6 +34,18 @@ Reply with ONE JSON object only (no markdown fences), in the app's language, wit
 Be accurate: only declare data the app actually handles based on the description and files. Never invent certifications.''';
 
 /// Guided "Publish to Google Play" flow after a signed AAB is ready.
+/// What Google Play actually received, in plain words.
+String uploadSummary(AppLocalizations l, Map<String, dynamic> result) {
+  final u = (result['uploaded'] as Map?) ?? const {};
+  final shots = (u['screenshots'] as num?)?.toInt() ?? 0;
+  return [
+    u['listing'] == true ? l.upListing((u['languages'] as List? ?? const []).join(', ')) : l.upNoListing,
+    u['icon'] == true ? l.upIcon : l.upNoIcon,
+    u['featureGraphic'] == true ? l.upFeature : l.upNoFeature,
+    shots > 0 ? l.upShots(shots) : l.upNoShots,
+  ].join('\n');
+}
+
 class PlayPublishScreen extends ConsumerStatefulWidget {
   const PlayPublishScreen({super.key, required this.projectId, required this.appDescription, this.initialStep = 0});
 
@@ -177,8 +189,13 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
 
   Widget _copyRow(String label, String value) => Row(
     children: [
-      Expanded(child: SelectableText('$label: $value', style: const TextStyle(fontWeight: FontWeight.w600))),
-      IconButton(icon: const Icon(Icons.copy, size: 18), onPressed: () => Clipboard.setData(ClipboardData(text: value))),
+      Expanded(
+        child: SelectableText('$label: $value', style: const TextStyle(fontWeight: FontWeight.w600)),
+      ),
+      IconButton(
+        icon: const Icon(Icons.copy, size: 18),
+        onPressed: () => Clipboard.setData(ClipboardData(text: value)),
+      ),
     ],
   );
 
@@ -186,148 +203,186 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final saValid = _sa.text.contains('"service_account"') && _sa.text.contains('private_key');
-    return Scaffold(
-      appBar: AppBar(title: Text(l.playPublishTitle)),
-      body: Stepper(
-        currentStep: _step,
-        onStepTapped: (i) => setState(() => _step = i),
-        controlsBuilder: (context, details) => const SizedBox.shrink(),
-        steps: [
-          Step(
-            title: Text(l.playStepAccount),
-            isActive: _step >= 0,
-            state: _hasAccount ? StepState.complete : StepState.indexed,
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Card(
-                  color: Theme.of(context).colorScheme.tertiaryContainer,
-                  child: Padding(padding: const EdgeInsets.all(12), child: Text(l.playFeeNotice)),
-                ),
-                _link(l.playOpenSignup, _playConsoleSignup),
-                CheckboxListTile(
-                  value: _hasAccount,
-                  onChanged: (v) => setState(() => _hasAccount = v ?? false),
-                  title: Text(l.playHaveAccount),
-                  contentPadding: EdgeInsets.zero,
-                ),
-                FilledButton(onPressed: _hasAccount ? () => setState(() => _step = 1) : null, child: Text(l.next)),
-              ],
-            ),
-          ),
-          Step(
-            title: Text(l.playStepCreateApp),
-            isActive: _step >= 1,
-            state: _appCreated ? StepState.complete : StepState.indexed,
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                MarkdownBody(data: l.playCreateAppGuide),
-                const SizedBox(height: 8),
-                if (_packageName != null) _copyRow(l.playPackageName, _packageName!),
-                _link(l.playOpenConsole, _playConsole),
-                CheckboxListTile(
-                  value: _appCreated,
-                  onChanged: (v) => setState(() => _appCreated = v ?? false),
-                  title: Text(l.playAppCreated),
-                  contentPadding: EdgeInsets.zero,
-                ),
-                FilledButton(onPressed: _appCreated ? () => setState(() => _step = 2) : null, child: Text(l.next)),
-              ],
-            ),
-          ),
-          Step(
-            title: Text(l.playStepConnect),
-            isActive: _step >= 2,
-            state: saValid ? StepState.complete : StepState.indexed,
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                MarkdownBody(data: l.playConnectGuide),
-                Wrap(children: [_link(l.playOpenApiLibrary, _enablePublisherApi), _link(l.playOpenServiceAccounts, _cloudServiceAccounts), _link(l.playOpenConsole, _playConsole)]),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _sa,
-                  minLines: 3,
-                  maxLines: 8,
-                  onChanged: (_) => setState(() {}),
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-                  decoration: InputDecoration(labelText: l.playServiceAccountJson, border: const OutlineInputBorder()),
-                ),
-                const SizedBox(height: 8),
-                FilledButton(onPressed: saValid ? () => setState(() => _step = 3) : null, child: Text(l.next)),
-              ],
-            ),
-          ),
-          Step(
-            title: Text(l.playStepListing),
-            isActive: _step >= 3,
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                FilledButton.tonalIcon(
-                  onPressed: _generating ? null : _generate,
-                  icon: _generating ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.auto_awesome),
-                  label: Text(l.playGenerateWithAi),
-                ),
-                const SizedBox(height: 12),
-                TextField(controller: _title, maxLength: 30, decoration: InputDecoration(labelText: l.playTitle, border: const OutlineInputBorder())),
-                TextField(controller: _short, maxLength: 80, decoration: InputDecoration(labelText: l.playShortDescription, border: const OutlineInputBorder())),
-                TextField(controller: _full, maxLength: 4000, minLines: 4, maxLines: 12, decoration: InputDecoration(labelText: l.playFullDescription, border: const OutlineInputBorder())),
-                TextField(controller: _notes, maxLength: 500, minLines: 2, maxLines: 4, decoration: InputDecoration(labelText: l.playReleaseNotes, border: const OutlineInputBorder())),
-                TextField(controller: _email, keyboardType: TextInputType.emailAddress, decoration: InputDecoration(labelText: l.playContactEmail, border: const OutlineInputBorder())),
-                const SizedBox(height: 12),
-                if (_privacyUrl != null) _copyRow(l.playPrivacyUrl, _privacyUrl!),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  initialValue: _track,
-                  decoration: InputDecoration(labelText: l.playTrack, border: const OutlineInputBorder()),
-                  items: [
-                    DropdownMenuItem(value: 'internal', child: Text(l.playTrackInternal)),
-                    DropdownMenuItem(value: 'alpha', child: Text(l.playTrackClosed)),
-                    DropdownMenuItem(value: 'production', child: Text(l.playTrackProduction)),
-                  ],
-                  onChanged: (v) => setState(() => _track = v ?? 'internal'),
-                ),
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  key: const Key('publishToPlay'),
-                  onPressed: _publishing || !saValid ? null : _publish,
-                  icon: _publishing ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.cloud_upload),
-                  label: Padding(padding: const EdgeInsets.all(10), child: Text(l.playUpload)),
-                ),
-                if (_error != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                  ),
-              ],
-            ),
-          ),
-          Step(
-            title: Text(l.playStepFinish),
-            isActive: _step >= 4,
-            state: _result != null ? StepState.complete : StepState.indexed,
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_result != null)
+    // Going back hands the upload result (or null) to the publishing chat.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) Navigator.of(context).pop(_result);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l.playPublishTitle),
+          leading: BackButton(onPressed: () => Navigator.of(context).pop(_result)),
+        ),
+        body: Stepper(
+          currentStep: _step,
+          onStepTapped: (i) => setState(() => _step = i),
+          controlsBuilder: (context, details) => const SizedBox.shrink(),
+          steps: [
+            Step(
+              title: Text(l.playStepAccount),
+              isActive: _step >= 0,
+              state: _hasAccount ? StepState.complete : StepState.indexed,
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Card(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Text(l.playUploaded('${_result!['versionCode']}', '${_result!['track']}', _result!['downgradedToDraft'] == true ? l.playDraftNote : '')),
-                    ),
+                    color: Theme.of(context).colorScheme.tertiaryContainer,
+                    child: Padding(padding: const EdgeInsets.all(12), child: Text(l.playFeeNotice)),
                   ),
-                MarkdownBody(data: l.playManualChecklist(_privacyUrl ?? '—')),
-                if (_dataSafety.isNotEmpty) ExpansionTile(title: Text(l.playDataSafety), children: [MarkdownBody(data: _dataSafety, selectable: true)]),
-                if (_contentRating.isNotEmpty) ExpansionTile(title: Text(l.playContentRating), children: [MarkdownBody(data: _contentRating, selectable: true)]),
-                if (_otherDeclarations.isNotEmpty) ExpansionTile(title: Text(l.playOtherDeclarations), children: [MarkdownBody(data: _otherDeclarations, selectable: true)]),
-                _link(l.playOpenConsole, _playConsole),
-              ],
+                  _link(l.playOpenSignup, _playConsoleSignup),
+                  CheckboxListTile(value: _hasAccount, onChanged: (v) => setState(() => _hasAccount = v ?? false), title: Text(l.playHaveAccount), contentPadding: EdgeInsets.zero),
+                  FilledButton(onPressed: _hasAccount ? () => setState(() => _step = 1) : null, child: Text(l.next)),
+                ],
+              ),
             ),
-          ),
-        ],
+            Step(
+              title: Text(l.playStepCreateApp),
+              isActive: _step >= 1,
+              state: _appCreated ? StepState.complete : StepState.indexed,
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MarkdownBody(data: l.playCreateAppGuide),
+                  const SizedBox(height: 8),
+                  if (_packageName != null) _copyRow(l.playPackageName, _packageName!),
+                  _link(l.playOpenConsole, _playConsole),
+                  CheckboxListTile(value: _appCreated, onChanged: (v) => setState(() => _appCreated = v ?? false), title: Text(l.playAppCreated), contentPadding: EdgeInsets.zero),
+                  FilledButton(onPressed: _appCreated ? () => setState(() => _step = 2) : null, child: Text(l.next)),
+                ],
+              ),
+            ),
+            Step(
+              title: Text(l.playStepConnect),
+              isActive: _step >= 2,
+              state: saValid ? StepState.complete : StepState.indexed,
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MarkdownBody(data: l.playConnectGuide),
+                  Wrap(children: [_link(l.playOpenApiLibrary, _enablePublisherApi), _link(l.playOpenServiceAccounts, _cloudServiceAccounts), _link(l.playOpenConsole, _playConsole)]),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _sa,
+                    minLines: 3,
+                    maxLines: 8,
+                    onChanged: (_) => setState(() {}),
+                    style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                    decoration: InputDecoration(labelText: l.playServiceAccountJson, border: const OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton(onPressed: saValid ? () => setState(() => _step = 3) : null, child: Text(l.next)),
+                ],
+              ),
+            ),
+            Step(
+              title: Text(l.playStepListing),
+              isActive: _step >= 3,
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: _generating ? null : _generate,
+                    icon: _generating ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.auto_awesome),
+                    label: Text(l.playGenerateWithAi),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _title,
+                    maxLength: 30,
+                    decoration: InputDecoration(labelText: l.playTitle, border: const OutlineInputBorder()),
+                  ),
+                  TextField(
+                    controller: _short,
+                    maxLength: 80,
+                    decoration: InputDecoration(labelText: l.playShortDescription, border: const OutlineInputBorder()),
+                  ),
+                  TextField(
+                    controller: _full,
+                    maxLength: 4000,
+                    minLines: 4,
+                    maxLines: 12,
+                    decoration: InputDecoration(labelText: l.playFullDescription, border: const OutlineInputBorder()),
+                  ),
+                  TextField(
+                    controller: _notes,
+                    maxLength: 500,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: InputDecoration(labelText: l.playReleaseNotes, border: const OutlineInputBorder()),
+                  ),
+                  TextField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(labelText: l.playContactEmail, border: const OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 12),
+                  if (_privacyUrl != null) _copyRow(l.playPrivacyUrl, _privacyUrl!),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: _track,
+                    decoration: InputDecoration(labelText: l.playTrack, border: const OutlineInputBorder()),
+                    items: [
+                      DropdownMenuItem(value: 'internal', child: Text(l.playTrackInternal)),
+                      DropdownMenuItem(value: 'alpha', child: Text(l.playTrackClosed)),
+                      DropdownMenuItem(value: 'production', child: Text(l.playTrackProduction)),
+                    ],
+                    onChanged: (v) => setState(() => _track = v ?? 'internal'),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    key: const Key('publishToPlay'),
+                    onPressed: _publishing || !saValid ? null : _publish,
+                    icon: _publishing ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.cloud_upload),
+                    label: Padding(padding: const EdgeInsets.all(10), child: Text(l.playUpload)),
+                  ),
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    ),
+                ],
+              ),
+            ),
+            Step(
+              title: Text(l.playStepFinish),
+              isActive: _step >= 4,
+              state: _result != null ? StepState.complete : StepState.indexed,
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_result != null)
+                    Card(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          '${l.playUploaded('${_result!['versionCode']}', '${_result!['track']}', _result!['downgradedToDraft'] == true ? l.playDraftNote : '')}\n${uploadSummary(l, _result!)}',
+                        ),
+                      ),
+                    ),
+                  MarkdownBody(data: l.playManualChecklist(_privacyUrl ?? '—')),
+                  if (_dataSafety.isNotEmpty)
+                    ExpansionTile(
+                      title: Text(l.playDataSafety),
+                      children: [MarkdownBody(data: _dataSafety, selectable: true)],
+                    ),
+                  if (_contentRating.isNotEmpty)
+                    ExpansionTile(
+                      title: Text(l.playContentRating),
+                      children: [MarkdownBody(data: _contentRating, selectable: true)],
+                    ),
+                  if (_otherDeclarations.isNotEmpty)
+                    ExpansionTile(
+                      title: Text(l.playOtherDeclarations),
+                      children: [MarkdownBody(data: _otherDeclarations, selectable: true)],
+                    ),
+                  _link(l.playOpenConsole, _playConsole),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

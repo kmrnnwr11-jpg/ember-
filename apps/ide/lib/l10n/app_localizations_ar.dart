@@ -1194,4 +1194,38 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adsChat => 'ضع معرّفات AdMob الحقيقية';
+
+  @override
+  String get pubNothingUploaded =>
+      'لم يُرفع أي شيء إلى Google Play: في الشاشة التالية اضغط «الرفع إلى Google Play» وانتظر التأكيد ثم عد.';
+
+  @override
+  String upListing(String languages) {
+    return '✓ صفحة المتجر (العنوان والأوصاف): $languages';
+  }
+
+  @override
+  String get upNoListing => '✗ لم تُكتب صفحة المتجر (العنوان والأوصاف فارغة)';
+
+  @override
+  String get upIcon => '✓ أيقونة 512×512';
+
+  @override
+  String get upNoIcon =>
+      '✗ الأيقونة مفقودة: اختر شعارًا أولًا في «شعار التطبيق»';
+
+  @override
+  String get upFeature => '✓ بانر 1024×500';
+
+  @override
+  String get upNoFeature => '✗ البانر مفقود: اختر شعارًا أولًا';
+
+  @override
+  String upShots(int count) {
+    return '✓ $count لقطات للهاتف';
+  }
+
+  @override
+  String get upNoShots =>
+      '✗ لقطات الشاشة مفقودة: التقطها أولًا في «لقطات شاشة لمتجر Play»';
 }

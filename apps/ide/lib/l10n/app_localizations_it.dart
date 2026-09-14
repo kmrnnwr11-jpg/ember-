@@ -1208,4 +1208,40 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get adsChat => 'Inserisci gli ID AdMob veri';
+
+  @override
+  String get pubNothingUploaded =>
+      'Non è stato caricato niente su Google Play: nella schermata successiva premi \"Carica su Google Play\" e aspetta la conferma, poi torna qui.';
+
+  @override
+  String upListing(String languages) {
+    return '✓ Scheda dello store (titolo e descrizioni): $languages';
+  }
+
+  @override
+  String get upNoListing =>
+      '✗ Scheda dello store non scritta (titolo e descrizioni erano vuoti)';
+
+  @override
+  String get upIcon => '✓ Icona 512×512';
+
+  @override
+  String get upNoIcon =>
+      '✗ Icona mancante: prima scegli un logo in \"Logo dell\'app\"';
+
+  @override
+  String get upFeature => '✓ Banner 1024×500';
+
+  @override
+  String get upNoFeature =>
+      '✗ Banner mancante: prima scegli un logo in \"Logo dell\'app\"';
+
+  @override
+  String upShots(int count) {
+    return '✓ $count screenshot del telefono';
+  }
+
+  @override
+  String get upNoShots =>
+      '✗ Screenshot mancanti: prima falli in \"Screenshot per il Play Store\"';
 }

@@ -1197,4 +1197,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adsChat => 'Set the real AdMob IDs';
+
+  @override
+  String get pubNothingUploaded =>
+      'Nothing was uploaded to Google Play: press \"Upload to Google Play\" in the next screen and wait for the confirmation, then come back.';
+
+  @override
+  String upListing(String languages) {
+    return '✓ Store listing (title and descriptions): $languages';
+  }
+
+  @override
+  String get upNoListing =>
+      '✗ Store listing not written (title and descriptions were empty)';
+
+  @override
+  String get upIcon => '✓ 512×512 icon';
+
+  @override
+  String get upNoIcon => '✗ Icon missing: choose a logo in \"App logo\" first';
+
+  @override
+  String get upFeature => '✓ 1024×500 banner';
+
+  @override
+  String get upNoFeature =>
+      '✗ Banner missing: choose a logo in \"App logo\" first';
+
+  @override
+  String upShots(int count) {
+    return '✓ $count phone screenshots';
+  }
+
+  @override
+  String get upNoShots =>
+      '✗ Screenshots missing: take them in \"Play Store screenshots\" first';
 }

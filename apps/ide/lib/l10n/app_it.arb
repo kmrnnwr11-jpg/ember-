@@ -344,5 +344,14 @@
   "adsUnitId": "ID unità {format}",
   "adsApply": "Inserisci gli ID veri nell'app",
   "adsInvalid": "Gli ID devono essere come ca-app-pub-1234567890123456~1234567890 (app) e ca-app-pub-1234567890123456/1234567890 (unità).",
-  "adsChat": "Inserisci gli ID AdMob veri"
+  "adsChat": "Inserisci gli ID AdMob veri",
+  "pubNothingUploaded": "Non è stato caricato niente su Google Play: nella schermata successiva premi \"Carica su Google Play\" e aspetta la conferma, poi torna qui.",
+  "upListing": "✓ Scheda dello store (titolo e descrizioni): {languages}",
+  "upNoListing": "✗ Scheda dello store non scritta (titolo e descrizioni erano vuoti)",
+  "upIcon": "✓ Icona 512×512",
+  "upNoIcon": "✗ Icona mancante: prima scegli un logo in \"Logo dell'app\"",
+  "upFeature": "✓ Banner 1024×500",
+  "upNoFeature": "✗ Banner mancante: prima scegli un logo in \"Logo dell'app\"",
+  "upShots": "✓ {count} screenshot del telefono",
+  "upNoShots": "✗ Screenshot mancanti: prima falli in \"Screenshot per il Play Store\""
 }

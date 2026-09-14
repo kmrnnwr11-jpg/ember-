@@ -344,5 +344,14 @@
   "adsUnitId": "ID de bloque {format}",
   "adsApply": "Poner los ID reales en la app",
   "adsInvalid": "Los ID deben ser como ca-app-pub-1234567890123456~1234567890 (app) y ca-app-pub-1234567890123456/1234567890 (bloques).",
-  "adsChat": "Poner los ID reales de AdMob"
+  "adsChat": "Poner los ID reales de AdMob",
+  "pubNothingUploaded": "No se subió nada a Google Play: en la siguiente pantalla pulsa \"Subir a Google Play\" y espera la confirmación, luego vuelve.",
+  "upListing": "✓ Ficha de la tienda (título y descripciones): {languages}",
+  "upNoListing": "✗ Ficha no escrita (título y descripciones vacíos)",
+  "upIcon": "✓ Icono 512×512",
+  "upNoIcon": "✗ Falta el icono: elige antes un logo en \"Logo de la app\"",
+  "upFeature": "✓ Banner 1024×500",
+  "upNoFeature": "✗ Falta el banner: elige antes un logo en \"Logo de la app\"",
+  "upShots": "✓ {count} capturas de teléfono",
+  "upNoShots": "✗ Faltan capturas: hazlas antes en \"Capturas para Play Store\""
 }

@@ -1023,4 +1023,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String productTrial(int days) {
     return '$days-day free trial';
   }
+
+  @override
+  String get logoTitle => 'App logo';
+
+  @override
+  String get logoHint =>
+      'Ember draws 6 proposals. Not convinced? Tap “More logos” as many times as you like. The one you choose becomes the app icon and the Play Store icon and banner.';
+
+  @override
+  String get logoDescribe => 'Describe the logo (optional)';
+
+  @override
+  String get logoDescribeHint =>
+      'E.g.: blue shield with a pen, modern, no text';
+
+  @override
+  String get logoGenerate => 'Generate 6 logos';
+
+  @override
+  String get logoMore => 'More logos';
+
+  @override
+  String get logoUse => 'Use this logo';
+
+  @override
+  String get logoApplied =>
+      'Logo set: app icons are being generated and the preview will update.';
 }

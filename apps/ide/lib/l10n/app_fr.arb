@@ -295,5 +295,13 @@
   "productsUploadFirst": "Importer l'AAB",
   "productsActive": "Actif sur Google Play ✓",
   "productPerPeriod": "{price} / {period}",
-  "productTrial": "essai gratuit de {days} jours"
+  "productTrial": "essai gratuit de {days} jours",
+  "logoTitle": "Logo de l'app",
+  "logoHint": "Ember dessine 6 propositions. Pas convaincu ? Appuyez sur « Autres logos » autant de fois que vous voulez. Celui choisi devient l'icône de l'app et l'icône et la bannière du Play Store.",
+  "logoDescribe": "Décrivez le logo (facultatif)",
+  "logoDescribeHint": "Ex. : bouclier bleu avec un stylo, moderne, sans texte",
+  "logoGenerate": "Générer 6 logos",
+  "logoMore": "Autres logos",
+  "logoUse": "Utiliser ce logo",
+  "logoApplied": "Logo appliqué : les icônes sont en cours de génération, l'aperçu va se mettre à jour."
 }

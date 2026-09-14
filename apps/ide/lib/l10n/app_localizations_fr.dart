@@ -1034,4 +1034,31 @@ class AppLocalizationsFr extends AppLocalizations {
   String productTrial(int days) {
     return 'essai gratuit de $days jours';
   }
+
+  @override
+  String get logoTitle => 'Logo de l\'app';
+
+  @override
+  String get logoHint =>
+      'Ember dessine 6 propositions. Pas convaincu ? Appuyez sur « Autres logos » autant de fois que vous voulez. Celui choisi devient l\'icône de l\'app et l\'icône et la bannière du Play Store.';
+
+  @override
+  String get logoDescribe => 'Décrivez le logo (facultatif)';
+
+  @override
+  String get logoDescribeHint =>
+      'Ex. : bouclier bleu avec un stylo, moderne, sans texte';
+
+  @override
+  String get logoGenerate => 'Générer 6 logos';
+
+  @override
+  String get logoMore => 'Autres logos';
+
+  @override
+  String get logoUse => 'Utiliser ce logo';
+
+  @override
+  String get logoApplied =>
+      'Logo appliqué : les icônes sont en cours de génération, l\'aperçu va se mettre à jour.';
 }

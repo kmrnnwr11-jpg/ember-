@@ -10,7 +10,7 @@ import type { Config } from './config.js';
 const isBuilderModel = (m: string) => /^gemini-[\w.-]+$/.test(m) && !/(tts|image|robotics|computer-use|transcribe|embedding)/.test(m);
 
 /** Tried in order when the requested Gemini model is overloaded, rate limited or retired. */
-const GEMINI_FALLBACKS = ['gemini-flash-latest', 'gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash-lite'];
+export const GEMINI_FALLBACKS = ['gemini-flash-latest', 'gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash-lite'];
 
 export type ProviderId = 'anthropic' | 'openai' | 'gemini' | 'xai' | 'openaiCompatible';
 

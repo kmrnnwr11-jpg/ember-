@@ -1879,6 +1879,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{days}-day free trial'**
   String productTrial(int days);
+
+  /// No description provided for @logoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'App logo'**
+  String get logoTitle;
+
+  /// No description provided for @logoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember draws 6 proposals. Not convinced? Tap “More logos” as many times as you like. The one you choose becomes the app icon and the Play Store icon and banner.'**
+  String get logoHint;
+
+  /// No description provided for @logoDescribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the logo (optional)'**
+  String get logoDescribe;
+
+  /// No description provided for @logoDescribeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'E.g.: blue shield with a pen, modern, no text'**
+  String get logoDescribeHint;
+
+  /// No description provided for @logoGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate 6 logos'**
+  String get logoGenerate;
+
+  /// No description provided for @logoMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More logos'**
+  String get logoMore;
+
+  /// No description provided for @logoUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this logo'**
+  String get logoUse;
+
+  /// No description provided for @logoApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Logo set: app icons are being generated and the preview will update.'**
+  String get logoApplied;
 }
 
 class _AppLocalizationsDelegate

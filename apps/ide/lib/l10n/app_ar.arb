@@ -295,5 +295,13 @@
   "productsUploadFirst": "رفع AAB",
   "productsActive": "مفعّل على Google Play ✓",
   "productPerPeriod": "{price} / {period}",
-  "productTrial": "تجربة مجانية لمدة {days} يومًا"
+  "productTrial": "تجربة مجانية لمدة {days} يومًا",
+  "logoTitle": "شعار التطبيق",
+  "logoHint": "يرسم Ember 6 مقترحات. لم تعجبك؟ اضغط «شعارات أخرى» كلما أردت. الشعار الذي تختاره يصبح أيقونة التطبيق وأيقونة وبانر متجر Play.",
+  "logoDescribe": "صِف الشعار (اختياري)",
+  "logoDescribeHint": "مثال: درع أزرق مع قلم، عصري، بدون نص",
+  "logoGenerate": "أنشئ 6 شعارات",
+  "logoMore": "شعارات أخرى",
+  "logoUse": "استخدم هذا الشعار",
+  "logoApplied": "تم تعيين الشعار: يجري إنشاء أيقونات التطبيق وسيتم تحديث المعاينة."
 }

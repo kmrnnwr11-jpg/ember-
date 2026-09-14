@@ -83,6 +83,16 @@ class RunnerApi {
       _call(() => _dio.get('/v1/projects/$projectId/android-info'), (d) => d as Map<String, dynamic>);
 
   /// Uploads the signed AAB to Google Play (edit → bundle → listing → track → commit).
+  /// Logo proposals (base64 PNG) drawn by the AI for a project.
+  Future<Map<String, dynamic>> generateLogos(String projectId, Map<String, dynamic> body) => _call(
+    () => _dio.post('/v1/projects/$projectId/logos', data: body, options: Options(receiveTimeout: const Duration(minutes: 6))),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Uses a proposal as app icon, Play icon and feature graphic.
+  Future<Map<String, dynamic>> applyLogo(String projectId, String logoId) =>
+      _call(() => _dio.post('/v1/projects/$projectId/logos/$logoId/apply', data: const <String, dynamic>{}), (d) => d as Map<String, dynamic>);
+
   /// Creates and activates in-app products / subscriptions on Google Play.
   Future<Map<String, dynamic>> syncPlayProducts(String projectId, String serviceAccount, List<Map<String, dynamic>> products) => _call(
     () => _dio.post('/v1/projects/$projectId/play/products', data: {'serviceAccount': serviceAccount, 'products': products}, options: Options(receiveTimeout: const Duration(minutes: 5))),

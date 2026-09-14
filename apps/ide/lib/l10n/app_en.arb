@@ -634,5 +634,13 @@
         "type": "int"
       }
     }
-  }
+  },
+  "logoTitle": "App logo",
+  "logoHint": "Ember draws 6 proposals. Not convinced? Tap “More logos” as many times as you like. The one you choose becomes the app icon and the Play Store icon and banner.",
+  "logoDescribe": "Describe the logo (optional)",
+  "logoDescribeHint": "E.g.: blue shield with a pen, modern, no text",
+  "logoGenerate": "Generate 6 logos",
+  "logoMore": "More logos",
+  "logoUse": "Use this logo",
+  "logoApplied": "Logo set: app icons are being generated and the preview will update."
 }

@@ -295,5 +295,13 @@
   "productsUploadFirst": "Carica AAB",
   "productsActive": "Attivo su Google Play ✓",
   "productPerPeriod": "{price} / {period}",
-  "productTrial": "prova gratuita di {days} giorni"
+  "productTrial": "prova gratuita di {days} giorni",
+  "logoTitle": "Logo dell'app",
+  "logoHint": "Ember disegna 6 proposte. Non ti convincono? Premi “Altri loghi” quante volte vuoi. Quello che scegli diventa l'icona dell'app e l'icona e il banner del Play Store.",
+  "logoDescribe": "Descrivi il logo (facoltativo)",
+  "logoDescribeHint": "Es.: scudo blu con una penna, moderno, senza scritte",
+  "logoGenerate": "Genera 6 loghi",
+  "logoMore": "Altri loghi",
+  "logoUse": "Usa questo logo",
+  "logoApplied": "Logo impostato: sto generando le icone dell'app, l'anteprima si aggiornerà."
 }

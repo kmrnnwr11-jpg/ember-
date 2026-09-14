@@ -26,6 +26,7 @@ const JOB_COMMANDS: Partial<Record<JobKind, string[]>> = {
   test: ['test', '--reporter', 'expanded'],
   build_apk: ['build', 'apk', '--release'],
   build_aab: ['build', 'appbundle', '--release'],
+  launcher_icons: ['pub', 'run', 'flutter_launcher_icons'],
 };
 
 /** Downloadable Android artifacts, relative to the project root. */

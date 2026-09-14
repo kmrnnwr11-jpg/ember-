@@ -8,7 +8,8 @@ import fastifyStatic from '@fastify/static';
 import websocket from '@fastify/websocket';
 import { PathError, safeResolve } from './paths.js';
 import { PreviewService } from './preview.js';
-import { DEFAULT_UPSTREAMS, registerAiRoutes } from './ai.js';
+import { DEFAULT_UPSTREAMS, GEMINI_FALLBACKS, registerAiRoutes } from './ai.js';
+import { applyLogo, generateLogos } from './logos.js';
 import { registerResearchRoutes } from './research.js';
 import { ClaudeCodeEngine, detectClis } from './agent_cli.js';
 import { z } from 'zod';
@@ -310,6 +311,68 @@ export async function buildApp(
         }
         throw e;
       }
+    });
+
+    // Logo proposals drawn by the AI (SVG → PNG); "more logos" just calls again.
+    r.post('/v1/projects/:projectId/logos', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const body = z
+        .object({
+          about: z.string().max(4000).default(''),
+          appName: z.string().max(80).optional(),
+          hint: z.string().max(500).optional(),
+          count: z.number().int().min(1).max(6).default(6),
+          engine: z.enum(['auto', 'claude', 'gemini']).default('auto'),
+        })
+        .parse(req.body);
+      const claudeOk = await claudeCode.isAvailable();
+      const viaClaude = async (system: string, prompt: string) => (await claudeCode.complete({ system, prompt, quality: 'fast' })).text;
+      const viaGemini = async (system: string, prompt: string) => {
+        if (!cfg.GEMINI_API_KEY) throw new Error('Gemini not configured');
+        for (const model of GEMINI_FALLBACKS) {
+          const res = await fetch(`${DEFAULT_UPSTREAMS.gemini}/v1beta/models/${model}:generateContent`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', 'x-goog-api-key': cfg.GEMINI_API_KEY },
+            body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 16000, temperature: 1 } }),
+          });
+          if (!res.ok) continue;
+          const j = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+          const text = j.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
+          if (text.includes('</svg>')) return text;
+        }
+        throw new Error('Gemini could not draw the logo (quota or overload)');
+      };
+      // Preferred engine first, the other one as fallback (free Gemini quota runs out quickly).
+      const order =
+        body.engine === 'gemini' ? [viaGemini, ...(claudeOk ? [viaClaude] : [])] : claudeOk ? [viaClaude, ...(cfg.GEMINI_API_KEY ? [viaGemini] : [])] : [viaGemini];
+      const complete = async (system: string, prompt: string) => {
+        let last: unknown;
+        for (const fn of order) {
+          try {
+            return await fn(system, prompt);
+          } catch (e) {
+            last = e;
+          }
+        }
+        throw last instanceof Error ? last : new Error('no AI available for logos');
+      };
+      const logos = await generateLogos({
+        projectRoot: services.projectRoot(project),
+        appName: body.appName ?? project.name.replace(/_\d+$/, '').replace(/_/g, ' '),
+        about: body.about,
+        hint: body.hint,
+        count: body.count,
+        complete,
+      });
+      if (logos.length === 0) return reply.status(502).send({ code: 'logo_failed', message: 'The AI could not draw logos right now, try again' });
+      return { logos };
+    });
+
+    r.post('/v1/projects/:projectId/logos/:logoId/apply', async (req) => {
+      const { projectId, logoId } = req.params as { projectId: string; logoId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      return applyLogo(services.projectRoot(project), logoId);
     });
 
     // Create/activate in-app products and subscriptions for the app on Google Play.

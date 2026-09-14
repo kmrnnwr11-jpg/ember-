@@ -1021,4 +1021,30 @@ class AppLocalizationsAr extends AppLocalizations {
   String productTrial(int days) {
     return 'تجربة مجانية لمدة $days يومًا';
   }
+
+  @override
+  String get logoTitle => 'شعار التطبيق';
+
+  @override
+  String get logoHint =>
+      'يرسم Ember 6 مقترحات. لم تعجبك؟ اضغط «شعارات أخرى» كلما أردت. الشعار الذي تختاره يصبح أيقونة التطبيق وأيقونة وبانر متجر Play.';
+
+  @override
+  String get logoDescribe => 'صِف الشعار (اختياري)';
+
+  @override
+  String get logoDescribeHint => 'مثال: درع أزرق مع قلم، عصري، بدون نص';
+
+  @override
+  String get logoGenerate => 'أنشئ 6 شعارات';
+
+  @override
+  String get logoMore => 'شعارات أخرى';
+
+  @override
+  String get logoUse => 'استخدم هذا الشعار';
+
+  @override
+  String get logoApplied =>
+      'تم تعيين الشعار: يجري إنشاء أيقونات التطبيق وسيتم تحديث المعاينة.';
 }

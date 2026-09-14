@@ -1072,4 +1072,94 @@ class AppLocalizationsAr extends AppLocalizations {
   String shotsSaved(int count) {
     return 'تم حفظ $count لقطات لـ Google Play.';
   }
+
+  @override
+  String get pubTitle => 'انشر مع Ember';
+
+  @override
+  String pubAccountAsk(String app) {
+    return 'مرحبًا! سأرشدك لنشر **$app** على Google Play خطوة بخطوة، وسأتولى الأجزاء التقنية بنفسي.\n\nالسؤال الأول: هل لديك **حساب مطوّر في Google Play Console**؟';
+  }
+
+  @override
+  String get pubYesHaveIt => 'نعم، لدي حساب';
+
+  @override
+  String get pubNoHowTo => 'لا، كيف أنشئه؟';
+
+  @override
+  String get pubAccountHow =>
+      'يستغرق إنشاؤه 10 دقائق:\n1. افتح صفحة التسجيل (الزر أدناه) بحساب Google\n2. اختر **شخصي** (أو مؤسسة إن كانت لديك شركة)\n3. ادفع **25 دولارًا مرة واحدة**: تذهب إلى Google وليس إلى Ember\n4. أكّد هويتك بمستند: عادةً تؤكد Google خلال يوم أو يومين\n\nعندما يصبح الحساب نشطًا، عد إلى هنا.';
+
+  @override
+  String get pubNowIHaveIt => 'تم، الحساب نشط';
+
+  @override
+  String pubCreateApp(String package) {
+    return 'الآن أنشئ التطبيق في Play Console (في المرة الأولى فقط):\n1. اضغط **فتح Play Console** أدناه ثم **إنشاء تطبيق**\n2. اسم التطبيق، اللغة الافتراضية، النوع **تطبيق**، **مجاني**\n3. حدّد الإقرارات واضغط **إنشاء تطبيق**\n\nاسم حزمة هذا التطبيق هو `$package`: تربطه Google تلقائيًا عند أول رفع.';
+  }
+
+  @override
+  String get pubDone => 'تم';
+
+  @override
+  String get pubConnect =>
+      'الآن أربط Ember بـ Google Play لأتمكن من رفع تطبيقاتك. **سأقوم بذلك بنفسي**: أنشئ مفتاحًا خاصًا في حساب Google على هذا الكمبيوتر (مشروع Google Cloud وواجهة Play والمفتاح). يُستخدم فقط لرفع التطبيقات ويبقى على جهازك.';
+
+  @override
+  String get pubDoItEmber => 'افعلها أنت يا Ember';
+
+  @override
+  String get pubManual => 'أفضّل القيام بذلك يدويًا';
+
+  @override
+  String get pubKeyWorking =>
+      'جارٍ إنشاء مشروع Google Cloud وتفعيل واجهة Play وإنشاء المفتاح (دقيقة أو دقيقتان)…';
+
+  @override
+  String get pubInvite =>
+      'تم إنشاء المفتاح ✓\n\nآخر ربط: يجب أن يُسمح للمفتاح بالنشر في Play Console **الخاص بك**.\n1. اضغط **فتح Play Console** أدناه\n2. انسخ عنوان الصفحة التي تراها (أي صفحة) و**الصقه هنا في المحادثة**\n\nبعدها سيفتح متصفح الكمبيوتر مرة واحدة: سجّل الدخول بنفس حساب Google واضغط **سماح**. سأرسل الدعوة بنفسي.';
+
+  @override
+  String get pubInviteBadLink =>
+      'هذا الرابط لا يحتوي على رقم حساب Play Console. افتح play.google.com/console والصق عنوان تلك الصفحة.';
+
+  @override
+  String get pubInviteWorking =>
+      'جارٍ دعوة المفتاح إلى Play Console… إذا فُتح متصفح الكمبيوتر، سجّل الدخول واضغط سماح.';
+
+  @override
+  String pubInviteManual(String email) {
+    return 'لم أتمكن من إرسال الدعوة تلقائيًا، لنفعلها معًا (دقيقتان):\n1. **فتح Play Console** ثم **المستخدمون والأذونات** و**دعوة مستخدمين جدد**\n2. الصق هذا البريد: `$email`\n3. **أذونات الحساب**: حدّد الإصدارات والتواجد في المتجر ومحتوى التطبيق والطلبات\n4. اضغط **دعوة مستخدم** ثم **تم** هنا';
+  }
+
+  @override
+  String get pubGraphics =>
+      'تم الربط بـ Google Play ✓\n\nتطلب Google لصفحة المتجر **أيقونة 512×512** و**بانر 1024×500** و**لقطتي شاشة** على الأقل. إن لم تنشئها بعد، عد إلى شاشة التطبيق: في **شعار التطبيق** و**لقطات شاشة لمتجر Play** ينشئها Ember بلمسة. سأرفعها تلقائيًا مع التطبيق.';
+
+  @override
+  String get pubContinue => 'متابعة';
+
+  @override
+  String get pubBackToApp => 'العودة إلى التطبيق';
+
+  @override
+  String get pubUpload =>
+      'الآن صفحة المتجر والرفع: أكتب العنوان والأوصاف وسياسة الخصوصية، وأجهّز إجابات نماذج Google، ثم أرفع ملف AAB الموقّع مع الأيقونة والبانر ولقطات الشاشة.\n\nأنشئ أولًا ملف **AAB** من شاشة التطبيق إن لم تفعل بعد.';
+
+  @override
+  String get pubPrepareUpload => 'جهّز وارفع';
+
+  @override
+  String get pubFinish =>
+      'رائع، التطبيق على Google Play ✓\n\nلا تزال Google تطلب تأكيد بعض النماذج يدويًا في Play Console (**أمان البيانات** و**تصنيف المحتوى** و**الجمهور المستهدف** و**الإعلانات** و**الوصول إلى التطبيق**): الإجابات الجاهزة في الشاشة الأخيرة. كما يجب على الحسابات الشخصية الجديدة إجراء **اختبار مغلق مع 12 مختبرًا لمدة 14 يومًا** قبل النشر العام.\n\nلديك سؤال؟ اسألني بالأسفل.';
+
+  @override
+  String get pubReviewAnswers => 'عرض الإجابات الجاهزة';
+
+  @override
+  String get pubPasteLink => 'الصق رابط Play Console هنا…';
+
+  @override
+  String get pubAskAnything => 'اسأل Ember أي شيء عن النشر…';
 }

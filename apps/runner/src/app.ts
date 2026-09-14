@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { syncProducts } from './play_products.js';
+import { createServiceAccountKey, gcloudStatus, invitePlayUser, storeImages } from './play_setup.js';
 import { cliLogins, cliModels } from './subscription_clis.js';
 import { mkdir, stat } from 'node:fs/promises';
 import path from 'node:path';
@@ -302,6 +303,7 @@ export async function buildApp(
             listing: body.listing,
             releaseNotes: body.releaseNotes,
             contactEmail: body.contactEmail,
+            images: await storeImages(root),
           },
           deps.playFetch ?? fetch,
         );
@@ -391,6 +393,26 @@ export async function buildApp(
       const shots = await captureScreenshots({ previewUrl: `http://127.0.0.1:${cfg.PORT}${info.path}`, projectRoot: root, browser });
       if (shots.length === 0) return reply.status(502).send({ code: 'screenshots_failed', message: 'No screen could be captured' });
       return { shots };
+    });
+
+    // Automatic Google Play connection on the Runner PC (gcloud): key creation and Play Console invite.
+    r.get('/v1/play/setup/status', async () => gcloudStatus());
+    r.post('/v1/play/setup/service-account', async (req, reply) => {
+      if (driver.kind !== 'local') return reply.status(501).send({ code: 'unsupported', message: 'Only available on a local Runner' });
+      try {
+        return await createServiceAccountKey(path.join(cfg.WORKSPACES_ROOT, '.play'));
+      } catch (e) {
+        return reply.status(502).send({ code: 'setup_failed', message: (e as Error).message });
+      }
+    });
+    r.post('/v1/play/setup/invite', async (req, reply) => {
+      if (driver.kind !== 'local') return reply.status(501).send({ code: 'unsupported', message: 'Only available on a local Runner' });
+      const body = z.object({ developerId: z.string().regex(/^\d{5,25}$/), serviceAccountEmail: z.string().email().max(200) }).parse(req.body);
+      try {
+        return await invitePlayUser(body.developerId, body.serviceAccountEmail, deps.playFetch ?? fetch);
+      } catch (e) {
+        return reply.status(502).send({ code: 'invite_failed', message: (e as Error).message });
+      }
     });
 
     // Create/activate in-app products and subscriptions for the app on Google Play.

@@ -1969,6 +1969,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} screenshots saved for Google Play.'**
   String shotsSaved(int count);
+
+  /// No description provided for @pubTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish with Ember'**
+  String get pubTitle;
+
+  /// No description provided for @pubAccountAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Hi! I will guide you to publish **{app}** on Google Play, one step at a time, and I will do the technical parts myself.\n\nFirst question: do you already have a **Google Play Console developer account**?'**
+  String pubAccountAsk(String app);
+
+  /// No description provided for @pubYesHaveIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, I have it'**
+  String get pubYesHaveIt;
+
+  /// No description provided for @pubNoHowTo.
+  ///
+  /// In en, this message translates to:
+  /// **'No, how do I create it?'**
+  String get pubNoHowTo;
+
+  /// No description provided for @pubAccountHow.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating it takes 10 minutes:\n1. Open the sign-up page (button below) with your Google account\n2. Choose **Personal** (or Organization if you have a company)\n3. Pay **25 \$ once**: it goes to Google, not to Ember\n4. Verify your identity with a document: Google usually confirms in 1-2 days\n\nWhen your account is active, come back here.'**
+  String get pubAccountHow;
+
+  /// No description provided for @pubNowIHaveIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Done, my account is active'**
+  String get pubNowIHaveIt;
+
+  /// No description provided for @pubCreateApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Now create the app in Play Console (only the first time):\n1. Press **Open Play Console** below, then **Create app**\n2. App name, default language, type **App**, **Free**\n3. Tick the declarations and press **Create app**\n\nThis app\'s package name is `{package}`: Google links it automatically on the first upload.'**
+  String pubCreateApp(String package);
+
+  /// No description provided for @pubDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get pubDone;
+
+  /// No description provided for @pubConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Now I connect Ember to Google Play, so I can upload your apps. **I do it myself**: I create a special key in your Google account on this PC (Google Cloud project, Play API and key). It is used only to upload apps and stays on your device.'**
+  String get pubConnect;
+
+  /// No description provided for @pubDoItEmber.
+  ///
+  /// In en, this message translates to:
+  /// **'Do it for me, Ember'**
+  String get pubDoItEmber;
+
+  /// No description provided for @pubManual.
+  ///
+  /// In en, this message translates to:
+  /// **'I prefer to do it by hand'**
+  String get pubManual;
+
+  /// No description provided for @pubKeyWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating the Google Cloud project, enabling the Play API and creating the key (about 1-2 minutes)…'**
+  String get pubKeyWorking;
+
+  /// No description provided for @pubInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Key created ✓\n\nLast connection: the key must be allowed to publish in **your** Play Console.\n1. Press **Open Play Console** below\n2. Copy the address of the page you see (any page) and **paste it here in the chat**\n\nThen the PC browser opens once: sign in with the same Google account and press **Allow**. I send the invitation myself.'**
+  String get pubInvite;
+
+  /// No description provided for @pubInviteBadLink.
+  ///
+  /// In en, this message translates to:
+  /// **'That link does not contain the Play Console account number. Open play.google.com/console and paste the address of that page.'**
+  String get pubInviteBadLink;
+
+  /// No description provided for @pubInviteWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Inviting the key into your Play Console… if the PC browser opens, sign in and press Allow.'**
+  String get pubInviteWorking;
+
+  /// No description provided for @pubInviteManual.
+  ///
+  /// In en, this message translates to:
+  /// **'I could not send the invitation automatically, so let\'s do it together (2 minutes):\n1. **Open Play Console**, then **Users and permissions** and **Invite new users**\n2. Paste this email: `{email}`\n3. **Account permissions**: tick releases, store presence, app content and orders\n4. Press **Invite user**, then **Done** here'**
+  String pubInviteManual(String email);
+
+  /// No description provided for @pubGraphics.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to Google Play ✓\n\nFor the store page Google wants the **512×512 icon**, the **1024×500 banner** and at least **2 screenshots**. If you haven\'t done them yet, go back to the app screen: in **App logo** and **Play Store screenshots** Ember makes them in one tap. I upload them automatically together with the app.'**
+  String get pubGraphics;
+
+  /// No description provided for @pubContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get pubContinue;
+
+  /// No description provided for @pubBackToApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the app'**
+  String get pubBackToApp;
+
+  /// No description provided for @pubUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Now the store page and the upload: I write title, descriptions and privacy policy, prepare the answers for Google\'s forms, then upload the signed AAB with icon, banner and screenshots.\n\nFirst generate the **AAB** from the app screen if you haven\'t yet.'**
+  String get pubUpload;
+
+  /// No description provided for @pubPrepareUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare and upload'**
+  String get pubPrepareUpload;
+
+  /// No description provided for @pubFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Great, the app is on Google Play ✓\n\nGoogle still asks you to confirm a few forms by hand in Play Console (**Data safety**, **Content rating**, **Target audience**, **Ads**, **App access**): the ready answers are in the last screen. New personal accounts must also run a **closed test with 12 testers for 14 days** before going public.\n\nAny doubt? Ask me here below.'**
+  String get pubFinish;
+
+  /// No description provided for @pubReviewAnswers.
+  ///
+  /// In en, this message translates to:
+  /// **'See the ready answers'**
+  String get pubReviewAnswers;
+
+  /// No description provided for @pubPasteLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the Play Console link here…'**
+  String get pubPasteLink;
+
+  /// No description provided for @pubAskAnything.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask Ember anything about publishing…'**
+  String get pubAskAnything;
 }
 
 class _AppLocalizationsDelegate

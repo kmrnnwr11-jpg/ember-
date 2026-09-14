@@ -59,6 +59,8 @@ export interface PublishInput {
   listing?: PlayListing;
   releaseNotes?: { language: string; text: string };
   contactEmail?: string;
+  /** Store graphics (PNG paths): replaced on every upload when present. */
+  images?: { icon?: string; featureGraphic?: string; phoneScreenshots?: string[] };
 }
 
 export interface PublishResult {
@@ -162,6 +164,27 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
   }
   if (input.contactEmail) {
     await json('PATCH', `${base}/details`, { contactEmail: input.contactEmail });
+  }
+
+  // Icon, feature graphic and phone screenshots for the listing language.
+  const images = input.images;
+  if (images && input.listing) {
+    const lang = encodeURIComponent(input.listing.language);
+    const put = async (type: string, files: string[]) => {
+      if (files.length === 0) return;
+      await json('DELETE', `${base}/listings/${lang}/${type}`);
+      for (const f of files) {
+        const res = await fetchImpl(`${UPLOAD}/${pkg}/edits/${encodeURIComponent(editId)}/listings/${lang}/${type}?uploadType=media`, {
+          method: 'POST',
+          headers: { ...auth, 'content-type': 'image/png' },
+          body: await readFile(f),
+        });
+        if (!res.ok) throw await googleError(res);
+      }
+    };
+    await put('icon', images.icon ? [images.icon] : []);
+    await put('featureGraphic', images.featureGraphic ? [images.featureGraphic] : []);
+    await put('phoneScreenshots', (images.phoneScreenshots ?? []).slice(0, 8));
   }
 
   const release = (status: ReleaseStatus) => ({

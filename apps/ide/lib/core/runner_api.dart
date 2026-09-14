@@ -89,6 +89,21 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// gcloud on the Runner PC: installed / logged-in account.
+  Future<Map<String, dynamic>> playSetupStatus() => _call(() => _dio.get('/v1/play/setup/status'), (d) => d as Map<String, dynamic>);
+
+  /// Creates the Google Cloud project, Play API and service account key automatically.
+  Future<Map<String, dynamic>> playCreateKey() => _call(
+    () => _dio.post('/v1/play/setup/service-account', data: const <String, dynamic>{}, options: Options(receiveTimeout: const Duration(minutes: 8))),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Invites the service account into the Play Console developer account.
+  Future<Map<String, dynamic>> playInvite(String developerId, String serviceAccountEmail) => _call(
+    () => _dio.post('/v1/play/setup/invite', data: {'developerId': developerId, 'serviceAccountEmail': serviceAccountEmail}, options: Options(receiveTimeout: const Duration(minutes: 7))),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// Six Play Store phone screenshots taken from the web preview.
   Future<Map<String, dynamic>> takeScreenshots(String projectId) => _call(
     () => _dio.post('/v1/projects/$projectId/screenshots', data: const <String, dynamic>{}, options: Options(receiveTimeout: const Duration(minutes: 10))),

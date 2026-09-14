@@ -1087,4 +1087,95 @@ class AppLocalizationsEs extends AppLocalizations {
   String shotsSaved(int count) {
     return '$count capturas guardadas para Google Play.';
   }
+
+  @override
+  String get pubTitle => 'Publicar con Ember';
+
+  @override
+  String pubAccountAsk(String app) {
+    return '¡Hola! Te guío para publicar **$app** en Google Play, paso a paso, y las partes técnicas las hago yo.\n\nPrimera pregunta: ¿ya tienes una **cuenta de desarrollador de Google Play Console**?';
+  }
+
+  @override
+  String get pubYesHaveIt => 'Sí, la tengo';
+
+  @override
+  String get pubNoHowTo => 'No, ¿cómo la creo?';
+
+  @override
+  String get pubAccountHow =>
+      'Crearla lleva 10 minutos:\n1. Abre la página de registro (botón de abajo) con tu cuenta de Google\n2. Elige **Personal** (u Organización si tienes empresa)\n3. Paga **25 \$ una sola vez**: van a Google, no a Ember\n4. Verifica tu identidad con un documento: Google suele confirmar en 1-2 días\n\nCuando la cuenta esté activa, vuelve aquí.';
+
+  @override
+  String get pubNowIHaveIt => 'Hecho, la cuenta está activa';
+
+  @override
+  String pubCreateApp(String package) {
+    return 'Ahora crea la app en Play Console (solo la primera vez):\n1. Pulsa **Abrir Play Console** abajo y luego **Crear app**\n2. Nombre, idioma predeterminado, tipo **App**, **Gratis**\n3. Marca las declaraciones y pulsa **Crear app**\n\nEl nombre del paquete de esta app es `$package`: Google lo vincula solo en la primera subida.';
+  }
+
+  @override
+  String get pubDone => 'Hecho';
+
+  @override
+  String get pubConnect =>
+      'Ahora conecto Ember a Google Play para poder subir tus apps. **Lo hago yo**: creo una clave especial en tu cuenta de Google en este PC (proyecto de Google Cloud, API de Play y clave). Solo sirve para subir apps y se queda en tu dispositivo.';
+
+  @override
+  String get pubDoItEmber => 'Hazlo tú, Ember';
+
+  @override
+  String get pubManual => 'Prefiero hacerlo a mano';
+
+  @override
+  String get pubKeyWorking =>
+      'Creando el proyecto de Google Cloud, activando la API de Play y creando la clave (1-2 minutos)…';
+
+  @override
+  String get pubInvite =>
+      'Clave creada ✓\n\nÚltima conexión: la clave debe tener permiso para publicar en **tu** Play Console.\n1. Pulsa **Abrir Play Console** abajo\n2. Copia la dirección de la página que ves (cualquiera) y **pégala aquí en el chat**\n\nLuego se abre una vez el navegador del PC: entra con la misma cuenta de Google y pulsa **Permitir**. La invitación la envío yo.';
+
+  @override
+  String get pubInviteBadLink =>
+      'Ese enlace no contiene el número de la cuenta de Play Console. Abre play.google.com/console y pega la dirección de esa página.';
+
+  @override
+  String get pubInviteWorking =>
+      'Invitando la clave a tu Play Console… si se abre el navegador del PC, entra y pulsa Permitir.';
+
+  @override
+  String pubInviteManual(String email) {
+    return 'No pude enviar la invitación automáticamente, hagámoslo juntos (2 minutos):\n1. **Abrir Play Console**, luego **Usuarios y permisos** e **Invitar nuevos usuarios**\n2. Pega este email: `$email`\n3. **Permisos de cuenta**: marca versiones, presencia en la tienda, contenido de la app y pedidos\n4. Pulsa **Invitar usuario** y luego **Hecho** aquí';
+  }
+
+  @override
+  String get pubGraphics =>
+      'Conectado a Google Play ✓\n\nPara la ficha, Google pide el **icono 512×512**, el **banner 1024×500** y al menos **2 capturas**. Si aún no los tienes, vuelve a la pantalla de la app: en **Logo de la app** y **Capturas para Play Store** Ember los crea con un toque. Los subo yo automáticamente con la app.';
+
+  @override
+  String get pubContinue => 'Continuar';
+
+  @override
+  String get pubBackToApp => 'Volver a la app';
+
+  @override
+  String get pubUpload =>
+      'Ahora la ficha y la subida: escribo título, descripciones y política de privacidad, preparo las respuestas para los formularios de Google y subo el AAB firmado con icono, banner y capturas.\n\nAntes genera el **AAB** desde la pantalla de la app si aún no lo has hecho.';
+
+  @override
+  String get pubPrepareUpload => 'Preparar y subir';
+
+  @override
+  String get pubFinish =>
+      'Perfecto, la app está en Google Play ✓\n\nGoogle aún pide confirmar a mano algunos formularios en Play Console (**Seguridad de los datos**, **Clasificación de contenido**, **Público objetivo**, **Anuncios**, **Acceso a la app**): las respuestas están en la última pantalla. Las cuentas personales nuevas también deben hacer una **prueba cerrada con 12 testers durante 14 días** antes de publicar.\n\n¿Dudas? Pregúntame aquí abajo.';
+
+  @override
+  String get pubReviewAnswers => 'Ver las respuestas';
+
+  @override
+  String get pubPasteLink => 'Pega aquí el enlace de Play Console…';
+
+  @override
+  String get pubAskAnything =>
+      'Pregunta a Ember lo que quieras sobre la publicación…';
 }

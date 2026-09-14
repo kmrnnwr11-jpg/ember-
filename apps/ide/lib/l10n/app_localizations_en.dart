@@ -1075,4 +1075,94 @@ class AppLocalizationsEn extends AppLocalizations {
   String shotsSaved(int count) {
     return '$count screenshots saved for Google Play.';
   }
+
+  @override
+  String get pubTitle => 'Publish with Ember';
+
+  @override
+  String pubAccountAsk(String app) {
+    return 'Hi! I will guide you to publish **$app** on Google Play, one step at a time, and I will do the technical parts myself.\n\nFirst question: do you already have a **Google Play Console developer account**?';
+  }
+
+  @override
+  String get pubYesHaveIt => 'Yes, I have it';
+
+  @override
+  String get pubNoHowTo => 'No, how do I create it?';
+
+  @override
+  String get pubAccountHow =>
+      'Creating it takes 10 minutes:\n1. Open the sign-up page (button below) with your Google account\n2. Choose **Personal** (or Organization if you have a company)\n3. Pay **25 \$ once**: it goes to Google, not to Ember\n4. Verify your identity with a document: Google usually confirms in 1-2 days\n\nWhen your account is active, come back here.';
+
+  @override
+  String get pubNowIHaveIt => 'Done, my account is active';
+
+  @override
+  String pubCreateApp(String package) {
+    return 'Now create the app in Play Console (only the first time):\n1. Press **Open Play Console** below, then **Create app**\n2. App name, default language, type **App**, **Free**\n3. Tick the declarations and press **Create app**\n\nThis app\'s package name is `$package`: Google links it automatically on the first upload.';
+  }
+
+  @override
+  String get pubDone => 'Done';
+
+  @override
+  String get pubConnect =>
+      'Now I connect Ember to Google Play, so I can upload your apps. **I do it myself**: I create a special key in your Google account on this PC (Google Cloud project, Play API and key). It is used only to upload apps and stays on your device.';
+
+  @override
+  String get pubDoItEmber => 'Do it for me, Ember';
+
+  @override
+  String get pubManual => 'I prefer to do it by hand';
+
+  @override
+  String get pubKeyWorking =>
+      'Creating the Google Cloud project, enabling the Play API and creating the key (about 1-2 minutes)…';
+
+  @override
+  String get pubInvite =>
+      'Key created ✓\n\nLast connection: the key must be allowed to publish in **your** Play Console.\n1. Press **Open Play Console** below\n2. Copy the address of the page you see (any page) and **paste it here in the chat**\n\nThen the PC browser opens once: sign in with the same Google account and press **Allow**. I send the invitation myself.';
+
+  @override
+  String get pubInviteBadLink =>
+      'That link does not contain the Play Console account number. Open play.google.com/console and paste the address of that page.';
+
+  @override
+  String get pubInviteWorking =>
+      'Inviting the key into your Play Console… if the PC browser opens, sign in and press Allow.';
+
+  @override
+  String pubInviteManual(String email) {
+    return 'I could not send the invitation automatically, so let\'s do it together (2 minutes):\n1. **Open Play Console**, then **Users and permissions** and **Invite new users**\n2. Paste this email: `$email`\n3. **Account permissions**: tick releases, store presence, app content and orders\n4. Press **Invite user**, then **Done** here';
+  }
+
+  @override
+  String get pubGraphics =>
+      'Connected to Google Play ✓\n\nFor the store page Google wants the **512×512 icon**, the **1024×500 banner** and at least **2 screenshots**. If you haven\'t done them yet, go back to the app screen: in **App logo** and **Play Store screenshots** Ember makes them in one tap. I upload them automatically together with the app.';
+
+  @override
+  String get pubContinue => 'Continue';
+
+  @override
+  String get pubBackToApp => 'Back to the app';
+
+  @override
+  String get pubUpload =>
+      'Now the store page and the upload: I write title, descriptions and privacy policy, prepare the answers for Google\'s forms, then upload the signed AAB with icon, banner and screenshots.\n\nFirst generate the **AAB** from the app screen if you haven\'t yet.';
+
+  @override
+  String get pubPrepareUpload => 'Prepare and upload';
+
+  @override
+  String get pubFinish =>
+      'Great, the app is on Google Play ✓\n\nGoogle still asks you to confirm a few forms by hand in Play Console (**Data safety**, **Content rating**, **Target audience**, **Ads**, **App access**): the ready answers are in the last screen. New personal accounts must also run a **closed test with 12 testers for 14 days** before going public.\n\nAny doubt? Ask me here below.';
+
+  @override
+  String get pubReviewAnswers => 'See the ready answers';
+
+  @override
+  String get pubPasteLink => 'Paste the Play Console link here…';
+
+  @override
+  String get pubAskAnything => 'Ask Ember anything about publishing…';
 }

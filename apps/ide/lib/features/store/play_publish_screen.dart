@@ -35,8 +35,10 @@ Be accurate: only declare data the app actually handles based on the description
 
 /// Guided "Publish to Google Play" flow after a signed AAB is ready.
 class PlayPublishScreen extends ConsumerStatefulWidget {
-  const PlayPublishScreen({super.key, required this.projectId, required this.appDescription});
+  const PlayPublishScreen({super.key, required this.projectId, required this.appDescription, this.initialStep = 0});
 
+  /// Opened from the Ember publishing chat at the listing step, when everything before is done.
+  final int initialStep;
   final String projectId;
   final String appDescription;
 
@@ -45,9 +47,9 @@ class PlayPublishScreen extends ConsumerStatefulWidget {
 }
 
 class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
-  int _step = 0;
-  bool _hasAccount = false;
-  bool _appCreated = false;
+  late int _step = widget.initialStep;
+  late bool _hasAccount = widget.initialStep > 0;
+  late bool _appCreated = widget.initialStep > 1;
   String? _packageName;
   final _sa = TextEditingController();
   final _title = TextEditingController();

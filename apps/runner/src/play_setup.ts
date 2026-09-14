@@ -1,0 +1,162 @@
+import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
+/**
+ * Hands-free Google Play connection on the Runner machine, using the Google
+ * account already logged in to gcloud:
+ *  1. a Google Cloud project with the Play Developer API enabled,
+ *  2. a service account + JSON key (returned once, stored by the client),
+ *  3. the service account invited to the Play Console developer account.
+ */
+
+const PLAY_SCOPES = [
+  'openid',
+  'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.googleapis.com/auth/cloud-platform',
+  'https://www.googleapis.com/auth/androidpublisher',
+].join(',');
+
+export const INVITE_PERMISSIONS = [
+  'CAN_SEE_ALL_APPS',
+  'CAN_VIEW_NON_FINANCIAL_DATA_GLOBAL',
+  'CAN_MANAGE_PUBLIC_APKS_GLOBAL',
+  'CAN_MANAGE_TRACK_APKS_GLOBAL',
+  'CAN_MANAGE_TRACK_USERS_GLOBAL',
+  'CAN_MANAGE_PUBLIC_LISTING_GLOBAL',
+  'CAN_MANAGE_DRAFT_APPS_GLOBAL',
+  'CAN_MANAGE_ORDERS_GLOBAL',
+  'CAN_MANAGE_APP_CONTENT_GLOBAL',
+];
+
+/** Runs gcloud with fixed arguments (never user text) and returns stdout. */
+function gcloud(args: string[], timeoutMs = 120_000): Promise<{ code: number; out: string; err: string }> {
+  return new Promise((resolve) => {
+    const win = process.platform === 'win32';
+    const p = spawn(win ? 'gcloud.cmd' : 'gcloud', args, { windowsHide: true, shell: win });
+    let out = '';
+    let err = '';
+    p.stdout?.on('data', (d) => (out += d));
+    p.stderr?.on('data', (d) => (err += d));
+    const t = setTimeout(() => p.kill(), timeoutMs);
+    p.on('error', (e) => (clearTimeout(t), resolve({ code: -1, out, err: e.message })));
+    p.on('close', (code) => (clearTimeout(t), resolve({ code: code ?? -1, out: out.trim(), err: err.trim() })));
+  });
+}
+
+export async function gcloudStatus(): Promise<{ installed: boolean; account: string | null }> {
+  const r = await gcloud(['auth', 'list', '--filter=status:ACTIVE', '--format=value(account)'], 30_000);
+  if (r.code === -1) return { installed: false, account: null };
+  return { installed: true, account: r.out.split(/\r?\n/)[0] || null };
+}
+
+/** Project id: reuse the one created earlier on this machine, otherwise a new `ember-play-xxxxxx`. */
+async function ensureProject(stateDir: string): Promise<string> {
+  const statePath = path.join(stateDir, 'setup.json');
+  const saved = existsSync(statePath) ? (JSON.parse(await readFile(statePath, 'utf8')) as { projectId?: string }) : {};
+  if (saved.projectId) {
+    const exists = await gcloud(['projects', 'describe', saved.projectId, '--format=value(projectId)']);
+    if (exists.code === 0) return saved.projectId;
+  }
+  const projectId = `ember-play-${Math.random().toString(36).slice(2, 8)}`;
+  const created = await gcloud(['projects', 'create', projectId, '--name=Ember Play'], 180_000);
+  if (created.code !== 0) throw new Error(`Could not create the Google Cloud project: ${created.err.slice(-400)}`);
+  await mkdir(stateDir, { recursive: true });
+  await writeFile(statePath, JSON.stringify({ projectId, createdAt: new Date().toISOString() }));
+  return projectId;
+}
+
+export async function createServiceAccountKey(stateDir: string): Promise<{ projectId: string; email: string; key: string; account: string }> {
+  const status = await gcloudStatus();
+  if (!status.installed) throw new Error('Google Cloud CLI (gcloud) is not installed on the Runner PC');
+  if (!status.account) throw new Error('Log in to gcloud on the Runner PC first: run "gcloud auth login"');
+  const projectId = await ensureProject(stateDir);
+  const enable = await gcloud(['services', 'enable', 'androidpublisher.googleapis.com', `--project=${projectId}`], 300_000);
+  if (enable.code !== 0) throw new Error(`Could not enable the Google Play Developer API: ${enable.err.slice(-400)}`);
+  const email = `ember-publisher@${projectId}.iam.gserviceaccount.com`;
+  const describe = await gcloud(['iam', 'service-accounts', 'describe', email, `--project=${projectId}`, '--format=value(email)']);
+  if (describe.code !== 0) {
+    const create = await gcloud(['iam', 'service-accounts', 'create', 'ember-publisher', '--display-name=Ember publisher', `--project=${projectId}`]);
+    if (create.code !== 0) throw new Error(`Could not create the service account: ${create.err.slice(-400)}`);
+  }
+  const tmp = path.join(os.tmpdir(), `ember-sa-${Date.now()}.json`);
+  try {
+    // New accounts can take a few seconds to be usable for key creation.
+    let key = { code: -1, out: '', err: '' };
+    for (let i = 0; i < 4 && key.code !== 0; i++) {
+      key = await gcloud(['iam', 'service-accounts', 'keys', 'create', tmp, `--iam-account=${email}`, `--project=${projectId}`]);
+      if (key.code !== 0) await new Promise((r) => setTimeout(r, 5000));
+    }
+    if (key.code !== 0) throw new Error(`Could not create the key: ${key.err.slice(-400)}`);
+    return { projectId, email, key: await readFile(tmp, 'utf8'), account: status.account };
+  } finally {
+    await rm(tmp, { force: true });
+  }
+}
+
+/** Access token of the user's Google account with Play scope; opens the browser once to grant it. */
+async function userPlayToken(): Promise<string> {
+  let t = await gcloud(['auth', 'application-default', 'print-access-token']);
+  const scoped = t.code === 0 && (await hasPlayScope(t.out));
+  if (!scoped) {
+    const login = await gcloud(['auth', 'application-default', 'login', `--scopes=${PLAY_SCOPES}`], 5 * 60_000);
+    if (login.code !== 0) throw new Error('Google login was not completed in the browser');
+    t = await gcloud(['auth', 'application-default', 'print-access-token']);
+  }
+  if (t.code !== 0 || !t.out) throw new Error('Could not get a Google access token');
+  return t.out.split(/\r?\n/).pop()!;
+}
+
+async function hasPlayScope(token: string): Promise<boolean> {
+  try {
+    const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(token.split(/\r?\n/).pop()!)}`);
+    const j = (await res.json()) as { scope?: string };
+    return (j.scope ?? '').includes('androidpublisher');
+  } catch {
+    return false;
+  }
+}
+
+/** Invites the service account into the Play Console developer account (idempotent). */
+export async function invitePlayUser(developerId: string, serviceAccountEmail: string, fetchImpl: typeof fetch = fetch): Promise<{ invited: boolean; alreadyMember: boolean }> {
+  const token = await userPlayToken();
+  const res = await fetchImpl(`https://androidpublisher.googleapis.com/androidpublisher/v3/developers/${developerId}/users`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ email: serviceAccountEmail, developerAccountPermissions: INVITE_PERMISSIONS }),
+  });
+  if (res.ok) return { invited: true, alreadyMember: false };
+  const text = await res.text();
+  if (res.status === 409 || /already/i.test(text)) return { invited: true, alreadyMember: true };
+  let message = text;
+  try {
+    message = (JSON.parse(text) as { error?: { message?: string } }).error?.message ?? text;
+  } catch {
+    // raw text
+  }
+  throw new Error(`Play Console did not accept the invite (${res.status}): ${message.slice(0, 400)}`);
+}
+
+/** Extracts the developer account id from any Play Console URL. */
+export function developerIdFromUrl(url: string): string | null {
+  return /developers\/(\d{5,25})/.exec(url)?.[1] ?? null;
+}
+
+/** Store graphics produced by Ember for a project, when present. */
+export async function storeImages(projectRoot: string): Promise<{ icon?: string; featureGraphic?: string; phoneScreenshots?: string[] }> {
+  const store = path.join(projectRoot, 'store');
+  const icon = path.join(store, 'play_icon_512.png');
+  const feature = path.join(store, 'feature_graphic.png');
+  const shotsDir = path.join(store, 'screenshots');
+  const shots = (await readdir(shotsDir).catch(() => [] as string[]))
+    .filter((f) => /^phone_\d+\.png$/.test(f))
+    .sort((a, b) => Number(/\d+/.exec(a)![0]) - Number(/\d+/.exec(b)![0]))
+    .map((f) => path.join(shotsDir, f));
+  return {
+    ...(existsSync(icon) ? { icon } : {}),
+    ...(existsSync(feature) ? { featureGraphic: feature } : {}),
+    ...(shots.length >= 2 ? { phoneScreenshots: shots } : {}),
+  };
+}

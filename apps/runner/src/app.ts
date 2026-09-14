@@ -1,5 +1,5 @@
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
-import { cliLogins } from './subscription_clis.js';
+import { cliLogins, cliModels } from './subscription_clis.js';
 import { mkdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import cors from '@fastify/cors';
@@ -198,6 +198,7 @@ export async function buildApp(
     engines: { claudeCode: await claudeCode.isAvailable(), ...(driver.kind === 'local' ? await cliLogins().then((l) => ({ codex: l.codex, geminiCli: l['gemini-cli'] })) : { codex: false, geminiCli: false }), assistant: cfg.GEMINI_API_KEY !== '', serverGemini: cfg.GEMINI_API_KEY !== '' },
     // AI CLIs usable from the integrated terminal (local driver: host PATH).
     cli: driver.kind === 'local' ? await detectClis() : {},
+    cliModels: driver.kind === 'local' ? cliModels() : {},
     shells: process.platform === 'win32' ? ['cmd', 'powershell'] : ['bash'],
   }));
 

@@ -990,4 +990,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get useSubscription => 'Usarla';
+
+  @override
+  String get bResumeChat =>
+      'Continuar la creación interrumpida desde donde se detuvo';
+
+  @override
+  String get backToEmber => 'Volver a Ember';
 }

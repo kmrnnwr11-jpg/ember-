@@ -977,4 +977,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get useSubscription => 'استخدمه';
+
+  @override
+  String get bResumeChat => 'تابِع الإنشاء المتوقف من حيث توقف';
+
+  @override
+  String get backToEmber => 'العودة إلى Ember';
 }

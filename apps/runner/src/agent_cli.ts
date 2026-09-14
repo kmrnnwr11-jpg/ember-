@@ -185,8 +185,8 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
     return (await cliLogins())[engine];
   }
 
-  start(opts: { ownerId: string; projectId: string; cwd: string; prompt: string; resume?: boolean; quality?: BuildQuality; engine?: CliEngine }): AgentRun {
-    const best = opts.quality === 'best';
+  start(opts: { ownerId: string; projectId: string; cwd: string; prompt: string; resume?: boolean; quality?: BuildQuality; engine?: CliEngine; model?: string }): AgentRun {
+    const best = opts.quality === 'best' || /opus|fable/.test(opts.model ?? '');
     const engine = opts.engine ?? 'claude-code';
     const run: AgentRun = {
       id: nanoid(12),
@@ -201,7 +201,7 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
       '-p',
       '--output-format', 'stream-json',
       '--verbose',
-      '--model', best ? this.cfg.CLAUDE_CODE_MODEL_BEST : this.cfg.CLAUDE_CODE_MODEL_FAST,
+      '--model', opts.model ?? (best ? this.cfg.CLAUDE_CODE_MODEL_BEST : this.cfg.CLAUDE_CODE_MODEL_FAST),
       '--effort', best ? 'high' : 'medium',
       '--permission-mode', 'acceptEdits',
       '--allowedTools', 'Read', 'Write', 'Edit', 'MultiEdit', 'Glob', 'Grep', 'TodoWrite', 'Bash(flutter:*)', 'Bash(dart:*)',
@@ -216,7 +216,7 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
     const other = engine === 'claude-code' ? null : cliCommand(engine);
     if (engine !== 'claude-code' && !other) throw Object.assign(new Error(`${engine} is not installed on this Runner`), { code: 'unsupported' });
     const child = other
-      ? this.spawnImpl(other.bin, [...other.pre, ...cliBuildArgs(engine as 'codex' | 'gemini-cli', opts.cwd)], { cwd: opts.cwd, windowsHide: true, env: { ...process.env, CI: '1' } })
+      ? this.spawnImpl(other.bin, [...other.pre, ...cliBuildArgs(engine as 'codex' | 'gemini-cli', opts.cwd, opts.model)], { cwd: opts.cwd, windowsHide: true, env: { ...process.env, CI: '1' } })
       : this.spawnImpl(resolveClaudeBin(this.cfg), args, {
           cwd: opts.cwd,
           windowsHide: true,

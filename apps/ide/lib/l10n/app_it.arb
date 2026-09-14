@@ -283,5 +283,7 @@
   "haveSubscription": "Hai già {plan}?",
   "subscriptionReadyUse": "Crea con {engine} usando il tuo abbonamento, senza comprare crediti API.",
   "subscriptionConnectFirst": "Collegalo una volta per creare con {engine} senza costi in più.",
-  "useSubscription": "Usalo"
+  "useSubscription": "Usalo",
+  "bResumeChat": "Riprendi la creazione interrotta da dove si era fermata",
+  "backToEmber": "Torna a Ember"
 }

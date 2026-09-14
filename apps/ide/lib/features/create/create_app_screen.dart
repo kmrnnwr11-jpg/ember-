@@ -127,7 +127,9 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
   late final _text = TextEditingController(text: widget.initialPrompt);
   BuildEngine? _engine;
   AiModel? _model;
-  bool _best = false;
+
+  /// Model picked for a subscription engine (Claude Code / Codex / Gemini CLI).
+  String? _cliModel;
 
   @override
   void dispose() {
@@ -153,9 +155,16 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
             ? _model
             : models.where((m) => m.id == engine.defaultModel).firstOrNull ?? models.firstOrNull);
 
+    final cliModels = [
+      for (final m in ((health?['cliModels'] as Map?)?[engine.cli] as List? ?? const []).cast<Map<String, dynamic>>())
+        (id: m['id'] as String, label: m['label'] as String, description: m['description'] as String?),
+    ];
+    final cliModel = cliModels.any((m) => m.id == _cliModel) ? _cliModel : cliModels.firstOrNull?.id;
+
     void submit() {
       if (_text.text.trim().isEmpty || !option.available || widget.busy) return;
-      widget.onSubmit(_text.text.trim(), engine, model, _best ? 'best' : 'fast');
+      // For subscription engines the chosen CLI model travels in `quality`.
+      widget.onSubmit(_text.text.trim(), engine, model, engine.isCli ? (cliModel ?? 'fast') : 'fast');
     }
 
     return Column(
@@ -192,6 +201,7 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
                 onSelected: (_) => setState(() {
                   _engine = o.engine;
                   _model = null;
+                  _cliModel = null;
                 }),
               ),
           ],
@@ -220,17 +230,24 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
             _model = null;
           }),
         ),
-        if (engine == BuildEngine.claudeCode && option.available)
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l.bestQuality),
-            subtitle: Text(_best ? l.bestQualityOn : l.bestQualityOff),
-            value: _best,
-            onChanged: (v) => setState(() => _best = v),
-          ),
-        if (models.length > 1 && option.available) ...[
+        if (engine.isCli && cliModels.isNotEmpty) ...[
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
+            key: ValueKey('cliModel_${engine.name}'),
+            initialValue: cliModel,
+            isExpanded: true,
+            decoration: InputDecoration(labelText: l.selectModel, border: const OutlineInputBorder(), isDense: true),
+            items: [
+              for (final m in cliModels)
+                DropdownMenuItem(value: m.id, child: Text(m.description == null ? m.label : '${m.label} — ${m.description}', overflow: TextOverflow.ellipsis)),
+            ],
+            onChanged: (v) => setState(() => _cliModel = v),
+          ),
+        ],
+        if (models.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            key: ValueKey('apiModel_${engine.name}'),
             initialValue: model?.key,
             isDense: true,
             decoration: InputDecoration(labelText: l.selectModel, border: const OutlineInputBorder(), isDense: true),
@@ -338,7 +355,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                       const SizedBox(height: 120),
                       const Center(child: EmberMark(size: 96)),
                     ] else ...[
-                      _PromptCard(prompt: b.prompt, engine: b.engine, model: b.model, designName: b.designName),
+                      _PromptCard(prompt: b.prompt, engine: b.engine, model: b.model, designName: b.designName, quality: b.quality),
                       const SizedBox(height: 12),
                       _Steps(builder: b),
                       const SizedBox(height: 12),
@@ -445,8 +462,9 @@ class _ChatBubble extends StatelessWidget {
 }
 
 class _PromptCard extends StatelessWidget {
-  const _PromptCard({required this.prompt, required this.engine, required this.model, this.designName});
+  const _PromptCard({required this.prompt, required this.engine, required this.model, this.designName, this.quality = 'fast'});
   final String prompt;
+  final String quality;
   final BuildEngine? engine;
   final AiModel? model;
   final String? designName;
@@ -461,7 +479,7 @@ class _PromptCard extends StatelessWidget {
           Text(prompt, maxLines: 6, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 6),
           Text(
-            [engine != null && engine!.isCli ? engine!.cliLabel : (model?.label ?? ''), if (designName != null) '🎨 $designName'].join(' · '),
+            [engine != null && engine!.isCli ? engine!.cliLabel : (model?.label ?? ''), if (engine != null && engine!.isCli && quality != 'fast' && quality != 'best') quality, if (designName != null) '🎨 $designName'].join(' · '),
             style: Theme.of(context).textTheme.labelSmall,
           ),
         ],

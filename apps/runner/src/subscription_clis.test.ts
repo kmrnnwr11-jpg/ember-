@@ -23,3 +23,13 @@ describe('subscription CLIs', () => {
     expect(cliBuildArgs('gemini-cli', 'C:/w/p')).toContain('yolo');
   });
 });
+
+describe('CLI models', () => {
+  it('lists Claude aliases and accepts only safe model names', async () => {
+    const { cliModels, safeModel } = await import('./subscription_clis.js');
+    expect(cliModels()['claude-code'].map((m) => m.id)).toEqual(['sonnet', 'opus', 'fable', 'haiku']);
+    expect(safeModel('gpt-5.6-terra')).toBe('gpt-5.6-terra');
+    expect(safeModel('opus; rm -rf /')).toBeUndefined();
+    expect(safeModel('best')).toBeUndefined();
+  });
+});

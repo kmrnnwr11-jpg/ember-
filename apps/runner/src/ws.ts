@@ -1,5 +1,5 @@
 import type { FastifyBaseLogger } from 'fastify';
-import { CLI_ENGINES, type CliEngine } from './subscription_clis.js';
+import { CLI_ENGINES, safeModel, type CliEngine } from './subscription_clis.js';
 import type { WebSocket } from 'ws';
 import type { AuthUser } from './auth.js';
 import type { FsChange, WatchHub } from './fs.js';
@@ -286,6 +286,7 @@ export class Session {
           resume: p.resume === true,
           quality: p.quality === 'best' ? 'best' : 'fast',
           engine,
+          model: safeModel(p.model),
         });
         return { ...run };
       }

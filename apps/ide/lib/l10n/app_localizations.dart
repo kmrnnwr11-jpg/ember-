@@ -1807,6 +1807,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use it'**
   String get useSubscription;
+
+  /// No description provided for @bResumeChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue the interrupted build from where it stopped'**
+  String get bResumeChat;
+
+  /// No description provided for @backToEmber.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Ember'**
+  String get backToEmber;
 }
 
 class _AppLocalizationsDelegate

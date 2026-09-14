@@ -126,3 +126,37 @@ export async function cliLogins(): Promise<Record<'codex' | 'gemini-cli', boolea
   loginCache = { at: Date.now(), value: { codex, 'gemini-cli': gemini } };
   return loginCache.value;
 }
+
+/** Models each subscription CLI can use, for the model picker. First entry is the default. */
+export function cliModels(): Record<CliEngine, Array<{ id: string; label: string; description?: string }>> {
+  let codex: Array<{ id: string; label: string; description?: string }> = [];
+  try {
+    const cache = JSON.parse(readFileSync(path.join(os.homedir(), '.codex', 'models_cache.json'), 'utf8')) as { models?: Array<Record<string, unknown>> };
+    codex = (cache.models ?? [])
+      .filter((m) => m.visibility === 'list' && typeof m.slug === 'string')
+      .sort((a, b) => Number(a.priority ?? 99) - Number(b.priority ?? 99))
+      .map((m) => ({ id: String(m.slug), label: String(m.display_name ?? m.slug), description: typeof m.description === 'string' ? m.description : undefined }));
+  } catch {
+    // Codex not used yet on this machine: let the CLI pick its default.
+  }
+  return {
+    'claude-code': [
+      { id: 'sonnet', label: 'Claude Sonnet', description: 'Fast, great for most apps' },
+      { id: 'opus', label: 'Claude Opus', description: 'Most capable, slower' },
+      { id: 'fable', label: 'Claude Fable', description: 'Latest flagship' },
+      { id: 'haiku', label: 'Claude Haiku', description: 'Fastest, simple apps' },
+    ],
+    codex,
+    'gemini-cli': [
+      { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', description: 'Fast' },
+      { id: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro (preview)', description: 'Most capable' },
+      { id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash-Lite', description: 'Fastest' },
+      { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+    ],
+  };
+}
+
+/** A model id from the client, or undefined when it is not a safe CLI model name. */
+export function safeModel(v: unknown): string | undefined {
+  return typeof v === 'string' && /^[A-Za-z0-9][\w.-]{0,59}$/.test(v) && v !== 'fast' && v !== 'best' ? v : undefined;
+}

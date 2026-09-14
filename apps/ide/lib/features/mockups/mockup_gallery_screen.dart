@@ -79,6 +79,14 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
     _jumpTo(0);
   }
 
+  void _slide(int i) {
+    if (_pages.hasClients) {
+      _pages.animateToPage(i, duration: const Duration(milliseconds: 300), curve: Curves.easeOutCubic);
+    } else {
+      _jumpTo(i);
+    }
+  }
+
   void _jumpTo(int i) {
     setState(() => _page = i);
     if (_pages.hasClients) _pages.jumpToPage(i);
@@ -172,6 +180,37 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
               onPageChanged: (i) => setState(() => _page = i),
               itemBuilder: (_, i) => _MockupPage(mockup: mockups[i], onRetry: () => c!.retry(mockups[i])),
             ),
+          // Previous / next arrows (a mouse cannot swipe the pages).
+          if (mockups.length > 1) ...[
+            if (_page > 0)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: IconButton.filled(
+                    key: const Key('mockupPrev'),
+                    style: IconButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, fixedSize: const Size(52, 52)),
+                    tooltip: '$_page / ${mockups.length}',
+                    onPressed: () => _slide(_page - 1),
+                    icon: const Icon(Icons.chevron_left, size: 32),
+                  ),
+                ),
+              ),
+            if (_page < mockups.length - 1)
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: IconButton.filled(
+                    key: const Key('mockupNext'),
+                    style: IconButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, fixedSize: const Size(52, 52)),
+                    tooltip: '${_page + 2} / ${mockups.length}',
+                    onPressed: () => _slide(_page + 1),
+                    icon: const Icon(Icons.chevron_right, size: 32),
+                  ),
+                ),
+              ),
+          ],
           // Top bar: close, progress, page dots, previous sets.
           SafeArea(
             child: Padding(

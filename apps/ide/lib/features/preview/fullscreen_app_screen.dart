@@ -84,6 +84,35 @@ class _FullscreenAppScreenState extends State<FullscreenAppScreen> {
             ),
             if (_progress < 1)
               Positioned(top: 0, left: 0, right: 0, child: LinearProgressIndicator(value: _progress == 0 ? null : _progress)),
+            // Always-visible way back to Ember (desktop has no back gesture).
+            SafeArea(
+              child: Align(
+                alignment: AlignmentDirectional.topEnd,
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Material(
+                    color: Colors.black54,
+                    shape: const StadiumBorder(),
+                    child: InkWell(
+                      key: const Key('closeFullscreenApp'),
+                      customBorder: const StadiumBorder(),
+                      onTap: () => context.pop(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.close, color: Colors.white, size: 18),
+                            const SizedBox(width: 6),
+                            Text(l.backToEmber, style: const TextStyle(color: Colors.white)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             AnimatedOpacity(
               opacity: _showHint ? 1 : 0,
               duration: const Duration(milliseconds: 400),

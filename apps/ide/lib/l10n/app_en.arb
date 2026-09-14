@@ -605,5 +605,7 @@
         "type": "String"
       }
     }
-  }
+  },
+  "bResumeChat": "Continue the interrupted build from where it stopped",
+  "backToEmber": "Back to Ember"
 }

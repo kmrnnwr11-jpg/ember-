@@ -283,5 +283,7 @@
   "haveSubscription": "هل لديك {plan} بالفعل؟",
   "subscriptionReadyUse": "أنشئ باستخدام {engine} عبر اشتراكك، دون شراء أرصدة API.",
   "subscriptionConnectFirst": "اربطه مرة واحدة لتنشئ باستخدام {engine} دون تكلفة إضافية.",
-  "useSubscription": "استخدمه"
+  "useSubscription": "استخدمه",
+  "bResumeChat": "تابِع الإنشاء المتوقف من حيث توقف",
+  "backToEmber": "العودة إلى Ember"
 }

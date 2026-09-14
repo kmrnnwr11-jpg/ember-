@@ -73,6 +73,13 @@ What to build:
 - Real integrations only: Firebase Auth (email + Google Sign-In), Cloud Firestore, Firebase Storage, Agora or Jitsi for video, Firebase Messaging, Stripe, Google Maps. Never invent keys: keep all keys in lib/config/app_config.dart with empty defaults, initialize services only when configured, and show an in-app "Configurazione necessaria" screen describing what is missing so the app still runs. Initialize Firebase with FirebaseOptions from AppConfig (no flutterfire CLI). When the user pastes keys, write them into AppConfig.
 - UI text in the user's language, polished Material 3 (or the APPROVED DESIGN when given). Must compile for web and Android; avoid code generation (no build_runner). Make sure every import resolves.''';
 
+/// Instruction that makes the AI finish a build interrupted by closing the app.
+String resumeRequest(String pending) => '''The previous build was interrupted (the app was closed) before it finished.
+Continue exactly where it stopped: look at the files that already exist, create every file that is still missing, complete the unfinished ones, and make the whole app work as requested. Do not start over and do not remove working code.
+
+Request being built:
+$pending''';
+
 String fixPrompt(String original, Map<String, String> files, String problems) {
   final buf = StringBuffer()
     ..writeln('The app requested was:')
@@ -258,8 +265,14 @@ class AppBuilder extends ChangeNotifier {
     return _run(prompt: prompt, engine: e, model: model, change: change);
   }
 
-  Future<void> _run({required String prompt, required BuildEngine engine, AiModel? model, String? change}) async {
+  /// Request being worked on and whether it finished: lets a closed app resume where it stopped.
+  String? _pending;
+  String _status = 'idle';
+
+  Future<void> _run({required String prompt, required BuildEngine engine, AiModel? model, String? change, String? display}) async {
     if (running) return;
+    _pending = change ?? prompt;
+    _status = 'building';
     this.prompt = prompt;
     this.engine = engine;
     this.model = model;
@@ -279,7 +292,7 @@ class AppBuilder extends ChangeNotifier {
         ..clear()
         ..add((role: 'user', text: prompt));
     } else {
-      conversation.add((role: 'user', text: change));
+      conversation.add((role: 'user', text: display ?? change));
     }
     _replyText = null;
     // Saved right away: if the app is closed mid-build, reopening the project picks the work up again.
@@ -294,16 +307,22 @@ class AppBuilder extends ChangeNotifier {
       await _buildPreview();
       if (_cancelled) return;
       conversation.add((role: 'assistant', text: _replyText?.trim().isNotEmpty == true ? _replyText!.trim() : strings.bAppUpdated));
+      _status = 'done';
       _setPhase(BuildPhase.ready);
       _saveSession();
       _log(strings.bAppReady, kind: 'info');
     } on _Cancelled {
+      _status = 'cancelled';
+      _saveSession();
       _setPhase(BuildPhase.cancelled);
     } catch (e) {
       if (_cancelled) {
+        _status = 'cancelled';
+        _saveSession();
         _setPhase(BuildPhase.cancelled);
         return;
       }
+      _status = 'failed';
       error = e is AiException ? e.message : (e is RunnerException ? e.message : e.toString());
       conversation.add((role: 'assistant', text: '⚠️ $error'));
       _log(error!, kind: 'error');
@@ -326,6 +345,8 @@ class AppBuilder extends ChangeNotifier {
     'quality': quality,
     'design': design,
     'designName': designName,
+    'status': _status,
+    'pending': _pending,
     'conversation': [
       for (final m in conversation.length > 60 ? conversation.sublist(conversation.length - 60) : conversation) {'role': m.role, 'text': m.text},
     ],
@@ -347,21 +368,32 @@ class AppBuilder extends ChangeNotifier {
           (role: m['role'] as String, text: m['text'] as String),
       ]);
     if (conversation.isEmpty) conversation.add((role: 'user', text: prompt));
+    _pending = session['pending'] as String?;
+    _status = session['status'] as String? ?? 'done';
     _cancelled = false;
     _cancelSignal = Completer<void>();
     error = null;
     try {
+      var attached = false;
       if (engine.isCli) {
         final res = await _request(MsgType.agentGet, {'projectId': projectId, 'withEvents': true});
         final run = res['run'] as Map<String, dynamic>?;
         if (run != null && run['status'] == 'running') {
+          attached = true;
           startedAt = DateTime.tryParse(run['startedAt'] as String? ?? '') ?? DateTime.now();
+          _setPhase(BuildPhase.generating);
           await _runClaudeCode('', resume: true, attachTo: run);
           if (_cancelled) return;
         }
       }
+      if (!attached && _status == 'building') {
+        // The app was closed mid-build: continue from the files already written.
+        await _run(prompt: prompt, engine: engine, model: model, change: resumeRequest(_pending ?? prompt), display: strings.bResumeChat);
+        return;
+      }
       await _buildPreview();
       if (_cancelled) return;
+      _status = 'done';
       _setPhase(BuildPhase.ready);
       _saveSession();
     } on _Cancelled {
@@ -649,6 +681,7 @@ class AppBuilder extends ChangeNotifier {
             'prompt': text,
             'resume': resume,
             'quality': quality,
+            if (quality != 'fast' && quality != 'best') 'model': quality,
           });
       _agentRunId = run['id'] as String;
       if (run['plannedFiles'] is int) expectedFiles = run['plannedFiles'] as int;

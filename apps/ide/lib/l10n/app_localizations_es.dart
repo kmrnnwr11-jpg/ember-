@@ -1178,4 +1178,36 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get pubAskAnything =>
       'Pregunta a Ember lo que quieras sobre la publicación…';
+
+  @override
+  String get adsTitle => 'Anuncios de AdMob';
+
+  @override
+  String get adsHint =>
+      'La app ya muestra anuncios de PRUEBA de Google (seguros durante el desarrollo) y pide el consentimiento UE. Para ganar dinero, crea los bloques reales en AdMob y pega aquí los ID: Ember los pone en la app.';
+
+  @override
+  String get adsSteps =>
+      'En AdMob (5 minutos, una vez por app):\n1. Apps → Añadir app → Android → \"¿Está en Google Play?\" (No si aún no se ha publicado) → nombre → Añadir\n2. Copia el ID de la app (ca-app-pub-…~…)\n3. Bloques de anuncios → Añadir → elige cada formato de abajo → Crear → copia su ID (ca-app-pub-…/…)\n4. Tras publicar, vincula la app a su ficha de Play en AdMob y añade app-ads.txt si AdMob lo pide';
+
+  @override
+  String get adsOpenAdmob => 'Abrir AdMob';
+
+  @override
+  String get adsAppId => 'ID de app de AdMob';
+
+  @override
+  String adsUnitId(String format) {
+    return 'ID de bloque $format';
+  }
+
+  @override
+  String get adsApply => 'Poner los ID reales en la app';
+
+  @override
+  String get adsInvalid =>
+      'Los ID deben ser como ca-app-pub-1234567890123456~1234567890 (app) y ca-app-pub-1234567890123456/1234567890 (bloques).';
+
+  @override
+  String get adsChat => 'Poner los ID reales de AdMob';
 }

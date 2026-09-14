@@ -1165,4 +1165,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pubAskAnything => 'Ask Ember anything about publishing…';
+
+  @override
+  String get adsTitle => 'AdMob ads';
+
+  @override
+  String get adsHint =>
+      'The app already shows Google TEST ads (safe while developing) and asks for EU consent. To earn money, create the real ad units in AdMob and paste the IDs here: Ember puts them in the app.';
+
+  @override
+  String get adsSteps =>
+      'In AdMob (5 minutes, once per app):\n1. Apps → Add app → Android → \"Is the app on Google Play?\" (No if not published yet) → name → Add\n2. Copy the App ID (ca-app-pub-…~…)\n3. Ad units → Add ad unit → choose each format below → Create → copy its ID (ca-app-pub-…/…)\n4. After publishing, link the app to its Play Store listing in AdMob and add app-ads.txt if AdMob asks';
+
+  @override
+  String get adsOpenAdmob => 'Open AdMob';
+
+  @override
+  String get adsAppId => 'AdMob App ID';
+
+  @override
+  String adsUnitId(String format) {
+    return '$format ad unit ID';
+  }
+
+  @override
+  String get adsApply => 'Put the real IDs in the app';
+
+  @override
+  String get adsInvalid =>
+      'IDs must look like ca-app-pub-1234567890123456~1234567890 (app) and ca-app-pub-1234567890123456/1234567890 (ad units).';
+
+  @override
+  String get adsChat => 'Set the real AdMob IDs';
 }

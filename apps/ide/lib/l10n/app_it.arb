@@ -335,5 +335,14 @@
   "pubFinish": "Ottimo, l'app è su Google Play ✓\n\nGoogle chiede ancora di confermare a mano alcuni moduli in Play Console (**Sicurezza dei dati**, **Classificazione dei contenuti**, **Pubblico di destinazione**, **Annunci**, **Accesso all'app**): le risposte pronte sono nell'ultima schermata. Gli account personali nuovi devono anche fare un **test chiuso con 12 tester per 14 giorni** prima di andare pubblici.\n\nHai dubbi? Chiedimi qui sotto.",
   "pubReviewAnswers": "Vedi le risposte pronte",
   "pubPasteLink": "Incolla qui il link di Play Console…",
-  "pubAskAnything": "Chiedi a Ember qualsiasi cosa sulla pubblicazione…"
+  "pubAskAnything": "Chiedi a Ember qualsiasi cosa sulla pubblicazione…",
+  "adsTitle": "Pubblicità AdMob",
+  "adsHint": "L'app mostra già annunci di TEST di Google (sicuri durante lo sviluppo) e chiede il consenso UE. Per guadagnare crea le unità vere in AdMob e incolla qui gli ID: Ember li inserisce nell'app.",
+  "adsSteps": "In AdMob (5 minuti, una volta per app):\n1. App → Aggiungi app → Android → \"L'app è su Google Play?\" (No se non è ancora pubblicata) → nome → Aggiungi\n2. Copia l'ID app (ca-app-pub-…~…)\n3. Unità pubblicitarie → Aggiungi unità → scegli ogni formato qui sotto → Crea → copia il suo ID (ca-app-pub-…/…)\n4. Dopo la pubblicazione collega l'app alla scheda del Play Store in AdMob e aggiungi app-ads.txt se AdMob lo chiede",
+  "adsOpenAdmob": "Apri AdMob",
+  "adsAppId": "ID app AdMob",
+  "adsUnitId": "ID unità {format}",
+  "adsApply": "Inserisci gli ID veri nell'app",
+  "adsInvalid": "Gli ID devono essere come ca-app-pub-1234567890123456~1234567890 (app) e ca-app-pub-1234567890123456/1234567890 (unità).",
+  "adsChat": "Inserisci gli ID AdMob veri"
 }

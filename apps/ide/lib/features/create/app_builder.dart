@@ -69,6 +69,7 @@ numbered step-by-step instructions for every external service still missing: ful
 Then one professional question inviting the next request.
 
 What to build:
+- ADS (only when the user asks for ads/AdMob): use the google_mobile_ads package with the Google UMP consent form (required in the EU) shown before loading ads, the ad formats the user asked for (banner, interstitial with frequency capping, rewarded) placed where they do not break the UX, and no ads for users who bought premium. Keep the IDs in lib/config/ads_config.dart: AdMob app id and one ad unit id per format, defaulting to Google's official TEST ids so the app works before real ids exist; put the app id in android/app/src/main/AndroidManifest.xml (com.google.android.gms.ads.APPLICATION_ID) and ios/Runner/Info.plist (GADApplicationIdentifier). On web show nothing. When the user pastes real AdMob ids, write them in ads_config.dart and the manifests. At the very end of the final reply add ONE line starting with EMBER_ADS: followed by compact JSON listing the formats used, e.g. EMBER_ADS: {"banner":true,"interstitial":true,"rewarded":false}. Omit the line when the app has no ads.
 - SCREENSHOT MODE (always include): on web, when the URL has the query parameter ember_screen=N (N = 0..5), open directly the app's N-th most representative screen (home, main feature, detail, list, profile/settings, premium…), filled with realistic demo content, skipping splash, login, onboarding and "configuration needed" screens, without dialogs or debug banners. Read it with Uri.base.queryParameters['ember_screen'] and keep the screen list in lib/config/screenshot_screens.dart. Normal launches are unchanged.
 - PAYMENTS (only when the user asks for paid features, subscriptions, premium, packs or coins): implement Google Play Billing with the `in_app_purchase` package: a polished paywall screen with the products and prices loaded from the store, buy, restore purchases, pending/error states, entitlement saved locally that unlocks the paid features, and complete purchases (consumables for coins/packs). On web show that purchases are available in the Android app. Keep product ids in lib/config/monetization.dart. At the very end of the final reply add ONE line starting with EMBER_PRODUCTS: followed by a compact JSON array of every product the app uses, e.g. EMBER_PRODUCTS: [{"id":"premium_monthly","type":"subscription","title":"Premium","description":"All features","price":"4.99","currency":"EUR","period":"P1M","freeTrialDays":7},{"id":"coins_100","type":"inapp","title":"100 coins","description":"Coin pack","price":"0.99","currency":"EUR"}] (ids lowercase a-z 0-9 _ ; period P1W/P1M/P3M/P6M/P1Y; prices the user asked for, otherwise sensible ones). Omit the line when the app has no purchases.
 - A complete, real product for the kind of app requested, not a single screen or a demo. For product-type apps include the core feature set users expect (e.g. a chat/dating app like Badoo: sign-up/login with email and Google, profile with photo, discovery/user list, conversations, private 1-to-1 chats and private rooms, real-time messages, logout). Simple utilities stay simple.
@@ -185,17 +186,31 @@ class AppBuilder extends ChangeNotifier {
   /// Play products the AI declared (`EMBER_PRODUCTS: [...]`), to activate on Google Play.
   List<Map<String, dynamic>> products = [];
 
+  /// Ad formats the AI put in the app (`EMBER_ADS: {...}`), for the AdMob guide.
+  Map<String, dynamic>? ads;
+
+  static final _adsRe = RegExp(r'^\s*EMBER_ADS:\s*(\{.*\})\s*$', multiLine: true);
+
   static final _productsRe = RegExp(r'^\s*EMBER_PRODUCTS:\s*(\[.*\])\s*$', multiLine: true);
 
   /// Removes the EMBER_PRODUCTS line from a reply and keeps the products.
   String _takeProducts(String reply) {
     final m = _productsRe.firstMatch(reply);
-    if (m == null) return reply;
-    try {
-      final list = (jsonDecode(m.group(1)!) as List).whereType<Map<String, dynamic>>().toList();
-      if (list.isNotEmpty) products = list;
-    } catch (_) {}
-    return reply.replaceFirst(_productsRe, '').trim();
+    if (m != null) {
+      try {
+        final list = (jsonDecode(m.group(1)!) as List).whereType<Map<String, dynamic>>().toList();
+        if (list.isNotEmpty) products = list;
+      } catch (_) {}
+    }
+    var out = reply.replaceFirst(_productsRe, '').trim();
+    final a = _adsRe.firstMatch(out);
+    if (a != null) {
+      try {
+        ads = jsonDecode(a.group(1)!) as Map<String, dynamic>;
+      } catch (_) {}
+      out = out.replaceFirst(_adsRe, '').trim();
+    }
+    return out;
   }
 
   /// Files the AI announced it will write (`PLAN_FILES: n`), when known.
@@ -366,6 +381,7 @@ class AppBuilder extends ChangeNotifier {
     'designName': designName,
     'status': _status,
     'products': products,
+    'ads': ads,
     'pending': _pending,
     'conversation': [
       for (final m in conversation.length > 60 ? conversation.sublist(conversation.length - 60) : conversation) {'role': m.role, 'text': m.text},
@@ -390,6 +406,7 @@ class AppBuilder extends ChangeNotifier {
     if (conversation.isEmpty) conversation.add((role: 'user', text: prompt));
     _pending = session['pending'] as String?;
     products = (session['products'] as List? ?? const []).whereType<Map<String, dynamic>>().toList();
+    ads = session['ads'] as Map<String, dynamic>?;
     _status = session['status'] as String? ?? 'done';
     _cancelled = false;
     _cancelSignal = Completer<void>();

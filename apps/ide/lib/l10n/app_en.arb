@@ -702,5 +702,21 @@
         "type": "String"
       }
     }
+  },
+  "adsTitle": "AdMob ads",
+  "adsHint": "The app already shows Google TEST ads (safe while developing) and asks for EU consent. To earn money, create the real ad units in AdMob and paste the IDs here: Ember puts them in the app.",
+  "adsSteps": "In AdMob (5 minutes, once per app):\n1. Apps → Add app → Android → \"Is the app on Google Play?\" (No if not published yet) → name → Add\n2. Copy the App ID (ca-app-pub-…~…)\n3. Ad units → Add ad unit → choose each format below → Create → copy its ID (ca-app-pub-…/…)\n4. After publishing, link the app to its Play Store listing in AdMob and add app-ads.txt if AdMob asks",
+  "adsOpenAdmob": "Open AdMob",
+  "adsAppId": "AdMob App ID",
+  "adsUnitId": "{format} ad unit ID",
+  "adsApply": "Put the real IDs in the app",
+  "adsInvalid": "IDs must look like ca-app-pub-1234567890123456~1234567890 (app) and ca-app-pub-1234567890123456/1234567890 (ad units).",
+  "adsChat": "Set the real AdMob IDs",
+  "@adsUnitId": {
+    "placeholders": {
+      "format": {
+        "type": "String"
+      }
+    }
   }
 }

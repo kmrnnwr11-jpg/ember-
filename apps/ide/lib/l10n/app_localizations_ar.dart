@@ -1162,4 +1162,36 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pubAskAnything => 'اسأل Ember أي شيء عن النشر…';
+
+  @override
+  String get adsTitle => 'إعلانات AdMob';
+
+  @override
+  String get adsHint =>
+      'يعرض التطبيق حاليًا إعلانات اختبار من Google (آمنة أثناء التطوير) ويطلب موافقة الاتحاد الأوروبي. لتحقيق الربح، أنشئ الوحدات الحقيقية في AdMob والصق المعرّفات هنا وسيضعها Ember في التطبيق.';
+
+  @override
+  String get adsSteps =>
+      'في AdMob (5 دقائق، مرة لكل تطبيق):\n1. التطبيقات ← إضافة تطبيق ← Android ← «هل التطبيق على Google Play؟» (لا إن لم يُنشر بعد) ← الاسم ← إضافة\n2. انسخ معرّف التطبيق (ca-app-pub-…~…)\n3. الوحدات الإعلانية ← إضافة وحدة ← اختر كل تنسيق أدناه ← إنشاء ← انسخ معرّفها (ca-app-pub-…/…)\n4. بعد النشر، اربط التطبيق بصفحته في متجر Play داخل AdMob وأضف app-ads.txt إن طُلب';
+
+  @override
+  String get adsOpenAdmob => 'فتح AdMob';
+
+  @override
+  String get adsAppId => 'معرّف تطبيق AdMob';
+
+  @override
+  String adsUnitId(String format) {
+    return 'معرّف وحدة $format';
+  }
+
+  @override
+  String get adsApply => 'ضع المعرّفات الحقيقية في التطبيق';
+
+  @override
+  String get adsInvalid =>
+      'يجب أن تكون المعرّفات مثل ca-app-pub-1234567890123456~1234567890 (للتطبيق) وca-app-pub-1234567890123456/1234567890 (للوحدات).';
+
+  @override
+  String get adsChat => 'ضع معرّفات AdMob الحقيقية';
 }

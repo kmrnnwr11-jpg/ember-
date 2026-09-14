@@ -9,18 +9,31 @@ import '../editor/project_controller.dart' show RunnerRequest;
 
 /// Which AI builds the app (§1B "Crea App").
 enum BuildEngine {
-  gemini(AiProviderId.gemini, 'gemini-2.5-flash', 65536),
+  gemini(AiProviderId.gemini, 'gemini-3.8-flash', 65536),
   openai(AiProviderId.openai, 'gpt-5', 64000),
   xai(AiProviderId.xai, 'grok-4', 32000),
   claude(AiProviderId.anthropic, 'claude-opus-5', 64000),
-  claudeCode(null, null, 0);
+  claudeCode(null, null, 0, cli: 'claude-code'),
+  // Subscriptions logged in on the Runner machine: ChatGPT plan (Codex CLI), Google account (Gemini CLI).
+  codex(null, null, 0, cli: 'codex'),
+  geminiCli(null, null, 0, cli: 'gemini-cli');
 
-  const BuildEngine(this.provider, this.defaultModel, this.maxTokens);
+  const BuildEngine(this.provider, this.defaultModel, this.maxTokens, {this.cli});
   final AiProviderId? provider;
   final String? defaultModel;
   final int maxTokens;
 
-  bool get isCli => this == claudeCode;
+  /// Runner CLI engine id for subscription engines.
+  final String? cli;
+
+  bool get isCli => cli != null;
+
+  /// Display name of subscription engines.
+  String get cliLabel => switch (this) {
+    codex => 'Codex (ChatGPT)',
+    geminiCli => 'Gemini CLI',
+    _ => 'Claude Code',
+  };
 }
 
 enum BuildPhase { idle, generating, dependencies, checking, fixing, building, ready, failed, cancelled }
@@ -632,7 +645,7 @@ class AppBuilder extends ChangeNotifier {
       final run = attachTo ??
           await _request(MsgType.agentStart, {
             'projectId': projectId,
-            'engine': 'claude-code',
+            'engine': engine!.cli,
             'prompt': text,
             'resume': resume,
             'quality': quality,

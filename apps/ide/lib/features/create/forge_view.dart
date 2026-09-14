@@ -101,7 +101,7 @@ class _ForgeViewState extends State<ForgeView> with SingleTickerProviderStateMix
       minutesLeft = ((perFile * math.max(planned - written, 0) + 90) / 60).ceil();
       return '${l.forgeEta(math.max(minutesLeft, 1))} · ${l.forgeElapsed(clock)}';
     }
-    final typical = b.engine == BuildEngine.claudeCode ? (b.quality == 'best' ? 15 : 8) : 4;
+    final typical = b.engine?.isCli == true ? (b.quality == 'best' ? 15 : 8) : 4;
     minutesLeft = math.max(typical - elapsed.inMinutes, 1);
     return '${l.forgeEstimated(minutesLeft)} · ${l.forgeElapsed(clock)}';
   }

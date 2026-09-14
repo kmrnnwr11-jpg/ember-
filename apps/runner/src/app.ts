@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import { cliLogins } from './subscription_clis.js';
 import { mkdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import cors from '@fastify/cors';
@@ -194,7 +195,7 @@ export async function buildApp(
     store: cfg.supabaseEnabled ? 'supabase' : 'json',
     devAuth: cfg.DEV_AUTH,
     version: '0.2.0',
-    engines: { claudeCode: await claudeCode.isAvailable(), assistant: cfg.GEMINI_API_KEY !== '', serverGemini: cfg.GEMINI_API_KEY !== '' },
+    engines: { claudeCode: await claudeCode.isAvailable(), ...(driver.kind === 'local' ? await cliLogins().then((l) => ({ codex: l.codex, geminiCli: l['gemini-cli'] })) : { codex: false, geminiCli: false }), assistant: cfg.GEMINI_API_KEY !== '', serverGemini: cfg.GEMINI_API_KEY !== '' },
     // AI CLIs usable from the integrated terminal (local driver: host PATH).
     cli: driver.kind === 'local' ? await detectClis() : {},
     shells: process.platform === 'win32' ? ['cmd', 'powershell'] : ['bash'],

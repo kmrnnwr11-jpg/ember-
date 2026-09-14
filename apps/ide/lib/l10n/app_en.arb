@@ -546,5 +546,31 @@
         "type": "String"
       }
     }
+  },
+  "buyCredits": "Buy API credits",
+  "getSubscription": "Get a subscription",
+  "connectSubscription": "Connect my subscription",
+  "accessTitle": "Access & payments",
+  "accessPaidOutside": "Payments happen on the provider's site, not in Ember.",
+  "subscriptionNotConnected": "{name} is not connected: log in with your subscription on the Runner PC.",
+  "connectHowTo": "Ember uses your own {plan} subscription, logged in on the PC where the Runner runs (no API key, no extra cost).\n\n1. On that PC open a terminal (or Ember's terminal).\n2. Run: {command}\n3. Complete the login in the browser with your account.\n\nCome back here: the engine turns on within a minute.",
+  "connectPersonalNote": "Subscriptions are personal: use them for your own apps, not to build apps for other people.",
+  "grokNoCli": "Grok subscriptions (SuperGrok) cannot be connected to other apps yet: use an xAI API key.",
+  "@subscriptionNotConnected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@connectHowTo": {
+    "placeholders": {
+      "plan": {
+        "type": "String"
+      },
+      "command": {
+        "type": "String"
+      }
+    }
   }
 }

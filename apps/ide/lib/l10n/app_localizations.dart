@@ -1723,6 +1723,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You can lock the screen or use other apps: Ember keeps working and finishes the app.'**
   String get forgeBackground;
+
+  /// No description provided for @buyCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy API credits'**
+  String get buyCredits;
+
+  /// No description provided for @getSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Get a subscription'**
+  String get getSubscription;
+
+  /// No description provided for @connectSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect my subscription'**
+  String get connectSubscription;
+
+  /// No description provided for @accessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Access & payments'**
+  String get accessTitle;
+
+  /// No description provided for @accessPaidOutside.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments happen on the provider\'s site, not in Ember.'**
+  String get accessPaidOutside;
+
+  /// No description provided for @subscriptionNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is not connected: log in with your subscription on the Runner PC.'**
+  String subscriptionNotConnected(String name);
+
+  /// No description provided for @connectHowTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember uses your own {plan} subscription, logged in on the PC where the Runner runs (no API key, no extra cost).\n\n1. On that PC open a terminal (or Ember\'s terminal).\n2. Run: {command}\n3. Complete the login in the browser with your account.\n\nCome back here: the engine turns on within a minute.'**
+  String connectHowTo(String plan, String command);
+
+  /// No description provided for @connectPersonalNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscriptions are personal: use them for your own apps, not to build apps for other people.'**
+  String get connectPersonalNote;
+
+  /// No description provided for @grokNoCli.
+  ///
+  /// In en, this message translates to:
+  /// **'Grok subscriptions (SuperGrok) cannot be connected to other apps yet: use an xAI API key.'**
+  String get grokNoCli;
 }
 
 class _AppLocalizationsDelegate

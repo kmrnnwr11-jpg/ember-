@@ -920,4 +920,38 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get forgeBackground =>
       'يمكنك إطفاء الشاشة أو استخدام تطبيقات أخرى: يواصل Ember العمل وينهي التطبيق.';
+
+  @override
+  String get buyCredits => 'شراء أرصدة API';
+
+  @override
+  String get getSubscription => 'اشترك';
+
+  @override
+  String get connectSubscription => 'اربط اشتراكي';
+
+  @override
+  String get accessTitle => 'الوصول والمدفوعات';
+
+  @override
+  String get accessPaidOutside =>
+      'تتم المدفوعات على موقع المزوّد، وليس داخل Ember.';
+
+  @override
+  String subscriptionNotConnected(String name) {
+    return '$name غير متصل: سجّل الدخول باشتراكك على كمبيوتر Runner.';
+  }
+
+  @override
+  String connectHowTo(String plan, String command) {
+    return 'يستخدم Ember اشتراكك الخاص في $plan، مع تسجيل الدخول على الكمبيوتر الذي يعمل عليه Runner (بدون مفتاح API وبدون تكلفة إضافية).\n\n1. على ذلك الكمبيوتر افتح طرفية (أو طرفية Ember).\n2. نفّذ: $command\n3. أكمل تسجيل الدخول في المتصفح بحسابك.\n\nعد إلى هنا: سيتفعّل المحرّك خلال دقيقة.';
+  }
+
+  @override
+  String get connectPersonalNote =>
+      'الاشتراكات شخصية: استخدمها لتطبيقاتك، لا لإنشاء تطبيقات لأشخاص آخرين.';
+
+  @override
+  String get grokNoCli =>
+      'لا يمكن ربط اشتراكات Grok (SuperGrok) بتطبيقات أخرى بعد: استخدم مفتاح API من xAI.';
 }

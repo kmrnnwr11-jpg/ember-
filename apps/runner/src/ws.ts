@@ -1,4 +1,5 @@
 import type { FastifyBaseLogger } from 'fastify';
+import { CLI_ENGINES, type CliEngine } from './subscription_clis.js';
 import type { WebSocket } from 'ws';
 import type { AuthUser } from './auth.js';
 import type { FsChange, WatchHub } from './fs.js';
@@ -268,9 +269,10 @@ export class Session {
         return { ...(await this.preview.info(project)) };
       }
       case 'agent.start': {
-        if (p.engine !== 'claude-code') throw Object.assign(new Error('unsupported engine'), { code: 'bad_request' });
-        if (!(await this.claudeCode.isAvailable())) {
-          throw Object.assign(new Error('Claude Code is not available on this Runner'), { code: 'unsupported' });
+        const engine = p.engine as CliEngine;
+        if (!CLI_ENGINES.includes(engine)) throw Object.assign(new Error('unsupported engine'), { code: 'bad_request' });
+        if (!(await this.claudeCode.isEngineAvailable(engine))) {
+          throw Object.assign(new Error(`${engine} is not connected on this Runner: log in to it on the Runner machine`), { code: 'unsupported' });
         }
         const { fs, project } = await this.services.projectFs(uid, str(p.projectId, 'projectId'));
         const prompt = str(p.prompt, 'prompt');
@@ -283,6 +285,7 @@ export class Session {
           prompt,
           resume: p.resume === true,
           quality: p.quality === 'best' ? 'best' : 'fast',
+          engine,
         });
         return { ...run };
       }

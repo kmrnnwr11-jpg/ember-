@@ -931,4 +931,38 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get forgeBackground =>
       'Puoi spegnere lo schermo o usare altre app: Ember continua a lavorare e finisce l\'app.';
+
+  @override
+  String get buyCredits => 'Compra crediti API';
+
+  @override
+  String get getSubscription => 'Abbonati';
+
+  @override
+  String get connectSubscription => 'Collega il mio abbonamento';
+
+  @override
+  String get accessTitle => 'Accesso e pagamenti';
+
+  @override
+  String get accessPaidOutside =>
+      'I pagamenti si fanno sul sito del fornitore, non in Ember.';
+
+  @override
+  String subscriptionNotConnected(String name) {
+    return '$name non è collegato: accedi con il tuo abbonamento sul PC del Runner.';
+  }
+
+  @override
+  String connectHowTo(String plan, String command) {
+    return 'Ember usa il tuo abbonamento $plan, con l\'accesso fatto sul PC dove gira il Runner (nessuna chiave API, nessun costo in più).\n\n1. Su quel PC apri un terminale (anche quello di Ember).\n2. Scrivi: $command\n3. Completa l\'accesso nel browser con il tuo account.\n\nTorna qui: il motore si attiva entro un minuto.';
+  }
+
+  @override
+  String get connectPersonalNote =>
+      'Gli abbonamenti sono personali: usali per le tue app, non per creare app per altre persone.';
+
+  @override
+  String get grokNoCli =>
+      'Gli abbonamenti Grok (SuperGrok) non si possono ancora collegare ad altre app: usa una chiave API xAI.';
 }

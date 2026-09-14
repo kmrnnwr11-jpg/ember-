@@ -4,6 +4,7 @@ import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import { nanoid } from 'nanoid';
 import type { Config } from './config.js';
+import { cliBuildArgs, cliCommand, cliLogins, parseCodexLine, parseGeminiLine, type CliEngine } from './subscription_clis.js';
 
 /** Normalized agent progress event sent to the IDE as `agent.event`. */
 export type AgentEvent =
@@ -16,7 +17,7 @@ export interface AgentRun {
   id: string;
   ownerId: string;
   projectId: string;
-  engine: 'claude-code';
+  engine: CliEngine;
   status: 'running' | 'succeeded' | 'failed' | 'cancelled';
   startedAt: string;
   /** Files the agent announced it will create or change (from its `PLAN_FILES: n` line). */
@@ -177,13 +178,21 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
     return this.runs.get(runId);
   }
 
-  start(opts: { ownerId: string; projectId: string; cwd: string; prompt: string; resume?: boolean; quality?: BuildQuality }): AgentRun {
+  /** Whether a CLI engine can run builds: Claude Code installed, Codex/Gemini CLI logged in. */
+  async isEngineAvailable(engine: CliEngine): Promise<boolean> {
+    if (engine === 'claude-code') return this.isAvailable();
+    if (this.cfg.WORKSPACE_DRIVER !== 'local') return false;
+    return (await cliLogins())[engine];
+  }
+
+  start(opts: { ownerId: string; projectId: string; cwd: string; prompt: string; resume?: boolean; quality?: BuildQuality; engine?: CliEngine }): AgentRun {
     const best = opts.quality === 'best';
+    const engine = opts.engine ?? 'claude-code';
     const run: AgentRun = {
       id: nanoid(12),
       ownerId: opts.ownerId,
       projectId: opts.projectId,
-      engine: 'claude-code',
+      engine,
       status: 'running',
       startedAt: new Date().toISOString(),
     };
@@ -203,16 +212,23 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
       '--append-system-prompt', CLAUDE_CODE_BUILD_PROMPT,
       ...(opts.resume ? ['--continue'] : []),
     ];
-    const child = this.spawnImpl(resolveClaudeBin(this.cfg), args, {
-      cwd: opts.cwd,
-      windowsHide: true,
-      env: { ...process.env, CI: '1' },
-    });
+    // Codex (ChatGPT plan) and Gemini CLI (Google account) get the same instructions through stdin.
+    const other = engine === 'claude-code' ? null : cliCommand(engine);
+    if (engine !== 'claude-code' && !other) throw Object.assign(new Error(`${engine} is not installed on this Runner`), { code: 'unsupported' });
+    const child = other
+      ? this.spawnImpl(other.bin, [...other.pre, ...cliBuildArgs(engine as 'codex' | 'gemini-cli', opts.cwd)], { cwd: opts.cwd, windowsHide: true, env: { ...process.env, CI: '1' } })
+      : this.spawnImpl(resolveClaudeBin(this.cfg), args, {
+          cwd: opts.cwd,
+          windowsHide: true,
+          env: { ...process.env, CI: '1' },
+        });
     this.procs.set(run.id, child);
     this.emit('status', run);
 
     // Prompt via stdin: avoids shell quoting of arbitrary user text.
-    child.stdin?.end(opts.prompt);
+    child.stdin?.end(other ? `${CLAUDE_CODE_BUILD_PROMPT}\n\nUSER REQUEST (work in the current directory; keep what already works):\n${opts.prompt}` : opts.prompt);
+    const state = { lastText: '' };
+    const parse = (line: string) => (engine === 'codex' ? parseCodexLine(line, state) : engine === 'gemini-cli' ? parseGeminiLine(line, state) : parseClaudeLine(line));
 
     let buffer = '';
     let sawResult = false;
@@ -223,7 +239,7 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
         const line = buffer.slice(0, nl).trim();
         buffer = buffer.slice(nl + 1);
         if (!line) continue;
-        for (const ev of parseClaudeLine(line)) {
+        for (const ev of parse(line)) {
           if (ev.kind === 'result') sawResult = true;
           if (ev.kind === 'text' && run.plannedFiles === undefined) {
             const m = PLAN_RE.exec(ev.text);
@@ -236,7 +252,7 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
     });
     let stderr = '';
     child.stderr?.setEncoding('utf8').on('data', (c: string) => (stderr = (stderr + c).slice(-4000)));
-    child.on('error', (e) => this.emit('event', run, { kind: 'error', message: `Claude Code could not start: ${e.message}` }));
+    child.on('error', (e) => this.emit('event', run, { kind: 'error', message: `${engine} could not start: ${e.message}` }));
     child.on('close', (code) => {
       this.procs.delete(run.id);
       if (run.status === 'running') {

@@ -16,6 +16,7 @@ import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../ai/ai_settings.dart';
 import '../../widgets/ember_logo.dart';
+import 'access_links.dart';
 import 'app_builder.dart';
 import 'forge_view.dart';
 
@@ -92,11 +93,15 @@ class EngineOption {
   final String? reason;
 }
 
-List<EngineOption> engineOptions(AppLocalizations l, AiSettings s, bool claudeCodeAvailable, {bool serverGemini = false}) => [
+List<EngineOption> engineOptions(AppLocalizations l, AiSettings s, bool claudeCodeAvailable, {bool serverGemini = false, Map<String, dynamic>? health}) => [
   EngineOption(BuildEngine.gemini, 'Gemini', l.badgeFreeTier, Icons.auto_awesome,
       available: serverGemini || s.isConfigured(AiProviderId.gemini), reason: l.needsKey('Gemini')),
   EngineOption(BuildEngine.claudeCode, 'Claude Code', l.badgeSubscription, Icons.terminal,
       available: claudeCodeAvailable, reason: l.claudeCodeUnavailable),
+  EngineOption(BuildEngine.codex, 'Codex · ChatGPT', l.badgeSubscription, Icons.terminal,
+      available: (health?['engines'] as Map?)?['codex'] == true, reason: l.subscriptionNotConnected('Codex (ChatGPT)')),
+  EngineOption(BuildEngine.geminiCli, 'Gemini CLI · Google', l.badgeSubscription, Icons.terminal,
+      available: (health?['engines'] as Map?)?['geminiCli'] == true, reason: l.subscriptionNotConnected('Gemini CLI')),
   EngineOption(BuildEngine.claude, 'Claude', l.badgePaid, Icons.psychology_outlined,
       available: s.isConfigured(AiProviderId.anthropic), reason: l.needsKey('Claude')),
   EngineOption(BuildEngine.openai, 'ChatGPT', l.badgePaid, Icons.chat_bubble_outline,
@@ -137,7 +142,7 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
     final health = ref.watch(runnerHealthProvider).value;
     final claudeCode = (health?['engines'] as Map?)?['claudeCode'] == true;
     final catalog = ref.watch(aiCatalogProvider).value ?? builtInCatalog;
-    final options = engineOptions(l, settings, claudeCode, serverGemini: serverGeminiAvailable(health));
+    final options = engineOptions(l, settings, claudeCode, serverGemini: serverGeminiAvailable(health), health: health);
 
     final engine = _engine ?? options.firstWhere((o) => o.available, orElse: () => options.first).engine;
     final option = options.firstWhere((o) => o.engine == engine);
@@ -198,11 +203,15 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
               Icon(Icons.info_outline, size: 16, color: Theme.of(context).colorScheme.error),
               const SizedBox(width: 6),
               Expanded(child: Text(option.reason ?? '', style: TextStyle(color: Theme.of(context).colorScheme.error))),
-              if (engine != BuildEngine.claudeCode)
-                TextButton(onPressed: () => context.push('/settings'), child: Text(l.aiSettings)),
+              if (!engine.isCli)
+                TextButton(onPressed: () => context.push('/settings'), child: Text(l.aiSettings))
+              else if (engine != BuildEngine.claudeCode || !option.available)
+                TextButton(onPressed: () => showConnectSubscription(context, engine), child: Text(l.connectSubscription)),
             ],
           ),
         ],
+        const SizedBox(height: 8),
+        AccessLinks(engine: engine),
         if (engine == BuildEngine.claudeCode && option.available)
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
@@ -444,7 +453,7 @@ class _PromptCard extends StatelessWidget {
           Text(prompt, maxLines: 6, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 6),
           Text(
-            [engine == BuildEngine.claudeCode ? 'Claude Code' : (model?.label ?? ''), if (designName != null) '🎨 $designName'].join(' · '),
+            [engine != null && engine!.isCli ? engine!.cliLabel : (model?.label ?? ''), if (designName != null) '🎨 $designName'].join(' · '),
             style: Theme.of(context).textTheme.labelSmall,
           ),
         ],
@@ -463,9 +472,9 @@ class _Steps extends StatelessWidget {
     final b = builder;
     final order = [BuildPhase.generating, BuildPhase.dependencies, BuildPhase.checking, BuildPhase.building, BuildPhase.ready];
     final labels = {
-      BuildPhase.generating: b.engine == BuildEngine.claudeCode
+      BuildPhase.generating: b.engine?.isCli == true
           ? [
-              '${l.stepClaudeCode} (${b.writtenFiles.length} file)',
+              '${b.engine == BuildEngine.claudeCode ? l.stepClaudeCode : b.engine!.cliLabel} (${b.writtenFiles.length} file)',
               if (b.currentAction != null) b.currentAction!,
             ].join('\n')
           : l.stepWriting(b.writtenFiles.length),
@@ -752,7 +761,7 @@ class _LogView extends StatelessWidget {
         controller: scroll,
         reverse: true,
         children: [
-          if (generating && tail.isNotEmpty && b.engine != BuildEngine.claudeCode)
+          if (generating && tail.isNotEmpty && b.engine?.isCli != true)
             Text(tail, style: const TextStyle(fontFamily: 'monospace', fontSize: 11, color: Colors.white38)),
           for (final line in b.log.reversed.take(300))
             Padding(

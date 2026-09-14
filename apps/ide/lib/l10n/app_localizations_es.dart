@@ -933,4 +933,38 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get forgeBackground =>
       'Puedes apagar la pantalla o usar otras apps: Ember sigue trabajando y termina la app.';
+
+  @override
+  String get buyCredits => 'Comprar créditos API';
+
+  @override
+  String get getSubscription => 'Suscribirse';
+
+  @override
+  String get connectSubscription => 'Conectar mi suscripción';
+
+  @override
+  String get accessTitle => 'Acceso y pagos';
+
+  @override
+  String get accessPaidOutside =>
+      'Los pagos se hacen en el sitio del proveedor, no en Ember.';
+
+  @override
+  String subscriptionNotConnected(String name) {
+    return '$name no está conectado: inicia sesión con tu suscripción en el PC del Runner.';
+  }
+
+  @override
+  String connectHowTo(String plan, String command) {
+    return 'Ember usa tu propia suscripción $plan, con la sesión iniciada en el PC donde se ejecuta el Runner (sin clave API ni costes extra).\n\n1. En ese PC abre una terminal (o la de Ember).\n2. Ejecuta: $command\n3. Completa el inicio de sesión en el navegador con tu cuenta.\n\nVuelve aquí: el motor se activa en un minuto.';
+  }
+
+  @override
+  String get connectPersonalNote =>
+      'Las suscripciones son personales: úsalas para tus apps, no para crear apps para otras personas.';
+
+  @override
+  String get grokNoCli =>
+      'Las suscripciones de Grok (SuperGrok) aún no se pueden conectar a otras apps: usa una clave API de xAI.';
 }

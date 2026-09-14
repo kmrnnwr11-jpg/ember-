@@ -57,9 +57,11 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
       complete = claudeCodeCompleter((t, p) => socket.request(t, p, timeout: const Duration(minutes: 6)));
     } else {
       final catalog = await ref.read(aiCatalogProvider.future);
+      // Subscription CLIs have no one-shot mode: their mockups use Gemini (Runner key or the user's).
+      final engine = a.engine.isCli ? BuildEngine.gemini : a.engine;
       model = catalog.where((m) => m.key == a.modelKey).firstOrNull ??
-          catalog.where((m) => m.provider == a.engine.provider && m.id == a.engine.defaultModel).firstOrNull ??
-          catalog.firstWhere((m) => m.provider == a.engine.provider);
+          catalog.where((m) => m.provider == engine.provider && m.id == engine.defaultModel).firstOrNull ??
+          catalog.firstWhere((m) => m.provider == engine.provider);
       complete = apiCompleter(ref.read(aiProviderFactory), model);
     }
     final c = MockupController(description: '${a.prompt}${a.reference ?? ''}', engine: a.engine, model: model, complete: complete);

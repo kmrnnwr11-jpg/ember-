@@ -269,5 +269,14 @@
   "forgeEta": "environ {minutes} min restantes",
   "forgeEstimated": "temps estimé environ {minutes} min",
   "forgeElapsed": "{time} écoulées",
-  "forgeBackground": "Vous pouvez éteindre l'écran ou utiliser d'autres apps : Ember continue et termine l'app."
+  "forgeBackground": "Vous pouvez éteindre l'écran ou utiliser d'autres apps : Ember continue et termine l'app.",
+  "buyCredits": "Acheter des crédits API",
+  "getSubscription": "S'abonner",
+  "connectSubscription": "Connecter mon abonnement",
+  "accessTitle": "Accès et paiements",
+  "accessPaidOutside": "Les paiements se font sur le site du fournisseur, pas dans Ember.",
+  "subscriptionNotConnected": "{name} n'est pas connecté : connectez-vous avec votre abonnement sur le PC du Runner.",
+  "connectHowTo": "Ember utilise votre propre abonnement {plan}, connecté sur le PC où tourne le Runner (sans clé API ni coût supplémentaire).\n\n1. Sur ce PC, ouvrez un terminal (ou celui d'Ember).\n2. Lancez : {command}\n3. Terminez la connexion dans le navigateur avec votre compte.\n\nRevenez ici : le moteur s'active en une minute.",
+  "connectPersonalNote": "Les abonnements sont personnels : utilisez-les pour vos apps, pas pour créer des apps pour d'autres.",
+  "grokNoCli": "Les abonnements Grok (SuperGrok) ne peuvent pas encore être connectés à d'autres apps : utilisez une clé API xAI."
 }

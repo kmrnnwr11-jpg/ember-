@@ -89,6 +89,12 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// Six Play Store phone screenshots taken from the web preview.
+  Future<Map<String, dynamic>> takeScreenshots(String projectId) => _call(
+    () => _dio.post('/v1/projects/$projectId/screenshots', data: const <String, dynamic>{}, options: Options(receiveTimeout: const Duration(minutes: 10))),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// Uses a proposal as app icon, Play icon and feature graphic.
   Future<Map<String, dynamic>> applyLogo(String projectId, String logoId) =>
       _call(() => _dio.post('/v1/projects/$projectId/logos/$logoId/apply', data: const <String, dynamic>{}), (d) => d as Map<String, dynamic>);

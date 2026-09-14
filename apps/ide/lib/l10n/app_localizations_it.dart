@@ -1059,4 +1059,30 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get logoApplied =>
       'Logo impostato: sto generando le icone dell\'app, l\'anteprima si aggiornerà.';
+
+  @override
+  String get shotsTitle => 'Screenshot per il Play Store';
+
+  @override
+  String get shotsHint =>
+      'Ember apre l\'app come un telefono e fa 6 screenshot delle schermate principali (1080×1920), pronti per Google Play.';
+
+  @override
+  String get shotsPreparing =>
+      'Ember sta preparando l\'app per gli screenshot (una modalità dimostrativa per ogni schermata): le foto partono da sole appena finisce.';
+
+  @override
+  String get shotsPreparingChat =>
+      'Prepara l\'app per gli screenshot del Play Store';
+
+  @override
+  String get shotsGenerate => 'Fai 6 screenshot';
+
+  @override
+  String get shotsAgain => 'Rifai gli screenshot';
+
+  @override
+  String shotsSaved(int count) {
+    return '$count screenshot salvati per Google Play.';
+  }
 }

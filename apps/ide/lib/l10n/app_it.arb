@@ -303,5 +303,12 @@
   "logoGenerate": "Genera 6 loghi",
   "logoMore": "Altri loghi",
   "logoUse": "Usa questo logo",
-  "logoApplied": "Logo impostato: sto generando le icone dell'app, l'anteprima si aggiornerà."
+  "logoApplied": "Logo impostato: sto generando le icone dell'app, l'anteprima si aggiornerà.",
+  "shotsTitle": "Screenshot per il Play Store",
+  "shotsHint": "Ember apre l'app come un telefono e fa 6 screenshot delle schermate principali (1080×1920), pronti per Google Play.",
+  "shotsPreparing": "Ember sta preparando l'app per gli screenshot (una modalità dimostrativa per ogni schermata): le foto partono da sole appena finisce.",
+  "shotsPreparingChat": "Prepara l'app per gli screenshot del Play Store",
+  "shotsGenerate": "Fai 6 screenshot",
+  "shotsAgain": "Rifai gli screenshot",
+  "shotsSaved": "{count} screenshot salvati per Google Play."
 }

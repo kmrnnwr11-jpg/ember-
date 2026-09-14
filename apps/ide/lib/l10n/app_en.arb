@@ -642,5 +642,19 @@
   "logoGenerate": "Generate 6 logos",
   "logoMore": "More logos",
   "logoUse": "Use this logo",
-  "logoApplied": "Logo set: app icons are being generated and the preview will update."
+  "logoApplied": "Logo set: app icons are being generated and the preview will update.",
+  "shotsTitle": "Play Store screenshots",
+  "shotsHint": "Ember opens the app like a phone and takes 6 screenshots of the main screens (1080×1920), ready for Google Play.",
+  "shotsPreparing": "Ember is preparing the app for screenshots (a demo mode for each screen); the photos start automatically when it is done.",
+  "shotsPreparingChat": "Prepare the app for Play Store screenshots",
+  "shotsGenerate": "Take 6 screenshots",
+  "shotsAgain": "Take them again",
+  "shotsSaved": "{count} screenshots saved for Google Play.",
+  "@shotsSaved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

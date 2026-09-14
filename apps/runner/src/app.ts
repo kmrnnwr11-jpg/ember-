@@ -10,6 +10,7 @@ import { PathError, safeResolve } from './paths.js';
 import { PreviewService } from './preview.js';
 import { DEFAULT_UPSTREAMS, GEMINI_FALLBACKS, registerAiRoutes } from './ai.js';
 import { applyLogo, generateLogos } from './logos.js';
+import { captureScreenshots, findBrowser, hasScreenshotMode, SCREENSHOT_UPGRADE_REQUEST } from './screenshots.js';
 import { registerResearchRoutes } from './research.js';
 import { ClaudeCodeEngine, detectClis } from './agent_cli.js';
 import { z } from 'zod';
@@ -373,6 +374,23 @@ export async function buildApp(
       const { projectId, logoId } = req.params as { projectId: string; logoId: string };
       const { project } = await services.ownedProject(req.user.id, projectId);
       return applyLogo(services.projectRoot(project), logoId);
+    });
+
+    // Play Store phone screenshots from the web preview (headless Chrome, screenshot mode).
+    r.post('/v1/projects/:projectId/screenshots', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const root = services.projectRoot(project);
+      if (!(await hasScreenshotMode(root))) {
+        return reply.status(409).send({ code: 'needs_screenshot_mode', message: 'The app needs a screenshot mode first', request: SCREENSHOT_UPGRADE_REQUEST });
+      }
+      const info = await preview.info(project);
+      if (!info.built || info.building) return reply.status(409).send({ code: 'not_built', message: 'Wait for the web preview to finish building, then try again' });
+      const browser = findBrowser();
+      if (!browser) return reply.status(501).send({ code: 'no_browser', message: 'Install Google Chrome or Microsoft Edge on the Runner machine to take screenshots' });
+      const shots = await captureScreenshots({ previewUrl: `http://127.0.0.1:${cfg.PORT}${info.path}`, projectRoot: root, browser });
+      if (shots.length === 0) return reply.status(502).send({ code: 'screenshots_failed', message: 'No screen could be captured' });
+      return { shots };
     });
 
     // Create/activate in-app products and subscriptions for the app on Google Play.

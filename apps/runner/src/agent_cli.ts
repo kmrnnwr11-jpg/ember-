@@ -52,6 +52,8 @@ SPEED
 
 PAYMENTS (only when the user asks for paid features, subscriptions, premium, packs or coins): implement Google Play Billing with the \`in_app_purchase\` package: a polished paywall screen with the products and prices loaded from the store, buy, restore purchases, pending/error states, entitlement saved locally that unlocks the paid features, and complete purchases (consumables for coins/packs). On web show that purchases are available in the Android app. Keep product ids in lib/config/monetization.dart. At the very end of the final reply add ONE line starting with EMBER_PRODUCTS: followed by a compact JSON array of every product the app uses, e.g. EMBER_PRODUCTS: [{"id":"premium_monthly","type":"subscription","title":"Premium","description":"All features","price":"4.99","currency":"EUR","period":"P1M","freeTrialDays":7},{"id":"coins_100","type":"inapp","title":"100 coins","description":"Coin pack","price":"0.99","currency":"EUR"}] (ids lowercase a-z 0-9 _ ; period P1W/P1M/P3M/P6M/P1Y; prices the user asked for, otherwise sensible ones). Omit the line when the app has no purchases.
 
+SCREENSHOT MODE (always include): on web, when the URL has the query parameter ember_screen=N (N = 0..5), open directly the app's N-th most representative screen (home, main feature, detail, list, profile/settings, premium…), filled with realistic demo content, skipping splash, login, onboarding and "configuration needed" screens, without dialogs or debug banners. Read it with Uri.base.queryParameters['ember_screen'] and keep the screen list in lib/config/screenshot_screens.dart. Normal launches are unchanged.
+
 FINAL REPLY (always, in the user's language, Markdown, concise):
 ## Fatto
 - bullet list of what now works

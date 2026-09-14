@@ -1047,4 +1047,29 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get logoApplied =>
       'تم تعيين الشعار: يجري إنشاء أيقونات التطبيق وسيتم تحديث المعاينة.';
+
+  @override
+  String get shotsTitle => 'لقطات شاشة لمتجر Play';
+
+  @override
+  String get shotsHint =>
+      'يفتح Ember التطبيق كهاتف ويلتقط 6 صور للشاشات الرئيسية (1080×1920) جاهزة لـ Google Play.';
+
+  @override
+  String get shotsPreparing =>
+      'يجهّز Ember التطبيق للقطات الشاشة (وضع عرض لكل شاشة)، وستبدأ الصور تلقائيًا عند الانتهاء.';
+
+  @override
+  String get shotsPreparingChat => 'جهّز التطبيق للقطات شاشة متجر Play';
+
+  @override
+  String get shotsGenerate => 'التقط 6 صور';
+
+  @override
+  String get shotsAgain => 'أعد التقاط الصور';
+
+  @override
+  String shotsSaved(int count) {
+    return 'تم حفظ $count لقطات لـ Google Play.';
+  }
 }

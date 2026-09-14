@@ -303,5 +303,12 @@
   "logoGenerate": "Générer 6 logos",
   "logoMore": "Autres logos",
   "logoUse": "Utiliser ce logo",
-  "logoApplied": "Logo appliqué : les icônes sont en cours de génération, l'aperçu va se mettre à jour."
+  "logoApplied": "Logo appliqué : les icônes sont en cours de génération, l'aperçu va se mettre à jour.",
+  "shotsTitle": "Captures pour le Play Store",
+  "shotsHint": "Ember ouvre l'app comme un téléphone et prend 6 captures des écrans principaux (1080×1920), prêtes pour Google Play.",
+  "shotsPreparing": "Ember prépare l'app pour les captures (un mode démo par écran) ; les photos démarrent automatiquement ensuite.",
+  "shotsPreparingChat": "Préparer l'app pour les captures du Play Store",
+  "shotsGenerate": "Prendre 6 captures",
+  "shotsAgain": "Refaire les captures",
+  "shotsSaved": "{count} captures enregistrées pour Google Play."
 }

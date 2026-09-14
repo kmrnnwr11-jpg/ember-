@@ -1061,4 +1061,30 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get logoApplied =>
       'Logo appliqué : les icônes sont en cours de génération, l\'aperçu va se mettre à jour.';
+
+  @override
+  String get shotsTitle => 'Captures pour le Play Store';
+
+  @override
+  String get shotsHint =>
+      'Ember ouvre l\'app comme un téléphone et prend 6 captures des écrans principaux (1080×1920), prêtes pour Google Play.';
+
+  @override
+  String get shotsPreparing =>
+      'Ember prépare l\'app pour les captures (un mode démo par écran) ; les photos démarrent automatiquement ensuite.';
+
+  @override
+  String get shotsPreparingChat =>
+      'Préparer l\'app pour les captures du Play Store';
+
+  @override
+  String get shotsGenerate => 'Prendre 6 captures';
+
+  @override
+  String get shotsAgain => 'Refaire les captures';
+
+  @override
+  String shotsSaved(int count) {
+    return '$count captures enregistrées pour Google Play.';
+  }
 }

@@ -1927,6 +1927,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Logo set: app icons are being generated and the preview will update.'**
   String get logoApplied;
+
+  /// No description provided for @shotsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Play Store screenshots'**
+  String get shotsTitle;
+
+  /// No description provided for @shotsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember opens the app like a phone and takes 6 screenshots of the main screens (1080×1920), ready for Google Play.'**
+  String get shotsHint;
+
+  /// No description provided for @shotsPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember is preparing the app for screenshots (a demo mode for each screen); the photos start automatically when it is done.'**
+  String get shotsPreparing;
+
+  /// No description provided for @shotsPreparingChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare the app for Play Store screenshots'**
+  String get shotsPreparingChat;
+
+  /// No description provided for @shotsGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Take 6 screenshots'**
+  String get shotsGenerate;
+
+  /// No description provided for @shotsAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Take them again'**
+  String get shotsAgain;
+
+  /// No description provided for @shotsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} screenshots saved for Google Play.'**
+  String shotsSaved(int count);
 }
 
 class _AppLocalizationsDelegate

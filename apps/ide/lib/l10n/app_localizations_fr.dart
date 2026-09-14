@@ -1245,4 +1245,41 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get upNoShots =>
       '✗ Captures manquantes : prenez-les d\'abord dans « Captures pour le Play Store »';
+
+  @override
+  String get upTitle => 'Google Play';
+
+  @override
+  String get upHint =>
+      'Tout est enregistré pour cette app. Modifiez ce que vous voulez puis envoyez une nouvelle version : Ember crée un nouvel AAB signé (version supérieure) et l\'envoie avec la fiche, le logo et les captures.';
+
+  @override
+  String get upStateLogo => 'Logo';
+
+  @override
+  String upStateShots(int count) {
+    return 'Captures : $count';
+  }
+
+  @override
+  String get upStateListing => 'Titre et descriptions';
+
+  @override
+  String get upEditListing => 'Modifier titre et descriptions';
+
+  @override
+  String get upNewVersion => 'Nouvelle version sur Google Play';
+
+  @override
+  String get upBuilding => 'Création du nouvel AAB signé…';
+
+  @override
+  String get upUploading => 'Envoi sur Google Play…';
+
+  @override
+  String get upNeedsSetup =>
+      'Connectez d\'abord Google Play et rédigez la fiche une fois : ouvrez le guide de publication.';
+
+  @override
+  String get upOpenGuide => 'Guide de publication';
 }

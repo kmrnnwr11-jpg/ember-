@@ -429,7 +429,13 @@ class AppBuilder extends ChangeNotifier {
         await _run(prompt: prompt, engine: engine, model: model, change: resumeRequest(_pending ?? prompt), display: strings.bResumeChat);
         return;
       }
-      await _buildPreview();
+      // A finished app opens instantly: rebuild only when there is no web build yet.
+      final info = PreviewInfo.fromJson(await _request(MsgType.previewStatus, {'projectId': projectId}));
+      if (attached || !info.built) {
+        await _buildPreview();
+      } else {
+        preview = info;
+      }
       if (_cancelled) return;
       _status = 'done';
       _setPhase(BuildPhase.ready);

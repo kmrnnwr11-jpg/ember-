@@ -1228,4 +1228,41 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get upNoShots =>
       '✗ لقطات الشاشة مفقودة: التقطها أولًا في «لقطات شاشة لمتجر Play»';
+
+  @override
+  String get upTitle => 'Google Play';
+
+  @override
+  String get upHint =>
+      'كل شيء محفوظ لهذا التطبيق. غيّر ما تريد ثم أرسل إصدارًا جديدًا: ينشئ Ember ملف AAB موقّعًا جديدًا (إصدار أعلى) ويرفعه مع صفحة المتجر والشعار ولقطات الشاشة.';
+
+  @override
+  String get upStateLogo => 'الشعار';
+
+  @override
+  String upStateShots(int count) {
+    return 'لقطات الشاشة: $count';
+  }
+
+  @override
+  String get upStateListing => 'العنوان والأوصاف';
+
+  @override
+  String get upEditListing => 'تعديل العنوان والأوصاف';
+
+  @override
+  String get upNewVersion => 'إصدار جديد على Google Play';
+
+  @override
+  String get upBuilding => 'جارٍ إنشاء ملف AAB الموقّع الجديد…';
+
+  @override
+  String get upUploading => 'جارٍ الرفع إلى Google Play…';
+
+  @override
+  String get upNeedsSetup =>
+      'اربط Google Play أولًا واكتب صفحة المتجر مرة واحدة: افتح دليل النشر.';
+
+  @override
+  String get upOpenGuide => 'دليل النشر';
 }

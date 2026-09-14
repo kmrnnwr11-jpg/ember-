@@ -353,5 +353,16 @@
   "upFeature": "✓ Banner 1024×500",
   "upNoFeature": "✗ Falta el banner: elige antes un logo en \"Logo de la app\"",
   "upShots": "✓ {count} capturas de teléfono",
-  "upNoShots": "✗ Faltan capturas: hazlas antes en \"Capturas para Play Store\""
+  "upNoShots": "✗ Faltan capturas: hazlas antes en \"Capturas para Play Store\"",
+  "upTitle": "Google Play",
+  "upHint": "Todo está guardado para esta app. Cambia lo que quieras y envía una nueva versión: Ember crea un nuevo AAB firmado (versión mayor) y lo sube con la ficha, el logo y las capturas.",
+  "upStateLogo": "Logo",
+  "upStateShots": "Capturas: {count}",
+  "upStateListing": "Título y descripciones",
+  "upEditListing": "Editar título y descripciones",
+  "upNewVersion": "Nueva versión en Google Play",
+  "upBuilding": "Creando el nuevo AAB firmado…",
+  "upUploading": "Subiendo a Google Play…",
+  "upNeedsSetup": "Primero conecta Google Play y escribe la ficha una vez: abre la guía de publicación.",
+  "upOpenGuide": "Guía de publicación"
 }

@@ -28,6 +28,26 @@ class _LogoCardState extends ConsumerState<LogoCard> {
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    _loadSaved();
+  }
+
+  Future<void> _loadSaved() async {
+    try {
+      final s = await (await ref.read(runnerApiProvider.future)).storeState(widget.projectId);
+      if (!mounted) return;
+      setState(() {
+        _logos
+          ..clear()
+          ..addAll([for (final l in (s['logos'] as List).cast<Map<String, dynamic>>()) (id: l['id'] as String, png: base64Decode(l['thumb'] as String))]);
+        _applied = s['appliedLogo'] as String?;
+        _selected ??= _applied;
+      });
+    } catch (_) {}
+  }
+
+  @override
   void dispose() {
     _hint.dispose();
     super.dispose();

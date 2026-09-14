@@ -741,5 +741,23 @@
         "type": "int"
       }
     }
+  },
+  "upTitle": "Google Play",
+  "upHint": "Everything is saved for this app. Change what you need, then send a new version: Ember builds a new signed AAB (higher version) and uploads it with the listing, logo and screenshots.",
+  "upStateLogo": "Logo",
+  "upStateShots": "Screenshots: {count}",
+  "upStateListing": "Title and descriptions",
+  "upEditListing": "Edit title and descriptions",
+  "upNewVersion": "New version on Google Play",
+  "upBuilding": "Building the new signed AAB…",
+  "upUploading": "Uploading to Google Play…",
+  "upNeedsSetup": "First connect Google Play and write the listing once: open the publishing guide.",
+  "upOpenGuide": "Publishing guide",
+  "@upStateShots": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

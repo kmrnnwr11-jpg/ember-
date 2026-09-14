@@ -92,6 +92,22 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     final saved = await ref.read(keyValueStoreProvider).read(_saKey);
     if (saved != null) _sa.text = saved;
     try {
+      final listing = (await (await ref.read(runnerApiProvider.future)).storeState(widget.projectId))['listing'] as Map<String, dynamic>?;
+      if (listing != null && mounted) {
+        setState(() {
+          _title.text = '${listing['title'] ?? ''}';
+          _short.text = '${listing['shortDescription'] ?? ''}';
+          _full.text = '${listing['fullDescription'] ?? ''}';
+          _notes.text = '${listing['releaseNotes'] ?? ''}';
+          _email.text = '${listing['contactEmail'] ?? ''}';
+          _privacyUrl = (listing['privacyUrl'] as String?)?.isEmpty == true ? null : listing['privacyUrl'] as String?;
+          _dataSafety = '${listing['dataSafety'] ?? ''}';
+          _contentRating = '${listing['contentRating'] ?? ''}';
+          _otherDeclarations = '${listing['otherDeclarations'] ?? ''}';
+        });
+      }
+    } catch (_) {}
+    try {
       final info = await (await ref.read(runnerApiProvider.future)).androidInfo(widget.projectId);
       if (mounted) setState(() => _packageName = info['applicationId'] as String?);
     } catch (_) {}
@@ -145,10 +161,27 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       final path = await api.savePrivacyPolicy(widget.projectId, _privacy, _title.text);
       final session = ref.read(sessionProvider).value!;
       _privacyUrl = '${session.runnerUrl}$path';
+      await _saveListing();
     } catch (e) {
       _error = e is RunnerException ? e.message : e.toString();
     }
     if (mounted) setState(() => _generating = false);
+  }
+
+  Future<void> _saveListing() async {
+    try {
+      await (await ref.read(runnerApiProvider.future)).saveListing(widget.projectId, {
+        'title': _title.text.trim(),
+        'shortDescription': _short.text.trim(),
+        'fullDescription': _full.text.trim(),
+        'releaseNotes': _notes.text.trim(),
+        'contactEmail': _email.text.trim(),
+        'privacyUrl': _privacyUrl ?? '',
+        'dataSafety': _dataSafety,
+        'contentRating': _contentRating,
+        'otherDeclarations': _otherDeclarations,
+      });
+    } catch (_) {}
   }
 
   Future<void> _publish() async {
@@ -156,6 +189,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       _publishing = true;
       _error = null;
     });
+    await _saveListing();
     try {
       await ref.read(keyValueStoreProvider).write(_saKey, _sa.text.trim());
       final api = await ref.read(runnerApiProvider.future);

@@ -83,6 +83,12 @@ class RunnerApi {
       _call(() => _dio.get('/v1/projects/$projectId/android-info'), (d) => d as Map<String, dynamic>);
 
   /// Uploads the signed AAB to Google Play (edit → bundle → listing → track → commit).
+  /// Saved logos, applied logo, screenshots and store listing.
+  Future<Map<String, dynamic>> storeState(String projectId) => _call(() => _dio.get('/v1/projects/$projectId/store'), (d) => d as Map<String, dynamic>);
+
+  /// Saves the store listing texts for future versions.
+  Future<void> saveListing(String projectId, Map<String, dynamic> listing) => _call(() => _dio.put('/v1/projects/$projectId/store/listing', data: listing), (_) {});
+
   /// Logo proposals (base64 PNG) drawn by the AI for a project.
   Future<Map<String, dynamic>> generateLogos(String projectId, Map<String, dynamic> body) => _call(
     () => _dio.post('/v1/projects/$projectId/logos', data: body, options: Options(receiveTimeout: const Duration(minutes: 6))),

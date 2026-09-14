@@ -35,6 +35,15 @@ class _ScreenshotsCardState extends ConsumerState<ScreenshotsCard> {
   void initState() {
     super.initState();
     widget.builder.addListener(_onBuilder);
+    _loadSaved();
+  }
+
+  Future<void> _loadSaved() async {
+    try {
+      final s = await (await ref.read(runnerApiProvider.future)).storeState(widget.projectId);
+      final shots = (s['screenshots'] as List).cast<String>();
+      if (mounted && _shots.isEmpty) setState(() => _shots.addAll(shots.map(base64Decode)));
+    } catch (_) {}
   }
 
   @override

@@ -2227,6 +2227,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'✗ Screenshots missing: take them in \"Play Store screenshots\" first'**
   String get upNoShots;
+
+  /// No description provided for @upTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play'**
+  String get upTitle;
+
+  /// No description provided for @upHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything is saved for this app. Change what you need, then send a new version: Ember builds a new signed AAB (higher version) and uploads it with the listing, logo and screenshots.'**
+  String get upHint;
+
+  /// No description provided for @upStateLogo.
+  ///
+  /// In en, this message translates to:
+  /// **'Logo'**
+  String get upStateLogo;
+
+  /// No description provided for @upStateShots.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshots: {count}'**
+  String upStateShots(int count);
+
+  /// No description provided for @upStateListing.
+  ///
+  /// In en, this message translates to:
+  /// **'Title and descriptions'**
+  String get upStateListing;
+
+  /// No description provided for @upEditListing.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit title and descriptions'**
+  String get upEditListing;
+
+  /// No description provided for @upNewVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'New version on Google Play'**
+  String get upNewVersion;
+
+  /// No description provided for @upBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Building the new signed AAB…'**
+  String get upBuilding;
+
+  /// No description provided for @upUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading to Google Play…'**
+  String get upUploading;
+
+  /// No description provided for @upNeedsSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'First connect Google Play and write the listing once: open the publishing guide.'**
+  String get upNeedsSetup;
+
+  /// No description provided for @upOpenGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Publishing guide'**
+  String get upOpenGuide;
 }
 
 class _AppLocalizationsDelegate

@@ -353,5 +353,16 @@
   "upFeature": "✓ Banner 1024×500",
   "upNoFeature": "✗ Banner mancante: prima scegli un logo in \"Logo dell'app\"",
   "upShots": "✓ {count} screenshot del telefono",
-  "upNoShots": "✗ Screenshot mancanti: prima falli in \"Screenshot per il Play Store\""
+  "upNoShots": "✗ Screenshot mancanti: prima falli in \"Screenshot per il Play Store\"",
+  "upTitle": "Google Play",
+  "upHint": "Per quest'app è tutto salvato. Cambia quello che vuoi, poi manda una nuova versione: Ember crea un nuovo AAB firmato (versione più alta) e lo carica con scheda, logo e screenshot.",
+  "upStateLogo": "Logo",
+  "upStateShots": "Screenshot: {count}",
+  "upStateListing": "Titolo e descrizioni",
+  "upEditListing": "Modifica titolo e descrizioni",
+  "upNewVersion": "Nuova versione su Google Play",
+  "upBuilding": "Creo il nuovo AAB firmato…",
+  "upUploading": "Carico su Google Play…",
+  "upNeedsSetup": "Prima collega Google Play e scrivi la scheda una volta: apri la guida alla pubblicazione.",
+  "upOpenGuide": "Guida alla pubblicazione"
 }

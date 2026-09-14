@@ -33,3 +33,26 @@ describe('logos', () => {
     await rm(root, { recursive: true, force: true });
   });
 });
+
+describe('store state', () => {
+  it('returns saved logos, applied logo, screenshots and listing', async () => {
+    const { storeState } = await import('./logos.js');
+    const sharp = (await import('sharp')).default;
+    const root = await mkdtemp(path.join(os.tmpdir(), 'fc-state-'));
+    await writeFile(path.join(root, 'pubspec.yaml'), 'name: demo\n');
+    expect(await storeState(root)).toEqual({ logos: [], appliedLogo: null, screenshots: [], listing: null });
+    const logos = await generateLogos({ projectRoot: root, appName: 'Demo', about: 'x', count: 2, complete: async () => SVG });
+    await applyLogo(root, logos[1]!.id);
+    const { mkdir } = await import('node:fs/promises');
+    await mkdir(path.join(root, 'store', 'screenshots'), { recursive: true });
+    const png = await sharp({ create: { width: 1080, height: 1920, channels: 3, background: '#fff' } }).png().toBuffer();
+    await writeFile(path.join(root, 'store', 'screenshots', 'phone_1.png'), png);
+    await writeFile(path.join(root, 'store', 'listing.json'), JSON.stringify({ title: 'Demo' }));
+    const state = await storeState(root);
+    expect(state.logos).toHaveLength(2);
+    expect(state.appliedLogo).toBe(logos[1]!.id);
+    expect(state.screenshots).toHaveLength(1);
+    expect(state.listing).toMatchObject({ title: 'Demo' });
+    await rm(root, { recursive: true, force: true });
+  });
+});

@@ -10,7 +10,7 @@ import websocket from '@fastify/websocket';
 import { PathError, safeResolve } from './paths.js';
 import { PreviewService } from './preview.js';
 import { DEFAULT_UPSTREAMS, GEMINI_FALLBACKS, registerAiRoutes } from './ai.js';
-import { applyLogo, generateLogos } from './logos.js';
+import { applyLogo, generateLogos, storeState } from './logos.js';
 import { captureScreenshots, findBrowser, hasScreenshotMode, SCREENSHOT_UPGRADE_REQUEST } from './screenshots.js';
 import { registerResearchRoutes } from './research.js';
 import { ClaudeCodeEngine, detectClis } from './agent_cli.js';
@@ -370,6 +370,36 @@ export async function buildApp(
       });
       if (logos.length === 0) return reply.status(502).send({ code: 'logo_failed', message: 'The AI could not draw logos right now, try again' });
       return { logos };
+    });
+
+    // Saved logos, applied logo, screenshots and store listing of a project.
+    r.get('/v1/projects/:projectId/store', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      return storeState(services.projectRoot(project));
+    });
+
+    // Store listing texts written/edited by the user, reused for every new version.
+    r.put('/v1/projects/:projectId/store/listing', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const listing = z
+        .object({
+          title: z.string().max(30).default(''),
+          shortDescription: z.string().max(80).default(''),
+          fullDescription: z.string().max(4000).default(''),
+          releaseNotes: z.string().max(500).default(''),
+          contactEmail: z.string().max(200).default(''),
+          privacyUrl: z.string().max(500).default(''),
+          dataSafety: z.string().max(20000).default(''),
+          contentRating: z.string().max(20000).default(''),
+          otherDeclarations: z.string().max(20000).default(''),
+        })
+        .parse(req.body);
+      const dir = path.join(services.projectRoot(project), 'store');
+      await mkdirAsync(dir, { recursive: true });
+      await writeFileAsync(path.join(dir, 'listing.json'), JSON.stringify({ ...listing, savedAt: new Date().toISOString() }, null, 2));
+      return { ok: true };
     });
 
     r.post('/v1/projects/:projectId/logos/:logoId/apply', async (req) => {

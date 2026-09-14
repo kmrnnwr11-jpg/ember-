@@ -146,3 +146,44 @@ export function withLauncherIcons(pubspec: string): string {
   }
   return out;
 }
+
+/** Everything Ember produced for the store, so a reopened app shows it again. */
+export async function storeState(projectRoot: string): Promise<{
+  logos: Array<{ id: string; thumb: string }>;
+  appliedLogo: string | null;
+  screenshots: string[];
+  listing: Record<string, unknown> | null;
+}> {
+  const dir = logosDir(projectRoot);
+  const files = await readdir(dir).catch(() => [] as string[]);
+  const metas = await Promise.all(
+    files
+      .filter((f) => f.endsWith('.json'))
+      .map(async (f) => {
+        const id = f.slice(0, -5);
+        const meta = JSON.parse(await readFile(path.join(dir, f), 'utf8').catch(() => '{}')) as { createdAt?: string };
+        return { id, at: meta.createdAt ?? '' };
+      }),
+  );
+  metas.sort((a, b) => b.at.localeCompare(a.at));
+  const logos: Array<{ id: string; thumb: string }> = [];
+  for (const m of metas.slice(0, 30)) {
+    const svg = await readFile(path.join(dir, `${m.id}.svg`), 'utf8').catch(() => null);
+    if (!svg) continue;
+    const png = await renderPng(svg, 256).catch(() => null);
+    if (png) logos.push({ id: m.id, thumb: png.toString('base64') });
+  }
+  const store = path.join(projectRoot, 'store');
+  const applied = JSON.parse(await readFile(path.join(store, 'logo.json'), 'utf8').catch(() => '{}')) as { logoId?: string };
+  const shotsDir = path.join(store, 'screenshots');
+  const shotFiles = (await readdir(shotsDir).catch(() => [] as string[]))
+    .filter((f) => /^phone_\d+\.png$/.test(f))
+    .sort((a, b) => Number(/\d+/.exec(a)![0]) - Number(/\d+/.exec(b)![0]));
+  const screenshots: string[] = [];
+  for (const f of shotFiles) {
+    const buf = await readFile(path.join(shotsDir, f)).catch(() => null);
+    if (buf) screenshots.push((await sharp(buf).resize(270, 480).png().toBuffer()).toString('base64'));
+  }
+  const listing = JSON.parse(await readFile(path.join(store, 'listing.json'), 'utf8').catch(() => 'null')) as Record<string, unknown> | null;
+  return { logos, appliedLogo: applied.logoId ?? null, screenshots, listing };
+}

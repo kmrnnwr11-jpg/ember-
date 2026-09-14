@@ -738,6 +738,7 @@ class _FailedCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Card(
       color: scheme.errorContainer,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: scheme.error.withValues(alpha: 0.6))),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

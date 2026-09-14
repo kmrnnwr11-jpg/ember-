@@ -29,6 +29,9 @@ class FlutterCursorApp extends ConsumerWidget {
       primaryContainer: dark ? const Color(0xFF221114) : null,
       onPrimaryContainer: dark ? Colors.white : null,
       secondaryContainer: dark ? const Color(0xFF221114) : null,
+      // Errors: dark card with a red edge, not a big red block.
+      errorContainer: dark ? const Color(0xFF1F0B0E) : null,
+      onErrorContainer: dark ? const Color(0xFFFFB4BD) : null,
       onSecondaryContainer: dark ? Colors.white : null,
       surface: dark ? const Color(0xFF0B0506) : null,
       surfaceContainerLow: dark ? const Color(0xFF120809) : null,

@@ -276,7 +276,8 @@ export class Session {
         }
         const { fs, project } = await this.services.projectFs(uid, str(p.projectId, 'projectId'));
         const prompt = str(p.prompt, 'prompt');
-        if (!prompt.trim() || prompt.length > 20000) throw Object.assign(new Error('prompt must be 1-20000 characters'), { code: 'bad_request' });
+        // Sent via stdin: long requests (reference app listing + design brief + Android info) are fine.
+        if (!prompt.trim() || prompt.length > 200_000) throw Object.assign(new Error('prompt must be 1-200000 characters'), { code: 'bad_request' });
         if (this.claudeCode.activeFor(project.id)) throw Object.assign(new Error('an agent is already running on this project'), { code: 'bad_request' });
         const run = this.claudeCode.start({
           ownerId: uid,
@@ -296,7 +297,7 @@ export class Session {
         }
         const prompt = str(p.prompt, 'prompt');
         const system = str(p.system, 'system');
-        if (prompt.length > 60000 || system.length > 20000) throw Object.assign(new Error('prompt too long'), { code: 'bad_request' });
+        if (prompt.length > 200_000 || system.length > 50_000) throw Object.assign(new Error('prompt too long'), { code: 'bad_request' });
         return await this.claudeCode.complete({ prompt, system, quality: p.quality === 'best' ? 'best' : 'fast' });
       }
       // Catch-up after a disconnect: status, planned files and recent events of a run.

@@ -1293,4 +1293,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String consoleLinkSaved(String id) {
     return 'Saved ✓ developer account $id: the buttons now open your console directly.';
   }
+
+  @override
+  String get upStateConnected => 'Google Play connected (key on this device)';
+
+  @override
+  String get upNeedsKey =>
+      'Google Play is not connected on this device: open the publishing guide and press “Do it for me, Ember” to create the key (1 minute).';
+
+  @override
+  String get upNeedsListing =>
+      'Write the store listing once: press “Edit title and descriptions”.';
+
+  @override
+  String get upConnectPlay => 'Connect Google Play';
 }

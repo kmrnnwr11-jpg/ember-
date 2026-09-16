@@ -370,5 +370,9 @@
   "privacyLocalWarning": "Questo indirizzo funziona solo su questo computer: Google non può aprirlo. Incolla invece un link pubblico.",
   "consoleLinkLabel": "Link della tua Play Console (incollalo una volta)",
   "consoleLinkHint": "Apri Play Console, scegli il tuo account sviluppatore, poi copia l'indirizzo di quella pagina e incollalo qui: i pulsanti apriranno direttamente il tuo account e la tua app.",
-  "consoleLinkSaved": "Salvato ✓ account sviluppatore {id}: i pulsanti ora aprono direttamente la tua console."
+  "consoleLinkSaved": "Salvato ✓ account sviluppatore {id}: i pulsanti ora aprono direttamente la tua console.",
+  "upStateConnected": "Google Play collegato (chiave su questo dispositivo)",
+  "upNeedsKey": "Google Play non è collegato su questo dispositivo: apri la guida alla pubblicazione e premi “Fallo tu, Ember” per creare la chiave (1 minuto).",
+  "upNeedsListing": "Scrivi la scheda dello store una volta: premi “Modifica titolo e descrizioni”.",
+  "upConnectPlay": "Collega Google Play"
 }

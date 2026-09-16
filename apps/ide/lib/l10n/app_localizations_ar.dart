@@ -1289,4 +1289,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String consoleLinkSaved(String id) {
     return 'تم الحفظ ✓ حساب المطوّر $id: تفتح الأزرار الآن وحدة تحكمك مباشرةً.';
   }
+
+  @override
+  String get upStateConnected => 'تم ربط Google Play (المفتاح على هذا الجهاز)';
+
+  @override
+  String get upNeedsKey =>
+      'Google Play غير مرتبط على هذا الجهاز: افتح دليل النشر واضغط «افعلها أنت يا Ember» لإنشاء المفتاح (دقيقة واحدة).';
+
+  @override
+  String get upNeedsListing =>
+      'اكتب صفحة المتجر مرة واحدة: اضغط «تعديل العنوان والأوصاف».';
+
+  @override
+  String get upConnectPlay => 'اربط Google Play';
 }

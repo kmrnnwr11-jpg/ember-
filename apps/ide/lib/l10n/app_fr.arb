@@ -370,5 +370,9 @@
   "privacyLocalWarning": "Cette adresse ne fonctionne que sur cet ordinateur : Google ne peut pas l'ouvrir. Collez un lien public.",
   "consoleLinkLabel": "Lien de votre Play Console (collez-le une fois)",
   "consoleLinkHint": "Ouvrez Play Console, choisissez votre compte développeur, copiez l'adresse de cette page et collez-la ici : les boutons ouvriront directement votre compte et votre app.",
-  "consoleLinkSaved": "Enregistré ✓ compte développeur {id} : les boutons ouvrent maintenant votre console."
+  "consoleLinkSaved": "Enregistré ✓ compte développeur {id} : les boutons ouvrent maintenant votre console.",
+  "upStateConnected": "Google Play connecté (clé sur cet appareil)",
+  "upNeedsKey": "Google Play n'est pas connecté sur cet appareil : ouvrez le guide de publication et appuyez sur « Fais-le pour moi, Ember » pour créer la clé (1 minute).",
+  "upNeedsListing": "Rédigez la fiche une fois : appuyez sur « Modifier titre et descriptions ».",
+  "upConnectPlay": "Connecter Google Play"
 }

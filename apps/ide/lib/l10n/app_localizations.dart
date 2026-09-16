@@ -2329,6 +2329,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saved ✓ developer account {id}: the buttons now open your console directly.'**
   String consoleLinkSaved(String id);
+
+  /// No description provided for @upStateConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play connected (key on this device)'**
+  String get upStateConnected;
+
+  /// No description provided for @upNeedsKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play is not connected on this device: open the publishing guide and press “Do it for me, Ember” to create the key (1 minute).'**
+  String get upNeedsKey;
+
+  /// No description provided for @upNeedsListing.
+  ///
+  /// In en, this message translates to:
+  /// **'Write the store listing once: press “Edit title and descriptions”.'**
+  String get upNeedsListing;
+
+  /// No description provided for @upConnectPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Google Play'**
+  String get upConnectPlay;
 }
 
 class _AppLocalizationsDelegate

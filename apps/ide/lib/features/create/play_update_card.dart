@@ -21,6 +21,7 @@ class PlayUpdateCard extends ConsumerStatefulWidget {
 class _PlayUpdateCardState extends ConsumerState<PlayUpdateCard> {
   static const _saKey = 'play_service_account';
   Map<String, dynamic>? _state;
+  bool _connected = false;
   String? _busy;
   String? _message;
   bool _error = false;
@@ -34,7 +35,13 @@ class _PlayUpdateCardState extends ConsumerState<PlayUpdateCard> {
   Future<void> _refresh() async {
     try {
       final s = await (await ref.read(runnerApiProvider.future)).storeState(widget.projectId);
-      if (mounted) setState(() => _state = s);
+      final sa = await ref.read(keyValueStoreProvider).read(_saKey);
+      if (mounted) {
+        setState(() {
+          _state = s;
+          _connected = sa != null && sa.contains('private_key');
+        });
+      }
     } catch (_) {}
   }
 
@@ -43,9 +50,17 @@ class _PlayUpdateCardState extends ConsumerState<PlayUpdateCard> {
     final sa = await ref.read(keyValueStoreProvider).read(_saKey);
     final listing = _state?['listing'] as Map<String, dynamic>?;
     if (!mounted) return;
-    if (sa == null || listing == null || '${listing['title'] ?? ''}'.isEmpty) {
+    // Say exactly what is missing instead of a generic "connect first".
+    if (sa == null || !sa.contains('private_key')) {
       setState(() {
-        _message = l.upNeedsSetup;
+        _message = l.upNeedsKey;
+        _error = true;
+      });
+      return;
+    }
+    if (listing == null || '${listing['title'] ?? ''}'.isEmpty) {
+      setState(() {
+        _message = l.upNeedsListing;
         _error = true;
       });
       return;
@@ -113,6 +128,7 @@ class _PlayUpdateCardState extends ConsumerState<PlayUpdateCard> {
             const SizedBox(height: 4),
             Text(l.upHint, style: theme.textTheme.bodySmall),
             const SizedBox(height: 10),
+            _row(_connected, l.upStateConnected),
             _row(s?['appliedLogo'] != null, l.upStateLogo),
             _row(shots >= 2, l.upStateShots(shots)),
             _row(listing != null && '${listing['title'] ?? ''}'.isNotEmpty, listing == null ? l.upStateListing : '${l.upStateListing}: ${listing['title']}'),
@@ -143,8 +159,11 @@ class _PlayUpdateCardState extends ConsumerState<PlayUpdateCard> {
                   label: Text(l.upEditListing),
                 ),
                 TextButton(
-                  onPressed: () => context.push('/projects/${widget.projectId}/play', extra: widget.builder.prompt),
-                  child: Text(l.upOpenGuide),
+                  onPressed: () async {
+                    await context.push('/projects/${widget.projectId}/play', extra: widget.builder.prompt);
+                    _refresh();
+                  },
+                  child: Text(_connected ? l.upOpenGuide : l.upConnectPlay),
                 ),
               ],
             ),

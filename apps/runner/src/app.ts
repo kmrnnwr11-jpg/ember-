@@ -439,7 +439,7 @@ export async function buildApp(
       if (driver.kind !== 'local') return reply.status(501).send({ code: 'unsupported', message: 'Only available on a local Runner' });
       const body = z.object({ developerId: z.string().regex(/^\d{5,25}$/), serviceAccountEmail: z.string().email().max(200) }).parse(req.body);
       try {
-        return await invitePlayUser(body.developerId, body.serviceAccountEmail, deps.playFetch ?? fetch);
+        return await invitePlayUser(body.developerId, body.serviceAccountEmail, deps.playFetch ?? fetch, path.join(cfg.WORKSPACES_ROOT, '.play'));
       } catch (e) {
         return reply.status(502).send({ code: 'invite_failed', message: (e as Error).message });
       }

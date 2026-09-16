@@ -110,22 +110,57 @@ async function userPlayToken(): Promise<string> {
   return t.out.split(/\r?\n/).pop()!;
 }
 
-async function hasPlayScope(token: string): Promise<boolean> {
+async function tokenInfo(token: string): Promise<{ scope?: string; email?: string }> {
   try {
     const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(token.split(/\r?\n/).pop()!)}`);
-    const j = (await res.json()) as { scope?: string };
-    return (j.scope ?? '').includes('androidpublisher');
+    return (await res.json()) as { scope?: string; email?: string };
   } catch {
-    return false;
+    return {};
+  }
+}
+
+async function hasPlayScope(token: string): Promise<boolean> {
+  return ((await tokenInfo(token)).scope ?? '').includes('androidpublisher');
+}
+
+/** Google Cloud project used for API quota with personal credentials. */
+export async function quotaProject(stateDir: string): Promise<string | null> {
+  try {
+    const saved = JSON.parse(await readFile(path.join(stateDir, 'setup.json'), 'utf8')) as { projectId?: string };
+    return saved.projectId ?? null;
+  } catch {
+    return null;
   }
 }
 
 /** Invites the service account into the Play Console developer account (idempotent). */
-export async function invitePlayUser(developerId: string, serviceAccountEmail: string, fetchImpl: typeof fetch = fetch): Promise<{ invited: boolean; alreadyMember: boolean }> {
+export async function invitePlayUser(
+  developerId: string,
+  serviceAccountEmail: string,
+  fetchImpl: typeof fetch = fetch,
+  stateDir?: string,
+): Promise<{ invited: boolean; alreadyMember: boolean }> {
   const token = await userPlayToken();
+  // Personal credentials need a billing/quota project for the Play API.
+  const project = stateDir ? await quotaProject(stateDir) : null;
+  if (project) {
+    await gcloud(['auth', 'application-default', 'set-quota-project', project], 60_000);
+    // The browser login can be a different Google account than the one that owns the project.
+    const email = (await tokenInfo(token)).email;
+    if (email) {
+      await gcloud(
+        ['projects', 'add-iam-policy-binding', project, `--member=user:${email}`, '--role=roles/serviceusage.serviceUsageConsumer', '--condition=None', '--quiet'],
+        120_000,
+      );
+    }
+  }
   const res = await fetchImpl(`https://androidpublisher.googleapis.com/androidpublisher/v3/developers/${developerId}/users`, {
     method: 'POST',
-    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    headers: {
+      authorization: `Bearer ${token}`,
+      'content-type': 'application/json',
+      ...(project ? { 'x-goog-user-project': project } : {}),
+    },
     body: JSON.stringify({ email: serviceAccountEmail, developerAccountPermissions: INVITE_PERMISSIONS }),
   });
   if (res.ok) return { invited: true, alreadyMember: false };

@@ -1281,4 +1281,8 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get upOpenGuide => 'Guida alla pubblicazione';
+
+  @override
+  String get pubPasteConsoleLink =>
+      'Consiglio: apri una volta Play Console e incolla qui in chat l\'indirizzo di quella pagina. Da quel momento ogni pulsante apre direttamente il **tuo** account, senza chiederti quale.';
 }

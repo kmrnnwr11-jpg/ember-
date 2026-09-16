@@ -1265,4 +1265,8 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get upOpenGuide => 'دليل النشر';
+
+  @override
+  String get pubPasteConsoleLink =>
+      'نصيحة: افتح Play Console مرة واحدة والصق عنوان تلك الصفحة هنا في المحادثة. بعدها سيفتح كل زر حسابك **أنت** مباشرةً دون سؤال.';
 }

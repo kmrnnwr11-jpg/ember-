@@ -2293,6 +2293,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Publishing guide'**
   String get upOpenGuide;
+
+  /// No description provided for @pubPasteConsoleLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: open Play Console once and paste the address of that page here in the chat. From then on every button opens **your** account directly, without asking which one.'**
+  String get pubPasteConsoleLink;
 }
 
 class _AppLocalizationsDelegate

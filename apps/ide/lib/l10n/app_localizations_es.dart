@@ -1283,4 +1283,8 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get upOpenGuide => 'Guía de publicación';
+
+  @override
+  String get pubPasteConsoleLink =>
+      'Consejo: abre Play Console una vez y pega aquí la dirección de esa página. A partir de entonces cada botón abrirá directamente **tu** cuenta, sin preguntar cuál.';
 }

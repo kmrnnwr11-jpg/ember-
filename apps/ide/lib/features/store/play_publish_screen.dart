@@ -10,11 +10,12 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import 'play_links.dart';
 import '../ai/ai_settings.dart';
 import '../mockups/mockup_controller.dart' show CompleteText, apiCompleter, claudeCodeCompleter;
 
 const _playConsoleSignup = 'https://play.google.com/console/signup';
-const _playConsole = 'https://play.google.com/console';
+
 const _cloudServiceAccounts = 'https://console.cloud.google.com/iam-admin/serviceaccounts';
 const _enablePublisherApi = 'https://console.cloud.google.com/apis/library/androidpublisher.googleapis.com';
 
@@ -59,6 +60,7 @@ class PlayPublishScreen extends ConsumerStatefulWidget {
 }
 
 class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
+  PlayConsoleLink _console = const PlayConsoleLink();
   late int _step = widget.initialStep;
   late bool _hasAccount = widget.initialStep > 0;
   late bool _appCreated = widget.initialStep > 1;
@@ -89,6 +91,8 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
   }
 
   Future<void> _load() async {
+    _console = await PlayConsoleLink.load();
+    if (mounted) setState(() {});
     final saved = await ref.read(keyValueStoreProvider).read(_saKey);
     if (saved != null) _sa.text = saved;
     try {
@@ -280,7 +284,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                   MarkdownBody(data: l.playCreateAppGuide),
                   const SizedBox(height: 8),
                   if (_packageName != null) _copyRow(l.playPackageName, _packageName!),
-                  _link(l.playOpenConsole, _playConsole),
+                  _link(l.playOpenConsole, _console.appList(_packageName)),
                   CheckboxListTile(value: _appCreated, onChanged: (v) => setState(() => _appCreated = v ?? false), title: Text(l.playAppCreated), contentPadding: EdgeInsets.zero),
                   FilledButton(onPressed: _appCreated ? () => setState(() => _step = 2) : null, child: Text(l.next)),
                 ],
@@ -294,7 +298,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   MarkdownBody(data: l.playConnectGuide),
-                  Wrap(children: [_link(l.playOpenApiLibrary, _enablePublisherApi), _link(l.playOpenServiceAccounts, _cloudServiceAccounts), _link(l.playOpenConsole, _playConsole)]),
+                  Wrap(children: [_link(l.playOpenApiLibrary, _enablePublisherApi), _link(l.playOpenServiceAccounts, _cloudServiceAccounts), _link(l.playOpenConsole, _console.appList(_packageName))]),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _sa,
@@ -411,7 +415,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                       title: Text(l.playOtherDeclarations),
                       children: [MarkdownBody(data: _otherDeclarations, selectable: true)],
                     ),
-                  _link(l.playOpenConsole, _playConsole),
+                  _link(l.playOpenConsole, _console.appList(_packageName)),
                 ],
               ),
             ),

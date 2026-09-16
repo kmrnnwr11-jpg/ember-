@@ -1282,4 +1282,8 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get upOpenGuide => 'Guide de publication';
+
+  @override
+  String get pubPasteConsoleLink =>
+      'Astuce : ouvrez Play Console une fois et collez ici l\'adresse de cette page. Ensuite, chaque bouton ouvrira directement **votre** compte, sans demander lequel.';
 }

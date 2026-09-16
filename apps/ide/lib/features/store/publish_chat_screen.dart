@@ -15,6 +15,7 @@ import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../../widgets/ember_logo.dart';
 import '../ai/chat_controller.dart';
+import 'play_links.dart';
 import 'play_publish_screen.dart' show uploadSummary;
 
 /// Free questions while publishing, answered by Ember (Gemini on the Runner key).
@@ -56,6 +57,7 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
   String? _error;
   bool _manualInvite = false;
   Map<String, dynamic>? _uploadResult;
+  PlayConsoleLink _console = const PlayConsoleLink();
   final _input = TextEditingController();
   final _scroll = ScrollController();
 
@@ -83,6 +85,7 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
         _done.addAll((j['done'] as List).map((s) => _Step.values.byName(s as String)));
       }
     } catch (_) {}
+    _console = await PlayConsoleLink.load();
     final sa = await ref.read(keyValueStoreProvider).read(_saKey);
     if (sa != null) {
       try {
@@ -130,13 +133,19 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
     }
   }
 
-  Future<void> _invite(String link) async {
+  Future<void> _invite(String pastedLink) async {
     final l = AppLocalizations.of(context);
     if (_saEmail == null) {
       await _go(_Step.connect);
       return;
     }
-    final id = RegExp(r'developers/(\d{5,25})').firstMatch(link)?.group(1);
+    // Remember the account and developer id: every button then opens the user's own console.
+    final link = PlayConsoleLink.parse(pastedLink);
+    if (link != null) {
+      _console = link;
+      await link.save();
+    }
+    final id = link?.developerId;
     if (id == null) {
       setState(() => _error = l.pubInviteBadLink);
       return;
@@ -176,8 +185,8 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
           btn(l.pubNowIHaveIt, () => _go(_Step.createApp), primary: true),
         ]);
       case _Step.createApp:
-        return (text: l.pubCreateApp(_packageName ?? '…'), actions: [
-          btn(l.playOpenConsole, () => _open('https://play.google.com/console/u/0/developers/create-new-app')),
+        return (text: [l.pubCreateApp(_packageName ?? '…'), if (_console.developerId == null) l.pubPasteConsoleLink].join('\n\n'), actions: [
+          btn(l.playOpenConsole, () => _open(_console.createApp)),
           if (_packageName != null) btn(l.copy, () => Clipboard.setData(ClipboardData(text: _packageName!))),
           btn(l.pubDone, () => _go(_saEmail != null ? _Step.invite : _Step.connect), primary: true),
         ]);
@@ -188,7 +197,7 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
         ]);
       case _Step.invite:
         return (text: _manualInvite ? l.pubInviteManual(_saEmail ?? '') : l.pubInvite, actions: [
-          btn(l.playOpenConsole, () => _open('https://play.google.com/console')),
+          btn(l.playOpenConsole, () => _open(_console.appList(_packageName))),
           if (_manualInvite) ...[
             btn(l.copy, () => Clipboard.setData(ClipboardData(text: _saEmail ?? ''))),
             btn(l.pubDone, () => _go(_Step.graphics), primary: true),
@@ -215,7 +224,7 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
         ]);
       case _Step.finish:
         return (text: _uploadResult == null ? l.pubFinish : '${l.playUploaded('${_uploadResult!['versionCode']}', '${_uploadResult!['track']}', _uploadResult!['downgradedToDraft'] == true ? l.playDraftNote : '')}\n\n${uploadSummary(l, _uploadResult!)}\n\n${l.pubFinish}', actions: [
-          btn(l.playOpenConsole, () => _open('https://play.google.com/console')),
+          btn(l.playOpenConsole, () => _open(_console.appList(_packageName))),
           btn(l.pubReviewAnswers, () => context.push('/projects/${widget.projectId}/play/details', extra: widget.appDescription)),
         ]);
     }
@@ -263,7 +272,7 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
     final assistant = ref.watch(publishAssistantProvider(widget.projectId));
     final history = [..._done.where((s) => s != _step)];
     final current = _say(_step, l);
-    final waitingLink = _step == _Step.invite && !_manualInvite;
+    final waitingLink = (_step == _Step.invite && !_manualInvite) || (_step == _Step.createApp && _console.developerId == null);
     return Scaffold(
       appBar: AppBar(title: Text(l.pubTitle)),
       body: Column(
@@ -310,6 +319,20 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
                             final text = _input.text.trim();
                             if (text.isEmpty) return;
                             if (waitingLink && text.contains('play.google.com')) {
+                              if (_step == _Step.createApp) {
+                                final link = PlayConsoleLink.parse(text);
+                                if (link == null) {
+                                  setState(() => _error = l.pubInviteBadLink);
+                                } else {
+                                  link.save();
+                                  setState(() {
+                                    _console = link;
+                                    _error = null;
+                                    _input.clear();
+                                  });
+                                }
+                                return;
+                              }
                               _invite(text);
                             } else {
                               _input.clear();

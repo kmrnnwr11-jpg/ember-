@@ -364,5 +364,6 @@
   "upBuilding": "Création du nouvel AAB signé…",
   "upUploading": "Envoi sur Google Play…",
   "upNeedsSetup": "Connectez d'abord Google Play et rédigez la fiche une fois : ouvrez le guide de publication.",
-  "upOpenGuide": "Guide de publication"
+  "upOpenGuide": "Guide de publication",
+  "pubPasteConsoleLink": "Astuce : ouvrez Play Console une fois et collez ici l'adresse de cette page. Ensuite, chaque bouton ouvrira directement **votre** compte, sans demander lequel."
 }

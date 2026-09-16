@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import '../store/play_links.dart';
 import 'app_builder.dart';
 
 /// Products the AI put in the app, with one button to create and activate them on Google Play.
@@ -108,7 +109,7 @@ class _ProductsCardState extends ConsumerState<ProductsCard> {
                   label: Text(l.productsActivate),
                 ),
                 OutlinedButton(
-                  onPressed: () => launchUrl(Uri.parse('https://play.google.com/console/u/0/developers/payments-profile'), mode: LaunchMode.externalApplication),
+                  onPressed: () async => launchUrl(Uri.parse((await PlayConsoleLink.load()).paymentsProfile), mode: LaunchMode.externalApplication),
                   child: Text(l.productsOpenPayments),
                 ),
                 OutlinedButton(

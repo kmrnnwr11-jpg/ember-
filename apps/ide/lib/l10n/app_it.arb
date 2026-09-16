@@ -364,5 +364,6 @@
   "upBuilding": "Creo il nuovo AAB firmato…",
   "upUploading": "Carico su Google Play…",
   "upNeedsSetup": "Prima collega Google Play e scrivi la scheda una volta: apri la guida alla pubblicazione.",
-  "upOpenGuide": "Guida alla pubblicazione"
+  "upOpenGuide": "Guida alla pubblicazione",
+  "pubPasteConsoleLink": "Consiglio: apri una volta Play Console e incolla qui in chat l'indirizzo di quella pagina. Da quel momento ogni pulsante apre direttamente il **tuo** account, senza chiederti quale."
 }

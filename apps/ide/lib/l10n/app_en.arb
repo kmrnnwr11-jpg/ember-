@@ -762,5 +762,15 @@
   },
   "pubPasteConsoleLink": "Tip: open Play Console once and paste the address of that page here in the chat. From then on every button opens **your** account directly, without asking which one.",
   "privacyPublicHint": "Paste a public link Google can open (e.g. a GitHub gist or a page on your site).",
-  "privacyLocalWarning": "This address only works on this computer: Google cannot open it. Paste a public link instead."
+  "privacyLocalWarning": "This address only works on this computer: Google cannot open it. Paste a public link instead.",
+  "consoleLinkLabel": "Your Play Console link (paste once)",
+  "consoleLinkHint": "Open Play Console, choose your developer account, then copy the address of that page and paste it here: the buttons will then open your account and your app directly.",
+  "consoleLinkSaved": "Saved ✓ developer account {id}: the buttons now open your console directly.",
+  "@consoleLinkSaved": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  }
 }

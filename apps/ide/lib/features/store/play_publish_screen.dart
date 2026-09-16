@@ -72,6 +72,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
   final _notes = TextEditingController();
   final _email = TextEditingController();
   final _privacyLink = TextEditingController();
+  final _consoleLink = TextEditingController();
   String _privacy = '';
   String _dataSafety = '';
   String _contentRating = '';
@@ -93,6 +94,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
 
   Future<void> _load() async {
     _console = await PlayConsoleLink.load();
+    _consoleLink.text = _console.developerId == null ? '' : _console.appList();
     if (mounted) setState(() {});
     final saved = await ref.read(keyValueStoreProvider).read(_saKey);
     if (saved != null) _sa.text = saved;
@@ -121,7 +123,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
 
   @override
   void dispose() {
-    for (final c in [_sa, _title, _short, _full, _notes, _email, _privacyLink]) {
+    for (final c in [_sa, _title, _short, _full, _notes, _email, _privacyLink, _consoleLink]) {
       c.dispose();
     }
     super.dispose();
@@ -223,6 +225,31 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     if (mounted) setState(() => _publishing = false);
   }
 
+  /// Saves the pasted Play Console address so every button opens the user's own account.
+  Future<void> _saveConsoleLink(String url) async {
+    final link = PlayConsoleLink.parse(url);
+    if (link == null) return;
+    await link.save();
+    if (mounted) setState(() => _console = link);
+  }
+
+  Widget _consoleLinkField(AppLocalizations l) => Padding(
+    padding: const EdgeInsets.only(top: 8),
+    child: TextField(
+      controller: _consoleLink,
+      keyboardType: TextInputType.url,
+      onChanged: _saveConsoleLink,
+      decoration: InputDecoration(
+        labelText: l.consoleLinkLabel,
+        hintText: 'https://play.google.com/console/u/0/developers/…',
+        helperText: _console.developerId == null ? l.consoleLinkHint : l.consoleLinkSaved(_console.developerId!),
+        helperMaxLines: 3,
+        border: const OutlineInputBorder(),
+        isDense: true,
+      ),
+    ),
+  );
+
   Widget _link(String label, String url) => TextButton.icon(
     onPressed: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
     icon: const Icon(Icons.open_in_new, size: 16),
@@ -289,6 +316,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                   const SizedBox(height: 8),
                   if (_packageName != null) _copyRow(l.playPackageName, _packageName!),
                   _link(l.playOpenConsole, _console.appList(_packageName)),
+                  _consoleLinkField(l),
                   CheckboxListTile(value: _appCreated, onChanged: (v) => setState(() => _appCreated = v ?? false), title: Text(l.playAppCreated), contentPadding: EdgeInsets.zero),
                   FilledButton(onPressed: _appCreated ? () => setState(() => _step = 2) : null, child: Text(l.next)),
                 ],
@@ -432,6 +460,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                       children: [MarkdownBody(data: _otherDeclarations, selectable: true)],
                     ),
                   _link(l.playOpenConsole, _console.appList(_packageName)),
+                  _consoleLinkField(l),
                 ],
               ),
             ),

@@ -367,5 +367,8 @@
   "upOpenGuide": "Guide de publication",
   "pubPasteConsoleLink": "Astuce : ouvrez Play Console une fois et collez ici l'adresse de cette page. Ensuite, chaque bouton ouvrira directement **votre** compte, sans demander lequel.",
   "privacyPublicHint": "Collez un lien public que Google peut ouvrir (par exemple un gist GitHub ou une page de votre site).",
-  "privacyLocalWarning": "Cette adresse ne fonctionne que sur cet ordinateur : Google ne peut pas l'ouvrir. Collez un lien public."
+  "privacyLocalWarning": "Cette adresse ne fonctionne que sur cet ordinateur : Google ne peut pas l'ouvrir. Collez un lien public.",
+  "consoleLinkLabel": "Lien de votre Play Console (collez-le une fois)",
+  "consoleLinkHint": "Ouvrez Play Console, choisissez votre compte développeur, copiez l'adresse de cette page et collez-la ici : les boutons ouvriront directement votre compte et votre app.",
+  "consoleLinkSaved": "Enregistré ✓ compte développeur {id} : les boutons ouvrent maintenant votre console."
 }

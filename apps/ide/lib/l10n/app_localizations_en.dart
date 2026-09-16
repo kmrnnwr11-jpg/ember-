@@ -1281,4 +1281,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get privacyLocalWarning =>
       'This address only works on this computer: Google cannot open it. Paste a public link instead.';
+
+  @override
+  String get consoleLinkLabel => 'Your Play Console link (paste once)';
+
+  @override
+  String get consoleLinkHint =>
+      'Open Play Console, choose your developer account, then copy the address of that page and paste it here: the buttons will then open your account and your app directly.';
+
+  @override
+  String consoleLinkSaved(String id) {
+    return 'Saved ✓ developer account $id: the buttons now open your console directly.';
+  }
 }

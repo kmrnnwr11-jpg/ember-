@@ -1277,4 +1277,16 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get privacyLocalWarning =>
       'هذا العنوان يعمل على هذا الكمبيوتر فقط ولا تستطيع Google فتحه. الصق رابطًا عامًا بدلًا منه.';
+
+  @override
+  String get consoleLinkLabel => 'رابط Play Console الخاص بك (الصقه مرة واحدة)';
+
+  @override
+  String get consoleLinkHint =>
+      'افتح Play Console واختر حساب المطوّر، ثم انسخ عنوان تلك الصفحة والصقه هنا: عندها ستفتح الأزرار حسابك وتطبيقك مباشرةً.';
+
+  @override
+  String consoleLinkSaved(String id) {
+    return 'تم الحفظ ✓ حساب المطوّر $id: تفتح الأزرار الآن وحدة تحكمك مباشرةً.';
+  }
 }

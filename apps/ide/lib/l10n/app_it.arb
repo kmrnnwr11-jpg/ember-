@@ -367,5 +367,8 @@
   "upOpenGuide": "Guida alla pubblicazione",
   "pubPasteConsoleLink": "Consiglio: apri una volta Play Console e incolla qui in chat l'indirizzo di quella pagina. Da quel momento ogni pulsante apre direttamente il **tuo** account, senza chiederti quale.",
   "privacyPublicHint": "Incolla un link pubblico che Google possa aprire (per esempio un gist GitHub o una pagina del tuo sito).",
-  "privacyLocalWarning": "Questo indirizzo funziona solo su questo computer: Google non può aprirlo. Incolla invece un link pubblico."
+  "privacyLocalWarning": "Questo indirizzo funziona solo su questo computer: Google non può aprirlo. Incolla invece un link pubblico.",
+  "consoleLinkLabel": "Link della tua Play Console (incollalo una volta)",
+  "consoleLinkHint": "Apri Play Console, scegli il tuo account sviluppatore, poi copia l'indirizzo di quella pagina e incollalo qui: i pulsanti apriranno direttamente il tuo account e la tua app.",
+  "consoleLinkSaved": "Salvato ✓ account sviluppatore {id}: i pulsanti ora aprono direttamente la tua console."
 }

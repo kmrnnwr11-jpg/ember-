@@ -2311,6 +2311,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This address only works on this computer: Google cannot open it. Paste a public link instead.'**
   String get privacyLocalWarning;
+
+  /// No description provided for @consoleLinkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Play Console link (paste once)'**
+  String get consoleLinkLabel;
+
+  /// No description provided for @consoleLinkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Play Console, choose your developer account, then copy the address of that page and paste it here: the buttons will then open your account and your app directly.'**
+  String get consoleLinkHint;
+
+  /// No description provided for @consoleLinkSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved ✓ developer account {id}: the buttons now open your console directly.'**
+  String consoleLinkSaved(String id);
 }
 
 class _AppLocalizationsDelegate

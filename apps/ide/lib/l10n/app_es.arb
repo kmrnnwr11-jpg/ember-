@@ -367,5 +367,8 @@
   "upOpenGuide": "Guía de publicación",
   "pubPasteConsoleLink": "Consejo: abre Play Console una vez y pega aquí la dirección de esa página. A partir de entonces cada botón abrirá directamente **tu** cuenta, sin preguntar cuál.",
   "privacyPublicHint": "Pega un enlace público que Google pueda abrir (por ejemplo un gist de GitHub o una página de tu web).",
-  "privacyLocalWarning": "Esta dirección solo funciona en este ordenador: Google no puede abrirla. Pega un enlace público."
+  "privacyLocalWarning": "Esta dirección solo funciona en este ordenador: Google no puede abrirla. Pega un enlace público.",
+  "consoleLinkLabel": "Enlace de tu Play Console (pégalo una vez)",
+  "consoleLinkHint": "Abre Play Console, elige tu cuenta de desarrollador, copia la dirección de esa página y pégala aquí: los botones abrirán directamente tu cuenta y tu app.",
+  "consoleLinkSaved": "Guardado ✓ cuenta de desarrollador {id}: los botones abren ya tu consola."
 }

@@ -185,7 +185,7 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
           btn(l.pubNowIHaveIt, () => _go(_Step.createApp), primary: true),
         ]);
       case _Step.createApp:
-        return (text: [l.pubCreateApp(_packageName ?? '…'), if (_console.developerId == null) l.pubPasteConsoleLink].join('\n\n'), actions: [
+        return (text: [l.pubCreateApp(_packageName ?? '…'), _console.developerId == null ? l.pubPasteConsoleLink : l.consoleLinkSaved(_console.developerId!)].join('\n\n'), actions: [
           btn(l.playOpenConsole, () => _open(_console.createApp)),
           if (_packageName != null) btn(l.copy, () => Clipboard.setData(ClipboardData(text: _packageName!))),
           btn(l.pubDone, () => _go(_saEmail != null ? _Step.invite : _Step.connect), primary: true),
@@ -318,22 +318,21 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
                         : () {
                             final text = _input.text.trim();
                             if (text.isEmpty) return;
+                            // A pasted Play Console link always updates the saved account.
+                            final pasted = text.contains('play.google.com/console') ? PlayConsoleLink.parse(text) : null;
+                            if (pasted != null) {
+                              pasted.save();
+                              setState(() {
+                                _console = pasted;
+                                _error = null;
+                                _input.clear();
+                              });
+                              if (_step == _Step.invite && !_manualInvite) _invite(text);
+                              return;
+                            }
                             if (waitingLink && text.contains('play.google.com')) {
-                              if (_step == _Step.createApp) {
-                                final link = PlayConsoleLink.parse(text);
-                                if (link == null) {
-                                  setState(() => _error = l.pubInviteBadLink);
-                                } else {
-                                  link.save();
-                                  setState(() {
-                                    _console = link;
-                                    _error = null;
-                                    _input.clear();
-                                  });
-                                }
-                                return;
-                              }
-                              _invite(text);
+                              setState(() => _error = l.pubInviteBadLink);
+                              return;
                             } else {
                               _input.clear();
                               assistant.send('[Publishing step: ${_step.name}] $text');

@@ -1287,4 +1287,12 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get pubPasteConsoleLink =>
       'Consejo: abre Play Console una vez y pega aquí la dirección de esa página. A partir de entonces cada botón abrirá directamente **tu** cuenta, sin preguntar cuál.';
+
+  @override
+  String get privacyPublicHint =>
+      'Pega un enlace público que Google pueda abrir (por ejemplo un gist de GitHub o una página de tu web).';
+
+  @override
+  String get privacyLocalWarning =>
+      'Esta dirección solo funciona en este ordenador: Google no puede abrirla. Pega un enlace público.';
 }

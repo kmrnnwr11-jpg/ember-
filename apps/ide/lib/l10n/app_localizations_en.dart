@@ -1273,4 +1273,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pubPasteConsoleLink =>
       'Tip: open Play Console once and paste the address of that page here in the chat. From then on every button opens **your** account directly, without asking which one.';
+
+  @override
+  String get privacyPublicHint =>
+      'Paste a public link Google can open (e.g. a GitHub gist or a page on your site).';
+
+  @override
+  String get privacyLocalWarning =>
+      'This address only works on this computer: Google cannot open it. Paste a public link instead.';
 }

@@ -1269,4 +1269,12 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get pubPasteConsoleLink =>
       'نصيحة: افتح Play Console مرة واحدة والصق عنوان تلك الصفحة هنا في المحادثة. بعدها سيفتح كل زر حسابك **أنت** مباشرةً دون سؤال.';
+
+  @override
+  String get privacyPublicHint =>
+      'الصق رابطًا عامًا يمكن لـ Google فتحه (مثل gist على GitHub أو صفحة في موقعك).';
+
+  @override
+  String get privacyLocalWarning =>
+      'هذا العنوان يعمل على هذا الكمبيوتر فقط ولا تستطيع Google فتحه. الصق رابطًا عامًا بدلًا منه.';
 }

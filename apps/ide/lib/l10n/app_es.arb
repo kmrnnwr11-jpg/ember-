@@ -365,5 +365,7 @@
   "upUploading": "Subiendo a Google Play…",
   "upNeedsSetup": "Primero conecta Google Play y escribe la ficha una vez: abre la guía de publicación.",
   "upOpenGuide": "Guía de publicación",
-  "pubPasteConsoleLink": "Consejo: abre Play Console una vez y pega aquí la dirección de esa página. A partir de entonces cada botón abrirá directamente **tu** cuenta, sin preguntar cuál."
+  "pubPasteConsoleLink": "Consejo: abre Play Console una vez y pega aquí la dirección de esa página. A partir de entonces cada botón abrirá directamente **tu** cuenta, sin preguntar cuál.",
+  "privacyPublicHint": "Pega un enlace público que Google pueda abrir (por ejemplo un gist de GitHub o una página de tu web).",
+  "privacyLocalWarning": "Esta dirección solo funciona en este ordenador: Google no puede abrirla. Pega un enlace público."
 }

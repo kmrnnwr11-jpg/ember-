@@ -2299,6 +2299,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tip: open Play Console once and paste the address of that page here in the chat. From then on every button opens **your** account directly, without asking which one.'**
   String get pubPasteConsoleLink;
+
+  /// No description provided for @privacyPublicHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste a public link Google can open (e.g. a GitHub gist or a page on your site).'**
+  String get privacyPublicHint;
+
+  /// No description provided for @privacyLocalWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This address only works on this computer: Google cannot open it. Paste a public link instead.'**
+  String get privacyLocalWarning;
 }
 
 class _AppLocalizationsDelegate

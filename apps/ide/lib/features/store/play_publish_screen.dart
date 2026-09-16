@@ -71,6 +71,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
   final _full = TextEditingController();
   final _notes = TextEditingController();
   final _email = TextEditingController();
+  final _privacyLink = TextEditingController();
   String _privacy = '';
   String _dataSafety = '';
   String _contentRating = '';
@@ -105,6 +106,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
           _notes.text = '${listing['releaseNotes'] ?? ''}';
           _email.text = '${listing['contactEmail'] ?? ''}';
           _privacyUrl = (listing['privacyUrl'] as String?)?.isEmpty == true ? null : listing['privacyUrl'] as String?;
+          _privacyLink.text = _privacyUrl ?? '';
           _dataSafety = '${listing['dataSafety'] ?? ''}';
           _contentRating = '${listing['contentRating'] ?? ''}';
           _otherDeclarations = '${listing['otherDeclarations'] ?? ''}';
@@ -119,7 +121,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
 
   @override
   void dispose() {
-    for (final c in [_sa, _title, _short, _full, _notes, _email]) {
+    for (final c in [_sa, _title, _short, _full, _notes, _email, _privacyLink]) {
       c.dispose();
     }
     super.dispose();
@@ -164,7 +166,9 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       final api = await ref.read(runnerApiProvider.future);
       final path = await api.savePrivacyPolicy(widget.projectId, _privacy, _title.text);
       final session = ref.read(sessionProvider).value!;
+      // Only as a suggestion: the Runner address is not reachable by Google, the user pastes a public link.
       _privacyUrl = '${session.runnerUrl}$path';
+      if (_privacyLink.text.trim().isEmpty) _privacyLink.text = _privacyUrl!;
       await _saveListing();
     } catch (e) {
       _error = e is RunnerException ? e.message : e.toString();
@@ -180,7 +184,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
         'fullDescription': _full.text.trim(),
         'releaseNotes': _notes.text.trim(),
         'contactEmail': _email.text.trim(),
-        'privacyUrl': _privacyUrl ?? '',
+        'privacyUrl': _privacyLink.text.trim(),
         'dataSafety': _dataSafety,
         'contentRating': _contentRating,
         'otherDeclarations': _otherDeclarations,
@@ -355,7 +359,19 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                     decoration: InputDecoration(labelText: l.playContactEmail, border: const OutlineInputBorder()),
                   ),
                   const SizedBox(height: 12),
-                  if (_privacyUrl != null) _copyRow(l.playPrivacyUrl, _privacyUrl!),
+                  TextField(
+                    controller: _privacyLink,
+                    keyboardType: TextInputType.url,
+                    onChanged: (v) => setState(() => _privacyUrl = v.trim().isEmpty ? null : v.trim()),
+                    decoration: InputDecoration(
+                      labelText: l.playPrivacyUrl,
+                      hintText: 'https://…',
+                      helperText: _privacyLink.text.contains('localhost') || _privacyLink.text.contains('127.0.0.1') ? l.privacyLocalWarning : l.privacyPublicHint,
+                      helperMaxLines: 3,
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(icon: const Icon(Icons.copy, size: 18), onPressed: () => Clipboard.setData(ClipboardData(text: _privacyLink.text))),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: _track,
@@ -399,7 +415,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                         ),
                       ),
                     ),
-                  MarkdownBody(data: l.playManualChecklist(_privacyUrl ?? '—')),
+                  MarkdownBody(data: l.playManualChecklist(_privacyLink.text.trim().isEmpty ? '—' : _privacyLink.text.trim())),
                   if (_dataSafety.isNotEmpty)
                     ExpansionTile(
                       title: Text(l.playDataSafety),

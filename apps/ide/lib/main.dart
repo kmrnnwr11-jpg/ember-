@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,6 +53,16 @@ class FlutterCursorApp extends ConsumerWidget {
         titleMedium: base.textTheme.titleMedium?.merge(display.copyWith(fontWeight: FontWeight.w600)),
       ),
       appBarTheme: AppBarTheme(backgroundColor: scheme.surface, surfaceTintColor: Colors.transparent),
+      // Always-visible scrollbar you can drag with the mouse, on every scrollable page.
+      scrollbarTheme: ScrollbarThemeData(
+        thumbVisibility: const WidgetStatePropertyAll(true),
+        trackVisibility: const WidgetStatePropertyAll(true),
+        interactive: true,
+        thickness: const WidgetStatePropertyAll(10),
+        radius: const Radius.circular(6),
+        thumbColor: WidgetStatePropertyAll(scheme.primary.withValues(alpha: 0.55)),
+        trackColor: WidgetStatePropertyAll(scheme.outlineVariant.withValues(alpha: 0.4)),
+      ),
       cardTheme: CardThemeData(
         color: scheme.surfaceContainerLow,
         surfaceTintColor: Colors.transparent,
@@ -90,6 +101,7 @@ class FlutterCursorApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      scrollBehavior: const MaterialScrollBehavior().copyWith(scrollbars: true, dragDevices: PointerDeviceKind.values.toSet()),
       routerConfig: ref.watch(routerProvider),
     );
   }

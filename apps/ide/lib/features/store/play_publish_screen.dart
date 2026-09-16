@@ -242,6 +242,17 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       decoration: InputDecoration(
         labelText: l.consoleLinkLabel,
         hintText: 'https://play.google.com/console/u/0/developers/…',
+        suffixIcon: IconButton(
+          tooltip: l.paste,
+          icon: const Icon(Icons.content_paste, size: 18),
+          onPressed: () async {
+            final data = await Clipboard.getData(Clipboard.kTextPlain);
+            final text = data?.text?.trim();
+            if (text == null || text.isEmpty) return;
+            _consoleLink.text = text;
+            await _saveConsoleLink(text);
+          },
+        ),
         helperText: _console.developerId == null ? l.consoleLinkHint : l.consoleLinkSaved(_console.developerId!),
         helperMaxLines: 3,
         border: const OutlineInputBorder(),
@@ -397,7 +408,25 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                       helperText: _privacyLink.text.contains('localhost') || _privacyLink.text.contains('127.0.0.1') ? l.privacyLocalWarning : l.privacyPublicHint,
                       helperMaxLines: 3,
                       border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(icon: const Icon(Icons.copy, size: 18), onPressed: () => Clipboard.setData(ClipboardData(text: _privacyLink.text))),
+                      suffixIcon: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: l.paste,
+                            icon: const Icon(Icons.content_paste, size: 18),
+                            onPressed: () async {
+                              final data = await Clipboard.getData(Clipboard.kTextPlain);
+                              final text = data?.text?.trim();
+                              if (text == null || text.isEmpty) return;
+                              setState(() {
+                                _privacyLink.text = text;
+                                _privacyUrl = text;
+                              });
+                            },
+                          ),
+                          IconButton(tooltip: l.copy, icon: const Icon(Icons.copy, size: 18), onPressed: () => Clipboard.setData(ClipboardData(text: _privacyLink.text))),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),

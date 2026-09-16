@@ -1318,4 +1318,7 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get dsNeedsCsv =>
       'صدّر النموذج أولًا من Play Console: محتوى التطبيق ← أمان البيانات ← تصدير إلى CSV. احفظه في مجلد التنزيلات ثم اضغط الزر مرة أخرى.';
+
+  @override
+  String get paste => 'لصق';
 }

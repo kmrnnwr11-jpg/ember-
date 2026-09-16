@@ -1336,4 +1336,7 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get dsNeedsCsv =>
       'Prima esporta il modulo da Play Console: Contenuti dell\'app → Sicurezza dei dati → Esporta in CSV. Salvalo in Download, poi premi di nuovo questo pulsante.';
+
+  @override
+  String get paste => 'Incolla';
 }

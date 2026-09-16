@@ -378,5 +378,6 @@
   "dsButton": "Remplir Sécurité des données",
   "dsWorking": "Analyse des données collectées et remplissage du formulaire…",
   "dsDone": "Sécurité des données envoyée à Google Play ✓ — vérifiez-la dans Play Console → Contenu de l'app → Sécurité des données et appuyez sur Envoyer.",
-  "dsNeedsCsv": "Exportez d'abord le formulaire depuis Play Console : Contenu de l'app → Sécurité des données → Exporter en CSV. Enregistrez-le dans Téléchargements, puis réappuyez."
+  "dsNeedsCsv": "Exportez d'abord le formulaire depuis Play Console : Contenu de l'app → Sécurité des données → Exporter en CSV. Enregistrez-le dans Téléchargements, puis réappuyez.",
+  "paste": "Coller"
 }

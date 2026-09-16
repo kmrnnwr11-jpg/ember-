@@ -780,5 +780,6 @@
   "dsButton": "Fill Data safety",
   "dsWorking": "Reading what the app collects and filling the Data safety form…",
   "dsDone": "Data safety sent to Google Play ✓ — check it in Play Console → App content → Data safety and press Submit.",
-  "dsNeedsCsv": "First export the form from Play Console: App content → Data safety → Export to CSV. Save it in Downloads, then press this button again."
+  "dsNeedsCsv": "First export the form from Play Console: App content → Data safety → Export to CSV. Save it in Downloads, then press this button again.",
+  "paste": "Paste"
 }

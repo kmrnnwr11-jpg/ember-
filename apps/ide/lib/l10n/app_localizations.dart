@@ -2377,6 +2377,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'First export the form from Play Console: App content → Data safety → Export to CSV. Save it in Downloads, then press this button again.'**
   String get dsNeedsCsv;
+
+  /// No description provided for @paste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get paste;
 }
 
 class _AppLocalizationsDelegate

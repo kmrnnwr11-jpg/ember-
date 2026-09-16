@@ -1337,4 +1337,7 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get dsNeedsCsv =>
       'Primero exporta el formulario desde Play Console: Contenido de la app → Seguridad de los datos → Exportar a CSV. Guárdalo en Descargas y pulsa otra vez.';
+
+  @override
+  String get paste => 'Pegar';
 }

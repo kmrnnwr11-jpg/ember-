@@ -1322,4 +1322,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get dsNeedsCsv =>
       'First export the form from Play Console: App content → Data safety → Export to CSV. Save it in Downloads, then press this button again.';
+
+  @override
+  String get paste => 'Paste';
 }

@@ -1303,4 +1303,19 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get upConnectPlay => 'اربط Google Play';
+
+  @override
+  String get dsButton => 'تعبئة أمان البيانات';
+
+  @override
+  String get dsWorking =>
+      'جارٍ تحليل ما يجمعه التطبيق وتعبئة نموذج أمان البيانات…';
+
+  @override
+  String get dsDone =>
+      'تم إرسال أمان البيانات إلى Google Play ✓ — راجعه في Play Console ← محتوى التطبيق ← أمان البيانات واضغط إرسال.';
+
+  @override
+  String get dsNeedsCsv =>
+      'صدّر النموذج أولًا من Play Console: محتوى التطبيق ← أمان البيانات ← تصدير إلى CSV. احفظه في مجلد التنزيلات ثم اضغط الزر مرة أخرى.';
 }

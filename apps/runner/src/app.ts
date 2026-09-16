@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { syncProducts } from './play_products.js';
+import { DATA_SAFETY_SYSTEM, dataSafetyPrompt, detectDataFacts, findExportedCsv, uploadDataSafety, validateFilledCsv } from './data_safety.js';
 import { createServiceAccountKey, gcloudStatus, invitePlayUser, storeImages } from './play_setup.js';
 import { cliLogins, cliModels } from './subscription_clis.js';
 import { mkdir, stat } from 'node:fs/promises';
@@ -442,6 +443,34 @@ export async function buildApp(
         return await invitePlayUser(body.developerId, body.serviceAccountEmail, deps.playFetch ?? fetch, path.join(cfg.WORKSPACES_ROOT, '.play'));
       } catch (e) {
         return reply.status(502).send({ code: 'invite_failed', message: (e as Error).message });
+      }
+    });
+
+    // Data safety: the AI fills the CSV exported from Play Console and the Runner uploads it.
+    r.post('/v1/projects/:projectId/play/data-safety', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const body = z.object({ serviceAccount: z.string().min(50).max(20000), csv: z.string().max(500_000).optional() }).parse(req.body);
+      const root = services.projectRoot(project);
+      const csvPath = body.csv ? null : await findExportedCsv();
+      const csv = body.csv ?? (csvPath ? await readFileAsync(csvPath, 'utf8') : null);
+      if (!csv || !/Question ID|PSL_/i.test(csv)) {
+        return reply.status(409).send({ code: 'needs_csv', message: 'Export the Data safety CSV from Play Console first (Data safety → Export to CSV), then try again' });
+      }
+      const info = await (deps.androidInfo ?? androidAppInfo)(cfg, project.id, root, project.name);
+      if (!info.applicationId) return reply.status(409).send({ code: 'not_ready', message: 'Android package name not found' });
+      const facts = await detectDataFacts(root);
+      const complete = (await claudeCode.isAvailable())
+        ? async (system: string, prompt: string) => (await claudeCode.complete({ system, prompt, quality: 'fast', timeoutMs: 600_000 })).text
+        : null;
+      if (!complete) return reply.status(501).send({ code: 'no_ai', message: 'Claude Code is needed to fill the Data safety form' });
+      try {
+        const filled = validateFilledCsv(csv, await complete(DATA_SAFETY_SYSTEM, dataSafetyPrompt(csv, facts, project.name)));
+        await uploadDataSafety({ serviceAccount: parseServiceAccount(body.serviceAccount), packageName: info.applicationId, csv: filled }, deps.playFetch ?? fetch);
+        return { ok: true, source: csvPath ?? 'pasted', facts };
+      } catch (e) {
+        if (e instanceof PlayError) return reply.status(422).send({ code: e.code, message: e.message });
+        throw e;
       }
     });
 

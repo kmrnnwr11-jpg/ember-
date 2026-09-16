@@ -1322,4 +1322,19 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get upConnectPlay => 'Conectar Google Play';
+
+  @override
+  String get dsButton => 'Rellenar Seguridad de los datos';
+
+  @override
+  String get dsWorking =>
+      'Analizando qué recoge la app y rellenando el formulario…';
+
+  @override
+  String get dsDone =>
+      'Seguridad de los datos enviada a Google Play ✓ — revísala en Play Console → Contenido de la app → Seguridad de los datos y pulsa Enviar.';
+
+  @override
+  String get dsNeedsCsv =>
+      'Primero exporta el formulario desde Play Console: Contenido de la app → Seguridad de los datos → Exportar a CSV. Guárdalo en Descargas y pulsa otra vez.';
 }

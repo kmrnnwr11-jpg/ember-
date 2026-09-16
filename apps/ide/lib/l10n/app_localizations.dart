@@ -2353,6 +2353,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect Google Play'**
   String get upConnectPlay;
+
+  /// No description provided for @dsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill Data safety'**
+  String get dsButton;
+
+  /// No description provided for @dsWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading what the app collects and filling the Data safety form…'**
+  String get dsWorking;
+
+  /// No description provided for @dsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Data safety sent to Google Play ✓ — check it in Play Console → App content → Data safety and press Submit.'**
+  String get dsDone;
+
+  /// No description provided for @dsNeedsCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'First export the form from Play Console: App content → Data safety → Export to CSV. Save it in Downloads, then press this button again.'**
+  String get dsNeedsCsv;
 }
 
 class _AppLocalizationsDelegate

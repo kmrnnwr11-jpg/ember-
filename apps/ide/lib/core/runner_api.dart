@@ -120,6 +120,12 @@ class RunnerApi {
   Future<Map<String, dynamic>> applyLogo(String projectId, String logoId) =>
       _call(() => _dio.post('/v1/projects/$projectId/logos/$logoId/apply', data: const <String, dynamic>{}), (d) => d as Map<String, dynamic>);
 
+  /// Fills the Play Console "Data safety" form from the exported CSV and uploads it.
+  Future<Map<String, dynamic>> fillDataSafety(String projectId, String serviceAccount, {String? csv}) => _call(
+    () => _dio.post('/v1/projects/$projectId/play/data-safety', data: {'serviceAccount': serviceAccount, 'csv': ?csv}, options: Options(receiveTimeout: const Duration(minutes: 12))),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// Creates and activates in-app products / subscriptions on Google Play.
   Future<Map<String, dynamic>> syncPlayProducts(String projectId, String serviceAccount, List<Map<String, dynamic>> products) => _call(
     () => _dio.post('/v1/projects/$projectId/play/products', data: {'serviceAccount': serviceAccount, 'products': products}, options: Options(receiveTimeout: const Duration(minutes: 5))),

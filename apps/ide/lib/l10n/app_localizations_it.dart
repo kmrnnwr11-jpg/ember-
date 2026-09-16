@@ -1321,4 +1321,19 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get upConnectPlay => 'Collega Google Play';
+
+  @override
+  String get dsButton => 'Compila Sicurezza dei dati';
+
+  @override
+  String get dsWorking =>
+      'Leggo cosa raccoglie l\'app e compilo il modulo Sicurezza dei dati…';
+
+  @override
+  String get dsDone =>
+      'Sicurezza dei dati inviata a Google Play ✓ — controllala in Play Console → Contenuti dell\'app → Sicurezza dei dati e premi Invia.';
+
+  @override
+  String get dsNeedsCsv =>
+      'Prima esporta il modulo da Play Console: Contenuti dell\'app → Sicurezza dei dati → Esporta in CSV. Salvalo in Download, poi premi di nuovo questo pulsante.';
 }

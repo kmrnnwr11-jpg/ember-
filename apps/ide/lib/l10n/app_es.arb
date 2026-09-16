@@ -374,5 +374,9 @@
   "upStateConnected": "Google Play conectado (clave en este dispositivo)",
   "upNeedsKey": "Google Play no está conectado en este dispositivo: abre la guía de publicación y pulsa “Hazlo tú, Ember” para crear la clave (1 minuto).",
   "upNeedsListing": "Escribe la ficha una vez: pulsa “Editar título y descripciones”.",
-  "upConnectPlay": "Conectar Google Play"
+  "upConnectPlay": "Conectar Google Play",
+  "dsButton": "Rellenar Seguridad de los datos",
+  "dsWorking": "Analizando qué recoge la app y rellenando el formulario…",
+  "dsDone": "Seguridad de los datos enviada a Google Play ✓ — revísala en Play Console → Contenido de la app → Seguridad de los datos y pulsa Enviar.",
+  "dsNeedsCsv": "Primero exporta el formulario desde Play Console: Contenido de la app → Seguridad de los datos → Exportar a CSV. Guárdalo en Descargas y pulsa otra vez."
 }

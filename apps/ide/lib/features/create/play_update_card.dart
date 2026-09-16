@@ -102,6 +102,38 @@ class _PlayUpdateCardState extends ConsumerState<PlayUpdateCard> {
     }
   }
 
+  Future<void> _dataSafety() async {
+    final l = AppLocalizations.of(context);
+    final sa = await ref.read(keyValueStoreProvider).read(_saKey);
+    if (!mounted) return;
+    if (sa == null || !sa.contains('private_key')) {
+      setState(() {
+        _message = l.upNeedsKey;
+        _error = true;
+      });
+      return;
+    }
+    setState(() {
+      _busy = l.dsWorking;
+      _message = null;
+      _error = false;
+    });
+    try {
+      await (await ref.read(runnerApiProvider.future)).fillDataSafety(widget.projectId, sa);
+      setState(() {
+        _message = l.dsDone;
+        _error = false;
+      });
+    } on RunnerException catch (e) {
+      setState(() {
+        _message = e.code == 'needs_csv' ? l.dsNeedsCsv : e.message;
+        _error = true;
+      });
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
   Widget _row(bool ok, String text) => Row(
     children: [
       Icon(ok ? Icons.check_circle : Icons.radio_button_unchecked, size: 18, color: ok ? Colors.greenAccent : Theme.of(context).disabledColor),
@@ -157,6 +189,11 @@ class _PlayUpdateCardState extends ConsumerState<PlayUpdateCard> {
                   },
                   icon: const Icon(Icons.edit_outlined),
                   label: Text(l.upEditListing),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _busy != null ? null : _dataSafety,
+                  icon: const Icon(Icons.privacy_tip_outlined),
+                  label: Text(l.dsButton),
                 ),
                 TextButton(
                   onPressed: () async {

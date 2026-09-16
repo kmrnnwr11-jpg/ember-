@@ -35,7 +35,8 @@ export const INVITE_PERMISSIONS = [
 function gcloud(args: string[], timeoutMs = 120_000): Promise<{ code: number; out: string; err: string }> {
   return new Promise((resolve) => {
     const win = process.platform === 'win32';
-    const p = spawn(win ? 'gcloud.cmd' : 'gcloud', args, { windowsHide: true, shell: win });
+    const quoted = win ? args.map((a) => (/\s/.test(a) ? `"${a}"` : a)) : args;
+    const p = spawn(win ? 'gcloud.cmd' : 'gcloud', quoted, { windowsHide: true, shell: win });
     let out = '';
     let err = '';
     p.stdout?.on('data', (d) => (out += d));

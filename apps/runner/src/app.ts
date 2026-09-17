@@ -135,6 +135,22 @@ export async function buildApp(
     return reply.sendFile(path.basename(link.keystorePath), path.dirname(link.keystorePath), { contentType: false });
   });
 
+  /**
+   * What the browser helper needs to know about the app being published.
+   * Ember puts it here with one button; the extension reads it from the Play
+   * Console tab. Only the facts that decide the answers, and only for a browser
+   * extension: a web page cannot read this response.
+   */
+  let helperApp: Record<string, unknown> | null = null;
+
+  app.get('/helper/app', async (req, reply) => {
+    const origin = req.headers.origin ?? '';
+    if (origin.startsWith('chrome-extension://')) reply.header('access-control-allow-origin', origin);
+    reply.header('cache-control', 'no-store');
+    if (!helperApp) return reply.status(404).send({ code: 'no_app', message: 'Open the app in Ember and press "Copy for the browser helper"' });
+    return helperApp;
+  });
+
   // Public privacy policy page (the URL required by Google Play).
   app.get('/privacy/:workspaceId/:projectId', async (req, reply) => {
     const { workspaceId, projectId } = req.params as { workspaceId: string; projectId: string };
@@ -467,6 +483,17 @@ export async function buildApp(
       const { projectId } = req.params as { projectId: string };
       const { project } = await services.ownedProject(req.user.id, projectId);
       return storeState(services.projectRoot(project));
+    });
+
+    // Hands this app's facts to the browser helper waiting on the Play Console tab.
+    r.post('/v1/projects/:projectId/helper', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const root = services.projectRoot(project);
+      const { facts, email } = await appContentAnswers(root);
+      const { title } = await storeTitle(root);
+      helperApp = { ...facts, email, name: title || project.name, at: new Date().toISOString() };
+      return { ok: true, name: helperApp.name };
     });
 
     // Play Console "App content": the answer for every declaration Google asks for.

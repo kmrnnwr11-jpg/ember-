@@ -152,6 +152,10 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// Hands this app's facts to the browser helper waiting on Play Console.
+  Future<Map<String, dynamic>> sendToHelper(String projectId) =>
+      _call(() => _dio.post('/v1/projects/$projectId/helper', data: const <String, dynamic>{}), (d) => d as Map<String, dynamic>);
+
   /// Ember's answer for every Play Console "App content" declaration.
   Future<Map<String, dynamic>> appContent(String projectId) =>
       _call(() => _dio.get('/v1/projects/$projectId/app-content'), (d) => d as Map<String, dynamic>);

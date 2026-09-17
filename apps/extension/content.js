@@ -35,6 +35,18 @@
   const text = (el) => (el?.innerText ?? el?.textContent ?? '').replace(/\s+/g, ' ').trim();
   const lower = (el) => text(el).toLowerCase();
 
+  /** The app Ember is publishing, asked straight to Ember on this computer. */
+  async function appFromEmber() {
+    try {
+      const res = await fetch('http://127.0.0.1:8787/helper/app', { cache: 'no-store' });
+      if (!res.ok) return null;
+      const app = await res.json();
+      return app?.name ? app : null;
+    } catch {
+      return null;
+    }
+  }
+
   async function store(patch) {
     if (!chrome?.runtime?.id || !chrome?.storage?.local) throw new Error(STALE);
     if (patch === undefined) return chrome.storage.local.get(['app', 'run']);
@@ -172,6 +184,16 @@
 
   // ---------------------------------------------------------------- the run
 
+  /** Ember running on this computer is the source of truth; storage is the fallback. */
+  async function currentApp() {
+    const fresh = await appFromEmber();
+    if (fresh) {
+      await store({ app: fresh });
+      return fresh;
+    }
+    return (await store()).app ?? null;
+  }
+
   async function loadRules() {
     if (!chrome?.runtime?.id) throw new Error(STALE);
     rules ??= await import(chrome.runtime.getURL('rules.js'));
@@ -182,7 +204,8 @@
   /** Walks every section: open, answer, save, next. Survives page reloads. */
   async function runAll() {
     await loadRules();
-    const { app, run } = await store();
+    const app = await currentApp();
+    const { run } = await store();
     if (!app) return render(needAppHtml());
     if (!run?.active) return;
 
@@ -231,7 +254,8 @@
     `<ul class="ember-list">${results.map((r) => `<li>${r.saved ? '✓' : '✗'} <b>${r.name}</b> <span class="ember-small">${r.answered} risposte</span></li>`).join('')}</ul>`;
 
   const needAppHtml = () =>
-    "<p>Prima incolla i dati dell'app: apri Ember, scheda <b>Contenuti dell'app</b>, premi <b>Copia per l'estensione</b>, poi clicca l'icona di Ember qui nel browser e incolla.</p>";
+    "<p>Non trovo l'app. Apri Ember sul computer, vai sull'app, scheda <b>App content</b>, e premi <b>Copy for the browser helper</b>. Poi ripremi qui.</p>" +
+    '<p class="ember-small">Ember deve essere aperto: è lui a dire all\'estensione com\'è fatta l\'app.</p>';
 
   // ---------------------------------------------------------------- panel
 
@@ -262,7 +286,7 @@
   /** The panel shown when the user presses the Ember button. */
   async function offer() {
     await loadRules();
-    const { app } = await store();
+    const app = await currentApp();
     if (!app) return render(needAppHtml());
     render(
       `<p>App: <b>${app.name}</b></p>` +

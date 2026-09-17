@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Fills the Play Console App content answers for an app built with Ember. Nothing is saved until you press Save yourself.",
   "permissions": ["storage", "activeTab", "clipboardRead"],
-  "host_permissions": ["https://play.google.com/console/*"],
+  "host_permissions": ["https://play.google.com/console/*", "http://127.0.0.1:8787/*"],
   "action": {
     "default_title": "Ember",
     "default_popup": "popup.html"

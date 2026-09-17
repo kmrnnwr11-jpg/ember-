@@ -82,10 +82,21 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
     if (mounted) setState(() => _copied = '${item['id']}');
   }
 
-  /// The facts the browser helper needs to answer Play Console's questions.
+  /// Hands the browser helper the facts it needs, and the clipboard as a fallback.
   Future<void> _copyForExtension() async {
     final app = <String, dynamic>{'name': widget.appName, ..._facts};
     await Clipboard.setData(ClipboardData(text: const JsonEncoder.withIndent('  ').convert(app)));
+    try {
+      await (await ref.read(runnerApiProvider.future)).sendToHelper(widget.projectId);
+    } on RunnerException catch (e) {
+      if (mounted) {
+        setState(() {
+          _message = e.message;
+          _error = true;
+        });
+      }
+      return;
+    }
     if (mounted) setState(() => _copied = '_extension');
   }
 

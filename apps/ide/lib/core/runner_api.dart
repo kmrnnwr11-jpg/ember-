@@ -126,6 +126,12 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// Copies the app's upload key and password to the user's Google Drive.
+  Future<Map<String, dynamic>> backupSigningKey(String projectId) => _call(
+    () => _dio.post('/v1/projects/$projectId/signing/backup', data: const <String, dynamic>{}, options: Options(receiveTimeout: const Duration(minutes: 6))),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// Ember's answer for every Play Console "App content" declaration.
   Future<Map<String, dynamic>> appContent(String projectId) =>
       _call(() => _dio.get('/v1/projects/$projectId/app-content'), (d) => d as Map<String, dynamic>);

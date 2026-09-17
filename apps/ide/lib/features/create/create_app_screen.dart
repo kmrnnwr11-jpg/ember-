@@ -340,7 +340,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
         return Scaffold(
           appBar: AppBar(
             leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/projects')),
-            title: Text(project.name),
+            title: Text(project.displayName),
             actions: [
               TextButton.icon(
                 onPressed: () => context.go('/projects/${project.id}'),
@@ -702,36 +702,73 @@ Future<void> _showKeyBackup(BuildContext context, WidgetRef ref, String projectI
   try {
     final info = await (await ref.read(runnerApiProvider.future)).signingLink(projectId);
     if (!context.mounted) return;
+    String? driveMessage;
+    String? driveFolder;
+    bool saving = false;
     await showDialog<void>(
       context: context,
-      builder: (d) => AlertDialog(
-        title: Text(l.backupSigningKey),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l.backupSigningKeyHint),
-            const SizedBox(height: 12),
-            SelectableText('Alias: ${info['alias']}'),
-            Row(
-              children: [
-                Expanded(child: SelectableText('Password: ${info['password']}')),
-                IconButton(
-                  icon: const Icon(Icons.copy, size: 18),
-                  onPressed: () => Clipboard.setData(ClipboardData(text: info['password'] as String)),
+      builder: (d) => StatefulBuilder(
+        builder: (d, setState) => AlertDialog(
+          title: Text(l.backupSigningKey),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l.backupSigningKeyHint),
+              const SizedBox(height: 12),
+              SelectableText('Alias: ${info['alias']}'),
+              Row(
+                children: [
+                  Expanded(child: SelectableText('Password: ${info['password']}')),
+                  IconButton(
+                    icon: const Icon(Icons.copy, size: 18),
+                    onPressed: () => Clipboard.setData(ClipboardData(text: info['password'] as String)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (saving) Row(children: [const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)), const SizedBox(width: 8), Expanded(child: Text(l.driveSaving))]),
+              if (driveMessage != null) SelectableText(driveMessage!),
+              if (driveFolder != null)
+                TextButton.icon(
+                  onPressed: () => launchUrl(Uri.parse(driveFolder!), mode: LaunchMode.externalApplication),
+                  icon: const Icon(Icons.folder_open, size: 18),
+                  label: Text(l.driveOpenFolder),
                 ),
-              ],
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(d), child: Text(l.close)),
+            OutlinedButton.icon(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      setState(() {
+                        saving = true;
+                        driveMessage = null;
+                      });
+                      try {
+                        final res = await (await ref.read(runnerApiProvider.future)).backupSigningKey(projectId);
+                        setState(() {
+                          driveMessage = l.driveSaved;
+                          driveFolder = res['folderUrl'] as String?;
+                        });
+                      } on RunnerException catch (e) {
+                        setState(() => driveMessage = e.message);
+                      } finally {
+                        setState(() => saving = false);
+                      }
+                    },
+              icon: const Icon(Icons.cloud_upload_outlined),
+              label: Text(l.driveBackup),
+            ),
+            FilledButton.icon(
+              onPressed: () => launchUrl(Uri.parse('$runnerUrl${info['path']}'), mode: LaunchMode.externalApplication),
+              icon: const Icon(Icons.download),
+              label: Text(l.downloadKeystore),
             ),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(d), child: Text(l.close)),
-          FilledButton.icon(
-            onPressed: () => launchUrl(Uri.parse('$runnerUrl${info['path']}'), mode: LaunchMode.externalApplication),
-            icon: const Icon(Icons.download),
-            label: Text(l.downloadKeystore),
-          ),
-        ],
       ),
     );
   } on RunnerException catch (e) {

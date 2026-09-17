@@ -1324,6 +1324,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'First export the form from Play Console: App content → Data safety → Export to CSV. Save it in Downloads, then press this button again.';
 
   @override
+  String get driveBackup => 'Save to Google Drive';
+
+  @override
+  String get driveSaving =>
+      'Asking Google for permission and saving the key on your Drive…';
+
+  @override
+  String get driveSaved => 'Keystore and password saved on your Google Drive ✓';
+
+  @override
+  String get driveOpenFolder => 'Open the folder on Drive';
+
+  @override
   String get acTitle => 'App content (Play Console)';
 
   @override

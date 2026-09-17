@@ -19,6 +19,9 @@ const PLAY_SCOPES = [
   'https://www.googleapis.com/auth/androidpublisher',
 ].join(',');
 
+/** Drive access is asked for on its own: Ember only ever touches files it created. */
+const DRIVE_SCOPES = [PLAY_SCOPES, 'https://www.googleapis.com/auth/drive.file'].join(',');
+
 export const INVITE_PERMISSIONS = [
   'CAN_SEE_ALL_APPS',
   'CAN_VIEW_NON_FINANCIAL_DATA_GLOBAL',
@@ -104,6 +107,19 @@ async function userPlayToken(): Promise<string> {
   if (!scoped) {
     const login = await gcloud(['auth', 'application-default', 'login', `--scopes=${PLAY_SCOPES}`], 5 * 60_000);
     if (login.code !== 0) throw new Error('Google login was not completed in the browser');
+    t = await gcloud(['auth', 'application-default', 'print-access-token']);
+  }
+  if (t.code !== 0 || !t.out) throw new Error('Could not get a Google access token');
+  return t.out.split(/\r?\n/).pop()!;
+}
+
+/** Access token allowed to write to the user's Drive; asks for the permission once. */
+export async function driveToken(): Promise<string> {
+  let t = await gcloud(['auth', 'application-default', 'print-access-token']);
+  const scoped = t.code === 0 && ((await tokenInfo(t.out)).scope ?? '').includes('drive.file');
+  if (!scoped) {
+    const login = await gcloud(['auth', 'application-default', 'login', `--scopes=${DRIVE_SCOPES}`], 5 * 60_000);
+    if (login.code !== 0) throw new Error('Google login was not completed in the browser, so Ember cannot save to your Drive');
     t = await gcloud(['auth', 'application-default', 'print-access-token']);
   }
   if (t.code !== 0 || !t.out) throw new Error('Could not get a Google access token');

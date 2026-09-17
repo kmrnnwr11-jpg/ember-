@@ -1320,6 +1320,18 @@ class AppLocalizationsAr extends AppLocalizations {
       'صدّر النموذج أولًا من Play Console: محتوى التطبيق ← أمان البيانات ← تصدير إلى CSV. احفظه في مجلد التنزيلات ثم اضغط الزر مرة أخرى.';
 
   @override
+  String get driveBackup => 'الحفظ في Google Drive';
+
+  @override
+  String get driveSaving => 'طلب الإذن من Google وحفظ المفتاح في Drive…';
+
+  @override
+  String get driveSaved => 'تم حفظ ملف المفاتيح وكلمة المرور في Google Drive ✓';
+
+  @override
+  String get driveOpenFolder => 'فتح المجلد في Drive';
+
+  @override
   String get acTitle => 'محتوى التطبيق (Play Console)';
 
   @override

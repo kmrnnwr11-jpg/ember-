@@ -34,12 +34,19 @@ class Project {
     required this.status,
     required this.createdAt,
     this.lastModel,
+    this.title,
   });
 
   final String id;
   final String workspaceId;
   final String name;
   final String template;
+
+  /// The name the app carries on the store, once the listing is written.
+  final String? title;
+
+  /// What to call the app: its store name, or the folder name until there is one.
+  String get displayName => (title ?? '').trim().isEmpty ? name : title!.trim();
 
   /// `creating` | `ready` | `error`.
   final String status;
@@ -56,6 +63,7 @@ class Project {
     status: j['status'] as String,
     createdAt: DateTime.parse(j['createdAt'] as String),
     lastModel: j['lastModel'] as String?,
+    title: j['title'] as String?,
   );
 }
 

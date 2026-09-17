@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
+import { backupKey } from './drive.js';
 import { detectDataFacts, fillCsv, findExportedCsv, uploadDataSafety, validateFilledCsv } from './data_safety.js';
 import { createServiceAccountKey, gcloudStatus, invitePlayUser, storeImages } from './play_setup.js';
 import { cliLogins, cliModels } from './subscription_clis.js';
@@ -48,6 +49,7 @@ export interface AppDeps {
   ensureKey?: typeof ensureUploadKey;
   androidInfo?: typeof androidAppInfo;
   playFetch?: typeof fetch;
+  backupKey?: typeof backupKey;
 }
 
 export async function buildApp(
@@ -233,7 +235,17 @@ export async function buildApp(
 
     r.get('/v1/workspaces/:workspaceId/projects', async (req) => {
       const { workspaceId } = req.params as { workspaceId: string };
-      return { projects: await services.listProjects(req.user.id, workspaceId) };
+      const projects = await services.listProjects(req.user.id, workspaceId);
+      // Show the name the app will carry on the store, not the folder name taken from the request.
+      return {
+        projects: await Promise.all(
+          projects.map(async (project) => {
+            const raw = await readFileAsync(path.join(services.projectRoot(project), 'store', 'listing.json'), 'utf8').catch(() => 'null');
+            const title = `${(JSON.parse(raw) as { title?: string } | null)?.title ?? ''}`.trim();
+            return title ? { ...project, title } : project;
+          }),
+        ),
+      };
     });
 
     r.post('/v1/workspaces/:workspaceId/projects', async (req, reply) => {
@@ -264,6 +276,27 @@ export async function buildApp(
       for (const [t, v] of keyLinks) if (v.expires < Date.now()) keyLinks.delete(t);
       keyLinks.set(token, { keystorePath: key.keystorePath, fileName: `${project.name}-upload-keystore.jks`, expires });
       return { path: `/signing-download/${token}`, alias: key.alias, password: key.storePassword, expiresAt: new Date(expires).toISOString() };
+    });
+
+    // Copy the upload key and its password to the user's Google Drive: it cannot be recreated.
+    r.post('/v1/projects/:projectId/signing/backup', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const root = services.projectRoot(project);
+      const key = await ensureKey(cfg, project.id, project.name);
+      const info = await (deps.androidInfo ?? androidAppInfo)(cfg, project.id, root, project.name);
+      const listing = JSON.parse(await readFileAsync(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '{}')) as { title?: string };
+      try {
+        return await (deps.backupKey ?? backupKey)({
+          appName: listing.title?.trim() || project.name,
+          packageName: info.applicationId,
+          keystorePath: key.keystorePath,
+          alias: key.alias,
+          password: key.storePassword,
+        });
+      } catch (e) {
+        return reply.status(502).send({ code: 'drive_failed', message: (e as Error).message });
+      }
     });
 
     // Publish the signed AAB to Google Play with the user's service account (not stored).

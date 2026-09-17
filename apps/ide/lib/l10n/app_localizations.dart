@@ -2378,6 +2378,30 @@ abstract class AppLocalizations {
   /// **'First export the form from Play Console: App content → Data safety → Export to CSV. Save it in Downloads, then press this button again.'**
   String get dsNeedsCsv;
 
+  /// No description provided for @driveBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to Google Drive'**
+  String get driveBackup;
+
+  /// No description provided for @driveSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Asking Google for permission and saving the key on your Drive…'**
+  String get driveSaving;
+
+  /// No description provided for @driveSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Keystore and password saved on your Google Drive ✓'**
+  String get driveSaved;
+
+  /// No description provided for @driveOpenFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the folder on Drive'**
+  String get driveOpenFolder;
+
   /// No description provided for @acTitle.
   ///
   /// In en, this message translates to:

@@ -114,7 +114,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        content: Text(l.deleteConfirm(p.name)),
+        content: Text(l.deleteConfirm(p.displayName)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c, false), child: Text(l.cancel)),
           FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(l.delete)),
@@ -230,7 +230,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                     };
                     return ListTile(
                       leading: Icon(icon),
-                      title: Text(p.name),
+                      title: Text(p.displayName),
                       subtitle: Text(label),
                       enabled: p.isReady,
                       onTap: p.isReady ? () => context.go('/projects/${p.id}/create') : null,

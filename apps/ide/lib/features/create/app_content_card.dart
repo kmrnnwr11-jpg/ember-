@@ -37,7 +37,7 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
       if (mounted) {
         setState(() {
           _items = items;
-          _facts = (data['facts'] as Map?)?.cast<String, dynamic>() ?? const {};
+          _facts = {...?(data['facts'] as Map?)?.cast<String, dynamic>(), 'email': data['email'] ?? ''};
         });
       }
     } catch (_) {}

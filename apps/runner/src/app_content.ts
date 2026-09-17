@@ -33,7 +33,7 @@ async function readJson<T>(file: string): Promise<T | null> {
 }
 
 /** Answers for every App content row, from the project's own dependencies and setup. */
-export async function appContentAnswers(projectRoot: string): Promise<{ facts: AppDataFacts; items: ContentItem[] }> {
+export async function appContentAnswers(projectRoot: string): Promise<{ facts: AppDataFacts; email: string; items: ContentItem[] }> {
   const facts = await detectDataFacts(projectRoot);
   const store = path.join(projectRoot, 'store');
   const listing = (await readJson<Listing>(path.join(store, 'listing.json'))) ?? {};
@@ -113,5 +113,5 @@ export async function appContentAnswers(projectRoot: string): Promise<{ facts: A
       automatic: true,
     },
   ];
-  return { facts, items: rows.map((r) => ({ ...r, title: titles[r.id] ?? r.id })) };
+  return { facts, email, items: rows.map((r) => ({ ...r, title: titles[r.id] ?? r.id })) };
 }

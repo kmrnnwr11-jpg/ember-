@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isWantedOption, normalize, plan, targetAudience } from './rules.js';
+import { categoryChoice, isWantedOption, normalize, plan, targetAudience, textAnswers } from './rules.js';
 
 const app = { name: 'Beauty Camera', ads: false, account: true };
 
@@ -46,6 +46,26 @@ test('leaves a page it does not understand untouched', () => {
     fields: [{ question: 'Come accede un revisore alla tua app?', options: ['Con credenziali', 'Senza credenziali'] }],
   });
   assert.deepEqual(proposals, []);
+});
+
+test('never picks Gioco, which opens the stricter games form', () => {
+  const labels = [
+    "Gioco — L'app è un gioco o un'app di scommesse",
+    'Utilità, produttività, comunicazione o altro',
+    'Social network o forum',
+  ];
+  assert.equal(categoryChoice(labels), 1);
+  // When nothing fits, Ember leaves the choice to the user rather than guessing.
+  assert.equal(categoryChoice(['Gioco', 'Scommesse']), -1);
+});
+
+test('writes the contact address Google asks for', () => {
+  const app = { name: 'Beauty Camera', email: 'me@example.com' };
+  assert.deepEqual(textAnswers([{ index: 0, label: 'Indirizzo email' }], app), [
+    { index: 0, value: 'me@example.com', why: 'The contact address of this app' },
+  ]);
+  assert.deepEqual(textAnswers([{ index: 0, label: 'Nome dello studio' }], app), []);
+  assert.deepEqual(textAnswers([{ index: 0, label: 'Indirizzo email' }], { name: 'x' }), []);
 });
 
 test('ticks 13 and over, never the children age groups', () => {

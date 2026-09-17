@@ -46,6 +46,35 @@
       .filter((f) => f.options.length > 0);
   }
 
+  /** Text boxes on screen, with the label a person reads next to them. */
+  function readTextInputs() {
+    return [...document.querySelectorAll('input[type="text"], input[type="email"], input:not([type])')]
+      .filter((el) => (el.offsetParent !== null || el.getClientRects().length > 0) && !el.disabled && !el.readOnly)
+      .map((el, index) => ({
+        el,
+        index,
+        type: el.type,
+        label:
+          el.getAttribute('aria-label') ||
+          document.getElementById(el.getAttribute('aria-labelledby') ?? '')?.textContent ||
+          text(el.closest('label')) ||
+          text(el.closest('div')?.previousElementSibling) ||
+          el.placeholder ||
+          '',
+      }));
+  }
+
+  /** Types into a box the way a person would, so the page notices the change. */
+  function type(el, value) {
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+    el.focus();
+    setter ? setter.call(el, value) : (el.value = value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.blur();
+    return el.value === value;
+  }
+
   function panel() {
     let box = document.getElementById('ember-panel');
     if (box) return box;
@@ -87,12 +116,20 @@
     const ageField = fields.find((f) => /età|age|anni|years/i.test(f.options.join(' ')) && f.options.length >= 4);
     const ages = ageField ? rules.targetAudience(ageField.options) : [];
 
-    if (proposals.length === 0 && ages.length === 0) {
+    // The contact address, and the category of the content rating questionnaire.
+    const inputs = readTextInputs();
+    const texts = rules.textAnswers(inputs, app).filter((t) => !inputs[t.index].el.value);
+    const categoryField = /categor/i.test(document.body.innerText) ? fields.find((f) => /gioco|game/i.test(f.options.join(' '))) : null;
+    const category = categoryField ? rules.categoryChoice(categoryField.options) : -1;
+
+    if (proposals.length === 0 && ages.length === 0 && texts.length === 0 && category < 0) {
       render(`<p>Su questa pagina non c'è niente che io possa compilare con certezza: rispondi tu.</p><p class="ember-small">App: ${app.name}</p>`);
       return;
     }
 
     const list = [
+      ...texts.map((t) => `<li><b>${t.value}</b><br><span class="ember-small">${inputs[t.index].label || 'Campo di testo'}</span></li>`),
+      ...(category >= 0 ? [`<li><b>${categoryField.options[category]}</b><br><span class="ember-small">Categoria</span></li>`] : []),
       ...proposals.map((p) => `<li><b>${p.label}</b><br><span class="ember-small">${p.question}</span></li>`),
       ...ages.map((i) => `<li><b>${ageField.options[i]}</b><br><span class="ember-small">Fascia d'età</span></li>`),
     ].join('');
@@ -105,6 +142,14 @@
     panel().querySelector('.ember-go').addEventListener('click', () => {
       let done = 0;
       let failed = 0;
+      for (const t of texts) {
+        if (type(inputs[t.index].el, t.value)) done++;
+        else failed++;
+      }
+      if (category >= 0 && categoryField.els[category]) {
+        if (choose(categoryField.els[category])) done++;
+        else failed++;
+      }
       for (const p of proposals) {
         const field = fields.find((f) => f.question === p.question);
         const el = field?.els?.[p.option];

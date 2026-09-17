@@ -139,6 +139,38 @@ export function plan({ url, title, fields, app }) {
   return proposals;
 }
 
+/**
+ * The category an app built with Ember belongs to, most specific first.
+ * "Gioco" is deliberately never chosen: it opens a different, stricter form.
+ */
+const CATEGORY = [
+  ['utilit', 'produttiv', 'comunicazione', 'utility', 'productivity', 'communication'],
+  ['fotograf', 'photo', 'foto'],
+  ['stile di vita', 'lifestyle'],
+  ['altro', 'other', 'app'],
+];
+
+/** Which option to pick on the category question, or -1 when unsure. */
+export function categoryChoice(labels) {
+  const usable = labels.map((l) => normalize(l));
+  for (const group of CATEGORY) {
+    const index = usable.findIndex((label) => label && !label.includes('gioco') && !label.includes('game') && group.some((w) => label.includes(normalize(w))));
+    if (index >= 0) return index;
+  }
+  return -1;
+}
+
+/** Text boxes Ember knows the answer to: the contact address Google asks for. */
+export function textAnswers(fields, app) {
+  const out = [];
+  for (const field of fields) {
+    const label = normalize(`${field.label ?? ''} ${field.question ?? ''}`);
+    const isEmail = field.type === 'email' || label.includes('email') || label.includes('e-mail') || label.includes('indirizzo email');
+    if (isEmail && app.email) out.push({ index: field.index, value: app.email, why: 'The contact address of this app' });
+  }
+  return out;
+}
+
 /** Ages to tick on "Target audience": 13 and over, never the children's groups. */
 export function targetAudience(labels) {
   const wanted = [];

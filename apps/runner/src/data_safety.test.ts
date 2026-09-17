@@ -63,7 +63,10 @@ function valueOf(csv: string, question: string, response = ''): string {
 describe('fillCsv', () => {
   it('fills the real exported form for a camera app with sign-in', async () => {
     const csv = await readFile(FIXTURE, 'utf8');
-    const filled = fillCsv(csv, facts({ account: true, photos: true, files: true, crashLogs: true, analytics: true }));
+    const filled = fillCsv(csv, facts({ account: true, photos: true, files: true, crashLogs: true, analytics: true }), 'https://example.com/privacy');
+    // Saying deletion is offered obliges us to say where.
+    expect(valueOf(filled, 'PSL_ACCOUNT_DELETION_URL')).toBe('https://example.com/privacy');
+    expect(valueOf(filled, 'PSL_DATA_DELETION_URL')).toBe('https://example.com/privacy');
     expect(() => validateFilledCsv(csv, filled)).not.toThrow();
     expect(filled.split('\n')).toHaveLength(csv.trim().split(/\r?\n/).length);
 
@@ -99,15 +102,21 @@ describe('fillCsv', () => {
   it('adds the advertising purpose to the device id only when the app shows ads', async () => {
     const csv = await readFile(FIXTURE, 'utf8');
     const withAds = fillCsv(csv, facts({ ads: true }));
+    expect(valueOf(withAds, 'PSL_ACCOUNT_DELETION_URL')).toBe('');
     expect(valueOf(withAds, 'PSL_DATA_TYPES_IDENTIFIERS', 'PSL_DEVICE_ID')).toBe('TRUE');
     expect(valueOf(withAds, 'PSL_DATA_USAGE_RESPONSES:PSL_DEVICE_ID:DATA_USAGE_COLLECTION_PURPOSE', 'PSL_ADVERTISING')).toBe('TRUE');
     const noAds = fillCsv(csv, facts({ analytics: true }));
     expect(valueOf(noAds, 'PSL_DATA_USAGE_RESPONSES:PSL_DEVICE_ID:DATA_USAGE_COLLECTION_PURPOSE', 'PSL_ADVERTISING')).toBe('');
   });
 
+  it('asks for the privacy link instead of sending a form Google would refuse', async () => {
+    const csv = await readFile(FIXTURE, 'utf8');
+    expect(() => fillCsv(csv, facts({ account: true }))).toThrow(/privacy policy link/);
+  });
+
   it('keeps quoted labels intact', async () => {
     const csv = await readFile(FIXTURE, 'utf8');
-    const filled = fillCsv(csv, facts({ account: true }));
+    const filled = fillCsv(csv, facts({ account: true }), 'https://example.com/privacy');
     expect(filled).toContain('"Quale dei seguenti metodi di creazione dell\'account supporta la tua app? Seleziona tutte le opzioni pertinenti/Nome utente, password e altre autenticazioni"');
   });
 });

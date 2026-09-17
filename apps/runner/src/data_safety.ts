@@ -111,7 +111,13 @@ function purposes(type: string, f: AppDataFacts): Set<string> {
  * in the CSV are stable, so this needs no AI: same answers every time, in a
  * second, for a form of ~800 rows.
  */
-export function fillCsv(csv: string, facts: AppDataFacts): string {
+export function fillCsv(csv: string, facts: AppDataFacts, deletionUrl = ''): string {
+  if (facts.account && !/^https?:\/\//.test(deletionUrl)) {
+    throw new PlayError(
+      'needs_deletion_url',
+      'The app has sign-in, so Google asks for a public page where users can request deletion of their account and data. Add the privacy policy link in "Edit title and descriptions", then press this button again.',
+    );
+  }
   const types = selectedTypes(facts);
   const collects = types.size > 0;
   const lines = csv.replace(/\r\n/g, '\n').trim().split('\n');
@@ -123,6 +129,8 @@ export function fillCsv(csv: string, facts: AppDataFacts): string {
     if (question === 'PSL_DATA_COLLECTION_COLLECTS_PERSONAL_DATA') value = collects ? 'TRUE' : 'FALSE';
     else if (question === 'PSL_DATA_COLLECTION_ENCRYPTED_IN_TRANSIT') value = 'TRUE';
     else if (question === 'PSL_SUPPORT_DATA_DELETION_BY_USER') value = response === (facts.account ? 'DATA_DELETION_YES' : 'DATA_DELETION_NO') ? 'TRUE' : '';
+    // Saying users can ask for deletion obliges us to say where: the privacy policy page explains how.
+    else if (question === 'PSL_ACCOUNT_DELETION_URL' || question === 'PSL_DATA_DELETION_URL') value = facts.account ? deletionUrl : '';
     else if (question === 'PSL_SUPPORTED_ACCOUNT_CREATION_METHODS') value = response === (facts.account ? 'PSL_ACM_OAUTH' : 'PSL_ACM_NONE') ? 'TRUE' : '';
     else if (question.startsWith('PSL_DATA_TYPES_')) value = types.has(response) ? 'TRUE' : '';
     else if (question.startsWith('PSL_DATA_USAGE_RESPONSES:')) {

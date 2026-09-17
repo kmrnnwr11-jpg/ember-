@@ -472,7 +472,8 @@ export async function buildApp(
       const facts = await detectDataFacts(root);
       try {
         // The form has ~800 rows with stable ids: filled from the app's own facts, no AI, no waiting.
-        const filled = validateFilledCsv(csv, fillCsv(csv, facts));
+        const listing = JSON.parse(await readFileAsync(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '{}')) as { privacyUrl?: string };
+        const filled = validateFilledCsv(csv, fillCsv(csv, facts, listing.privacyUrl ?? ''));
         await uploadDataSafety({ serviceAccount: parseServiceAccount(body.serviceAccount), packageName: info.applicationId, csv: filled }, deps.playFetch ?? fetch);
         return { ok: true, source: csvPath ?? 'pasted', facts };
       } catch (e) {

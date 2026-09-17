@@ -1426,4 +1426,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String ghUpdated(String repo) {
     return 'App caricata su $repo ✓';
   }
+
+  @override
+  String get acCopyForExtension => 'Copia per l\'estensione';
 }

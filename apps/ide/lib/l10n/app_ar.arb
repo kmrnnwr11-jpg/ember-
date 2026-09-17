@@ -405,5 +405,6 @@
   "ghForgetToken": "نسيان الرمز",
   "ghNeedsToken": "الصق رمز GitHub أولاً.",
   "ghCreated": "تم إنشاء المستودع {repo} ورفع التطبيق ✓",
-  "ghUpdated": "تم رفع التطبيق إلى {repo} ✓"
+  "ghUpdated": "تم رفع التطبيق إلى {repo} ✓",
+  "acCopyForExtension": "نسخ لأجل الإضافة"
 }

@@ -405,5 +405,6 @@
   "ghForgetToken": "Oublier le jeton",
   "ghNeedsToken": "Collez d'abord un jeton GitHub.",
   "ghCreated": "Dépôt {repo} créé et app envoyée ✓",
-  "ghUpdated": "App envoyée vers {repo} ✓"
+  "ghUpdated": "App envoyée vers {repo} ✓",
+  "acCopyForExtension": "Copier pour l'extension"
 }

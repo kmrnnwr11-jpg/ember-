@@ -2539,6 +2539,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'App uploaded to {repo} ✓'**
   String ghUpdated(String repo);
+
+  /// No description provided for @acCopyForExtension.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy for the browser helper'**
+  String get acCopyForExtension;
 }
 
 class _AppLocalizationsDelegate

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,11 +8,12 @@ import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../store/play_links.dart';
 
-/// Play Console → App content: Ember's answer for each of Google's questions,
+/// Play Console â†’ App content: Ember's answer for each of Google's questions,
 /// ready to copy. The rows Ember can send by itself are marked.
 class AppContentCard extends ConsumerStatefulWidget {
-  const AppContentCard({super.key, required this.projectId});
+  const AppContentCard({super.key, required this.projectId, required this.appName});
   final String projectId;
+  final String appName;
 
   @override
   ConsumerState<AppContentCard> createState() => _AppContentCardState();
@@ -18,6 +21,7 @@ class AppContentCard extends ConsumerStatefulWidget {
 
 class _AppContentCardState extends ConsumerState<AppContentCard> {
   List<Map<String, dynamic>> _items = const [];
+  Map<String, dynamic> _facts = const {};
   String? _copied;
 
   @override
@@ -30,13 +34,25 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
     try {
       final data = await (await ref.read(runnerApiProvider.future)).appContent(widget.projectId);
       final items = (data['items'] as List? ?? const []).cast<Map<String, dynamic>>();
-      if (mounted) setState(() => _items = items);
+      if (mounted) {
+        setState(() {
+          _items = items;
+          _facts = (data['facts'] as Map?)?.cast<String, dynamic>() ?? const {};
+        });
+      }
     } catch (_) {}
   }
 
   Future<void> _copy(Map<String, dynamic> item) async {
     await Clipboard.setData(ClipboardData(text: '${item['answer']}'));
     if (mounted) setState(() => _copied = '${item['id']}');
+  }
+
+  /// The facts the browser helper needs to answer Play Console's questions.
+  Future<void> _copyForExtension() async {
+    final app = <String, dynamic>{'name': widget.appName, ..._facts};
+    await Clipboard.setData(ClipboardData(text: const JsonEncoder.withIndent('  ').convert(app)));
+    if (mounted) setState(() => _copied = '_extension');
   }
 
   Future<void> _openConsole() async {
@@ -62,7 +78,18 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
             const SizedBox(height: 12),
             for (final item in _items) _row(context, l, item),
             const SizedBox(height: 12),
-            OutlinedButton.icon(onPressed: _openConsole, icon: const Icon(Icons.open_in_new), label: Text(l.acOpenConsole)),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(onPressed: _openConsole, icon: const Icon(Icons.open_in_new), label: Text(l.acOpenConsole)),
+                TextButton.icon(
+                  onPressed: _copyForExtension,
+                  icon: Icon(_copied == '_extension' ? Icons.check : Icons.extension_outlined, size: 18),
+                  label: Text(_copied == '_extension' ? l.acCopied : l.acCopyForExtension),
+                ),
+              ],
+            ),
           ],
         ),
       ),

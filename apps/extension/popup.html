@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>Ember</title>
+    <style>
+      body {
+        width: 320px;
+        margin: 0;
+        padding: 14px;
+        background: #140b0d;
+        color: #f4eceb;
+        font: 14px/1.5 system-ui, sans-serif;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 16px;
+        letter-spacing: 0.06em;
+      }
+      p {
+        margin: 6px 0;
+      }
+      .small {
+        color: #b9a6a6;
+        font-size: 12px;
+      }
+      textarea {
+        width: 100%;
+        height: 92px;
+        margin-top: 6px;
+        padding: 8px;
+        border: 1px solid #3a2226;
+        border-radius: 8px;
+        background: #0b0506;
+        color: #f4eceb;
+        font: 12px/1.4 ui-monospace, monospace;
+        resize: vertical;
+        box-sizing: border-box;
+      }
+      button {
+        width: 100%;
+        margin-top: 8px;
+        padding: 9px;
+        border: 0;
+        border-radius: 999px;
+        background: #e5131b;
+        color: #fff;
+        font: 600 14px/1 system-ui, sans-serif;
+        cursor: pointer;
+      }
+      .app {
+        margin-top: 8px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: #221114;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>EMBER</h1>
+    <p class="small">Incolla qui i dati dell'app: in Ember, scheda «Contenuti dell'app» → «Copia per l'estensione».</p>
+    <div id="current"></div>
+    <textarea id="data" placeholder='{"name":"…","ads":false,…}'></textarea>
+    <button id="save">Salva i dati dell'app</button>
+    <p id="msg" class="small"></p>
+    <script src="popup.js"></script>
+  </body>
+</html>

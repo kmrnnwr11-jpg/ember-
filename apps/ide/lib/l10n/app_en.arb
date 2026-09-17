@@ -821,5 +821,6 @@
         "type": "String"
       }
     }
-  }
+  },
+  "acCopyForExtension": "Copy for the browser helper"
 }

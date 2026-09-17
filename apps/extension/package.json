@@ -1,0 +1,10 @@
+{
+  "name": "@fluttercursor/extension",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Ember browser extension: fills the Play Console App content answers",
+  "scripts": {
+    "test": "node --test"
+  }
+}

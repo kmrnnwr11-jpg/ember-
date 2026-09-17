@@ -403,7 +403,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                       const SizedBox(height: 12),
                       if (b.phase == BuildPhase.ready) _ReadyCard(builder: b, projectId: project.id),
                       if (b.phase == BuildPhase.ready) PlayUpdateCard(builder: b, projectId: project.id),
-                      if (b.phase == BuildPhase.ready) AppContentCard(projectId: project.id),
+                      if (b.phase == BuildPhase.ready) AppContentCard(projectId: project.id, appName: project.displayName),
                       if (b.phase == BuildPhase.ready) GitHubCard(projectId: project.id),
                       if (b.phase == BuildPhase.ready) LogoCard(builder: b, projectId: project.id),
                       if (b.phase == BuildPhase.ready || b.phase == BuildPhase.generating) ScreenshotsCard(builder: b, projectId: project.id),

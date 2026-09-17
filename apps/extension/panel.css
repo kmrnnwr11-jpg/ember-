@@ -1,0 +1,97 @@
+/* Ember's own two pieces of interface inside Play Console: a button and a panel. */
+
+#ember-button {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147483000;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: #e5131b;
+  color: #fff;
+  font: 600 14px/1 system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+}
+
+#ember-button:hover {
+  background: #ff2a33;
+}
+
+#ember-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 72px;
+  z-index: 2147483000;
+  width: 360px;
+  max-height: 70vh;
+  overflow: auto;
+  padding: 14px 16px 16px;
+  border-radius: 14px;
+  background: #140b0d;
+  color: #f4eceb;
+  font: 14px/1.5 system-ui, sans-serif;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
+}
+
+#ember-panel p {
+  margin: 8px 0;
+}
+
+.ember-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #3a2226;
+}
+
+.ember-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e5131b;
+  box-shadow: 0 0 10px #e5131b;
+}
+
+.ember-x {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: #b9a6a6;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ember-list {
+  margin: 8px 0;
+  padding-left: 18px;
+}
+
+.ember-list li {
+  margin-bottom: 8px;
+}
+
+.ember-small {
+  color: #b9a6a6;
+  font-size: 12px;
+}
+
+.ember-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.ember-go {
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #e5131b;
+  color: #fff;
+  font: 600 14px/1 system-ui, sans-serif;
+  cursor: pointer;
+}

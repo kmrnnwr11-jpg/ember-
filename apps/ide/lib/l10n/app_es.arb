@@ -405,5 +405,6 @@
   "ghForgetToken": "Olvidar el token",
   "ghNeedsToken": "Primero pega un token de GitHub.",
   "ghCreated": "Repositorio {repo} creado y app subida ✓",
-  "ghUpdated": "App subida a {repo} ✓"
+  "ghUpdated": "App subida a {repo} ✓",
+  "acCopyForExtension": "Copiar para la extensión"
 }

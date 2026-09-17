@@ -1411,4 +1411,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String ghUpdated(String repo) {
     return 'App uploaded to $repo ✓';
   }
+
+  @override
+  String get acCopyForExtension => 'Copy for the browser helper';
 }

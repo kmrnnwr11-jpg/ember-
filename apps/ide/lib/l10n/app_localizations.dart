@@ -2378,6 +2378,42 @@ abstract class AppLocalizations {
   /// **'First export the form from Play Console: App content → Data safety → Export to CSV. Save it in Downloads, then press this button again.'**
   String get dsNeedsCsv;
 
+  /// No description provided for @acTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'App content (Play Console)'**
+  String get acTitle;
+
+  /// No description provided for @acHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Google asks these questions before the app can go public. Ember has the answer for each one: copy it and click it in Play Console.'**
+  String get acHint;
+
+  /// No description provided for @acOpenConsole.
+  ///
+  /// In en, this message translates to:
+  /// **'Open App content'**
+  String get acOpenConsole;
+
+  /// No description provided for @acCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy answer'**
+  String get acCopy;
+
+  /// No description provided for @acCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get acCopied;
+
+  /// No description provided for @acAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember does this one'**
+  String get acAuto;
+
   /// No description provided for @paste.
   ///
   /// In en, this message translates to:

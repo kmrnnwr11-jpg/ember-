@@ -1324,5 +1324,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'First export the form from Play Console: App content → Data safety → Export to CSV. Save it in Downloads, then press this button again.';
 
   @override
+  String get acTitle => 'App content (Play Console)';
+
+  @override
+  String get acHint =>
+      'Google asks these questions before the app can go public. Ember has the answer for each one: copy it and click it in Play Console.';
+
+  @override
+  String get acOpenConsole => 'Open App content';
+
+  @override
+  String get acCopy => 'Copy answer';
+
+  @override
+  String get acCopied => 'Copied';
+
+  @override
+  String get acAuto => 'Ember does this one';
+
+  @override
   String get paste => 'Paste';
 }

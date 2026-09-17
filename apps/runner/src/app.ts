@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { syncProducts } from './play_products.js';
+import { appContentAnswers } from './app_content.js';
 import { DATA_SAFETY_SYSTEM, dataSafetyPrompt, detectDataFacts, findExportedCsv, uploadDataSafety, validateFilledCsv } from './data_safety.js';
 import { createServiceAccountKey, gcloudStatus, invitePlayUser, storeImages } from './play_setup.js';
 import { cliLogins, cliModels } from './subscription_clis.js';
@@ -22,7 +23,7 @@ import { errorPayload, httpStatus } from './errors.js';
 import { WatchHub } from './fs.js';
 import { JobManager, jobPublic } from './jobs.js';
 import { ARTIFACTS, Services, TEMPLATES, type SignedBuildPreparer } from './services.js';
-import { androidAppInfo, ensureUploadKey } from './signing.js';
+import { androidAppInfo, ensureUploadKey, rememberPublishedVersionCode } from './signing.js';
 import { parseServiceAccount, PlayError, privacyHtml, publishToPlay } from './play.js';
 import { readFile as readFileAsync, writeFile as writeFileAsync, mkdir as mkdirAsync } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
@@ -308,6 +309,7 @@ export async function buildApp(
           },
           deps.playFetch ?? fetch,
         );
+        await rememberPublishedVersionCode(root, result.versionCode);
         return { ...result, packageName: info.applicationId };
       } catch (e) {
         if (e instanceof PlayError) {
@@ -378,6 +380,13 @@ export async function buildApp(
       const { projectId } = req.params as { projectId: string };
       const { project } = await services.ownedProject(req.user.id, projectId);
       return storeState(services.projectRoot(project));
+    });
+
+    // Play Console "App content": the answer for every declaration Google asks for.
+    r.get('/v1/projects/:projectId/app-content', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      return appContentAnswers(services.projectRoot(project));
     });
 
     // Store listing texts written/edited by the user, reused for every new version.

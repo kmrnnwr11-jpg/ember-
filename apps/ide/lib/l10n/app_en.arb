@@ -781,5 +781,11 @@
   "dsWorking": "Reading what the app collects and filling the Data safety form…",
   "dsDone": "Data safety sent to Google Play ✓ — check it in Play Console → App content → Data safety and press Submit.",
   "dsNeedsCsv": "First export the form from Play Console: App content → Data safety → Export to CSV. Save it in Downloads, then press this button again.",
+  "acTitle": "App content (Play Console)",
+  "acHint": "Google asks these questions before the app can go public. Ember has the answer for each one: copy it and click it in Play Console.",
+  "acOpenConsole": "Open App content",
+  "acCopy": "Copy answer",
+  "acCopied": "Copied",
+  "acAuto": "Ember does this one",
   "paste": "Paste"
 }

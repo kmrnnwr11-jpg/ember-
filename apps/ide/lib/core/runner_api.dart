@@ -126,6 +126,10 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// Ember's answer for every Play Console "App content" declaration.
+  Future<Map<String, dynamic>> appContent(String projectId) =>
+      _call(() => _dio.get('/v1/projects/$projectId/app-content'), (d) => d as Map<String, dynamic>);
+
   /// Creates and activates in-app products / subscriptions on Google Play.
   Future<Map<String, dynamic>> syncPlayProducts(String projectId, String serviceAccount, List<Map<String, dynamic>> products) => _call(
     () => _dio.post('/v1/projects/$projectId/play/products', data: {'serviceAccount': serviceAccount, 'products': products}, options: Options(receiveTimeout: const Duration(minutes: 5))),

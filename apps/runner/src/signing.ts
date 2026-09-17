@@ -147,13 +147,34 @@ export function patchGradleKts(src: string): string {
   return out;
 }
 
-/** Increments the build number in `version: x.y.z+N` (adds +1 if missing). */
-export function bumpBuildNumber(pubspec: string): { text: string; version: string } {
+/**
+ * Increments the build number in `version: x.y.z+N` (adds +1 if missing).
+ * `floor` is the highest version code Google Play has already accepted: the
+ * next build must be above it, whatever the project file says.
+ */
+export function bumpBuildNumber(pubspec: string, floor = 0): { text: string; version: string } {
   const re = /^version:[ \t]*([0-9]+\.[0-9]+\.[0-9]+)(?:\+([0-9]+))?[ \t]*$/m;
   const m = re.exec(pubspec);
-  if (!m) return { text: pubspec.replace(/^name:.*$/m, (l) => `${l}\nversion: 1.0.0+1`), version: '1.0.0+1' };
-  const next = `${m[1]}+${Number(m[2] ?? 0) + 1}`;
-  return { text: pubspec.replace(re, `version: ${next}`), version: next };
+  const next = Math.max(Number(m?.[2] ?? 0), floor) + 1;
+  if (!m) return { text: pubspec.replace(/^name:.*$/m, (l) => `${l}\nversion: 1.0.0+${next}`), version: `1.0.0+${next}` };
+  const version = `${m[1]}+${next}`;
+  return { text: pubspec.replace(re, `version: ${version}`), version };
+}
+
+/** Highest version code Google Play accepted for this project, if known. */
+export async function lastPublishedVersionCode(projectRoot: string): Promise<number> {
+  const raw = await readFile(path.join(projectRoot, 'store', 'play.json'), 'utf8').catch(() => null);
+  if (!raw) return 0;
+  const n = Number((JSON.parse(raw) as { lastVersionCode?: number }).lastVersionCode);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** Remembers what Google Play accepted, so the next build starts above it. */
+export async function rememberPublishedVersionCode(projectRoot: string, versionCode: number): Promise<void> {
+  const dir = path.join(projectRoot, 'store');
+  await mkdir(dir, { recursive: true });
+  const previous = await lastPublishedVersionCode(projectRoot);
+  await writeFile(path.join(dir, 'play.json'), JSON.stringify({ lastVersionCode: Math.max(previous, versionCode) }, null, 2));
 }
 
 /** SHA-1 of a keystore entry via keytool, or null. */
@@ -186,7 +207,7 @@ export async function prepareSignedBuild(cfg: Config, projectId: string, project
   const patched = patchGradleKts(src);
   if (patched !== src) await writeFile(gradle, patched);
   const pubspecPath = path.join(projectRoot, 'pubspec.yaml');
-  const bumped = bumpBuildNumber(await readFile(pubspecPath, 'utf8'));
+  const bumped = bumpBuildNumber(await readFile(pubspecPath, 'utf8'), await lastPublishedVersionCode(projectRoot));
   await writeFile(pubspecPath, bumped.text);
   return {
     version: bumped.version,

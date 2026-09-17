@@ -379,5 +379,11 @@
   "dsWorking": "Analizando qué recoge la app y rellenando el formulario…",
   "dsDone": "Seguridad de los datos enviada a Google Play ✓ — revísala en Play Console → Contenido de la app → Seguridad de los datos y pulsa Enviar.",
   "dsNeedsCsv": "Primero exporta el formulario desde Play Console: Contenido de la app → Seguridad de los datos → Exportar a CSV. Guárdalo en Descargas y pulsa otra vez.",
+  "acTitle": "Contenido de la app (Play Console)",
+  "acHint": "Google hace estas preguntas antes de publicar la app. Ember tiene la respuesta a cada una: cópiala y selecciónala en Play Console.",
+  "acOpenConsole": "Abrir Contenido de la app",
+  "acCopy": "Copiar respuesta",
+  "acCopied": "Copiado",
+  "acAuto": "Lo hace Ember",
   "paste": "Pegar"
 }

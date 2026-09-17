@@ -18,6 +18,7 @@ import '../ai/ai_settings.dart';
 import '../../widgets/ember_logo.dart';
 import 'access_links.dart';
 import 'logo_card.dart';
+import 'app_content_card.dart';
 import 'play_update_card.dart';
 import 'products_card.dart';
 import 'screenshots_card.dart';
@@ -366,6 +367,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                       const SizedBox(height: 12),
                       if (b.phase == BuildPhase.ready) _ReadyCard(builder: b, projectId: project.id),
                       if (b.phase == BuildPhase.ready) PlayUpdateCard(builder: b, projectId: project.id),
+                      if (b.phase == BuildPhase.ready) AppContentCard(projectId: project.id),
                       if (b.phase == BuildPhase.ready) LogoCard(builder: b, projectId: project.id),
                       if (b.phase == BuildPhase.ready || b.phase == BuildPhase.generating) ScreenshotsCard(builder: b, projectId: project.id),
                       if (b.phase == BuildPhase.ready && b.products.isNotEmpty) ProductsCard(builder: b, projectId: project.id),

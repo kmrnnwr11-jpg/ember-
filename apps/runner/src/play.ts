@@ -87,6 +87,15 @@ async function googleError(res: Response): Promise<PlayError> {
   if (res.status === 404) {
     return new PlayError('play_app_not_found', `Google Play: app not found. Create the app in Play Console with this exact package name first. (${message})`, 404);
   }
+  // Play reports a reused version code as 403; say what it really is.
+  const used = /version\s*code\s*(\d+)\s*has already been used/i.exec(message);
+  if (used) {
+    return new PlayError(
+      'version_code_used',
+      `Google Play already has version ${used[1]} of this app. Build a new AAB: Ember raises the version number and uploads it.`,
+      res.status,
+    );
+  }
   if (res.status === 401 || res.status === 403) {
     return new PlayError(
       'play_permission',

@@ -1320,5 +1320,24 @@ class AppLocalizationsAr extends AppLocalizations {
       'صدّر النموذج أولًا من Play Console: محتوى التطبيق ← أمان البيانات ← تصدير إلى CSV. احفظه في مجلد التنزيلات ثم اضغط الزر مرة أخرى.';
 
   @override
+  String get acTitle => 'محتوى التطبيق (Play Console)';
+
+  @override
+  String get acHint =>
+      'تطرح Google هذه الأسئلة قبل نشر التطبيق. لدى Ember إجابة لكل سؤال: انسخها واخترها في Play Console.';
+
+  @override
+  String get acOpenConsole => 'فتح محتوى التطبيق';
+
+  @override
+  String get acCopy => 'نسخ الإجابة';
+
+  @override
+  String get acCopied => 'تم النسخ';
+
+  @override
+  String get acAuto => 'يتولاها Ember';
+
+  @override
   String get paste => 'لصق';
 }

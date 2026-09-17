@@ -14,8 +14,22 @@
   if (window.__emberPlayHelper) return;
   window.__emberPlayHelper = true;
 
-  const RULES = chrome.runtime.getURL('rules.js');
   let rules = null;
+
+  /**
+   * Reloading the extension leaves open tabs holding a dead connection to it:
+   * chrome.* is then gone or throws. Say what to do instead of a raw error.
+   */
+  const STALE = 'Ho aggiornato Ember: ricarica questa pagina (F5) e ripremi il pulsante.';
+
+  async function storedApp() {
+    if (!chrome?.runtime?.id || !chrome?.storage?.local) throw new Error(STALE);
+    try {
+      return (await chrome.storage.local.get('app')).app;
+    } catch {
+      throw new Error(STALE);
+    }
+  }
 
   const text = (el) => (el?.innerText ?? el?.textContent ?? '').replace(/\s+/g, ' ').trim();
 
@@ -102,9 +116,8 @@
   }
 
   async function propose() {
-    rules ??= await import(RULES);
-    const stored = await chrome.storage.local.get('app');
-    const app = stored.app;
+    const app = await storedApp();
+    rules ??= await import(chrome.runtime.getURL('rules.js'));
     if (!app) {
       render('<p>Prima incolla i dati dell\'app: apri Ember, scheda <b>Contenuti dell\'app</b>, premi <b>Copia per l\'estensione</b>, poi clicca l\'icona di Ember qui nel browser e incolla.</p>');
       return;

@@ -150,6 +150,16 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
             Row(children: [const Icon(Icons.fact_check_outlined), const SizedBox(width: 8), Expanded(child: Text(l.acTitle, style: theme.textTheme.titleMedium))]),
             const SizedBox(height: 4),
             Text(l.acHint, style: theme.textTheme.bodySmall),
+            const SizedBox(height: 10),
+            // The one button that starts the browser helper: at the top, where it is found.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FilledButton.tonalIcon(
+                onPressed: _copyForExtension,
+                icon: Icon(_copied == '_extension' ? Icons.check : Icons.extension_outlined, size: 18),
+                label: Text(_copied == '_extension' ? l.acCopied : l.acCopyForExtension),
+              ),
+            ),
             const SizedBox(height: 12),
             for (final item in _items) _row(context, l, item),
             const SizedBox(height: 12),
@@ -197,11 +207,6 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
                   label: Text(l.acFillForMe),
                 ),
                 OutlinedButton.icon(onPressed: _openConsole, icon: const Icon(Icons.open_in_new), label: Text(l.acOpenConsole)),
-                TextButton.icon(
-                  onPressed: _copyForExtension,
-                  icon: Icon(_copied == '_extension' ? Icons.check : Icons.extension_outlined, size: 18),
-                  label: Text(_copied == '_extension' ? l.acCopied : l.acCopyForExtension),
-                ),
               ],
             ),
           ],

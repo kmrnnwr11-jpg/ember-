@@ -261,15 +261,24 @@ export async function fillAppContent(input: ConsoleFillInput, launch = puppeteer
   const profile = ownProfile
     ? ((await profileForAccount(ownProfile, account)) ?? lastUsedProfile(await readFile(path.join(ownProfile, 'Local State'), 'utf8').catch(() => '')))
     : 'Default';
-  const browser: Browser = await launch({
-    executablePath,
-    headless: false,
-    defaultViewport: null,
-    userDataDir: ownProfile ?? path.resolve(input.profileDir),
-    // Without this Chrome shows the "controlled by automated test software" bar and Google refuses to sign in.
-    ignoreDefaultArgs: ['--enable-automation', '--disable-extensions'],
-    args: ['--start-maximized', '--no-first-run', '--no-default-browser-check', `--profile-directory=${profile}`],
-  });
+  let browser: Browser;
+  try {
+    browser = await launch({
+      executablePath,
+      headless: false,
+      defaultViewport: null,
+      userDataDir: ownProfile ?? path.resolve(input.profileDir),
+      // Without this Chrome shows the "controlled by automated test software" bar and Google refuses to sign in.
+      ignoreDefaultArgs: ['--enable-automation', '--disable-extensions'],
+      args: ['--start-maximized', '--no-first-run', '--no-default-browser-check', `--profile-directory=${profile}`],
+    });
+  } catch (e) {
+    // Chrome cannot share a profile with a copy of itself; say that, not the library's wording.
+    if (/already running|ProcessSingleton|SingletonLock/i.test((e as Error).message)) {
+      throw new Error('Chrome is open: close every Chrome window (including the one Ember left open) and press the button again.');
+    }
+    throw e;
+  }
   const results: FillResult[] = [];
   try {
     const page = (await browser.pages())[0] ?? (await browser.newPage());

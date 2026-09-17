@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { readdir, readFile } from 'node:fs/promises';
+import { copyFile, cp, mkdir, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
 import { categoryChoice, plan, targetAudience, textAnswers } from '../../extension/rules.js';
@@ -230,6 +230,61 @@ function chromeIsRunning(): Promise<boolean> {
   });
 }
 
+/**
+ * A working copy of the user's Chrome profile.
+ *
+ * Since Chrome 136 a program cannot drive the real profile directory at all:
+ * Chrome quits rather than be automated there. Google's own advice is to work
+ * on a copy, so Ember copies the parts that carry the signed-in session —
+ * nothing else — and drives that.
+ */
+export async function copySignedInProfile(userDataDir: string, profile: string, destination: string): Promise<string> {
+  const dest = path.join(destination, 'Default');
+  await mkdir(dest, { recursive: true });
+  // "Local State" holds the key the cookies are encrypted with: without it they are unreadable.
+  await copyFile(path.join(userDataDir, 'Local State'), path.join(destination, 'Local State')).catch(() => {});
+  for (const file of ['Preferences', 'Secure Preferences', 'Login Data', 'Web Data']) {
+    await copyFile(path.join(userDataDir, profile, file), path.join(dest, file)).catch(() => {});
+  }
+  for (const dir of ['Network', 'Local Storage', 'Session Storage', 'IndexedDB']) {
+    await cp(path.join(userDataDir, profile, dir), path.join(dest, dir), { recursive: true, force: true }).catch(() => {});
+  }
+  return destination;
+}
+
+/**
+ * Starts the user's own Chrome and waits for it to answer on its debugging port.
+ *
+ * Chrome relaunches itself when it opens a real profile, so the process we spawn
+ * is not the one that ends up running: driving it directly fails. Connecting to
+ * the port works whichever process wins, and leaves the window a normal browser
+ * — which is also why Google keeps trusting the session.
+ */
+async function connectToOwnChrome(executablePath: string, userDataDir: string, profile: string, port = 9222): Promise<Browser> {
+  const version = async (): Promise<string | null> => {
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/json/version`, { signal: AbortSignal.timeout(2000) });
+      return res.ok ? ((await res.json()) as { webSocketDebuggerUrl?: string }).webSocketDebuggerUrl ?? null : null;
+    } catch {
+      return null;
+    }
+  };
+
+  if (!(await version())) {
+    const child = spawn(
+      executablePath,
+      [`--remote-debugging-port=${port}`, `--user-data-dir=${userDataDir}`, `--profile-directory=${profile}`, '--no-first-run', '--no-default-browser-check'],
+      { detached: true, stdio: 'ignore', windowsHide: false },
+    );
+    child.unref();
+    for (let i = 0; i < 40 && !(await version()); i++) await new Promise((r) => setTimeout(r, 500));
+  }
+  if (!(await version())) {
+    throw new Error('Chrome did not open. Close every Chrome window and press the button again.');
+  }
+  return puppeteer.connect({ browserURL: `http://127.0.0.1:${port}`, defaultViewport: null });
+}
+
 export interface ConsoleFillInput {
   /** Play Console addresses: the developer account and the app inside it. */
   developerId: string;
@@ -254,31 +309,21 @@ export async function fillAppContent(input: ConsoleFillInput, launch = puppeteer
   const base = `https://play.google.com/console/u/${input.userIndex ?? 0}/developers/${input.developerId}/app/${input.appId}`;
   // The user's own Chrome profile: already signed in to Google, and Google trusts it.
   const ownProfile = chromeProfileDir();
-  if (ownProfile && (await chromeIsRunning())) {
-    throw new Error('Close Chrome first: Ember needs to open it with your own profile, the one already signed in to Play Console.');
-  }
   const account = `${input.app.email ?? ''}`;
   const profile = ownProfile
     ? ((await profileForAccount(ownProfile, account)) ?? lastUsedProfile(await readFile(path.join(ownProfile, 'Local State'), 'utf8').catch(() => '')))
     : 'Default';
-  let browser: Browser;
-  try {
-    browser = await launch({
-      executablePath,
-      headless: false,
-      defaultViewport: null,
-      userDataDir: ownProfile ?? path.resolve(input.profileDir),
-      // Without this Chrome shows the "controlled by automated test software" bar and Google refuses to sign in.
-      ignoreDefaultArgs: ['--enable-automation', '--disable-extensions'],
-      args: ['--start-maximized', '--no-first-run', '--no-default-browser-check', `--profile-directory=${profile}`],
-    });
-  } catch (e) {
-    // Chrome cannot share a profile with a copy of itself; say that, not the library's wording.
-    if (/already running|ProcessSingleton|SingletonLock/i.test((e as Error).message)) {
-      throw new Error('Chrome is open: close every Chrome window (including the one Ember left open) and press the button again.');
-    }
-    throw e;
-  }
+  const workingDir = path.resolve(input.profileDir);
+  if (ownProfile) await copySignedInProfile(ownProfile, profile, workingDir);
+  const browser: Browser = await launch({
+    executablePath,
+    headless: false,
+    defaultViewport: null,
+    userDataDir: workingDir,
+    // Without this Chrome shows the "controlled by automated test software" bar.
+    ignoreDefaultArgs: ['--enable-automation'],
+    args: ['--start-maximized', '--no-first-run', '--no-default-browser-check', '--profile-directory=Default'],
+  });
   const results: FillResult[] = [];
   try {
     const page = (await browser.pages())[0] ?? (await browser.newPage());
@@ -290,7 +335,8 @@ export async function fillAppContent(input: ConsoleFillInput, launch = puppeteer
     if (/accounts\.google\.com/.test(page.url())) {
       await page.waitForFunction('location.host === "play.google.com"', { timeout: 3 * 60_000 }).catch(() => {
         throw new Error(
-          `Chrome opened the profile "${profile}", which is not signed in to Play Console. Open Chrome normally, sign in to Play Console with the account that owns the app, close Chrome, and press the button again.`,
+          'Chrome will not carry your Play Console session into a window driven by a program: since Chrome 136 it refuses the real profile, and a copied profile cannot read its own cookies. ' +
+            'Use the Ember browser helper instead: it works inside your own browser, where you are already signed in.',
         );
       });
       await page.goto(`${base}/app-content`, { waitUntil: 'domcontentloaded', timeout: 120_000 });

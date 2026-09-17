@@ -9,9 +9,10 @@ async function show() {
     : '<p class="small">Nessuna app impostata.</p>';
 }
 
-$('save').addEventListener('click', async () => {
+/** Accepts the app data, wherever it came from. */
+async function save(raw) {
   try {
-    const app = JSON.parse($('data').value.trim());
+    const app = JSON.parse(raw.trim());
     if (!app.name) throw new Error("mancano i dati dell'app");
     await chrome.storage.local.set({ app });
     $('data').value = '';
@@ -20,6 +21,19 @@ $('save').addEventListener('click', async () => {
   } catch (e) {
     $('msg').textContent = `Non riesco a leggere questi dati: ${e.message}`;
   }
+}
+
+// One button instead of paste-then-save: Ember already put the data on the clipboard.
+$('fromClipboard').addEventListener('click', async () => {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (!text.trim()) throw new Error('gli appunti sono vuoti');
+    await save(text);
+  } catch (e) {
+    $('msg').textContent = `Non riesco a leggere gli appunti: ${e.message}. Incolla qui sotto con Ctrl+V.`;
+  }
 });
+
+$('save').addEventListener('click', () => save($('data').value));
 
 show();

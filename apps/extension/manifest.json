@@ -3,7 +3,7 @@
   "name": "Ember – Play Console helper",
   "version": "0.1.0",
   "description": "Fills the Play Console App content answers for an app built with Ember. Nothing is saved until you press Save yourself.",
-  "permissions": ["storage", "activeTab"],
+  "permissions": ["storage", "activeTab", "clipboardRead"],
   "host_permissions": ["https://play.google.com/console/*"],
   "action": {
     "default_title": "Ember",

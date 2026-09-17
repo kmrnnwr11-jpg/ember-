@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
 import { categoryChoice, plan, targetAudience, textAnswers } from '../../extension/rules.js';
@@ -181,6 +182,42 @@ export function chromeProfileDir(env: NodeJS.ProcessEnv = process.env, platform 
   return platform === 'darwin' ? path.join(home, 'Library', 'Application Support', 'Google', 'Chrome') : path.join(home, '.config', 'google-chrome');
 }
 
+/**
+ * Which profile inside Chrome the person actually uses. Opening "Default" when
+ * they signed in under "Profile 3" lands on a logged-out window, and Google
+ * refuses to sign in again inside a window driven by a program.
+ */
+export function lastUsedProfile(localState: string): string {
+  try {
+    const state = JSON.parse(localState) as { profile?: { last_used?: string; last_active_profiles?: string[] } };
+    return state.profile?.last_used || state.profile?.last_active_profiles?.[0] || 'Default';
+  } catch {
+    return 'Default';
+  }
+}
+
+/**
+ * The Chrome profile signed in with a given Google account. People keep several
+ * profiles — work, personal, the one that owns the Play Console account — and
+ * only the right one opens Play Console without a login page.
+ */
+export async function profileForAccount(userDataDir: string, email: string): Promise<string | null> {
+  const wanted = email.trim().toLowerCase();
+  if (!wanted) return null;
+  const names = await readdir(userDataDir).catch(() => [] as string[]);
+  for (const name of names.filter((n) => n === 'Default' || /^Profile \d+$/.test(n))) {
+    const raw = await readFile(path.join(userDataDir, name, 'Preferences'), 'utf8').catch(() => '');
+    if (!raw) continue;
+    try {
+      const prefs = JSON.parse(raw) as { account_info?: Array<{ email?: string }> };
+      if ((prefs.account_info ?? []).some((a) => (a.email ?? '').toLowerCase() === wanted)) return name;
+    } catch {
+      // a profile we cannot read is simply not a match
+    }
+  }
+  return null;
+}
+
 /** Chrome refuses to share a profile with itself: it must be closed first. */
 function chromeIsRunning(): Promise<boolean> {
   if (process.platform !== 'win32') return Promise.resolve(false);
@@ -220,14 +257,18 @@ export async function fillAppContent(input: ConsoleFillInput, launch = puppeteer
   if (ownProfile && (await chromeIsRunning())) {
     throw new Error('Close Chrome first: Ember needs to open it with your own profile, the one already signed in to Play Console.');
   }
+  const account = `${input.app.email ?? ''}`;
+  const profile = ownProfile
+    ? ((await profileForAccount(ownProfile, account)) ?? lastUsedProfile(await readFile(path.join(ownProfile, 'Local State'), 'utf8').catch(() => '')))
+    : 'Default';
   const browser: Browser = await launch({
     executablePath,
     headless: false,
     defaultViewport: null,
     userDataDir: ownProfile ?? path.resolve(input.profileDir),
-    // Without this Chrome shows the "controlled by automated test software" bar and Google may refuse the sign-in.
+    // Without this Chrome shows the "controlled by automated test software" bar and Google refuses to sign in.
     ignoreDefaultArgs: ['--enable-automation', '--disable-extensions'],
-    args: ['--start-maximized', '--no-first-run', '--no-default-browser-check', '--profile-directory=Default'],
+    args: ['--start-maximized', '--no-first-run', '--no-default-browser-check', `--profile-directory=${profile}`],
   });
   const results: FillResult[] = [];
   try {
@@ -235,10 +276,13 @@ export async function fillAppContent(input: ConsoleFillInput, launch = puppeteer
     await page.goto(`${base}/app-content`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
     await settle(page, 3000);
 
-    // A login page means the user has not signed in to Google in this window yet.
+    // Google refuses new sign-ins inside a window a program is driving, so a login
+    // page here means the wrong Chrome profile was opened: say so, do not fight it.
     if (/accounts\.google\.com/.test(page.url())) {
-      await page.waitForFunction('location.host === "play.google.com"', { timeout: 10 * 60_000 }).catch(() => {
-        throw new Error('Sign in to Google in the window Ember opened, then press the button again');
+      await page.waitForFunction('location.host === "play.google.com"', { timeout: 3 * 60_000 }).catch(() => {
+        throw new Error(
+          `Chrome opened the profile "${profile}", which is not signed in to Play Console. Open Chrome normally, sign in to Play Console with the account that owns the app, close Chrome, and press the button again.`,
+        );
       });
       await page.goto(`${base}/app-content`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
       await settle(page, 3000);

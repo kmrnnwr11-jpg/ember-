@@ -18,6 +18,7 @@ import '../ai/ai_settings.dart';
 import '../../widgets/ember_logo.dart';
 import 'access_links.dart';
 import 'logo_card.dart';
+import '../assistant/home_assistant.dart';
 import 'app_content_card.dart';
 import 'play_update_card.dart';
 import 'products_card.dart';
@@ -290,6 +291,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
   final _logScroll = ScrollController();
   bool _autoStarted = false;
   bool _showLog = true;
+  bool _showAssistant = false;
 
   @override
   void dispose() {
@@ -342,6 +344,11 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
             leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/projects')),
             title: Text(project.displayName),
             actions: [
+              IconButton(
+                tooltip: l.acAssistant,
+                icon: Icon(_showAssistant ? Icons.forum : Icons.forum_outlined),
+                onPressed: () => setState(() => _showAssistant = !_showAssistant),
+              ),
               TextButton.icon(
                 onPressed: () => context.go('/projects/${project.id}'),
                 icon: const Icon(Icons.code),
@@ -349,7 +356,35 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
               ),
             ],
           ),
-          body: ListenableBuilder(
+          body: Row(
+            children: [
+              Expanded(child: _buildBody(context, l, b, project)),
+              if (_showAssistant && MediaQuery.sizeOf(context).width >= 900) ...[
+                const VerticalDivider(width: 1),
+                SizedBox(
+                  width: 380,
+                  child: HomeAssistantPanel(
+                    app: (id: project.id, name: project.displayName),
+                    onClose: () => setState(() => _showAssistant = false),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          // On a narrow window the assistant takes the whole screen instead of squeezing the app.
+          endDrawer: MediaQuery.sizeOf(context).width < 900
+              ? Drawer(
+                  width: 380,
+                  child: HomeAssistantPanel(app: (id: project.id, name: project.displayName), onClose: () => Navigator.pop(context)),
+                )
+              : null,
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(BuildContext context, AppLocalizations l, AppBuilder b, Project project) {
+    return ListenableBuilder(
             listenable: b,
             builder: (context, _) => Center(
               child: ConstrainedBox(
@@ -427,9 +462,6 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                 ),
               ),
             ),
-          ),
-        );
-      },
     );
   }
 }

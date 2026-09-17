@@ -2402,6 +2402,30 @@ abstract class AppLocalizations {
   /// **'Open the folder on Drive'**
   String get driveOpenFolder;
 
+  /// No description provided for @acAskPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Write the privacy policy for this app'**
+  String get acAskPrivacy;
+
+  /// No description provided for @acAskAdmob.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I add AdMob ads to this app?'**
+  String get acAskAdmob;
+
+  /// No description provided for @acAskContent.
+  ///
+  /// In en, this message translates to:
+  /// **'What do I answer in Play Console App content?'**
+  String get acAskContent;
+
+  /// No description provided for @acAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask Ember about this app'**
+  String get acAssistant;
+
   /// No description provided for @acTitle.
   ///
   /// In en, this message translates to:

@@ -1332,6 +1332,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get driveOpenFolder => 'فتح المجلد في Drive';
 
   @override
+  String get acAskPrivacy => 'اكتب سياسة الخصوصية لهذا التطبيق';
+
+  @override
+  String get acAskAdmob => 'كيف أضيف إعلانات AdMob إلى هذا التطبيق؟';
+
+  @override
+  String get acAskContent => 'بماذا أجيب في قسم محتوى التطبيق في Play Console؟';
+
+  @override
+  String get acAssistant => 'اسأل Ember عن هذا التطبيق';
+
+  @override
   String get acTitle => 'محتوى التطبيق (Play Console)';
 
   @override

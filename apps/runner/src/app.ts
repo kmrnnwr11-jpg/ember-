@@ -40,6 +40,13 @@ declare module 'fastify' {
   }
 }
 
+/** The name the app carries on the store, when the listing has one. */
+async function storeTitle(projectRoot: string): Promise<{ title?: string }> {
+  const raw = await readFileAsync(path.join(projectRoot, 'store', 'listing.json'), 'utf8').catch(() => 'null');
+  const title = `${(JSON.parse(raw) as { title?: string } | null)?.title ?? ''}`.trim();
+  return title ? { title } : {};
+}
+
 export interface AppDeps {
   store?: Store;
   driver?: WorkspaceDriver;
@@ -236,15 +243,8 @@ export async function buildApp(
     r.get('/v1/workspaces/:workspaceId/projects', async (req) => {
       const { workspaceId } = req.params as { workspaceId: string };
       const projects = await services.listProjects(req.user.id, workspaceId);
-      // Show the name the app will carry on the store, not the folder name taken from the request.
       return {
-        projects: await Promise.all(
-          projects.map(async (project) => {
-            const raw = await readFileAsync(path.join(services.projectRoot(project), 'store', 'listing.json'), 'utf8').catch(() => 'null');
-            const title = `${(JSON.parse(raw) as { title?: string } | null)?.title ?? ''}`.trim();
-            return title ? { ...project, title } : project;
-          }),
-        ),
+        projects: await Promise.all(projects.map(async (project) => ({ ...project, ...(await storeTitle(services.projectRoot(project))) }))),
       };
     });
 
@@ -257,7 +257,8 @@ export async function buildApp(
 
     r.get('/v1/projects/:projectId', async (req) => {
       const { projectId } = req.params as { projectId: string };
-      return (await services.ownedProject(req.user.id, projectId)).project;
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      return { ...project, ...(await storeTitle(services.projectRoot(project))) };
     });
 
     r.delete('/v1/projects/:projectId', async (req, reply) => {

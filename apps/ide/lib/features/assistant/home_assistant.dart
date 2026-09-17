@@ -32,10 +32,30 @@ final homeAssistantProvider = ChangeNotifierProvider<ChatController>((ref) {
   )..selectModel(const AiModel(provider: AiProviderId.gemini, id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', inputPerMTok: 0, outputPerMTok: 0));
 });
 
+/// The same assistant, but told which app it is talking about, so answers are
+/// about this app: its privacy policy, its AdMob setup, its Play Console rows.
+final projectAssistantProvider = ChangeNotifierProvider.family<ChatController, ({String id, String name})>((ref, app) {
+  return ChatController(
+    projectId: 'assistant_${app.id}',
+    resolveProvider: (_) async {
+      final session = ref.read(sessionProvider).value;
+      if (session == null) throw const AiException('Accedi per usare l\'assistente');
+      return GeminiProvider(
+        AiEndpoint.proxy(apiKey: '', runnerUrl: session.runnerUrl, runnerToken: await session.token(), proxyPath: 'assistant'),
+      );
+    },
+    systemPrompt: '$assistantSystemPrompt\n\nThe user is working on their app "${app.name}". Assume every question is about that app unless they say otherwise.',
+    attachFiles: false,
+  )..selectModel(const AiModel(provider: AiProviderId.gemini, id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', inputPerMTok: 0, outputPerMTok: 0));
+});
+
 class HomeAssistantPanel extends ConsumerStatefulWidget {
-  const HomeAssistantPanel({super.key, this.onClose});
+  const HomeAssistantPanel({super.key, this.onClose, this.app});
 
   final VoidCallback? onClose;
+
+  /// When set, the assistant answers about this app instead of in general.
+  final ({String id, String name})? app;
 
   @override
   ConsumerState<HomeAssistantPanel> createState() => _HomeAssistantPanelState();
@@ -65,11 +85,13 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final c = ref.watch(homeAssistantProvider);
+    final c = widget.app == null ? ref.watch(homeAssistantProvider) : ref.watch(projectAssistantProvider(widget.app!));
     final scheme = Theme.of(context).colorScheme;
     final health = ref.watch(runnerHealthProvider).value;
     final enabled = (health?['engines'] as Map?)?['assistant'] != false;
-    final suggestions = [l.assistantSuggest1, l.assistantSuggest2, l.assistantSuggest3];
+    final suggestions = widget.app == null
+        ? [l.assistantSuggest1, l.assistantSuggest2, l.assistantSuggest3]
+        : [l.acAskPrivacy, l.acAskAdmob, l.acAskContent];
 
     return Material(
       color: scheme.surfaceContainerLow,

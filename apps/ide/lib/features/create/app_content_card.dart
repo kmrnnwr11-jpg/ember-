@@ -41,7 +41,7 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
 
   Future<void> _openConsole() async {
     final link = await PlayConsoleLink.load();
-    await link.open(link.appList());
+    await link.open(link.appContent);
   }
 
   @override

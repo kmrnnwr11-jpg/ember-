@@ -140,7 +140,7 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
       return;
     }
     // Remember the account and developer id: every button then opens the user's own console.
-    final link = PlayConsoleLink.parse(pastedLink);
+    final link = PlayConsoleLink.parse(pastedLink)?.merge(_console);
     if (link != null) {
       _console = link;
       await link.save();
@@ -321,9 +321,10 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
                             // A pasted Play Console link always updates the saved account.
                             final pasted = text.contains('play.google.com/console') ? PlayConsoleLink.parse(text) : null;
                             if (pasted != null) {
-                              pasted.save();
+                              final link = pasted.merge(_console);
+                              link.save();
                               setState(() {
-                                _console = pasted;
+                                _console = link;
                                 _error = null;
                                 _input.clear();
                               });

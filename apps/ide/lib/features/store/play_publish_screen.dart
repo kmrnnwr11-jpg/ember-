@@ -227,8 +227,9 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
 
   /// Saves the pasted Play Console address so every button opens the user's own account.
   Future<void> _saveConsoleLink(String url) async {
-    final link = PlayConsoleLink.parse(url);
-    if (link == null) return;
+    final parsed = PlayConsoleLink.parse(url);
+    if (parsed == null) return;
+    final link = parsed.merge(await PlayConsoleLink.load());
     await link.save();
     if (mounted) setState(() => _console = link);
   }

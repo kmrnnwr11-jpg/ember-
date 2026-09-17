@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
 import { categoryChoice, plan, targetAudience, textAnswers } from '../../extension/rules.js';
@@ -149,7 +150,7 @@ async function answerVisible(page: Page, app: Record<string, unknown>): Promise<
     if (tag && !field!.checked[p.option] && (await click(page, tag))) done++;
   }
 
-  const ageField = read.fields.find((f) => /età|age|anni|years/i.test(f.options.join(' ')) && f.options.length >= 4);
+  const ageField = read.fields.find((f) => /et[aà]|age|anni|years/i.test(f.options.join(' ')) && f.options.length >= 4);
   if (ageField) {
     for (const i of targetAudience(ageField.options)) {
       if (!ageField.checked[i] && (await click(page, ageField.tags[i]!))) done++;
@@ -170,6 +171,26 @@ async function openRow(page: Page, words: string[]): Promise<boolean> {
   }, words);
   if (opened) await new Promise((r) => setTimeout(r, 3500));
   return opened;
+}
+
+/** Where this computer's Chrome keeps its profiles, so the user is already signed in. */
+export function chromeProfileDir(env: NodeJS.ProcessEnv = process.env, platform = process.platform): string | null {
+  if (platform === 'win32') return env.LOCALAPPDATA ? path.join(env.LOCALAPPDATA, 'Google', 'Chrome', 'User Data') : null;
+  const home = env.HOME;
+  if (!home) return null;
+  return platform === 'darwin' ? path.join(home, 'Library', 'Application Support', 'Google', 'Chrome') : path.join(home, '.config', 'google-chrome');
+}
+
+/** Chrome refuses to share a profile with itself: it must be closed first. */
+function chromeIsRunning(): Promise<boolean> {
+  if (process.platform !== 'win32') return Promise.resolve(false);
+  return new Promise((resolve) => {
+    const p = spawn('tasklist', ['/FI', 'IMAGENAME eq chrome.exe', '/NH'], { windowsHide: true });
+    let out = '';
+    p.stdout?.on('data', (d) => (out += d));
+    p.on('error', () => resolve(false));
+    p.on('close', () => resolve(/chrome\.exe/i.test(out)));
+  });
 }
 
 export interface ConsoleFillInput {
@@ -194,12 +215,19 @@ export async function fillAppContent(input: ConsoleFillInput, launch = puppeteer
   if (!executablePath) throw new Error('Chrome is not installed on this PC, so Ember cannot open Play Console for you');
 
   const base = `https://play.google.com/console/u/${input.userIndex ?? 0}/developers/${input.developerId}/app/${input.appId}`;
+  // The user's own Chrome profile: already signed in to Google, and Google trusts it.
+  const ownProfile = chromeProfileDir();
+  if (ownProfile && (await chromeIsRunning())) {
+    throw new Error('Close Chrome first: Ember needs to open it with your own profile, the one already signed in to Play Console.');
+  }
   const browser: Browser = await launch({
     executablePath,
     headless: false,
     defaultViewport: null,
-    userDataDir: path.resolve(input.profileDir),
-    args: ['--start-maximized', '--no-first-run', '--no-default-browser-check'],
+    userDataDir: ownProfile ?? path.resolve(input.profileDir),
+    // Without this Chrome shows the "controlled by automated test software" bar and Google may refuse the sign-in.
+    ignoreDefaultArgs: ['--enable-automation', '--disable-extensions'],
+    args: ['--start-maximized', '--no-first-run', '--no-default-browser-check', '--profile-directory=Default'],
   });
   const results: FillResult[] = [];
   try {

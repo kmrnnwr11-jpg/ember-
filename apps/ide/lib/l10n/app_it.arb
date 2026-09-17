@@ -410,5 +410,7 @@
   "acFillForMe": "Compila su Play Console",
   "acFilling": "Ember sta rispondendo alle domande nella finestra di Chrome che ha aperto. Guardalo, e prendi il comando quando vuoi.",
   "acFilled": "Salvate {done} sezioni su {total}.",
-  "acNeedsAppLink": "Ember non sa ancora qual è questa app su Play Console: aprila lì, copia l'indirizzo dal browser e incollalo nella schermata di pubblicazione."
+  "acNeedsAppLink": "Ember non sa ancora qual è questa app su Play Console: aprila lì, copia l'indirizzo dal browser e incollalo nella schermata di pubblicazione.",
+  "acAppLink": "Indirizzo di questa app su Play Console",
+  "acLinkNotUnderstood": "Quell'indirizzo non indica un'app. Apri l'app su Play Console e copia tutto l'indirizzo dalla barra del browser."
 }

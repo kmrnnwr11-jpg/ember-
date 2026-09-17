@@ -1425,4 +1425,11 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get acNeedsAppLink =>
       'لا يعرف Ember بعد أي تطبيق هذا في Play Console: افتحه هناك وانسخ العنوان من المتصفح والصقه في شاشة النشر.';
+
+  @override
+  String get acAppLink => 'عنوان هذا التطبيق في Play Console';
+
+  @override
+  String get acLinkNotUnderstood =>
+      'هذا العنوان لا يشير إلى تطبيق. افتح التطبيق في Play Console وانسخ العنوان كاملًا من شريط المتصفح.';
 }

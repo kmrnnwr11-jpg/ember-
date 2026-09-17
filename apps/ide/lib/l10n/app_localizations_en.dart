@@ -1430,4 +1430,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get acNeedsAppLink =>
       'Ember does not know this app on Play Console yet: open your app there, copy the address from the browser and paste it in the publishing screen.';
+
+  @override
+  String get acAppLink => 'Address of this app in Play Console';
+
+  @override
+  String get acLinkNotUnderstood =>
+      'That address does not name an app. Open the app in Play Console and copy the whole address from the browser bar.';
 }

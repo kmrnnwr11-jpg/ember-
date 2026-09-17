@@ -2569,6 +2569,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ember does not know this app on Play Console yet: open your app there, copy the address from the browser and paste it in the publishing screen.'**
   String get acNeedsAppLink;
+
+  /// No description provided for @acAppLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Address of this app in Play Console'**
+  String get acAppLink;
+
+  /// No description provided for @acLinkNotUnderstood.
+  ///
+  /// In en, this message translates to:
+  /// **'That address does not name an app. Open the app in Play Console and copy the whole address from the browser bar.'**
+  String get acLinkNotUnderstood;
 }
 
 class _AppLocalizationsDelegate

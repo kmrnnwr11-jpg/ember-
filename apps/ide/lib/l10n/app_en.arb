@@ -836,5 +836,7 @@
         "type": "int"
       }
     }
-  }
+  },
+  "acAppLink": "Address of this app in Play Console",
+  "acLinkNotUnderstood": "That address does not name an app. Open the app in Play Console and copy the whole address from the browser bar."
 }

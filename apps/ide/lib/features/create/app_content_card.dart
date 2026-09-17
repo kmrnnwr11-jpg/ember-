@@ -27,6 +27,36 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
   bool _busy = false;
   String? _message;
   bool _error = false;
+  bool _askLink = false;
+  final _link = TextEditingController();
+
+  @override
+  void dispose() {
+    _link.dispose();
+    super.dispose();
+  }
+
+  /// Saves the Play Console address of this app, so Ember opens the right one.
+  Future<void> _saveLink(String url) async {
+    final l = AppLocalizations.of(context);
+    final parsed = PlayConsoleLink.parse(url);
+    if (parsed == null || parsed.appId == null) {
+      setState(() {
+        _message = l.acLinkNotUnderstood;
+        _error = true;
+      });
+      return;
+    }
+    await parsed.merge(await PlayConsoleLink.load()).save();
+    if (!mounted) return;
+    setState(() {
+      _askLink = false;
+      _message = null;
+      _error = false;
+      _link.clear();
+    });
+    await _fillInConsole();
+  }
 
   @override
   void initState() {
@@ -73,6 +103,7 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
       setState(() {
         _message = l.acNeedsAppLink;
         _error = true;
+        _askLink = true;
       });
       return;
     }
@@ -128,6 +159,32 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
             ],
             if (_message != null) ...[
               SelectableText(_message!, style: TextStyle(color: _error ? theme.colorScheme.error : null)),
+              const SizedBox(height: 8),
+            ],
+            if (_askLink) ...[
+              TextField(
+                controller: _link,
+                decoration: InputDecoration(
+                  labelText: l.acAppLink,
+                  hintText: 'https://play.google.com/console/u/0/developers/…/app/…/app-dashboard',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: l.paste,
+                        icon: const Icon(Icons.content_paste),
+                        onPressed: () async {
+                          final data = await Clipboard.getData(Clipboard.kTextPlain);
+                          if (data?.text != null) _link.text = data!.text!.trim();
+                        },
+                      ),
+                      IconButton(icon: const Icon(Icons.arrow_forward), onPressed: () => _saveLink(_link.text.trim())),
+                    ],
+                  ),
+                ),
+                onSubmitted: _saveLink,
+              ),
               const SizedBox(height: 8),
             ],
             Wrap(

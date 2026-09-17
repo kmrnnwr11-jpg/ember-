@@ -1447,4 +1447,11 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get acNeedsAppLink =>
       'Ember aún no sabe cuál es esta app en Play Console: ábrela allí, copia la dirección del navegador y pégala en la pantalla de publicación.';
+
+  @override
+  String get acAppLink => 'Dirección de esta app en Play Console';
+
+  @override
+  String get acLinkNotUnderstood =>
+      'Esa dirección no indica una app. Abre la app en Play Console y copia la dirección completa de la barra del navegador.';
 }

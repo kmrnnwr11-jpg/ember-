@@ -410,5 +410,7 @@
   "acFillForMe": "Remplir dans Play Console",
   "acFilling": "Ember répond aux questions dans la fenêtre Chrome qu'il a ouverte. Regardez-le et reprenez la main quand vous voulez.",
   "acFilled": "{done} sections enregistrées sur {total}.",
-  "acNeedsAppLink": "Ember ne sait pas encore quelle est cette app dans Play Console : ouvrez-la là-bas, copiez l'adresse du navigateur et collez-la dans l'écran de publication."
+  "acNeedsAppLink": "Ember ne sait pas encore quelle est cette app dans Play Console : ouvrez-la là-bas, copiez l'adresse du navigateur et collez-la dans l'écran de publication.",
+  "acAppLink": "Adresse de cette app dans Play Console",
+  "acLinkNotUnderstood": "Cette adresse ne désigne pas une app. Ouvrez l'app dans Play Console et copiez l'adresse complète depuis la barre du navigateur."
 }

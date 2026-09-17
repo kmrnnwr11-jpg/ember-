@@ -1409,4 +1409,20 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get acCopyForExtension => 'نسخ لأجل الإضافة';
+
+  @override
+  String get acFillForMe => 'التعبئة في Play Console';
+
+  @override
+  String get acFilling =>
+      'يجيب Ember عن الأسئلة في نافذة Chrome التي فتحها. راقبه وتولَّ الأمر متى شئت.';
+
+  @override
+  String acFilled(int done, int total) {
+    return 'تم حفظ $done من $total أقسام.';
+  }
+
+  @override
+  String get acNeedsAppLink =>
+      'لا يعرف Ember بعد أي تطبيق هذا في Play Console: افتحه هناك وانسخ العنوان من المتصفح والصقه في شاشة النشر.';
 }

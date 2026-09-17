@@ -406,5 +406,9 @@
   "ghNeedsToken": "Prima incolla un token GitHub.",
   "ghCreated": "Repository {repo} creato e app caricata ✓",
   "ghUpdated": "App caricata su {repo} ✓",
-  "acCopyForExtension": "Copia per l'estensione"
+  "acCopyForExtension": "Copia per l'estensione",
+  "acFillForMe": "Compila su Play Console",
+  "acFilling": "Ember sta rispondendo alle domande nella finestra di Chrome che ha aperto. Guardalo, e prendi il comando quando vuoi.",
+  "acFilled": "Salvate {done} sezioni su {total}.",
+  "acNeedsAppLink": "Ember non sa ancora qual è questa app su Play Console: aprila lì, copia l'indirizzo dal browser e incollalo nella schermata di pubblicazione."
 }

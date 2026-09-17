@@ -822,5 +822,19 @@
       }
     }
   },
-  "acCopyForExtension": "Copy for the browser helper"
+  "acCopyForExtension": "Copy for the browser helper",
+  "acFillForMe": "Fill in Play Console",
+  "acFilling": "Ember is answering the questions in the Chrome window it opened. Watch it, and take over whenever you want.",
+  "acFilled": "Saved {done} of {total} sections.",
+  "acNeedsAppLink": "Ember does not know this app on Play Console yet: open your app there, copy the address from the browser and paste it in the publishing screen.",
+  "@acFilled": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }

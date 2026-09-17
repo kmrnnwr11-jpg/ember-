@@ -2545,6 +2545,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copy for the browser helper'**
   String get acCopyForExtension;
+
+  /// No description provided for @acFillForMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in Play Console'**
+  String get acFillForMe;
+
+  /// No description provided for @acFilling.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember is answering the questions in the Chrome window it opened. Watch it, and take over whenever you want.'**
+  String get acFilling;
+
+  /// No description provided for @acFilled.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {done} of {total} sections.'**
+  String acFilled(int done, int total);
+
+  /// No description provided for @acNeedsAppLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember does not know this app on Play Console yet: open your app there, copy the address from the browser and paste it in the publishing screen.'**
+  String get acNeedsAppLink;
 }
 
 class _AppLocalizationsDelegate

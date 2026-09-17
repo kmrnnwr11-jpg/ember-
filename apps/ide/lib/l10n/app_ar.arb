@@ -406,5 +406,9 @@
   "ghNeedsToken": "الصق رمز GitHub أولاً.",
   "ghCreated": "تم إنشاء المستودع {repo} ورفع التطبيق ✓",
   "ghUpdated": "تم رفع التطبيق إلى {repo} ✓",
-  "acCopyForExtension": "نسخ لأجل الإضافة"
+  "acCopyForExtension": "نسخ لأجل الإضافة",
+  "acFillForMe": "التعبئة في Play Console",
+  "acFilling": "يجيب Ember عن الأسئلة في نافذة Chrome التي فتحها. راقبه وتولَّ الأمر متى شئت.",
+  "acFilled": "تم حفظ {done} من {total} أقسام.",
+  "acNeedsAppLink": "لا يعرف Ember بعد أي تطبيق هذا في Play Console: افتحه هناك وانسخ العنوان من المتصفح والصقه في شاشة النشر."
 }

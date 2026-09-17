@@ -1414,4 +1414,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get acCopyForExtension => 'Copy for the browser helper';
+
+  @override
+  String get acFillForMe => 'Fill in Play Console';
+
+  @override
+  String get acFilling =>
+      'Ember is answering the questions in the Chrome window it opened. Watch it, and take over whenever you want.';
+
+  @override
+  String acFilled(int done, int total) {
+    return 'Saved $done of $total sections.';
+  }
+
+  @override
+  String get acNeedsAppLink =>
+      'Ember does not know this app on Play Console yet: open your app there, copy the address from the browser and paste it in the publishing screen.';
 }

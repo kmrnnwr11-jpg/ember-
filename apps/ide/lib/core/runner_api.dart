@@ -142,6 +142,16 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// Answers the Play Console "App content" questions in a Chrome window.
+  Future<Map<String, dynamic>> fillPlayAppContent(String projectId, {required String developerId, required String appId, int userIndex = 0, bool save = true}) => _call(
+    () => _dio.post(
+      '/v1/projects/$projectId/play/app-content',
+      data: {'developerId': developerId, 'appId': appId, 'userIndex': userIndex, 'save': save},
+      options: Options(receiveTimeout: const Duration(minutes: 20)),
+    ),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// Ember's answer for every Play Console "App content" declaration.
   Future<Map<String, dynamic>> appContent(String projectId) =>
       _call(() => _dio.get('/v1/projects/$projectId/app-content'), (d) => d as Map<String, dynamic>);

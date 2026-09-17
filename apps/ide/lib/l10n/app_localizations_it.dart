@@ -1429,4 +1429,20 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get acCopyForExtension => 'Copia per l\'estensione';
+
+  @override
+  String get acFillForMe => 'Compila su Play Console';
+
+  @override
+  String get acFilling =>
+      'Ember sta rispondendo alle domande nella finestra di Chrome che ha aperto. Guardalo, e prendi il comando quando vuoi.';
+
+  @override
+  String acFilled(int done, int total) {
+    return 'Salvate $done sezioni su $total.';
+  }
+
+  @override
+  String get acNeedsAppLink =>
+      'Ember non sa ancora qual è questa app su Play Console: aprila lì, copia l\'indirizzo dal browser e incollalo nella schermata di pubblicazione.';
 }

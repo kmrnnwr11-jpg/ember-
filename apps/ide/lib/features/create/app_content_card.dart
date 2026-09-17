@@ -3,12 +3,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ide_core/ide_core.dart' show RunnerException;
 
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../store/play_links.dart';
 
-/// Play Console â†’ App content: Ember's answer for each of Google's questions,
+/// Play Console App content: Ember's answer for each of Google's questions,
 /// ready to copy. The rows Ember can send by itself are marked.
 class AppContentCard extends ConsumerStatefulWidget {
   const AppContentCard({super.key, required this.projectId, required this.appName});
@@ -23,6 +24,9 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
   List<Map<String, dynamic>> _items = const [];
   Map<String, dynamic> _facts = const {};
   String? _copied;
+  bool _busy = false;
+  String? _message;
+  bool _error = false;
 
   @override
   void initState() {
@@ -60,6 +64,46 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
     await link.open(link.appContent);
   }
 
+  /// Ember opens Play Console in a Chrome window and answers the questions itself.
+  Future<void> _fillInConsole() async {
+    final l = AppLocalizations.of(context);
+    final link = await PlayConsoleLink.load();
+    if (!mounted) return;
+    if (link.developerId == null || link.appId == null) {
+      setState(() {
+        _message = l.acNeedsAppLink;
+        _error = true;
+      });
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _message = l.acFilling;
+      _error = false;
+    });
+    try {
+      final res = await (await ref.read(runnerApiProvider.future)).fillPlayAppContent(
+        widget.projectId,
+        developerId: link.developerId!,
+        appId: link.appId!,
+        userIndex: link.userIndex,
+      );
+      final rows = (res['results'] as List? ?? const []).cast<Map<String, dynamic>>();
+      final done = rows.where((r) => r['saved'] == true).length;
+      setState(() {
+        _message = '${l.acFilled(done, rows.length)}\n${rows.map((r) => '${r['saved'] == true ? '[ok]' : '[--]'} ${r['row']} (${r['answered']})').join('\n')}';
+        _error = false;
+      });
+    } on RunnerException catch (e) {
+      setState(() {
+        _message = e.message;
+        _error = true;
+      });
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -78,10 +122,23 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
             const SizedBox(height: 12),
             for (final item in _items) _row(context, l, item),
             const SizedBox(height: 12),
+            if (_busy) ...[
+              Row(children: [const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)), const SizedBox(width: 8), Expanded(child: Text(l.acFilling))]),
+              const SizedBox(height: 8),
+            ],
+            if (_message != null) ...[
+              SelectableText(_message!, style: TextStyle(color: _error ? theme.colorScheme.error : null)),
+              const SizedBox(height: 8),
+            ],
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
+                FilledButton.icon(
+                  onPressed: _busy ? null : _fillInConsole,
+                  icon: const Icon(Icons.auto_fix_high),
+                  label: Text(l.acFillForMe),
+                ),
                 OutlinedButton.icon(onPressed: _openConsole, icon: const Icon(Icons.open_in_new), label: Text(l.acOpenConsole)),
                 TextButton.icon(
                   onPressed: _copyForExtension,

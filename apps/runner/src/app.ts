@@ -1,7 +1,7 @@
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
-import { DATA_SAFETY_SYSTEM, dataSafetyPrompt, detectDataFacts, findExportedCsv, uploadDataSafety, validateFilledCsv } from './data_safety.js';
+import { detectDataFacts, fillCsv, findExportedCsv, uploadDataSafety, validateFilledCsv } from './data_safety.js';
 import { createServiceAccountKey, gcloudStatus, invitePlayUser, storeImages } from './play_setup.js';
 import { cliLogins, cliModels } from './subscription_clis.js';
 import { mkdir, stat } from 'node:fs/promises';
@@ -309,7 +309,8 @@ export async function buildApp(
           },
           deps.playFetch ?? fetch,
         );
-        await rememberPublishedVersionCode(root, result.versionCode);
+        // Remembering the version must never turn a successful upload into an error.
+        await rememberPublishedVersionCode(root, result.versionCode).catch(() => {});
         return { ...result, packageName: info.applicationId };
       } catch (e) {
         if (e instanceof PlayError) {
@@ -469,12 +470,9 @@ export async function buildApp(
       const info = await (deps.androidInfo ?? androidAppInfo)(cfg, project.id, root, project.name);
       if (!info.applicationId) return reply.status(409).send({ code: 'not_ready', message: 'Android package name not found' });
       const facts = await detectDataFacts(root);
-      const complete = (await claudeCode.isAvailable())
-        ? async (system: string, prompt: string) => (await claudeCode.complete({ system, prompt, quality: 'fast', timeoutMs: 600_000 })).text
-        : null;
-      if (!complete) return reply.status(501).send({ code: 'no_ai', message: 'Claude Code is needed to fill the Data safety form' });
       try {
-        const filled = validateFilledCsv(csv, await complete(DATA_SAFETY_SYSTEM, dataSafetyPrompt(csv, facts, project.name)));
+        // The form has ~800 rows with stable ids: filled from the app's own facts, no AI, no waiting.
+        const filled = validateFilledCsv(csv, fillCsv(csv, facts));
         await uploadDataSafety({ serviceAccount: parseServiceAccount(body.serviceAccount), packageName: info.applicationId, csv: filled }, deps.playFetch ?? fetch);
         return { ok: true, source: csvPath ?? 'pasted', facts };
       } catch (e) {

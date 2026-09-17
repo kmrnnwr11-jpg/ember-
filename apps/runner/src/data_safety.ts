@@ -1,4 +1,4 @@
-import { readdir, readFile, stat } from 'node:fs/promises';
+﻿import { readdir, readFile, stat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { getAccessToken, PlayError, type ServiceAccount } from './play.js';
@@ -57,27 +57,89 @@ export function factsSummary(f: AppDataFacts): string {
   return yes.length === 0 ? 'the app collects no personal data' : `the app uses: ${yes.join(', ')}`;
 }
 
-export const DATA_SAFETY_SYSTEM = `You fill Google Play Console "Data safety" CSV forms.
-You get the exported CSV (columns: Question ID, Response, Response value, Answer requirement, Human-friendly question label) and facts about the app.
-Rules:
-- Output ONLY the complete CSV, same rows in the same order, same columns, nothing else. No markdown fences, no comments.
-- Only change the "Response value" column: TRUE or FALSE (or empty where the requirement is OPTIONAL and the answer is no).
-- Answer truthfully from the facts: declare every data type the app can collect, mark data as encrypted in transit, say users can request deletion, and that data is collected (not only processed ephemerally) when it is stored in the cloud.
-- Every REQUIRED question must have a value, every SINGLE_CHOICE exactly one TRUE, every MULTIPLE_CHOICE at least one TRUE.`;
-
-export function dataSafetyPrompt(csv: string, facts: AppDataFacts, appName: string): string {
-  return [
-    `App: ${appName}`,
-    `Facts: ${factsSummary(facts)}.`,
-    'Notes: account data (email, name) when the app has sign-in; photos when it uses camera or gallery; messages when users write to each other;',
-    'device or other ids and crash logs when Firebase is used; purchase history when it sells products; ads id when it shows ads.',
-    'Fill this CSV now:',
-    '',
-    csv,
-  ].join('\n');
+/** Splits one CSV line into fields, honouring quotes. */
+function splitCsv(line: string): string[] {
+  const out: string[] = [];
+  let field = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i]!;
+    if (quoted) {
+      if (c === '"' && line[i + 1] === '"') (field += '"', i++);
+      else if (c === '"') quoted = false;
+      else field += c;
+    } else if (c === '"') quoted = true;
+    else if (c === ',') (out.push(field), (field = ''));
+    else field += c;
+  }
+  out.push(field);
+  return out;
 }
 
-/** Keeps the AI honest: same question ids, same order, only the response value may change. */
+const quote = (f: string) => (/[",\n]/.test(f) ? `"${f.replace(/"/g, '""')}"` : f);
+
+/** Data types the app can collect, by Play's own response ids. */
+function selectedTypes(f: AppDataFacts): Set<string> {
+  const types = new Set<string>();
+  const add = (on: boolean, ...ids: string[]) => on && ids.forEach((i) => types.add(i));
+  add(f.account, 'PSL_NAME', 'PSL_EMAIL', 'PSL_USER_ACCOUNT');
+  add(f.photos, 'PSL_PHOTOS');
+  add(f.files, 'PSL_FILES_AND_DOCS');
+  add(f.location, 'PSL_APPROX_LOCATION');
+  add(f.contacts, 'PSL_CONTACTS');
+  add(f.microphone, 'PSL_AUDIO');
+  add(f.messages, 'PSL_OTHER_MESSAGES');
+  add(f.crashLogs, 'PSL_CRASH_LOGS', 'PSL_PERFORMANCE_DIAGNOSTICS');
+  add(f.analytics, 'PSL_USER_INTERACTION', 'PSL_DEVICE_ID');
+  add(f.ads, 'PSL_DEVICE_ID');
+  add(f.purchases, 'PSL_PURCHASE_HISTORY');
+  add(f.cloudStorage, 'PSL_USER_GENERATED_CONTENT');
+  return types;
+}
+
+/** Why each data type is collected. Every type serves the app itself; some serve more. */
+function purposes(type: string, f: AppDataFacts): Set<string> {
+  const p = new Set(['PSL_APP_FUNCTIONALITY']);
+  if (['PSL_CRASH_LOGS', 'PSL_PERFORMANCE_DIAGNOSTICS', 'PSL_USER_INTERACTION'].includes(type)) p.add('PSL_ANALYTICS');
+  if (['PSL_NAME', 'PSL_EMAIL', 'PSL_USER_ACCOUNT'].includes(type)) p.add('PSL_ACCOUNT_MANAGEMENT');
+  if (type === 'PSL_DEVICE_ID' && f.ads) p.add('PSL_ADVERTISING');
+  return p;
+}
+
+/**
+ * Fills the exported form from what the app actually does. The ids Google puts
+ * in the CSV are stable, so this needs no AI: same answers every time, in a
+ * second, for a form of ~800 rows.
+ */
+export function fillCsv(csv: string, facts: AppDataFacts): string {
+  const types = selectedTypes(facts);
+  const collects = types.size > 0;
+  const lines = csv.replace(/\r\n/g, '\n').trim().split('\n');
+  const out = lines.map((line, index) => {
+    if (index === 0) return line;
+    const cols = splitCsv(line);
+    const [question = '', response = ''] = cols;
+    let value = '';
+    if (question === 'PSL_DATA_COLLECTION_COLLECTS_PERSONAL_DATA') value = collects ? 'TRUE' : 'FALSE';
+    else if (question === 'PSL_DATA_COLLECTION_ENCRYPTED_IN_TRANSIT') value = 'TRUE';
+    else if (question === 'PSL_SUPPORT_DATA_DELETION_BY_USER') value = response === (facts.account ? 'DATA_DELETION_YES' : 'DATA_DELETION_NO') ? 'TRUE' : '';
+    else if (question === 'PSL_SUPPORTED_ACCOUNT_CREATION_METHODS') value = response === (facts.account ? 'PSL_ACM_OAUTH' : 'PSL_ACM_NONE') ? 'TRUE' : '';
+    else if (question.startsWith('PSL_DATA_TYPES_')) value = types.has(response) ? 'TRUE' : '';
+    else if (question.startsWith('PSL_DATA_USAGE_RESPONSES:')) {
+      const [, type = '', field = ''] = question.split(':');
+      if (!types.has(type)) value = '';
+      else if (field === 'PSL_DATA_USAGE_COLLECTION_AND_SHARING') value = response === 'PSL_DATA_USAGE_ONLY_COLLECTED' ? 'TRUE' : '';
+      else if (field === 'PSL_DATA_USAGE_EPHEMERAL') value = 'FALSE';
+      else if (field === 'DATA_USAGE_USER_CONTROL') value = response === 'PSL_DATA_USAGE_USER_CONTROL_REQUIRED' ? 'TRUE' : '';
+      else if (field === 'DATA_USAGE_COLLECTION_PURPOSE') value = purposes(type, facts).has(response) ? 'TRUE' : '';
+    }
+    cols[2] = value;
+    return cols.map(quote).join(',');
+  });
+  return out.join('\n');
+}
+
+/** Safety net: same question ids, same order, only the response value may change. */
 export function validateFilledCsv(original: string, filled: string): string {
   const rows = (t: string) => t.trim().split(/\r?\n/).map((l) => l.split(','));
   const a = rows(original);

@@ -165,8 +165,13 @@ export function bumpBuildNumber(pubspec: string, floor = 0): { text: string; ver
 export async function lastPublishedVersionCode(projectRoot: string): Promise<number> {
   const raw = await readFile(path.join(projectRoot, 'store', 'play.json'), 'utf8').catch(() => null);
   if (!raw) return 0;
-  const n = Number((JSON.parse(raw) as { lastVersionCode?: number }).lastVersionCode);
-  return Number.isFinite(n) ? n : 0;
+  try {
+    // The file may have been written by hand (BOM, stray characters): never fail a build over it.
+    const n = Number((JSON.parse(raw.replace(/^﻿/, '')) as { lastVersionCode?: number }).lastVersionCode);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  } catch {
+    return Number(/"lastVersionCode"\s*:\s*(\d+)/.exec(raw)?.[1] ?? 0);
+  }
 }
 
 /** Remembers what Google Play accepted, so the next build starts above it. */

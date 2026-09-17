@@ -1,10 +1,20 @@
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { loadConfig } from './config.js';
-import { bumpBuildNumber, ensureUploadKey, openSecret, patchGradleKts, resolveKeytool, sealSecret, SIGNING_MARKER } from './signing.js';
+import {
+  bumpBuildNumber,
+  ensureUploadKey,
+  lastPublishedVersionCode,
+  openSecret,
+  patchGradleKts,
+  rememberPublishedVersionCode,
+  resolveKeytool,
+  sealSecret,
+  SIGNING_MARKER,
+} from './signing.js';
 
 const TEMPLATE = `android {
     defaultConfig {
@@ -35,6 +45,27 @@ describe('signing helpers', () => {
     expect(bumpBuildNumber('name: a\nversion: 1.2.3+7\n')).toEqual({ text: 'name: a\nversion: 1.2.3+8\n', version: '1.2.3+8' });
     expect(bumpBuildNumber('name: a\nversion: 1.0.0\n').version).toBe('1.0.0+1');
     expect(bumpBuildNumber('name: a\n').text).toContain('version: 1.0.0+1');
+    // Google Play already has 9: the next build must be above it, not above the file.
+    expect(bumpBuildNumber('name: a\nversion: 1.2.3+2\n', 9).version).toBe('1.2.3+10');
+  });
+
+  it('reads the published version code even from a hand-written file', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'ember-signing-'));
+    const store = path.join(root, 'store');
+    await mkdir(store, { recursive: true });
+    await writeFile(path.join(store, 'play.json'), '﻿{ "lastVersionCode": 5 }');
+    expect(await lastPublishedVersionCode(root)).toBe(5);
+    await writeFile(path.join(store, 'play.json'), 'not json at all');
+    expect(await lastPublishedVersionCode(root)).toBe(0);
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it('keeps the highest version code it has seen', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'ember-signing-'));
+    await rememberPublishedVersionCode(root, 7);
+    await rememberPublishedVersionCode(root, 3);
+    expect(await lastPublishedVersionCode(root)).toBe(7);
+    await rm(root, { recursive: true, force: true });
   });
 
   it('encrypts secrets when VAULT_MASTER_KEY is set', () => {

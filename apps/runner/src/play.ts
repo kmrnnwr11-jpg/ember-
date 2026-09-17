@@ -154,12 +154,28 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
   const base = `${API}/${pkg}/edits/${encodeURIComponent(editId)}`;
 
   const aab = await readFile(input.aabPath);
-  const upload = await fetchImpl(`${UPLOAD}/${pkg}/edits/${encodeURIComponent(editId)}/bundles?uploadType=media`, {
-    method: 'POST',
-    headers: { ...auth, 'content-type': 'application/octet-stream' },
-    body: aab,
-    signal: AbortSignal.timeout(10 * 60_000),
-  });
+  // A bundle is tens of megabytes: on a slow uplink the connection can die mid-way, so try again.
+  let upload: Response | null = null;
+  let networkError: Error | null = null;
+  for (let attempt = 0; attempt < 3 && !upload; attempt++) {
+    try {
+      upload = await fetchImpl(`${UPLOAD}/${pkg}/edits/${encodeURIComponent(editId)}/bundles?uploadType=media`, {
+        method: 'POST',
+        headers: { ...auth, 'content-type': 'application/octet-stream' },
+        body: aab,
+        signal: AbortSignal.timeout(30 * 60_000),
+      });
+    } catch (e) {
+      networkError = e as Error;
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+  }
+  if (!upload) {
+    throw new PlayError(
+      'upload_interrupted',
+      `The connection dropped while sending the ${Math.round(aab.length / 1_000_000)} MB bundle to Google (${networkError?.message ?? 'network error'}). Nothing was published: try again on a steadier connection.`,
+    );
+  }
   if (!upload.ok) throw await googleError(upload);
   const bundle = (await upload.json()) as { versionCode?: number };
   if (typeof bundle.versionCode !== 'number') throw new PlayError('play_api_error', 'Google Play did not return a versionCode for the bundle');

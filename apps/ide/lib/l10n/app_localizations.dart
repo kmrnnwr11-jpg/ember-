@@ -2467,6 +2467,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paste'**
   String get paste;
+
+  /// No description provided for @ghTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save on GitHub'**
+  String get ghTitle;
+
+  /// No description provided for @ghHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Keeps a copy of this app\'s source in your own GitHub repository. The signing key, the build folder and the Google files are never uploaded.'**
+  String get ghHint;
+
+  /// No description provided for @ghToken.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub token'**
+  String get ghToken;
+
+  /// No description provided for @ghTokenHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'A personal access token with the \"repo\" permission. It is stored encrypted on this device and used only to upload this app.'**
+  String get ghTokenHelp;
+
+  /// No description provided for @ghGetToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a token on GitHub'**
+  String get ghGetToken;
+
+  /// No description provided for @ghSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save on GitHub'**
+  String get ghSave;
+
+  /// No description provided for @ghSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading the app to GitHub…'**
+  String get ghSaving;
+
+  /// No description provided for @ghOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the repository'**
+  String get ghOpen;
+
+  /// No description provided for @ghForgetToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget the token'**
+  String get ghForgetToken;
+
+  /// No description provided for @ghNeedsToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste a GitHub token first.'**
+  String get ghNeedsToken;
+
+  /// No description provided for @ghCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Repository {repo} created and app uploaded ✓'**
+  String ghCreated(String repo);
+
+  /// No description provided for @ghUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'App uploaded to {repo} ✓'**
+  String ghUpdated(String repo);
 }
 
 class _AppLocalizationsDelegate

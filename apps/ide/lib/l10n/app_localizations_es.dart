@@ -1386,4 +1386,46 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get paste => 'Pegar';
+
+  @override
+  String get ghTitle => 'Guardar en GitHub';
+
+  @override
+  String get ghHint =>
+      'Guarda una copia del código de esta app en tu propio repositorio de GitHub. La clave de firma, la carpeta build y los archivos de Google nunca se suben.';
+
+  @override
+  String get ghToken => 'Token de GitHub';
+
+  @override
+  String get ghTokenHelp =>
+      'Un token personal con el permiso \"repo\". Se guarda cifrado en este dispositivo y solo se usa para subir esta app.';
+
+  @override
+  String get ghGetToken => 'Crear un token en GitHub';
+
+  @override
+  String get ghSave => 'Guardar en GitHub';
+
+  @override
+  String get ghSaving => 'Subiendo la app a GitHub…';
+
+  @override
+  String get ghOpen => 'Abrir el repositorio';
+
+  @override
+  String get ghForgetToken => 'Olvidar el token';
+
+  @override
+  String get ghNeedsToken => 'Primero pega un token de GitHub.';
+
+  @override
+  String ghCreated(String repo) {
+    return 'Repositorio $repo creado y app subida ✓';
+  }
+
+  @override
+  String ghUpdated(String repo) {
+    return 'App subida a $repo ✓';
+  }
 }

@@ -393,5 +393,17 @@
   "acCopy": "نسخ الإجابة",
   "acCopied": "تم النسخ",
   "acAuto": "يتولاها Ember",
-  "paste": "لصق"
+  "paste": "لصق",
+  "ghTitle": "الحفظ على GitHub",
+  "ghHint": "يحتفظ بنسخة من كود التطبيق في مستودعك على GitHub. لا يتم رفع مفتاح التوقيع ولا مجلد build ولا ملفات Google.",
+  "ghToken": "رمز GitHub",
+  "ghTokenHelp": "رمز وصول شخصي بصلاحية \"repo\". يُحفظ مشفّرًا على هذا الجهاز ويُستخدم فقط لرفع هذا التطبيق.",
+  "ghGetToken": "إنشاء رمز على GitHub",
+  "ghSave": "الحفظ على GitHub",
+  "ghSaving": "جارٍ رفع التطبيق إلى GitHub…",
+  "ghOpen": "فتح المستودع",
+  "ghForgetToken": "نسيان الرمز",
+  "ghNeedsToken": "الصق رمز GitHub أولاً.",
+  "ghCreated": "تم إنشاء المستودع {repo} ورفع التطبيق ✓",
+  "ghUpdated": "تم رفع التطبيق إلى {repo} ✓"
 }

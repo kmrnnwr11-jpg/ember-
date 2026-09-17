@@ -126,6 +126,16 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// Pushes the app's source to a GitHub repository the user owns.
+  Future<Map<String, dynamic>> saveToGitHub(String projectId, String token, {String? repo, bool private = true, String? message}) => _call(
+    () => _dio.post(
+      '/v1/projects/$projectId/github',
+      data: {'token': token, 'private': private, if (repo != null && repo.isNotEmpty) 'repo': repo, if (message != null && message.isNotEmpty) 'message': message},
+      options: Options(receiveTimeout: const Duration(minutes: 12)),
+    ),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// Copies the app's upload key and password to the user's Google Drive.
   Future<Map<String, dynamic>> backupSigningKey(String projectId) => _call(
     () => _dio.post('/v1/projects/$projectId/signing/backup', data: const <String, dynamic>{}, options: Options(receiveTimeout: const Duration(minutes: 6))),

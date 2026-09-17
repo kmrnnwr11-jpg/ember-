@@ -795,5 +795,31 @@
   "acCopy": "Copy answer",
   "acCopied": "Copied",
   "acAuto": "Ember does this one",
-  "paste": "Paste"
+  "paste": "Paste",
+  "ghTitle": "Save on GitHub",
+  "ghHint": "Keeps a copy of this app's source in your own GitHub repository. The signing key, the build folder and the Google files are never uploaded.",
+  "ghToken": "GitHub token",
+  "ghTokenHelp": "A personal access token with the \"repo\" permission. It is stored encrypted on this device and used only to upload this app.",
+  "ghGetToken": "Create a token on GitHub",
+  "ghSave": "Save on GitHub",
+  "ghSaving": "Uploading the app to GitHub…",
+  "ghOpen": "Open the repository",
+  "ghForgetToken": "Forget the token",
+  "ghNeedsToken": "Paste a GitHub token first.",
+  "ghCreated": "Repository {repo} created and app uploaded ✓",
+  "ghUpdated": "App uploaded to {repo} ✓",
+  "@ghCreated": {
+    "placeholders": {
+      "repo": {
+        "type": "String"
+      }
+    }
+  },
+  "@ghUpdated": {
+    "placeholders": {
+      "repo": {
+        "type": "String"
+      }
+    }
+  }
 }

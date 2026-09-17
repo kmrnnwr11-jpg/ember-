@@ -1,0 +1,138 @@
+import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
+/**
+ * "Save on GitHub": the app's source, pushed to a repository the user owns.
+ * The token is used for this one push and never written into the project.
+ */
+
+const API = 'https://api.github.com';
+
+/** Files that must never leave this machine, plus the usual build noise. */
+const GITIGNORE = [
+  '# Ember',
+  'build/',
+  '.dart_tool/',
+  '.flutter-plugins-dependencies',
+  'android/local.properties',
+  'android/key.properties',
+  '*.jks',
+  '*.keystore',
+  'google-services.json',
+  '.env',
+  '',
+].join('\n');
+
+export class GitHubError extends Error {
+  constructor(
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+function git(args: string[], cwd: string, timeoutMs = 180_000): Promise<{ code: number; out: string; err: string }> {
+  return new Promise((resolve) => {
+    const p = spawn('git', args, { cwd, windowsHide: true });
+    let out = '';
+    let err = '';
+    p.stdout?.on('data', (d) => (out += d));
+    p.stderr?.on('data', (d) => (err += d));
+    const t = setTimeout(() => p.kill(), timeoutMs);
+    p.on('error', (e) => (clearTimeout(t), resolve({ code: -1, out, err: e.message })));
+    p.on('close', (code) => (clearTimeout(t), resolve({ code: code ?? -1, out: out.trim(), err: err.trim() })));
+  });
+}
+
+async function api(token: string, method: string, url: string, body: unknown, fetchImpl: typeof fetch): Promise<Record<string, unknown>> {
+  const res = await fetchImpl(`${API}${url}`, {
+    method,
+    headers: {
+      authorization: `Bearer ${token}`,
+      accept: 'application/vnd.github+json',
+      'user-agent': 'ember-app-maker',
+      ...(body !== undefined ? { 'content-type': 'application/json' } : {}),
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  const json = (text ? JSON.parse(text) : {}) as Record<string, unknown>;
+  if (res.ok) return json;
+  if (res.status === 401) throw new GitHubError('bad_token', 'GitHub did not accept the token. Create a new one with "repo" permission and paste it again.');
+  if (res.status === 404) throw new GitHubError('not_found', `GitHub: not found (${url})`);
+  throw new GitHubError('github_error', `GitHub refused: ${String(json.message ?? text).slice(0, 300)}`);
+}
+
+/** A repository name GitHub accepts, from the app's own name. */
+export function repoName(appName: string): string {
+  const slug = appName
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 90);
+  return slug || 'ember-app';
+}
+
+export interface SaveInput {
+  projectRoot: string;
+  token: string;
+  appName: string;
+  /** Existing repository to push to; otherwise one is created from the app name. */
+  repo?: string;
+  private?: boolean;
+  message?: string;
+  /** Test seam: runs the git commands. */
+  runGit?: (args: string[], cwd: string) => Promise<{ code: number; out: string; err: string }>;
+}
+
+/** Creates the repository if needed and pushes everything. Returns the repo page. */
+export async function saveToGitHub(input: SaveInput, fetchImpl: typeof fetch = fetch): Promise<{ url: string; repo: string; owner: string; created: boolean; pushed: boolean }> {
+  const run = input.runGit ?? ((args: string[], cwd: string) => git(args, cwd));
+  const me = (await api(input.token, 'GET', '/user', undefined, fetchImpl)) as { login?: string };
+  const owner = String(me.login ?? '');
+  if (!owner) throw new GitHubError('bad_token', 'GitHub did not say who the token belongs to');
+  const repo = input.repo?.trim() || repoName(input.appName);
+
+  let created = false;
+  try {
+    await api(input.token, 'GET', `/repos/${owner}/${repo}`, undefined, fetchImpl);
+  } catch (e) {
+    if (!(e instanceof GitHubError) || e.code !== 'not_found') throw e;
+    await api(input.token, 'POST', '/user/repos', { name: repo, private: input.private ?? true, auto_init: false }, fetchImpl);
+    created = true;
+  }
+
+  const root = input.projectRoot;
+  const ignore = path.join(root, '.gitignore');
+  if (!existsSync(ignore)) await writeFile(ignore, GITIGNORE);
+  else {
+    const current = await readFile(ignore, 'utf8');
+    if (!/\*\.jks/.test(current)) await writeFile(ignore, `${current.replace(/\s*$/, '')}\n${GITIGNORE}`);
+  }
+
+  if (!existsSync(path.join(root, '.git'))) {
+    const init = await run(['init', '-b', 'main'], root);
+    if (init.code !== 0) throw new GitHubError('git_failed', `Could not start the repository: ${init.err.slice(-300)}`);
+  }
+  // Identity only for this repository, so the user's own git setup is untouched.
+  await run(['config', 'user.name', owner], root);
+  await run(['config', 'user.email', `${owner}@users.noreply.github.com`], root);
+  await run(['add', '-A'], root);
+  const commit = await run(['commit', '-m', input.message?.trim() || 'Update from Ember'], root);
+  const nothingToCommit = commit.code !== 0 && /nothing to commit/i.test(`${commit.out}${commit.err}`);
+  if (commit.code !== 0 && !nothingToCommit) throw new GitHubError('git_failed', `Could not save the changes: ${(commit.err || commit.out).slice(-300)}`);
+
+  // The token travels in this one command and is never stored as a remote.
+  const url = `https://x-access-token:${input.token}@github.com/${owner}/${repo}.git`;
+  const push = await run(['push', url, 'HEAD:main', '--force'], root);
+  if (push.code !== 0) {
+    const reason = (push.err || push.out).replace(input.token, '***').slice(-300);
+    throw new GitHubError('push_failed', `GitHub refused the upload: ${reason}`);
+  }
+  return { url: `https://github.com/${owner}/${repo}`, repo, owner, created, pushed: !nothingToCommit || push.code === 0 };
+}

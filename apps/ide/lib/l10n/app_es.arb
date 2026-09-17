@@ -393,5 +393,17 @@
   "acCopy": "Copiar respuesta",
   "acCopied": "Copiado",
   "acAuto": "Lo hace Ember",
-  "paste": "Pegar"
+  "paste": "Pegar",
+  "ghTitle": "Guardar en GitHub",
+  "ghHint": "Guarda una copia del código de esta app en tu propio repositorio de GitHub. La clave de firma, la carpeta build y los archivos de Google nunca se suben.",
+  "ghToken": "Token de GitHub",
+  "ghTokenHelp": "Un token personal con el permiso \"repo\". Se guarda cifrado en este dispositivo y solo se usa para subir esta app.",
+  "ghGetToken": "Crear un token en GitHub",
+  "ghSave": "Guardar en GitHub",
+  "ghSaving": "Subiendo la app a GitHub…",
+  "ghOpen": "Abrir el repositorio",
+  "ghForgetToken": "Olvidar el token",
+  "ghNeedsToken": "Primero pega un token de GitHub.",
+  "ghCreated": "Repositorio {repo} creado y app subida ✓",
+  "ghUpdated": "App subida a {repo} ✓"
 }

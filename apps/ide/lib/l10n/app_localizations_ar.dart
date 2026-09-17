@@ -1364,4 +1364,46 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get paste => 'لصق';
+
+  @override
+  String get ghTitle => 'الحفظ على GitHub';
+
+  @override
+  String get ghHint =>
+      'يحتفظ بنسخة من كود التطبيق في مستودعك على GitHub. لا يتم رفع مفتاح التوقيع ولا مجلد build ولا ملفات Google.';
+
+  @override
+  String get ghToken => 'رمز GitHub';
+
+  @override
+  String get ghTokenHelp =>
+      'رمز وصول شخصي بصلاحية \"repo\". يُحفظ مشفّرًا على هذا الجهاز ويُستخدم فقط لرفع هذا التطبيق.';
+
+  @override
+  String get ghGetToken => 'إنشاء رمز على GitHub';
+
+  @override
+  String get ghSave => 'الحفظ على GitHub';
+
+  @override
+  String get ghSaving => 'جارٍ رفع التطبيق إلى GitHub…';
+
+  @override
+  String get ghOpen => 'فتح المستودع';
+
+  @override
+  String get ghForgetToken => 'نسيان الرمز';
+
+  @override
+  String get ghNeedsToken => 'الصق رمز GitHub أولاً.';
+
+  @override
+  String ghCreated(String repo) {
+    return 'تم إنشاء المستودع $repo ورفع التطبيق ✓';
+  }
+
+  @override
+  String ghUpdated(String repo) {
+    return 'تم رفع التطبيق إلى $repo ✓';
+  }
 }

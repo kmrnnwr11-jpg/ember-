@@ -1386,4 +1386,46 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get paste => 'Coller';
+
+  @override
+  String get ghTitle => 'Enregistrer sur GitHub';
+
+  @override
+  String get ghHint =>
+      'Conserve une copie du code de cette app dans votre propre dépôt GitHub. La clé de signature, le dossier build et les fichiers Google ne sont jamais envoyés.';
+
+  @override
+  String get ghToken => 'Jeton GitHub';
+
+  @override
+  String get ghTokenHelp =>
+      'Un jeton personnel avec l\'autorisation « repo ». Il reste chiffré sur cet appareil et sert uniquement à envoyer cette app.';
+
+  @override
+  String get ghGetToken => 'Créer un jeton sur GitHub';
+
+  @override
+  String get ghSave => 'Enregistrer sur GitHub';
+
+  @override
+  String get ghSaving => 'Envoi de l\'app vers GitHub…';
+
+  @override
+  String get ghOpen => 'Ouvrir le dépôt';
+
+  @override
+  String get ghForgetToken => 'Oublier le jeton';
+
+  @override
+  String get ghNeedsToken => 'Collez d\'abord un jeton GitHub.';
+
+  @override
+  String ghCreated(String repo) {
+    return 'Dépôt $repo créé et app envoyée ✓';
+  }
+
+  @override
+  String ghUpdated(String repo) {
+    return 'App envoyée vers $repo ✓';
+  }
 }

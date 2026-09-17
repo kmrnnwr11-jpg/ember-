@@ -393,5 +393,17 @@
   "acCopy": "Copier la réponse",
   "acCopied": "Copié",
   "acAuto": "Ember s'en charge",
-  "paste": "Coller"
+  "paste": "Coller",
+  "ghTitle": "Enregistrer sur GitHub",
+  "ghHint": "Conserve une copie du code de cette app dans votre propre dépôt GitHub. La clé de signature, le dossier build et les fichiers Google ne sont jamais envoyés.",
+  "ghToken": "Jeton GitHub",
+  "ghTokenHelp": "Un jeton personnel avec l'autorisation « repo ». Il reste chiffré sur cet appareil et sert uniquement à envoyer cette app.",
+  "ghGetToken": "Créer un jeton sur GitHub",
+  "ghSave": "Enregistrer sur GitHub",
+  "ghSaving": "Envoi de l'app vers GitHub…",
+  "ghOpen": "Ouvrir le dépôt",
+  "ghForgetToken": "Oublier le jeton",
+  "ghNeedsToken": "Collez d'abord un jeton GitHub.",
+  "ghCreated": "Dépôt {repo} créé et app envoyée ✓",
+  "ghUpdated": "App envoyée vers {repo} ✓"
 }

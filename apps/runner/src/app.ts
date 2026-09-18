@@ -2,6 +2,7 @@
 import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
 import { backupKey } from './drive.js';
+import { installAndRun, listDevices } from './devices.js';
 import { fix as fixFinding, inspectCloud, inspectProject, inspectRunning } from './doctor.js';
 import { GitHubError, saveToGitHub } from './github.js';
 import { fillAppContent } from './play_console.js';
@@ -509,6 +510,27 @@ export async function buildApp(
       const { title } = await storeTitle(root);
       helperApp = { ...facts, email, name: title || project.name, at: new Date().toISOString() };
       return { ok: true, name: helperApp.name };
+    });
+
+    // The phones plugged into this computer, so an app can be tried where it counts.
+    r.get('/v1/devices', async () => ({ devices: await listDevices() }));
+
+    r.post('/v1/projects/:projectId/run-on-device', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const { deviceId } = z.object({ deviceId: z.string().max(80).optional() }).parse(req.body ?? {});
+      const root = services.projectRoot(project);
+      const apkPath = path.join(root, ARTIFACTS['app-release.apk']!.rel);
+      if (!(await stat(apkPath).catch(() => null))) {
+        return reply.status(409).send({ code: 'not_ready', message: 'Build the APK first: Ember installs the file it has built.' });
+      }
+      const info = await (deps.androidInfo ?? androidAppInfo)(cfg, project.id, root, project.name);
+      if (!info.applicationId) return reply.status(409).send({ code: 'not_ready', message: 'Android package name not found' });
+      try {
+        return { message: await installAndRun({ apkPath, packageName: info.applicationId, deviceId }) };
+      } catch (e) {
+        return reply.status(422).send({ code: 'device_refused', message: (e as Error).message });
+      }
     });
 
     // What is missing for this app to work, and what Ember can put right by itself.

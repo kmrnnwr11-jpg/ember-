@@ -21,6 +21,7 @@ import 'logo_card.dart';
 import '../assistant/home_assistant.dart';
 import 'app_content_card.dart';
 import 'checkup_card.dart';
+import 'phone_card.dart';
 import 'github_card.dart';
 import 'play_update_card.dart';
 import 'products_card.dart';
@@ -409,6 +410,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                           previewUrl: b.preview?.resolve(ref.read(sessionProvider).value?.runnerUrl ?? ''),
                         ),
                       if (b.phase == BuildPhase.ready) _ReadyCard(builder: b, projectId: project.id),
+                      if (b.phase == BuildPhase.ready) PhoneCard(projectId: project.id, builder: b),
                       if (b.phase == BuildPhase.ready) PlayUpdateCard(builder: b, projectId: project.id),
                       if (b.phase == BuildPhase.ready) AppContentCard(projectId: project.id, appName: project.displayName),
                       if (b.phase == BuildPhase.ready) GitHubCard(projectId: project.id),

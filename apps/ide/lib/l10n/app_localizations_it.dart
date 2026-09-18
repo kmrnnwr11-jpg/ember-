@@ -1521,4 +1521,30 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get previewLoginInBrowser =>
       'Google non fa accedere dentro questa finestra, e un login fatto nel browser non vale qui. In questa finestra usa email e password; il login Google funziona nel browser e sul telefono.';
+
+  @override
+  String get phoneTitle => 'Il tuo telefono';
+
+  @override
+  String get phoneHint =>
+      'Ember installa l\'app sul telefono collegato a questo computer e la apre. Login Google, notifiche e pubblicità si comportano davvero come devono solo lì.';
+
+  @override
+  String phoneRunOn(String name) {
+    return 'Avvia su $name';
+  }
+
+  @override
+  String phoneUnauthorized(String name) {
+    return '$name: sbloccalo e consenti il debug USB';
+  }
+
+  @override
+  String get phoneBuilding => 'Preparo l\'app per il telefono…';
+
+  @override
+  String get phoneInstalling => 'Installo sul telefono…';
+
+  @override
+  String get phoneLookAgain => 'Cerca di nuovo i telefoni';
 }

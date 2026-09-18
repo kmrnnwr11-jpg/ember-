@@ -431,5 +431,12 @@
   "checkAgain": "Controlla di nuovo",
   "checkAskEmber": "Fallo sistemare a Ember",
   "checkAsked": "Chiesto. Ember ci sta lavorando: guarda la chat qui sotto.",
-  "previewLoginInBrowser": "Google non fa accedere dentro questa finestra, e un login fatto nel browser non vale qui. In questa finestra usa email e password; il login Google funziona nel browser e sul telefono."
+  "previewLoginInBrowser": "Google non fa accedere dentro questa finestra, e un login fatto nel browser non vale qui. In questa finestra usa email e password; il login Google funziona nel browser e sul telefono.",
+  "phoneTitle": "Il tuo telefono",
+  "phoneHint": "Ember installa l'app sul telefono collegato a questo computer e la apre. Login Google, notifiche e pubblicità si comportano davvero come devono solo lì.",
+  "phoneRunOn": "Avvia su {name}",
+  "phoneUnauthorized": "{name}: sbloccalo e consenti il debug USB",
+  "phoneBuilding": "Preparo l'app per il telefono…",
+  "phoneInstalling": "Installo sul telefono…",
+  "phoneLookAgain": "Cerca di nuovo i telefoni"
 }

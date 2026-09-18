@@ -156,6 +156,22 @@ class RunnerApi {
   Future<Map<String, dynamic>> sendToHelper(String projectId) =>
       _call(() => _dio.post('/v1/projects/$projectId/helper', data: const <String, dynamic>{}), (d) => d as Map<String, dynamic>);
 
+  /// The phones plugged into the Runner's computer.
+  Future<List<Map<String, dynamic>>> devices() => _call(
+    () => _dio.get('/v1/devices'),
+    (d) => ((d as Map<String, dynamic>)['devices'] as List? ?? const []).cast<Map<String, dynamic>>(),
+  );
+
+  /// Installs the built APK on a phone and opens it.
+  Future<Map<String, dynamic>> runOnDevice(String projectId, {String? deviceId}) => _call(
+    () => _dio.post(
+      '/v1/projects/$projectId/run-on-device',
+      data: {'deviceId': ?deviceId},
+      options: Options(receiveTimeout: const Duration(minutes: 12)),
+    ),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// What is missing for this app to work, checked in the project and on Google.
   Future<Map<String, dynamic>> checkApp(String projectId, {String? previewUrl}) => _call(
     () => _dio.get(

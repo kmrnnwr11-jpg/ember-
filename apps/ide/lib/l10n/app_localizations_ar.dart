@@ -1498,4 +1498,30 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get previewLoginInBrowser =>
       'لا تسمح Google بتسجيل الدخول داخل هذه النافذة، وتسجيل الدخول من المتصفح لا ينتقل إلى هنا. استخدم البريد وكلمة المرور هنا؛ ودخول Google يعمل في المتصفح وعلى الهاتف.';
+
+  @override
+  String get phoneTitle => 'هاتفك';
+
+  @override
+  String get phoneHint =>
+      'يثبّت Ember التطبيق على الهاتف الموصول بهذا الحاسوب ويفتحه. دخول Google والإشعارات والإعلانات تعمل كما ينبغي هناك فقط.';
+
+  @override
+  String phoneRunOn(String name) {
+    return 'التشغيل على $name';
+  }
+
+  @override
+  String phoneUnauthorized(String name) {
+    return '$name: افتح قفله واسمح بتصحيح USB';
+  }
+
+  @override
+  String get phoneBuilding => 'تحضير التطبيق للهاتف…';
+
+  @override
+  String get phoneInstalling => 'جارٍ التثبيت على الهاتف…';
+
+  @override
+  String get phoneLookAgain => 'ابحث عن الهواتف مجددًا';
 }

@@ -2695,6 +2695,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Google will not sign anyone in inside this window, and a login done in the browser does not carry over here. In this window use email and password; Google sign-in works in the browser and on a phone.'**
   String get previewLoginInBrowser;
+
+  /// No description provided for @phoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone'**
+  String get phoneTitle;
+
+  /// No description provided for @phoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember installs the app on the phone plugged into this computer and opens it. Google sign-in, notifications and ads only behave properly there.'**
+  String get phoneHint;
+
+  /// No description provided for @phoneRunOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Run on {name}'**
+  String phoneRunOn(String name);
+
+  /// No description provided for @phoneUnauthorized.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: unlock it and allow USB debugging'**
+  String phoneUnauthorized(String name);
+
+  /// No description provided for @phoneBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Building the app for the phone…'**
+  String get phoneBuilding;
+
+  /// No description provided for @phoneInstalling.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing on the phone…'**
+  String get phoneInstalling;
+
+  /// No description provided for @phoneLookAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Look for phones again'**
+  String get phoneLookAgain;
 }
 
 class _AppLocalizationsDelegate

@@ -1522,4 +1522,30 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get previewLoginInBrowser =>
       'Google no permite iniciar sesión dentro de esta ventana, y la sesión del navegador no se traslada aquí. En esta ventana usa email y contraseña; el acceso con Google funciona en el navegador y en el móvil.';
+
+  @override
+  String get phoneTitle => 'Tu teléfono';
+
+  @override
+  String get phoneHint =>
+      'Ember instala la app en el teléfono conectado a este ordenador y la abre. El acceso con Google, las notificaciones y los anuncios solo funcionan de verdad allí.';
+
+  @override
+  String phoneRunOn(String name) {
+    return 'Abrir en $name';
+  }
+
+  @override
+  String phoneUnauthorized(String name) {
+    return '$name: desbloquéalo y permite la depuración USB';
+  }
+
+  @override
+  String get phoneBuilding => 'Preparando la app para el teléfono…';
+
+  @override
+  String get phoneInstalling => 'Instalando en el teléfono…';
+
+  @override
+  String get phoneLookAgain => 'Buscar teléfonos otra vez';
 }

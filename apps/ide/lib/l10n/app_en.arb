@@ -871,5 +871,26 @@
   },
   "checkAskEmber": "Have Ember fix it",
   "checkAsked": "Asked. Ember is working on it: watch the chat below.",
-  "previewLoginInBrowser": "Google will not sign anyone in inside this window, and a login done in the browser does not carry over here. In this window use email and password; Google sign-in works in the browser and on a phone."
+  "previewLoginInBrowser": "Google will not sign anyone in inside this window, and a login done in the browser does not carry over here. In this window use email and password; Google sign-in works in the browser and on a phone.",
+  "phoneTitle": "Your phone",
+  "phoneHint": "Ember installs the app on the phone plugged into this computer and opens it. Google sign-in, notifications and ads only behave properly there.",
+  "phoneRunOn": "Run on {name}",
+  "phoneUnauthorized": "{name}: unlock it and allow USB debugging",
+  "phoneBuilding": "Building the app for the phone…",
+  "phoneInstalling": "Installing on the phone…",
+  "phoneLookAgain": "Look for phones again",
+  "@phoneRunOn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@phoneUnauthorized": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

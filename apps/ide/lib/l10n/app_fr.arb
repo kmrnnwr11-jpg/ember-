@@ -431,5 +431,12 @@
   "checkAgain": "Vérifier à nouveau",
   "checkAskEmber": "Faire corriger par Ember",
   "checkAsked": "Demandé. Ember s'en occupe : regardez la discussion ci-dessous.",
-  "previewLoginInBrowser": "Google ne connecte personne dans cette fenêtre, et une connexion faite dans le navigateur ne vaut pas ici. Dans cette fenêtre, utilisez e-mail et mot de passe ; la connexion Google marche dans le navigateur et sur un téléphone."
+  "previewLoginInBrowser": "Google ne connecte personne dans cette fenêtre, et une connexion faite dans le navigateur ne vaut pas ici. Dans cette fenêtre, utilisez e-mail et mot de passe ; la connexion Google marche dans le navigateur et sur un téléphone.",
+  "phoneTitle": "Votre téléphone",
+  "phoneHint": "Ember installe l'app sur le téléphone branché à cet ordinateur et l'ouvre. La connexion Google, les notifications et les annonces ne se comportent vraiment que là.",
+  "phoneRunOn": "Lancer sur {name}",
+  "phoneUnauthorized": "{name} : déverrouillez-le et autorisez le débogage USB",
+  "phoneBuilding": "Préparation de l'app pour le téléphone…",
+  "phoneInstalling": "Installation sur le téléphone…",
+  "phoneLookAgain": "Chercher à nouveau les téléphones"
 }

@@ -431,5 +431,12 @@
   "checkAgain": "Revisar otra vez",
   "checkAskEmber": "Que lo arregle Ember",
   "checkAsked": "Pedido. Ember está trabajando: mira el chat de abajo.",
-  "previewLoginInBrowser": "Google no permite iniciar sesión dentro de esta ventana, y la sesión del navegador no se traslada aquí. En esta ventana usa email y contraseña; el acceso con Google funciona en el navegador y en el móvil."
+  "previewLoginInBrowser": "Google no permite iniciar sesión dentro de esta ventana, y la sesión del navegador no se traslada aquí. En esta ventana usa email y contraseña; el acceso con Google funciona en el navegador y en el móvil.",
+  "phoneTitle": "Tu teléfono",
+  "phoneHint": "Ember instala la app en el teléfono conectado a este ordenador y la abre. El acceso con Google, las notificaciones y los anuncios solo funcionan de verdad allí.",
+  "phoneRunOn": "Abrir en {name}",
+  "phoneUnauthorized": "{name}: desbloquéalo y permite la depuración USB",
+  "phoneBuilding": "Preparando la app para el teléfono…",
+  "phoneInstalling": "Instalando en el teléfono…",
+  "phoneLookAgain": "Buscar teléfonos otra vez"
 }

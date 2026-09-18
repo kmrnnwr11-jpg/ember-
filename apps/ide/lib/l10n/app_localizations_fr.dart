@@ -1523,4 +1523,30 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get previewLoginInBrowser =>
       'Google ne connecte personne dans cette fenêtre, et une connexion faite dans le navigateur ne vaut pas ici. Dans cette fenêtre, utilisez e-mail et mot de passe ; la connexion Google marche dans le navigateur et sur un téléphone.';
+
+  @override
+  String get phoneTitle => 'Votre téléphone';
+
+  @override
+  String get phoneHint =>
+      'Ember installe l\'app sur le téléphone branché à cet ordinateur et l\'ouvre. La connexion Google, les notifications et les annonces ne se comportent vraiment que là.';
+
+  @override
+  String phoneRunOn(String name) {
+    return 'Lancer sur $name';
+  }
+
+  @override
+  String phoneUnauthorized(String name) {
+    return '$name : déverrouillez-le et autorisez le débogage USB';
+  }
+
+  @override
+  String get phoneBuilding => 'Préparation de l\'app pour le téléphone…';
+
+  @override
+  String get phoneInstalling => 'Installation sur le téléphone…';
+
+  @override
+  String get phoneLookAgain => 'Chercher à nouveau les téléphones';
 }

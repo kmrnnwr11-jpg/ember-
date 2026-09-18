@@ -1505,4 +1505,30 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get previewLoginInBrowser =>
       'Google will not sign anyone in inside this window, and a login done in the browser does not carry over here. In this window use email and password; Google sign-in works in the browser and on a phone.';
+
+  @override
+  String get phoneTitle => 'Your phone';
+
+  @override
+  String get phoneHint =>
+      'Ember installs the app on the phone plugged into this computer and opens it. Google sign-in, notifications and ads only behave properly there.';
+
+  @override
+  String phoneRunOn(String name) {
+    return 'Run on $name';
+  }
+
+  @override
+  String phoneUnauthorized(String name) {
+    return '$name: unlock it and allow USB debugging';
+  }
+
+  @override
+  String get phoneBuilding => 'Building the app for the phone…';
+
+  @override
+  String get phoneInstalling => 'Installing on the phone…';
+
+  @override
+  String get phoneLookAgain => 'Look for phones again';
 }

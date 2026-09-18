@@ -2591,7 +2591,7 @@ abstract class AppLocalizations {
   /// No description provided for @adsAddHint.
   ///
   /// In en, this message translates to:
-  /// **'Ember adds the ad code to this app and shows Google test ads. When you have your AdMob ids, paste them here and Ember swaps them in.'**
+  /// **'Ember puts ads on every screen that can carry one, within the limits that keep an AdMob account alive, and shows Google test ads until you paste your own ids.'**
   String get adsAddHint;
 
   /// No description provided for @adsAddChat.
@@ -2599,6 +2599,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add AdMob ads with test ids'**
   String get adsAddChat;
+
+  /// No description provided for @adsYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, show ads'**
+  String get adsYes;
+
+  /// No description provided for @adsNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No ads'**
+  String get adsNo;
+
+  /// No description provided for @adsDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'No ads in this app. Ask Ember for them whenever you change your mind.'**
+  String get adsDeclined;
+
+  /// No description provided for @adsRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the ads'**
+  String get adsRemove;
+
+  /// No description provided for @adsRemoveChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove AdMob from this app'**
+  String get adsRemoveChat;
 }
 
 class _AppLocalizationsDelegate

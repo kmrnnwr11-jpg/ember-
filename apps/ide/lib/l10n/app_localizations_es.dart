@@ -1460,9 +1460,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get adsAddHint =>
-      'Ember añade el código de anuncios a esta app y muestra los anuncios de prueba de Google. Cuando tengas tus identificadores de AdMob, pégalos aquí y Ember los cambia.';
+      'Ember pone anuncios en cada pantalla que puede llevarlos, dentro de los límites que mantienen viva una cuenta de AdMob, y usa los anuncios de prueba de Google hasta que pegues tus identificadores.';
 
   @override
   String get adsAddChat =>
       'Añadir anuncios de AdMob con identificadores de prueba';
+
+  @override
+  String get adsYes => 'Sí, poner anuncios';
+
+  @override
+  String get adsNo => 'Sin anuncios';
+
+  @override
+  String get adsDeclined =>
+      'Sin anuncios en esta app. Pídeselos a Ember cuando cambies de idea.';
+
+  @override
+  String get adsRemove => 'Quitar los anuncios';
+
+  @override
+  String get adsRemoveChat => 'Quitar AdMob de esta app';
 }

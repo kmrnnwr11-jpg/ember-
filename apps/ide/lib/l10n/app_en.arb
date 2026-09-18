@@ -840,6 +840,11 @@
   "acAppLink": "Address of this app in Play Console",
   "acLinkNotUnderstood": "That address does not name an app. Open the app in Play Console and copy the whole address from the browser bar.",
   "adsAdd": "Add AdMob ads",
-  "adsAddHint": "Ember adds the ad code to this app and shows Google test ads. When you have your AdMob ids, paste them here and Ember swaps them in.",
-  "adsAddChat": "Add AdMob ads with test ids"
+  "adsAddHint": "Ember puts ads on every screen that can carry one, within the limits that keep an AdMob account alive, and shows Google test ads until you paste your own ids.",
+  "adsAddChat": "Add AdMob ads with test ids",
+  "adsYes": "Yes, show ads",
+  "adsNo": "No ads",
+  "adsDeclined": "No ads in this app. Ask Ember for them whenever you change your mind.",
+  "adsRemove": "Remove the ads",
+  "adsRemoveChat": "Remove AdMob from this app"
 }

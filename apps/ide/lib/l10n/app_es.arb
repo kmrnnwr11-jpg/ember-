@@ -414,6 +414,11 @@
   "acAppLink": "Dirección de esta app en Play Console",
   "acLinkNotUnderstood": "Esa dirección no indica una app. Abre la app en Play Console y copia la dirección completa de la barra del navegador.",
   "adsAdd": "Añadir anuncios de AdMob",
-  "adsAddHint": "Ember añade el código de anuncios a esta app y muestra los anuncios de prueba de Google. Cuando tengas tus identificadores de AdMob, pégalos aquí y Ember los cambia.",
-  "adsAddChat": "Añadir anuncios de AdMob con identificadores de prueba"
+  "adsAddHint": "Ember pone anuncios en cada pantalla que puede llevarlos, dentro de los límites que mantienen viva una cuenta de AdMob, y usa los anuncios de prueba de Google hasta que pegues tus identificadores.",
+  "adsAddChat": "Añadir anuncios de AdMob con identificadores de prueba",
+  "adsYes": "Sí, poner anuncios",
+  "adsNo": "Sin anuncios",
+  "adsDeclined": "Sin anuncios en esta app. Pídeselos a Ember cuando cambies de idea.",
+  "adsRemove": "Quitar los anuncios",
+  "adsRemoveChat": "Quitar AdMob de esta app"
 }

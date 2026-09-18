@@ -35,7 +35,9 @@ REFERENCE APP — the user wants an app like this Play Store app. Study its list
 Name: $title${developer.isEmpty ? '' : ' (by $developer)'}
 Play Store: $url
 Listing:
-$description''';
+$description
+
+If that app is free and ad-supported, this one earns the same way: add AdMob with google_mobile_ads using Google's TEST ad unit ids, a banner on the main screen and an interstitial after a completed action — never on first launch, never more than once a minute, never next to a button the user is about to press. Then end your reply with the line EMBER_ADS: banner,interstitial''';
 }
 
 /// Detects "an app like X" in a request and returns X, or a Play Store id from a link.

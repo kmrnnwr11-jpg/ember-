@@ -1438,8 +1438,24 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adsAddHint =>
-      'يضيف Ember كود الإعلانات إلى هذا التطبيق ويعرض إعلانات Google التجريبية. عندما تحصل على معرّفات AdMob الصقها هنا ليستبدلها Ember.';
+      'يضع Ember الإعلانات في كل شاشة تحتملها، ضمن الحدود التي تُبقي حساب AdMob آمنًا، ويستخدم إعلانات Google التجريبية حتى تلصق معرّفاتك.';
 
   @override
   String get adsAddChat => 'إضافة إعلانات AdMob بمعرّفات تجريبية';
+
+  @override
+  String get adsYes => 'نعم، اعرض الإعلانات';
+
+  @override
+  String get adsNo => 'بدون إعلانات';
+
+  @override
+  String get adsDeclined =>
+      'لا إعلانات في هذا التطبيق. اطلبها من Ember متى غيّرت رأيك.';
+
+  @override
+  String get adsRemove => 'إزالة الإعلانات';
+
+  @override
+  String get adsRemoveChat => 'إزالة AdMob من هذا التطبيق';
 }

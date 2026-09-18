@@ -23,6 +23,9 @@ class _AdsCardState extends State<AdsCard> {
   };
   String? _error;
 
+  /// The user said no to ads for this app: stop offering until they reopen it.
+  bool _declined = false;
+
   @override
   void dispose() {
     _appId.dispose();
@@ -32,16 +35,36 @@ class _AdsCardState extends State<AdsCard> {
     super.dispose();
   }
 
+  /// As many ads as the app can carry without Google turning them off.
+  ///
+  /// Google suspends accounts for accidental clicks and for ads that get in the
+  /// way, so the limits below are the line: earn from every screen, never trick
+  /// anyone into a tap.
+  static const _adsPolicy =
+      'Add AdMob ads with the google_mobile_ads package, earning as much as the policy allows and no more. '
+      'Use ONLY Google official TEST ad unit ids for now, gathered in one file lib/config/ads_config.dart, '
+      'and the test application id in AndroidManifest.xml and Info.plist. Initialise the SDK at startup. '
+      'Place: an adaptive banner at the bottom of each main screen; an interstitial after a completed action '
+      '(a saved photo, a finished game, a closed detail page). Add a rewarded ad only where the user gets '
+      'something for watching it, and never force it. '
+      'Respect these limits, which are what keeps an account alive: no ad on the first launch or the splash; '
+      'at most one interstitial per minute and never two in a row; keep every ad at least 40 logical pixels away '
+      'from buttons, and never under a finger that is about to tap; no ad over content the user is reading or '
+      'during a video or a call; never ask anyone to click an ad, and never click them yourself while testing. '
+      'End your reply with the line EMBER_ADS: banner,interstitial';
+
   /// Adds ads to an app that was built without them, with Google's test ids first.
   void _addAds() {
-    final l = AppLocalizations.of(context);
+    widget.builder.improve(_adsPolicy, display: AppLocalizations.of(context).adsAddChat);
+  }
+
+  /// Takes the ads back out, for an app that should not carry them.
+  void _removeAds() {
     widget.builder.improve(
-      'Add AdMob ads to this app with the google_mobile_ads package. Use ONLY Google\'s official TEST ad unit ids for now, '
-      'in a single file lib/config/ads_config.dart, and set the test application id in AndroidManifest.xml and Info.plist. '
-      'Show a banner at the bottom of the main screen and an interstitial after a meaningful action, never on first launch '
-      'and never more than once a minute. Initialise the SDK at startup. '
-      'End your reply with the line EMBER_ADS: banner,interstitial',
-      display: l.adsAddChat,
+      'Remove AdMob from this app completely: the google_mobile_ads dependency, the ads configuration file, '
+      'every banner and interstitial, the SDK initialisation and the application id in AndroidManifest.xml and Info.plist. '
+      'Leave the app working exactly as before, with the space the banners used given back to the content.',
+      display: AppLocalizations.of(context).adsRemoveChat,
     );
   }
 
@@ -84,14 +107,21 @@ class _AdsCardState extends State<AdsCard> {
             Text(widget.builder.ads == null ? l.adsAddHint : l.adsHint, style: theme.textTheme.bodySmall),
             if (widget.builder.ads == null) ...[
               const SizedBox(height: 10),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: FilledButton.icon(
-                  onPressed: widget.builder.running ? null : _addAds,
-                  icon: const Icon(Icons.campaign),
-                  label: Text(l.adsAdd),
+              if (_declined)
+                Text(l.adsDeclined, style: theme.textTheme.bodySmall)
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: widget.builder.running ? null : _addAds,
+                      icon: const Icon(Icons.campaign),
+                      label: Text(l.adsYes),
+                    ),
+                    OutlinedButton(onPressed: () => setState(() => _declined = true), child: Text(l.adsNo)),
+                  ],
                 ),
-              ),
             ],
             if (widget.builder.ads != null) ...[
               const SizedBox(height: 8),
@@ -114,9 +144,13 @@ class _AdsCardState extends State<AdsCard> {
                 Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
               ],
               const SizedBox(height: 10),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: FilledButton.icon(onPressed: widget.builder.running ? null : _apply, icon: const Icon(Icons.check), label: Text(l.adsApply)),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.icon(onPressed: widget.builder.running ? null : _apply, icon: const Icon(Icons.check), label: Text(l.adsApply)),
+                  TextButton(onPressed: widget.builder.running ? null : _removeAds, child: Text(l.adsRemove)),
+                ],
               ),
             ],
           ],

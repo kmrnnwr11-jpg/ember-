@@ -284,7 +284,8 @@
         for (let screen = 0; screen < 14; screen++) {
           answered += await answerHere(app);
           await sleep(800);
-          if (!pressButton(['avanti', 'next', 'continua', 'continue'])) break;
+          // "Classificazione contenuti" starts behind a button before any question appears.
+          if (!pressButton(['avanti', 'next', 'continua', 'continue', 'avvia questionario', 'inizia', 'start'])) break;
           await sleep(2500);
         }
         saved = pressButton(['salva', 'save', 'invia', 'submit']);

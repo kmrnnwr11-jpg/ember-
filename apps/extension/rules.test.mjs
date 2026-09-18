@@ -48,6 +48,25 @@ test('leaves a page it does not understand untouched', () => {
   assert.deepEqual(proposals, []);
 });
 
+test('ticks "none of these" where the page lists features instead of asking yes or no', () => {
+  const page = { url: 'https://play.google.com/console/u/0/developers/1/app/2/app-content/financial-features', title: 'Funzionalità finanziarie', app };
+  const fields = [
+    {
+      question: 'Quali funzionalità finanziarie offre la tua app?',
+      options: ['Concessione diretta di prestiti personali', 'Agevolazione dei prestiti', 'Operazioni bancarie', 'La mia app non offre funzionalità finanziarie'],
+    },
+  ];
+  assert.equal(plan({ ...page, fields })[0].option, 3);
+
+  const health = {
+    url: 'https://play.google.com/console/u/0/developers/1/app/2/app-content/health',
+    title: 'Salute',
+    app,
+    fields: [{ question: 'Funzionalità legate alla salute', options: ['Attività fisica e fitness', 'Gestione del sonno', 'Nessuna di queste'] }],
+  };
+  assert.equal(plan(health)[0].option, 2);
+});
+
 test('never picks Gioco, which opens the stricter games form', () => {
   const labels = [
     "Gioco — L'app è un gioco o un'app di scommesse",

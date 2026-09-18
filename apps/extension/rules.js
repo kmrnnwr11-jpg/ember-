@@ -12,6 +12,24 @@
 const YES = ['sì', 'si', 'yes', 'oui', 'sí', 'نعم'];
 const NO = ['no', 'non', 'لا'];
 
+/**
+ * Some pages do not ask "yes or no": they list features (loans, fitness…) and
+ * the answer for an app that has none of them is the last box, "none of these".
+ */
+const NONE = [
+  'nessuna di queste',
+  'nessuna delle',
+  'nessuno di questi',
+  'non offre',
+  'non fornisce',
+  'la mia app non',
+  'none of these',
+  'does not provide',
+  'my app does not',
+  'aucune de ces',
+  'ninguna de estas',
+];
+
 /** One question Ember can answer, with the phrases that identify it. */
 const QUESTIONS = [
   {
@@ -32,7 +50,7 @@ const QUESTIONS = [
     id: 'financial',
     page: /financial|finanziarie/i,
     asks: ['funzionalità finanziarie', 'financial features', 'fonctionnalités financières', 'funciones financieras'],
-    answer: () => ['non offre', 'does not provide', 'ne propose pas', 'no ofrece', ...NO],
+    answer: () => [...NONE, ...NO],
     why: () => 'Loans, crypto and payments only; in-app products are not a financial feature',
   },
   {
@@ -46,7 +64,7 @@ const QUESTIONS = [
     id: 'health',
     page: /health|salute/i,
     asks: ['salute', 'health'],
-    answer: () => NO,
+    answer: () => [...NONE, ...NO],
     why: () => 'The app has no medical, wellbeing or health-research features',
   },
 ];

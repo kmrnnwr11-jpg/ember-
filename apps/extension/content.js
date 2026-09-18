@@ -66,20 +66,36 @@
 
   // ---------------------------------------------------------------- reading
 
+  /**
+   * Material hides the real radio behind a styled element, so the input itself
+   * has no size: what counts is whether the thing the user sees is on screen.
+   */
+  function onScreen(el) {
+    for (let node = el; node && node !== document.body; node = node.parentElement) {
+      const rect = node.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) return getComputedStyle(node).visibility !== 'hidden';
+    }
+    return false;
+  }
+
   function readOptions() {
-    return [...document.querySelectorAll('input[type="radio"], input[type="checkbox"], [role="radio"], [role="checkbox"]')]
-      .filter((el) => el.offsetParent !== null || el.getClientRects().length > 0)
+    return [...document.querySelectorAll('input[type="radio"], input[type="checkbox"], [role="radio"], [role="checkbox"], mat-radio-button, mat-checkbox')]
+      .filter(onScreen)
       .map((el) => {
         const labelled = el.getAttribute('aria-label') || document.getElementById(el.getAttribute('aria-labelledby') ?? '')?.textContent;
-        const label = (labelled || text(el.closest('label')) || text(el.parentElement) || '').slice(0, 200);
-        return { el, label, checked: el.checked === true || el.getAttribute('aria-checked') === 'true' };
+        // The words sit next to the control, sometimes a couple of boxes away.
+        const near = el.closest('label, mat-radio-button, mat-checkbox, [role="radio"], [role="checkbox"], li, tr') ?? el.parentElement;
+        const label = (labelled || text(near) || text(el.parentElement) || '').slice(0, 200);
+        return { el, label, checked: el.checked === true || el.getAttribute('aria-checked') === 'true' || el.classList.contains('mat-mdc-radio-checked') };
       })
       .filter((o) => o.label);
   }
 
   function readFields() {
     const all = readOptions();
-    const groups = [...document.querySelectorAll('[role="radiogroup"], fieldset, form section')].filter((g) => g.querySelector('input, [role="radio"]'));
+    const groups = [...document.querySelectorAll('[role="radiogroup"], mat-radio-group, fieldset, form section')].filter((g) =>
+      g.querySelector('input, [role="radio"], mat-radio-button'),
+    );
     if (groups.length === 0) {
       return [{ question: text(document.querySelector('h1, h2')) || document.title, options: all.map((o) => o.label), els: all.map((o) => o.el), checked: all.map((o) => o.checked) }];
     }
@@ -94,7 +110,7 @@
 
   function readTextInputs() {
     return [...document.querySelectorAll('input[type="text"], input[type="email"], input:not([type])')]
-      .filter((el) => (el.offsetParent !== null || el.getClientRects().length > 0) && !el.disabled && !el.readOnly)
+      .filter((el) => onScreen(el) && !el.disabled && !el.readOnly)
       .map((el, index) => ({
         el,
         index,
@@ -131,7 +147,7 @@
   /** Presses a button by the word written on it. */
   function pressButton(words) {
     const buttons = [...document.querySelectorAll('button, [role="button"]')].filter(
-      (b) => !b.disabled && b.getAttribute('aria-disabled') !== 'true' && (b.offsetParent !== null || b.getClientRects().length > 0),
+      (b) => !b.disabled && b.getAttribute('aria-disabled') !== 'true' && onScreen(b),
     );
     const hit = buttons.find((b) => words.some((w) => lower(b) === w || lower(b).startsWith(`${w} `)));
     if (!hit) return false;
@@ -172,13 +188,17 @@
 
   /** Opens one App content section from the list page. */
   async function openRow(row) {
+    const before = location.href;
     const link = await waitFor(() => {
-      const links = [...document.querySelectorAll('a, [role="link"], button, [role="listitem"]')];
+      const links = [...document.querySelectorAll('a, [role="link"], button, [role="listitem"], li')].filter(onScreen);
       return links.find((l) => row.words.some((w) => lower(l).startsWith(w)));
-    }, 12000);
+    }, 15000);
     if (!link) return false;
-    link.click();
-    await sleep(3000);
+    (link.querySelector('a, button') ?? link).click();
+    // The section is open once the address changed and something answerable is on screen.
+    await waitFor(() => location.href !== before, 8000);
+    await waitFor(() => readOptions().length > 0 || readTextInputs().length > 0, 12000);
+    await sleep(1200);
     return true;
   }
 
@@ -224,7 +244,11 @@
 
       let answered = 0;
       let saved = false;
-      if (await openRow(row)) {
+      let seen = 'sezione non trovata';
+      const opened = await openRow(row);
+      if (opened) {
+        // Kept so a section that fills nothing can be told apart from one that was never opened.
+        seen = `${readFields().length} domande, ${readOptions().length} risposte possibili`;
         // The content rating questionnaire is several screens long.
         for (let screen = 0; screen < 14; screen++) {
           answered += await answerHere(app);
@@ -236,7 +260,7 @@
         await sleep(3000);
       }
 
-      const results = [...(current.results ?? []), { id: row.id, name: row.name, answered, saved }];
+      const results = [...(current.results ?? []), { id: row.id, name: row.name, answered, saved, seen }];
       await store({ run: { ...current, index: i + 1, results } });
       history.pushState({}, '', hubUrl());
       location.assign(hubUrl());
@@ -251,7 +275,9 @@
   const summary = (run) => `${(run?.results ?? []).filter((r) => r.saved).length} sezioni salvate su ${ROWS.length}.`;
 
   const listHtml = (results = []) =>
-    `<ul class="ember-list">${results.map((r) => `<li>${r.saved ? '✓' : '✗'} <b>${r.name}</b> <span class="ember-small">${r.answered} risposte</span></li>`).join('')}</ul>`;
+    `<ul class="ember-list">${results
+      .map((r) => `<li>${r.saved ? '✓' : '✗'} <b>${r.name}</b> <span class="ember-small">${r.answered} risposte${r.seen ? ` · ${r.seen}` : ''}</span></li>`)
+      .join('')}</ul>`;
 
   const needAppHtml = () =>
     "<p>Non trovo l'app. Apri Ember sul computer, vai sull'app, scheda <b>App content</b>, e premi <b>Copy for the browser helper</b>. Poi ripremi qui.</p>" +

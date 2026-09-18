@@ -1,8 +1,9 @@
-import { spawn } from 'node:child_process';
+﻿import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import puppeteer from 'puppeteer-core';
+import { lanAddress } from './devices.js';
 import { findBrowser } from './screenshots.js';
 
 /**
@@ -93,7 +94,7 @@ export async function inspectProject(root: string): Promise<Checked> {
   if (/allow read, write: if request\.auth != null;[\s\S]*document=\*\*/.test(rules) || /\{document=\*\*\}[\s\S]*allow read, write: if request\.auth != null;/.test(rules)) {
     findings.push({
       id: 'rules_open',
-      title: 'Anyone signed in can read everyone else’s data',
+      title: 'Anyone signed in can read everyone elseâ€™s data',
       detail: 'The database rules are wide open to any signed-in user. Fine while building, a leak once the app is public.',
       fixable: true,
     });
@@ -148,8 +149,15 @@ function run(bin: string, args: string[], cwd?: string, timeoutMs = 180_000): Pr
 
 const IDENTITY = 'https://identitytoolkit.googleapis.com/admin/v2/projects';
 
-/** The addresses Firebase accepts a sign-in from. Ember's preview runs on 127.0.0.1. */
-const NEEDED_DOMAINS = ['localhost', '127.0.0.1'];
+/**
+ * The addresses Firebase must accept a sign-in from: the preview runs on
+ * 127.0.0.1, and a phone on the same Wi-Fi reaches this computer by its network
+ * address. Miss one and the phone shows "this domain is not authorized".
+ */
+function neededDomains(): string[] {
+  const lan = lanAddress();
+  return lan ? ['localhost', '127.0.0.1', lan] : ['localhost', '127.0.0.1'];
+}
 
 async function googleToken(): Promise<string | null> {
   const t = await run('gcloud', ['auth', 'print-access-token'], undefined, 60_000);
@@ -174,11 +182,11 @@ export async function inspectCloud(firebaseProject: string | null, fetchImpl: ty
 
   const auth = await authConfig(firebaseProject, fetchImpl);
   const domains = (auth?.config.authorizedDomains as string[] | undefined) ?? null;
-  if (domains && NEEDED_DOMAINS.some((d) => !domains.includes(d))) {
+  if (domains && neededDomains().some((d) => !domains.includes(d))) {
     findings.push({
       id: 'auth_domains',
       title: 'Google sign-in is refused where the app is being tested',
-      detail: 'Firebase only accepts a sign-in from addresses it knows, and the preview address is not one of them: the user signs in and the screen stays black.',
+      detail: 'Firebase only accepts a sign-in from addresses it knows. On the phone it says "this domain is not authorized"; in the preview the screen just stays black.',
       fixable: true,
     });
   }
@@ -224,7 +232,7 @@ export async function inspectRunning(previewUrl: string | null, launch = puppete
   }
   const real = problems.filter((p) => p && !/favicon|service worker|DevTools/i.test(p)).slice(0, 3);
   if (real.length === 0) return [];
-  const text = real.join(' · ').slice(0, 300);
+  const text = real.join(' Â· ').slice(0, 300);
   return [
     {
       id: 'runtime_errors',
@@ -257,7 +265,7 @@ export async function fix(id: string, input: { projectRoot: string; firebaseProj
     const auth = await authConfig(firebaseProject, fetch);
     if (!auth) throw new Error('Could not read the Firebase sign-in settings');
     const current = (auth.config.authorizedDomains as string[] | undefined) ?? [];
-    const authorizedDomains = [...new Set([...current, ...NEEDED_DOMAINS])];
+    const authorizedDomains = [...new Set([...current, ...neededDomains()])];
     const res = await fetch(`${IDENTITY}/${firebaseProject}/config?updateMask=authorizedDomains`, {
       method: 'PATCH',
       headers: { authorization: `Bearer ${auth.token}`, 'x-goog-user-project': firebaseProject, 'content-type': 'application/json' },

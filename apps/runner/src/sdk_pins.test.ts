@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { applySdkPins, relaxFirebaseVersions } from './sdk_pins.js';
+﻿import { describe, expect, it } from 'vitest';
+import { applySdkPins, relaxFirebaseVersions, tuneGradleText } from './sdk_pins.js';
 
 describe('SDK pins', () => {
   it('pins firebase_core_web for Firebase apps, once', () => {
@@ -29,6 +29,17 @@ describe('SDK pins', () => {
     // The override itself keeps its exact version.
     expect(out).toContain('  firebase_core_web: 3.10.0');
     expect(relaxFirebaseVersions('dependencies:\n  http: ^1.0.0\n')).toBe('dependencies:\n  http: ^1.0.0\n');
+  });
+
+  it('turns on the Gradle settings that make the next build fast', () => {
+    const tuned = tuneGradleText('org.gradle.jvmargs=-Xmx8G\nandroid.useAndroidX=true\n');
+    expect(tuned).toContain('org.gradle.caching=true');
+    expect(tuned).toContain('org.gradle.parallel=true');
+    expect(tuned).toContain('org.gradle.jvmargs=-Xmx8G');
+    // Applying it twice must not stack the same keys again.
+    expect(tuneGradleText(tuned)).toBe(tuned);
+    // A value the project already chose is left alone.
+    expect(tuneGradleText('org.gradle.parallel=false\n')).toContain('org.gradle.parallel=false');
   });
 
   it('respects a pin the project already has', () => {

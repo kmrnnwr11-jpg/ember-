@@ -44,6 +44,39 @@ export function applySdkPins(pubspec: string): string {
   return out;
 }
 
+/**
+ * Gradle settings that make the second build fast.
+ *
+ * Out of the box Gradle rebuilds everything, in one thread, throwing away what
+ * it learned. Turning on its cache and parallel work costs nothing and is the
+ * difference between waiting ten minutes and waiting one.
+ */
+const GRADLE_SPEED: Array<[string, string]> = [
+  ['org.gradle.caching', 'true'],
+  ['org.gradle.parallel', 'true'],
+  ['org.gradle.configureondemand', 'true'],
+  ['org.gradle.daemon', 'true'],
+  ['kotlin.incremental', 'true'],
+];
+
+export function tuneGradleText(properties: string): string {
+  let out = properties.replace(/\s*$/, '');
+  for (const [key, value] of GRADLE_SPEED) {
+    if (new RegExp(`^${key.replace(/\./g, '\\.')}\\s*=`, 'm').test(out)) continue;
+    out += `\n${key}=${value}`;
+  }
+  return `${out}\n`;
+}
+
+/** Applies the speed settings to a project on disk, once. */
+export async function tuneGradle(projectRoot: string): Promise<void> {
+  const file = path.join(projectRoot, 'android', 'gradle.properties');
+  const text = await readFile(file, 'utf8').catch(() => null);
+  if (text === null) return;
+  const tuned = tuneGradleText(text);
+  if (tuned !== text) await writeFile(file, tuned);
+}
+
 /** Applies [applySdkPins] to a project's pubspec.yaml on disk. */
 export async function pinProjectSdk(projectRoot: string): Promise<void> {
   const file = path.join(projectRoot, 'pubspec.yaml');

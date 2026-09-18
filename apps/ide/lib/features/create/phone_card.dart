@@ -98,10 +98,10 @@ class _PhoneCardState extends ConsumerState<PhoneCard> {
       _error = false;
     });
     try {
-      // The phone needs the APK, so build it first when it is not there yet.
-      if (widget.builder.androidKind != 'apk' || widget.builder.androidStatus != 'ready') {
+      // The phone needs an APK; the quick build is the right one for trying it.
+      if (!(widget.builder.androidKind ?? '').startsWith('apk') || widget.builder.androidStatus != 'ready') {
         setState(() => _message = l.phoneBuilding);
-        await widget.builder.buildAndroid('apk');
+        await widget.builder.buildAndroid('apk_fast');
         if (widget.builder.androidStatus != 'ready') throw RunnerException('build_failed', widget.builder.androidError ?? l.androidFailed);
       }
       setState(() => _message = l.phoneInstalling);

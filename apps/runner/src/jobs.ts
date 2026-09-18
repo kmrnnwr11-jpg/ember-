@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import { nanoid } from 'nanoid';
 import type { WorkspaceDriver } from './workspaces/driver.js';
 
-export type JobKind = 'create' | 'pub_get' | 'analyze' | 'test' | 'build_web' | 'build_apk' | 'build_aab' | 'launcher_icons';
+export type JobKind = 'create' | 'pub_get' | 'analyze' | 'test' | 'build_web' | 'build_apk' | 'build_apk_fast' | 'build_aab' | 'launcher_icons';
 export type JobState = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
 
 export interface JobSpec {

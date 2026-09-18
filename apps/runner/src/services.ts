@@ -6,7 +6,7 @@ import { FsError, ProjectFs } from './fs.js';
 import type { Job, JobKind, JobManager } from './jobs.js';
 import { validateProjectName } from './paths.js';
 import { prepareSignedBuild } from './signing.js';
-import { pinProjectSdk } from './sdk_pins.js';
+import { pinProjectSdk, tuneGradle } from './sdk_pins.js';
 import type { ProjectRow, Store, WorkspaceRow } from './store.js';
 import type { WorkspaceDriver } from './workspaces/driver.js';
 
@@ -25,6 +25,8 @@ const JOB_COMMANDS: Partial<Record<JobKind, string[]>> = {
   analyze: ['analyze', '--no-fatal-infos', '--no-fatal-warnings'],
   test: ['test', '--reporter', 'expanded'],
   build_apk: ['build', 'apk', '--release'],
+  // For trying the app on a phone: no shrinking, no obfuscation, minutes faster.
+  build_apk_fast: ['build', 'apk', '--debug'],
   build_aab: ['build', 'appbundle', '--release'],
   launcher_icons: ['pub', 'run', 'flutter_launcher_icons'],
 };
@@ -32,6 +34,7 @@ const JOB_COMMANDS: Partial<Record<JobKind, string[]>> = {
 /** Downloadable Android artifacts, relative to the project root. */
 export const ARTIFACTS: Record<string, { rel: string; contentType: string }> = {
   'app-release.apk': { rel: 'build/app/outputs/flutter-apk/app-release.apk', contentType: 'application/vnd.android.package-archive' },
+  'app-debug.apk': { rel: 'build/app/outputs/flutter-apk/app-debug.apk', contentType: 'application/vnd.android.package-archive' },
   'app-release.aab': { rel: 'build/app/outputs/bundle/release/app-release.aab', contentType: 'application/octet-stream' },
 };
 
@@ -158,6 +161,7 @@ export class Services {
     if (!args) throw new FsError('bad_job', `unsupported job kind; available: ${Object.keys(JOB_COMMANDS).join(', ')}`);
     // Keep AI-chosen dependencies compatible with this Runner's Flutter SDK.
     await pinProjectSdk(this.projectRoot(project));
+    await tuneGradle(this.projectRoot(project));
     let env: Record<string, string> | undefined;
     if (kind === 'build_apk' || kind === 'build_aab') {
       // Signed release for Play Console: upload key + bumped versionCode.

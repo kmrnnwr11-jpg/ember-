@@ -520,10 +520,18 @@ export async function buildApp(
       const { project } = await services.ownedProject(req.user.id, projectId);
       const { deviceId } = z.object({ deviceId: z.string().max(80).optional() }).parse(req.body ?? {});
       const root = services.projectRoot(project);
-      const apkPath = path.join(root, ARTIFACTS['app-release.apk']!.rel);
-      if (!(await stat(apkPath).catch(() => null))) {
+      // Whichever APK was built last: the quick one for trying, the signed one after publishing.
+      const candidates = await Promise.all(
+        (['app-debug.apk', 'app-release.apk'] as const).map(async (name) => {
+          const file = path.join(root, ARTIFACTS[name]!.rel);
+          return { file, at: (await stat(file).catch(() => null))?.mtimeMs ?? 0 };
+        }),
+      );
+      const newest = candidates.sort((a, b) => b.at - a.at)[0]!;
+      if (newest.at === 0) {
         return reply.status(409).send({ code: 'not_ready', message: 'Build the APK first: Ember installs the file it has built.' });
       }
+      const apkPath = newest.file;
       const info = await (deps.androidInfo ?? androidAppInfo)(cfg, project.id, root, project.name);
       if (!info.applicationId) return reply.status(409).send({ code: 'not_ready', message: 'Android package name not found' });
       try {

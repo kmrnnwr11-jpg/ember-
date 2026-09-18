@@ -874,7 +874,12 @@ class AppBuilder extends ChangeNotifier {
     _log(kind == 'apk' ? strings.bApk : strings.bAab);
     notifyListeners();
     try {
-      final job = await _runJob(kind == 'apk' ? 'build_apk' : 'build_aab');
+      // `apk_fast` is the one for trying the app on a phone: no shrinking, minutes quicker.
+      final job = await _runJob(switch (kind) {
+        'apk' => 'build_apk',
+        'apk_fast' => 'build_apk_fast',
+        _ => 'build_aab',
+      });
       if (job.status != 'succeeded') {
         androidError = _tail(await _fetchJobLog(job.jobId), 30);
         androidStatus = 'failed';

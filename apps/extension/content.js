@@ -187,14 +187,29 @@
   }
 
   /** Opens one App content section from the list page. */
+  /** Everything on the page a person could click, ignoring Ember's own panel. */
+  function clickables() {
+    return [...document.querySelectorAll('a[href], [role="link"], button, [role="button"], [role="listitem"], li')].filter(
+      (el) => onScreen(el) && !el.closest('#ember-panel') && el.id !== 'ember-button',
+    );
+  }
+
+  /** The link that opens a section, chosen as the shortest text that names it. */
+  function rowLink(row) {
+    const matches = clickables()
+      .filter((el) => {
+        const t = lower(el);
+        return t.length < 120 && row.words.some((w) => t.includes(w));
+      })
+      .sort((a, b) => lower(a).length - lower(b).length);
+    return matches[0] ?? null;
+  }
+
   async function openRow(row) {
     const before = location.href;
-    const link = await waitFor(() => {
-      const links = [...document.querySelectorAll('a, [role="link"], button, [role="listitem"], li')].filter(onScreen);
-      return links.find((l) => row.words.some((w) => lower(l).startsWith(w)));
-    }, 15000);
+    const link = await waitFor(() => rowLink(row), 8000);
     if (!link) return false;
-    (link.querySelector('a, button') ?? link).click();
+    (link.closest('a[href], button') ?? link).click();
     // The section is open once the address changed and something answerable is on screen.
     await waitFor(() => location.href !== before, 8000);
     await waitFor(() => readOptions().length > 0 || readTextInputs().length > 0, 12000);
@@ -237,14 +252,17 @@
       render(`<p>Sto compilando <b>${row.name}</b> (${i + 1} di ${ROWS.length})…</p>${listHtml(current.results)}<div class="ember-actions"><button class="ember-stop">Ferma</button></div>`);
       wireStop();
 
-      if (!location.href.includes('/app-content')) {
-        location.assign(hubUrl());
+      // The sections are listed on the dashboard and on the App content page: if the
+      // link is not here, try the other page once before giving up on this section.
+      if (!rowLink(row) && !current.searched) {
+        await store({ run: { ...current, searched: true } });
+        location.assign(location.href.includes('/app-content') ? `${hubUrl().replace('/app-content', '')}/app-dashboard` : hubUrl());
         return; // the script starts again on the new page and carries on
       }
 
       let answered = 0;
       let saved = false;
-      let seen = 'sezione non trovata';
+      let seen = `sezione non trovata fra ${clickables().length} voci`;
       const opened = await openRow(row);
       if (opened) {
         // Kept so a section that fills nothing can be told apart from one that was never opened.
@@ -261,7 +279,7 @@
       }
 
       const results = [...(current.results ?? []), { id: row.id, name: row.name, answered, saved, seen }];
-      await store({ run: { ...current, index: i + 1, results } });
+      await store({ run: { ...current, index: i + 1, searched: false, results } });
       history.pushState({}, '', hubUrl());
       location.assign(hubUrl());
       return; // continues after the page settles

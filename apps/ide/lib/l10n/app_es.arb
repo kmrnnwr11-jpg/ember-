@@ -428,5 +428,7 @@
   "checkFound": "{count} cosas aún no funcionan. Ember puede arreglar las que tienen el icono de la herramienta, si se lo pides.",
   "checkFixNow": "Arreglar {count}",
   "checkFixing": "Arreglando…",
-  "checkAgain": "Revisar otra vez"
+  "checkAgain": "Revisar otra vez",
+  "checkAskEmber": "Que lo arregle Ember",
+  "checkAsked": "Pedido. Ember está trabajando: mira el chat de abajo."
 }

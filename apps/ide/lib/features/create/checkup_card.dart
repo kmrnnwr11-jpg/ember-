@@ -4,6 +4,7 @@ import 'package:ide_core/ide_core.dart' show RunnerException;
 
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import 'app_builder.dart';
 
 /// What Ember found wrong when the app was opened, and the offer to fix it.
 ///
@@ -11,8 +12,11 @@ import '../../l10n/app_localizations.dart';
 /// costs the user, and waits for a yes. The things it cannot fix alone are
 /// listed too, because knowing about them is worth more than hiding them.
 class CheckupCard extends ConsumerStatefulWidget {
-  const CheckupCard({super.key, required this.projectId, this.previewUrl});
+  const CheckupCard({super.key, required this.projectId, required this.builder, this.previewUrl});
   final String projectId;
+
+  /// The engine that wrote the app: it is what fixes the findings made of code.
+  final AppBuilder builder;
 
   /// Where the built app can be opened, so the check can watch it run.
   final String? previewUrl;
@@ -113,6 +117,17 @@ class _CheckupCardState extends ConsumerState<CheckupCard> {
                       children: [
                         Text('${f['title']}', style: theme.textTheme.titleSmall),
                         Text('${f['detail']}', style: theme.textTheme.bodySmall),
+                        if ('${f['ask'] ?? ''}'.isNotEmpty)
+                          TextButton.icon(
+                            onPressed: widget.builder.running
+                                ? null
+                                : () {
+                                    widget.builder.improve('${f['ask']}', display: '${f['title']}');
+                                    setState(() => _message = l.checkAsked);
+                                  },
+                            icon: const Icon(Icons.auto_fix_high, size: 16),
+                            label: Text(l.checkAskEmber),
+                          ),
                       ],
                     ),
                   ),

@@ -19,6 +19,12 @@ export interface Finding {
   detail: string;
   /** true when Ember can put it right without asking anything else. */
   fixable: boolean;
+  /**
+   * What to ask the engine that wrote the app, when the fix is a change to the
+   * code rather than a setting. The user presses one button; this is the
+   * request that gets sent.
+   */
+  ask?: string;
 }
 
 export interface Checked {
@@ -72,10 +78,35 @@ export async function inspectProject(root: string): Promise<Checked> {
       findings.push({
         id: 'ads_rewarded_unused',
         title: 'Rewarded ads set up but never shown',
-        detail: 'The app can show ads that pay the user with something (coins, a filter). That format earns the most: ask Ember to use it.',
+        detail: 'The app can show ads that pay the user back with something: coins, a filter, an extra life. That format earns the most.',
         fixable: false,
+        ask:
+          'Use the rewarded ad that is already configured: put it where the user gains something by watching it (coins, an extra try, a locked feature), '
+          + 'always as a choice with a clear button, never forced and never on first launch. Give the reward only when the ad reports it was watched.',
       });
     }
+  }
+
+  // Rules that let any signed-in person read everything are fine while building
+  // and a data leak once the app is public: every user can read every other user.
+  const rules = await read(root, 'firestore.rules');
+  if (/allow read, write: if request\.auth != null;[\s\S]*document=\*\*/.test(rules) || /\{document=\*\*\}[\s\S]*allow read, write: if request\.auth != null;/.test(rules)) {
+    findings.push({
+      id: 'rules_open',
+      title: 'Anyone signed in can read everyone else’s data',
+      detail: 'The database rules are wide open to any signed-in user. Fine while building, a leak once the app is public.',
+      fixable: true,
+    });
+  }
+
+  if (usesFirebase && !existsSync(path.join(root, 'android', 'app', 'google-services.json'))) {
+    findings.push({
+      id: 'no_google_services',
+      title: 'The Android app has no google-services.json',
+      detail: 'Notifications and Google sign-in can fail once installed on a phone, while the preview works.',
+      fixable: false,
+      ask: 'Add the google-services.json for this Android app from the Firebase project, and wire the Gradle plugin that reads it.',
+    });
   }
 
   if (manifest && !/android\.permission\.INTERNET/.test(manifest) && /http|firebase|dio/i.test(pubspec)) {
@@ -182,12 +213,14 @@ export async function inspectRunning(previewUrl: string | null, launch = puppete
   }
   const real = problems.filter((p) => p && !/favicon|service worker|DevTools/i.test(p)).slice(0, 3);
   if (real.length === 0) return [];
+  const text = real.join(' · ').slice(0, 300);
   return [
     {
       id: 'runtime_errors',
       title: 'The app reports errors while running',
-      detail: `${real.join(' · ').slice(0, 300)}. Ask Ember in the chat to fix this: it can read the same error.`,
+      detail: text,
       fixable: false,
+      ask: `The app prints these errors while running, and the user sees a broken screen. Find the cause and fix it:\n${text}`,
     },
   ];
 }
@@ -221,6 +254,13 @@ export async function fix(id: string, input: { projectRoot: string; firebaseProj
     });
     if (!res.ok) throw new Error(`Google refused the change: ${(await res.text()).slice(0, 200)}`);
     return 'Sign-in now accepted from the address the preview runs on.';
+  }
+  if (id === 'rules_open') {
+    if (!firebaseProject) throw new Error('This app has no Firebase project yet');
+    await writeFile(path.join(projectRoot, 'firestore.rules'), OWNER_ONLY_RULES);
+    const rules = await run('firebase', ['deploy', '--only', 'firestore:rules', '--project', firebaseProject], projectRoot, 300_000);
+    if (rules.code !== 0) throw new Error(`Google refused the rules: ${rules.out.slice(-300)}`);
+    return 'Each person can now read and write only their own data.';
   }
   if (id === 'no_internet_permission') {
     const file = path.join(projectRoot, 'android', 'app', 'src', 'main', 'AndroidManifest.xml');

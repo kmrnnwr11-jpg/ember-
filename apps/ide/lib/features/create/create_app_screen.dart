@@ -405,6 +405,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                       if (b.phase == BuildPhase.ready)
                         CheckupCard(
                           projectId: project.id,
+                          builder: b,
                           previewUrl: b.preview?.resolve(ref.read(sessionProvider).value?.runnerUrl ?? ''),
                         ),
                       if (b.phase == BuildPhase.ready) _ReadyCard(builder: b, projectId: project.id),

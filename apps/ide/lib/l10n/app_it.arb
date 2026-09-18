@@ -428,5 +428,7 @@
   "checkFound": "{count} cose non funzionano ancora. Quelle con l'icona della chiave Ember le sistema, se glielo dici tu.",
   "checkFixNow": "Sistema {count} cose",
   "checkFixing": "Sto sistemando…",
-  "checkAgain": "Controlla di nuovo"
+  "checkAgain": "Controlla di nuovo",
+  "checkAskEmber": "Fallo sistemare a Ember",
+  "checkAsked": "Chiesto. Ember ci sta lavorando: guarda la chat qui sotto."
 }

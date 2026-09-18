@@ -1494,4 +1494,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get checkAgain => 'Check again';
+
+  @override
+  String get checkAskEmber => 'Have Ember fix it';
+
+  @override
+  String get checkAsked =>
+      'Asked. Ember is working on it: watch the chat below.';
 }

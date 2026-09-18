@@ -868,5 +868,7 @@
         "type": "int"
       }
     }
-  }
+  },
+  "checkAskEmber": "Have Ember fix it",
+  "checkAsked": "Asked. Ember is working on it: watch the chat below."
 }

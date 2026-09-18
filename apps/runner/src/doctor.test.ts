@@ -59,6 +59,30 @@ describe('inspectProject', () => {
     await rm(root, { recursive: true, force: true });
   });
 
+  it('calls out rules that let every signed-in person read everyone else', async () => {
+    const root = await project({
+      'pubspec.yaml': 'dependencies:\n  firebase_core: ^4.1.1\n',
+      'lib/config/app_config.dart': "static const String firebaseApiKey = 'AIzaSy-real';\n",
+      'lib/firebase_options.dart': "projectId: 'demo-1234',\n",
+      'firestore.rules': "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if request.auth != null;\n    }\n  }\n}\n",
+    });
+    const checked = await inspectProject(root);
+    expect(ids(checked)).toContain('rules_open');
+    expect(checked.findings.find((f) => f.id === 'rules_open')?.fixable).toBe(true);
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it('gives Ember the words to fix what only code can fix', async () => {
+    const root = await project({
+      'pubspec.yaml': 'dependencies:\n  google_mobile_ads: ^9.1.0\n',
+      'lib/config/ads_config.dart': "static const String rewardedId = 'ca-app-pub-3940256099942544/5224354917';\n",
+    });
+    const rewarded = (await inspectProject(root)).findings.find((f) => f.id === 'ads_rewarded_unused');
+    expect(rewarded?.ask).toMatch(/rewarded ad/i);
+    expect(rewarded?.ask).toMatch(/never forced/i);
+    await rm(root, { recursive: true, force: true });
+  });
+
   it('has nothing to say about a plain, finished app', async () => {
     const root = await project({
       'pubspec.yaml': 'dependencies:\n  flutter:\n    sdk: flutter\n',

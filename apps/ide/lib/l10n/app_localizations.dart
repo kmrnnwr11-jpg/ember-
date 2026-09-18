@@ -2677,6 +2677,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Check again'**
   String get checkAgain;
+
+  /// No description provided for @checkAskEmber.
+  ///
+  /// In en, this message translates to:
+  /// **'Have Ember fix it'**
+  String get checkAskEmber;
+
+  /// No description provided for @checkAsked.
+  ///
+  /// In en, this message translates to:
+  /// **'Asked. Ember is working on it: watch the chat below.'**
+  String get checkAsked;
 }
 
 class _AppLocalizationsDelegate

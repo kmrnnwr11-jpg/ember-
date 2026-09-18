@@ -428,5 +428,7 @@
   "checkFound": "{count} choses ne marchent pas encore. Ember peut réparer celles qui portent l'icône outil, si vous le demandez.",
   "checkFixNow": "Réparer {count} choses",
   "checkFixing": "Réparation…",
-  "checkAgain": "Vérifier à nouveau"
+  "checkAgain": "Vérifier à nouveau",
+  "checkAskEmber": "Faire corriger par Ember",
+  "checkAsked": "Demandé. Ember s'en occupe : regardez la discussion ci-dessous."
 }

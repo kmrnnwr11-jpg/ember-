@@ -1512,4 +1512,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get checkAgain => 'Vérifier à nouveau';
+
+  @override
+  String get checkAskEmber => 'Faire corriger par Ember';
+
+  @override
+  String get checkAsked =>
+      'Demandé. Ember s\'en occupe : regardez la discussion ci-dessous.';
 }

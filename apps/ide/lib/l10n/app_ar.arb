@@ -428,5 +428,7 @@
   "checkFound": "{count} أمور لا تعمل بعد. يستطيع Ember إصلاح ما يحمل أيقونة الأداة إذا طلبت ذلك.",
   "checkFixNow": "إصلاح {count}",
   "checkFixing": "جارٍ الإصلاح…",
-  "checkAgain": "افحص مرة أخرى"
+  "checkAgain": "افحص مرة أخرى",
+  "checkAskEmber": "دع Ember يصلحها",
+  "checkAsked": "تم الطلب. يعمل Ember عليها: تابع المحادثة بالأسفل."
 }

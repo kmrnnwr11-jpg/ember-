@@ -422,5 +422,11 @@
   "adsRemove": "Retirer les annonces",
   "adsRemoveChat": "Retirer AdMob de cette app",
   "adsAppIdHelp": "Le code avec le ~ , à côté de l'icône Android. Le même pour toutes les unités.",
-  "adsUnitHelp": "Le code avec le / , à côté de l'icône de la carte. Un différent pour chaque format."
+  "adsUnitHelp": "Le code avec le / , à côté de l'icône de la carte. Un différent pour chaque format.",
+  "checkTitle": "Ember a vérifié cette app",
+  "checkAllGood": "Tout ce qu'il faut pour que l'app fonctionne est en place.",
+  "checkFound": "{count} choses ne marchent pas encore. Ember peut réparer celles qui portent l'icône outil, si vous le demandez.",
+  "checkFixNow": "Réparer {count} choses",
+  "checkFixing": "Réparation…",
+  "checkAgain": "Vérifier à nouveau"
 }

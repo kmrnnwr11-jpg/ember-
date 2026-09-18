@@ -1487,4 +1487,27 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get adsUnitHelp =>
       'Il codice con la / , quello accanto all\'icona della scheda. Uno diverso per ogni formato.';
+
+  @override
+  String get checkTitle => 'Ember ha controllato questa app';
+
+  @override
+  String get checkAllGood =>
+      'Tutto quello che serve per far funzionare l\'app c\'è.';
+
+  @override
+  String checkFound(int count) {
+    return '$count cose non funzionano ancora. Quelle con l\'icona della chiave Ember le sistema, se glielo dici tu.';
+  }
+
+  @override
+  String checkFixNow(int count) {
+    return 'Sistema $count cose';
+  }
+
+  @override
+  String get checkFixing => 'Sto sistemando…';
+
+  @override
+  String get checkAgain => 'Controlla di nuovo';
 }

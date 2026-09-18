@@ -156,6 +156,18 @@ class RunnerApi {
   Future<Map<String, dynamic>> sendToHelper(String projectId) =>
       _call(() => _dio.post('/v1/projects/$projectId/helper', data: const <String, dynamic>{}), (d) => d as Map<String, dynamic>);
 
+  /// What is missing for this app to work, checked in the project and on Google.
+  Future<Map<String, dynamic>> checkApp(String projectId) => _call(
+    () => _dio.get('/v1/projects/$projectId/check', options: Options(receiveTimeout: const Duration(minutes: 3))),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Puts right the things the check found, once the user has agreed.
+  Future<Map<String, dynamic>> fixApp(String projectId, List<String> ids) => _call(
+    () => _dio.post('/v1/projects/$projectId/check/fix', data: {'ids': ids}, options: Options(receiveTimeout: const Duration(minutes: 10))),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// Ember's answer for every Play Console "App content" declaration.
   Future<Map<String, dynamic>> appContent(String projectId) =>
       _call(() => _dio.get('/v1/projects/$projectId/app-content'), (d) => d as Map<String, dynamic>);

@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
 import { backupKey } from './drive.js';
+import { fix as fixFinding, inspectCloud, inspectProject } from './doctor.js';
 import { GitHubError, saveToGitHub } from './github.js';
 import { fillAppContent } from './play_console.js';
 import { detectDataFacts, fillCsv, findExportedCsv, uploadDataSafety, validateFilledCsv } from './data_safety.js';
@@ -508,6 +509,32 @@ export async function buildApp(
       const { title } = await storeTitle(root);
       helperApp = { ...facts, email, name: title || project.name, at: new Date().toISOString() };
       return { ok: true, name: helperApp.name };
+    });
+
+    // What is missing for this app to work, and what Ember can put right by itself.
+    r.get('/v1/projects/:projectId/check', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const root = services.projectRoot(project);
+      const checked = await inspectProject(root);
+      return { ...checked, findings: [...checked.findings, ...(await inspectCloud(checked.firebaseProject))] };
+    });
+
+    r.post('/v1/projects/:projectId/check/fix', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const { ids } = z.object({ ids: z.array(z.string().max(60)).min(1).max(20) }).parse(req.body);
+      const root = services.projectRoot(project);
+      const { firebaseProject } = await inspectProject(root);
+      const done: Array<{ id: string; ok: boolean; message: string }> = [];
+      for (const id of ids) {
+        try {
+          done.push({ id, ok: true, message: await fixFinding(id, { projectRoot: root, firebaseProject }) });
+        } catch (e) {
+          done.push({ id, ok: false, message: (e as Error).message });
+        }
+      }
+      return reply.send({ done });
     });
 
     // Play Console "App content": the answer for every declaration Google asks for.

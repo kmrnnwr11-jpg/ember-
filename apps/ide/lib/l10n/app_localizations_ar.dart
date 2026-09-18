@@ -1466,4 +1466,26 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get adsUnitHelp =>
       'الرمز الذي يحتوي على / بجانب أيقونة البطاقة. رمز مختلف لكل صيغة.';
+
+  @override
+  String get checkTitle => 'فحص Ember هذا التطبيق';
+
+  @override
+  String get checkAllGood => 'كل ما يلزم لتشغيل التطبيق موجود.';
+
+  @override
+  String checkFound(int count) {
+    return '$count أمور لا تعمل بعد. يستطيع Ember إصلاح ما يحمل أيقونة الأداة إذا طلبت ذلك.';
+  }
+
+  @override
+  String checkFixNow(int count) {
+    return 'إصلاح $count';
+  }
+
+  @override
+  String get checkFixing => 'جارٍ الإصلاح…';
+
+  @override
+  String get checkAgain => 'افحص مرة أخرى';
 }

@@ -1489,4 +1489,26 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get adsUnitHelp =>
       'El código con la / , junto al icono de la tarjeta. Uno distinto para cada formato.';
+
+  @override
+  String get checkTitle => 'Ember ha revisado esta app';
+
+  @override
+  String get checkAllGood => 'Está todo lo necesario para que la app funcione.';
+
+  @override
+  String checkFound(int count) {
+    return '$count cosas aún no funcionan. Ember puede arreglar las que tienen el icono de la herramienta, si se lo pides.';
+  }
+
+  @override
+  String checkFixNow(int count) {
+    return 'Arreglar $count';
+  }
+
+  @override
+  String get checkFixing => 'Arreglando…';
+
+  @override
+  String get checkAgain => 'Revisar otra vez';
 }

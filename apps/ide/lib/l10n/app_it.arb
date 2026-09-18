@@ -422,5 +422,11 @@
   "adsRemove": "Togli la pubblicità",
   "adsRemoveChat": "Togli AdMob da questa app",
   "adsAppIdHelp": "Il codice con la ~ , quello accanto all'icona Android. È lo stesso per tutte le unità.",
-  "adsUnitHelp": "Il codice con la / , quello accanto all'icona della scheda. Uno diverso per ogni formato."
+  "adsUnitHelp": "Il codice con la / , quello accanto all'icona della scheda. Uno diverso per ogni formato.",
+  "checkTitle": "Ember ha controllato questa app",
+  "checkAllGood": "Tutto quello che serve per far funzionare l'app c'è.",
+  "checkFound": "{count} cose non funzionano ancora. Quelle con l'icona della chiave Ember le sistema, se glielo dici tu.",
+  "checkFixNow": "Sistema {count} cose",
+  "checkFixing": "Sto sistemando…",
+  "checkAgain": "Controlla di nuovo"
 }

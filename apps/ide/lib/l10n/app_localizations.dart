@@ -2641,6 +2641,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The code with the / , next to the card icon. A different one for each format.'**
   String get adsUnitHelp;
+
+  /// No description provided for @checkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember checked this app'**
+  String get checkTitle;
+
+  /// No description provided for @checkAllGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything needed for the app to work is in place.'**
+  String get checkAllGood;
+
+  /// No description provided for @checkFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} things do not work yet. Ember can put right the ones with the tool icon, once you say so.'**
+  String checkFound(int count);
+
+  /// No description provided for @checkFixNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix {count} of them'**
+  String checkFixNow(int count);
+
+  /// No description provided for @checkFixing.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixing…'**
+  String get checkFixing;
+
+  /// No description provided for @checkAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Check again'**
+  String get checkAgain;
 }
 
 class _AppLocalizationsDelegate

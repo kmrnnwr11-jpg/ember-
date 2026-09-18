@@ -1471,4 +1471,27 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adsUnitHelp =>
       'The code with the / , next to the card icon. A different one for each format.';
+
+  @override
+  String get checkTitle => 'Ember checked this app';
+
+  @override
+  String get checkAllGood =>
+      'Everything needed for the app to work is in place.';
+
+  @override
+  String checkFound(int count) {
+    return '$count things do not work yet. Ember can put right the ones with the tool icon, once you say so.';
+  }
+
+  @override
+  String checkFixNow(int count) {
+    return 'Fix $count of them';
+  }
+
+  @override
+  String get checkFixing => 'Fixing…';
+
+  @override
+  String get checkAgain => 'Check again';
 }

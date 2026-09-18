@@ -20,6 +20,7 @@ import 'access_links.dart';
 import 'logo_card.dart';
 import '../assistant/home_assistant.dart';
 import 'app_content_card.dart';
+import 'checkup_card.dart';
 import 'github_card.dart';
 import 'play_update_card.dart';
 import 'products_card.dart';
@@ -401,6 +402,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                       const SizedBox(height: 12),
                       _Steps(builder: b),
                       const SizedBox(height: 12),
+                      if (b.phase == BuildPhase.ready) CheckupCard(projectId: project.id),
                       if (b.phase == BuildPhase.ready) _ReadyCard(builder: b, projectId: project.id),
                       if (b.phase == BuildPhase.ready) PlayUpdateCard(builder: b, projectId: project.id),
                       if (b.phase == BuildPhase.ready) AppContentCard(projectId: project.id, appName: project.displayName),

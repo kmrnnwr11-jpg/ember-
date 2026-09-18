@@ -848,5 +848,25 @@
   "adsRemove": "Remove the ads",
   "adsRemoveChat": "Remove AdMob from this app",
   "adsAppIdHelp": "The code with the ~ , next to the Android icon. The same one for every ad unit.",
-  "adsUnitHelp": "The code with the / , next to the card icon. A different one for each format."
+  "adsUnitHelp": "The code with the / , next to the card icon. A different one for each format.",
+  "checkTitle": "Ember checked this app",
+  "checkAllGood": "Everything needed for the app to work is in place.",
+  "checkFound": "{count} things do not work yet. Ember can put right the ones with the tool icon, once you say so.",
+  "checkFixNow": "Fix {count} of them",
+  "checkFixing": "Fixing…",
+  "checkAgain": "Check again",
+  "@checkFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@checkFixNow": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -412,5 +412,8 @@
   "acFilled": "{done} sections enregistrées sur {total}.",
   "acNeedsAppLink": "Ember ne sait pas encore quelle est cette app dans Play Console : ouvrez-la là-bas, copiez l'adresse du navigateur et collez-la dans l'écran de publication.",
   "acAppLink": "Adresse de cette app dans Play Console",
-  "acLinkNotUnderstood": "Cette adresse ne désigne pas une app. Ouvrez l'app dans Play Console et copiez l'adresse complète depuis la barre du navigateur."
+  "acLinkNotUnderstood": "Cette adresse ne désigne pas une app. Ouvrez l'app dans Play Console et copiez l'adresse complète depuis la barre du navigateur.",
+  "adsAdd": "Ajouter les annonces AdMob",
+  "adsAddHint": "Ember ajoute le code des annonces à cette app et affiche les annonces de test de Google. Quand vous aurez vos identifiants AdMob, collez-les ici et Ember les remplacera.",
+  "adsAddChat": "Ajouter les annonces AdMob avec des identifiants de test"
 }

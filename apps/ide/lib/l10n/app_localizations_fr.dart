@@ -1454,4 +1454,15 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get acLinkNotUnderstood =>
       'Cette adresse ne désigne pas une app. Ouvrez l\'app dans Play Console et copiez l\'adresse complète depuis la barre du navigateur.';
+
+  @override
+  String get adsAdd => 'Ajouter les annonces AdMob';
+
+  @override
+  String get adsAddHint =>
+      'Ember ajoute le code des annonces à cette app et affiche les annonces de test de Google. Quand vous aurez vos identifiants AdMob, collez-les ici et Ember les remplacera.';
+
+  @override
+  String get adsAddChat =>
+      'Ajouter les annonces AdMob avec des identifiants de test';
 }

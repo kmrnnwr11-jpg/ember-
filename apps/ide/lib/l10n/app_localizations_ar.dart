@@ -1432,4 +1432,14 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get acLinkNotUnderstood =>
       'هذا العنوان لا يشير إلى تطبيق. افتح التطبيق في Play Console وانسخ العنوان كاملًا من شريط المتصفح.';
+
+  @override
+  String get adsAdd => 'إضافة إعلانات AdMob';
+
+  @override
+  String get adsAddHint =>
+      'يضيف Ember كود الإعلانات إلى هذا التطبيق ويعرض إعلانات Google التجريبية. عندما تحصل على معرّفات AdMob الصقها هنا ليستبدلها Ember.';
+
+  @override
+  String get adsAddChat => 'إضافة إعلانات AdMob بمعرّفات تجريبية';
 }

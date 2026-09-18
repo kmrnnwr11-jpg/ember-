@@ -32,6 +32,19 @@ class _AdsCardState extends State<AdsCard> {
     super.dispose();
   }
 
+  /// Adds ads to an app that was built without them, with Google's test ids first.
+  void _addAds() {
+    final l = AppLocalizations.of(context);
+    widget.builder.improve(
+      'Add AdMob ads to this app with the google_mobile_ads package. Use ONLY Google\'s official TEST ad unit ids for now, '
+      'in a single file lib/config/ads_config.dart, and set the test application id in AndroidManifest.xml and Info.plist. '
+      'Show a banner at the bottom of the main screen and an interstitial after a meaningful action, never on first launch '
+      'and never more than once a minute. Initialise the SDK at startup. '
+      'End your reply with the line EMBER_ADS: banner,interstitial',
+      display: l.adsAddChat,
+    );
+  }
+
   void _apply() {
     final l = AppLocalizations.of(context);
     final app = _appId.text.trim();
@@ -68,31 +81,44 @@ class _AdsCardState extends State<AdsCard> {
               ],
             ),
             const SizedBox(height: 4),
-            Text(l.adsHint, style: theme.textTheme.bodySmall),
-            const SizedBox(height: 8),
-            Text(l.adsSteps, style: theme.textTheme.bodySmall),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: TextButton.icon(
-                onPressed: () => launchUrl(Uri.parse('https://admob.google.com/v2/apps/list'), mode: LaunchMode.externalApplication),
-                icon: const Icon(Icons.open_in_new, size: 16),
-                label: Text(l.adsOpenAdmob),
+            Text(widget.builder.ads == null ? l.adsAddHint : l.adsHint, style: theme.textTheme.bodySmall),
+            if (widget.builder.ads == null) ...[
+              const SizedBox(height: 10),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: FilledButton.icon(
+                  onPressed: widget.builder.running ? null : _addAds,
+                  icon: const Icon(Icons.campaign),
+                  label: Text(l.adsAdd),
+                ),
               ),
-            ),
-            TextField(controller: _appId, decoration: InputDecoration(labelText: l.adsAppId, hintText: 'ca-app-pub-0000000000000000~0000000000', isDense: true, border: const OutlineInputBorder())),
-            for (final e in _units.entries) ...[
-              const SizedBox(height: 8),
-              TextField(controller: e.value, decoration: InputDecoration(labelText: l.adsUnitId(e.key), hintText: 'ca-app-pub-0000000000000000/0000000000', isDense: true, border: const OutlineInputBorder())),
             ],
-            if (_error != null) ...[
+            if (widget.builder.ads != null) ...[
               const SizedBox(height: 8),
-              Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+              Text(l.adsSteps, style: theme.textTheme.bodySmall),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  onPressed: () => launchUrl(Uri.parse('https://admob.google.com/v2/apps/list'), mode: LaunchMode.externalApplication),
+                  icon: const Icon(Icons.open_in_new, size: 16),
+                  label: Text(l.adsOpenAdmob),
+                ),
+              ),
+              TextField(controller: _appId, decoration: InputDecoration(labelText: l.adsAppId, hintText: 'ca-app-pub-0000000000000000~0000000000', isDense: true, border: const OutlineInputBorder())),
+              for (final e in _units.entries) ...[
+                const SizedBox(height: 8),
+                TextField(controller: e.value, decoration: InputDecoration(labelText: l.adsUnitId(e.key), hintText: 'ca-app-pub-0000000000000000/0000000000', isDense: true, border: const OutlineInputBorder())),
+              ],
+              if (_error != null) ...[
+                const SizedBox(height: 8),
+                Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+              ],
+              const SizedBox(height: 10),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: FilledButton.icon(onPressed: widget.builder.running ? null : _apply, icon: const Icon(Icons.check), label: Text(l.adsApply)),
+              ),
             ],
-            const SizedBox(height: 10),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: FilledButton.icon(onPressed: widget.builder.running ? null : _apply, icon: const Icon(Icons.check), label: Text(l.adsApply)),
-            ),
           ],
         ),
       ),

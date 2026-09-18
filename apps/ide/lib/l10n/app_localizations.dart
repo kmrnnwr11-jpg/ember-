@@ -2581,6 +2581,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'That address does not name an app. Open the app in Play Console and copy the whole address from the browser bar.'**
   String get acLinkNotUnderstood;
+
+  /// No description provided for @adsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add AdMob ads'**
+  String get adsAdd;
+
+  /// No description provided for @adsAddHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember adds the ad code to this app and shows Google test ads. When you have your AdMob ids, paste them here and Ember swaps them in.'**
+  String get adsAddHint;
+
+  /// No description provided for @adsAddChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Add AdMob ads with test ids'**
+  String get adsAddChat;
 }
 
 class _AppLocalizationsDelegate

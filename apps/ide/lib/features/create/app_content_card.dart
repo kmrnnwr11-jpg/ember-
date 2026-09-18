@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,7 +20,6 @@ class AppContentCard extends ConsumerStatefulWidget {
 
 class _AppContentCardState extends ConsumerState<AppContentCard> {
   List<Map<String, dynamic>> _items = const [];
-  Map<String, dynamic> _facts = const {};
   String? _copied;
   bool _busy = false;
   String? _message;
@@ -68,36 +65,13 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
     try {
       final data = await (await ref.read(runnerApiProvider.future)).appContent(widget.projectId);
       final items = (data['items'] as List? ?? const []).cast<Map<String, dynamic>>();
-      if (mounted) {
-        setState(() {
-          _items = items;
-          _facts = {...?(data['facts'] as Map?)?.cast<String, dynamic>(), 'email': data['email'] ?? ''};
-        });
-      }
+      if (mounted) setState(() => _items = items);
     } catch (_) {}
   }
 
   Future<void> _copy(Map<String, dynamic> item) async {
     await Clipboard.setData(ClipboardData(text: '${item['answer']}'));
     if (mounted) setState(() => _copied = '${item['id']}');
-  }
-
-  /// Hands the browser helper the facts it needs, and the clipboard as a fallback.
-  Future<void> _copyForExtension() async {
-    final app = <String, dynamic>{'name': widget.appName, ..._facts};
-    await Clipboard.setData(ClipboardData(text: const JsonEncoder.withIndent('  ').convert(app)));
-    try {
-      await (await ref.read(runnerApiProvider.future)).sendToHelper(widget.projectId);
-    } on RunnerException catch (e) {
-      if (mounted) {
-        setState(() {
-          _message = e.message;
-          _error = true;
-        });
-      }
-      return;
-    }
-    if (mounted) setState(() => _copied = '_extension');
   }
 
   Future<void> _openConsole() async {
@@ -161,16 +135,6 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
             Row(children: [const Icon(Icons.fact_check_outlined), const SizedBox(width: 8), Expanded(child: Text(l.acTitle, style: theme.textTheme.titleMedium))]),
             const SizedBox(height: 4),
             Text(l.acHint, style: theme.textTheme.bodySmall),
-            const SizedBox(height: 10),
-            // The one button that starts the browser helper: at the top, where it is found.
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FilledButton.tonalIcon(
-                onPressed: _copyForExtension,
-                icon: Icon(_copied == '_extension' ? Icons.check : Icons.extension_outlined, size: 18),
-                label: Text(_copied == '_extension' ? l.acCopied : l.acCopyForExtension),
-              ),
-            ),
             const SizedBox(height: 12),
             for (final item in _items) _row(context, l, item),
             const SizedBox(height: 12),
@@ -208,17 +172,9 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
               ),
               const SizedBox(height: 8),
             ],
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                FilledButton.icon(
-                  onPressed: _busy ? null : _fillInConsole,
-                  icon: const Icon(Icons.auto_fix_high),
-                  label: Text(l.acFillForMe),
-                ),
-                OutlinedButton.icon(onPressed: _openConsole, icon: const Icon(Icons.open_in_new), label: Text(l.acOpenConsole)),
-              ],
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(onPressed: _openConsole, icon: const Icon(Icons.open_in_new), label: Text(l.acOpenConsole)),
             ),
           ],
         ),

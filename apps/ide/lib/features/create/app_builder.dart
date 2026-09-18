@@ -338,7 +338,7 @@ class AppBuilder extends ChangeNotifier {
         await _runApiEngine(change: change);
       }
       if (_cancelled) return;
-      await _buildPreview();
+      await _buildUntilItWorks();
       if (_cancelled) return;
       conversation.add((role: 'assistant', text: _replyText?.trim().isNotEmpty == true ? _replyText!.trim() : strings.bAppUpdated));
       _status = 'done';
@@ -764,6 +764,36 @@ class AppBuilder extends ChangeNotifier {
   }
 
   // ------------------------------------------------------------------- preview
+
+  /// How many times a failed build is handed back to the engine to be fixed.
+  static const _buildFixRounds = 2;
+
+  /// Builds, and when the build fails lets the engine read the error and fix it.
+  ///
+  /// A build can fail for things the engine can put right on its own — packages
+  /// whose versions do not fit together, a missing import, a typo in a platform
+  /// file. Giving up on the first failure leaves the user with an app that does
+  /// not run and an error they cannot act on.
+  Future<void> _buildUntilItWorks() async {
+    for (var round = 0; ; round++) {
+      try {
+        await _buildPreview();
+        return;
+      } on AiException catch (e) {
+        if (_cancelled || round >= _buildFixRounds) rethrow;
+        _log(strings.bFixing(round + 1, _buildFixRounds), kind: 'info');
+        _setPhase(BuildPhase.fixing);
+        final ask =
+            'The build failed with the error below. Fix the cause in the project and make sure the app builds, '
+            'without removing any feature. If packages disagree on versions, choose a set that works together.\n\n${e.message}';
+        if (engine?.isCli ?? false) {
+          await _runClaudeCode(ask, resume: true);
+        } else {
+          await _runApiEngine(change: ask);
+        }
+      }
+    }
+  }
 
   Future<void> _buildPreview() async {
     currentAction = null;

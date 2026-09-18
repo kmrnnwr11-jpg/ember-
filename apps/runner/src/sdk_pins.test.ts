@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applySdkPins } from './sdk_pins.js';
+import { applySdkPins, relaxFirebaseVersions } from './sdk_pins.js';
 
 describe('SDK pins', () => {
   it('pins firebase_core_web for Firebase apps, once', () => {
@@ -15,6 +15,20 @@ describe('SDK pins', () => {
     expect(applySdkPins(src)).toMatch(/dependency_overrides:\n  # .*\n  firebase_core_web: 3.10.0\n  intl: 0.19.0/);
     const plain = 'dependencies:\n  http: ^1.0.0\n';
     expect(applySdkPins(plain)).toBe(plain);
+  });
+
+  it('lets the other Firebase packages follow the pinned one', () => {
+    // The AI writes these versions from memory; an old firebase_storage next to a
+    // pinned firebase_core_web makes pub give up before anything is built.
+    const src = 'dependencies:\n  firebase_core: ^4.1.1\n  firebase_storage: ^12.4.10\n  cloud_firestore: ^5.6.0\n  http: ^1.2.0\n';
+    const out = applySdkPins(src);
+    expect(out).toContain('  firebase_storage: any');
+    expect(out).toContain('  cloud_firestore: any');
+    expect(out).toContain('  firebase_core: any');
+    expect(out).toContain('  http: ^1.2.0');
+    // The override itself keeps its exact version.
+    expect(out).toContain('  firebase_core_web: 3.10.0');
+    expect(relaxFirebaseVersions('dependencies:\n  http: ^1.0.0\n')).toBe('dependencies:\n  http: ^1.0.0\n');
   });
 
   it('respects a pin the project already has', () => {

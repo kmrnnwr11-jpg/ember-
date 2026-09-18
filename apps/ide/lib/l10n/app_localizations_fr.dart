@@ -1522,5 +1522,5 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get previewLoginInBrowser =>
-      'Google n\'autorise pas la connexion dans cette fenêtre : Ember a ouvert votre app dans le navigateur, connectez-vous là.';
+      'Google ne connecte personne dans cette fenêtre, et une connexion faite dans le navigateur ne vaut pas ici. Dans cette fenêtre, utilisez e-mail et mot de passe ; la connexion Google marche dans le navigateur et sur un téléphone.';
 }

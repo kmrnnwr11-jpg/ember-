@@ -2693,7 +2693,7 @@ abstract class AppLocalizations {
   /// No description provided for @previewLoginInBrowser.
   ///
   /// In en, this message translates to:
-  /// **'Google does not allow signing in inside this window: Ember opened your app in the browser, finish the login there.'**
+  /// **'Google will not sign anyone in inside this window, and a login done in the browser does not carry over here. In this window use email and password; Google sign-in works in the browser and on a phone.'**
   String get previewLoginInBrowser;
 }
 

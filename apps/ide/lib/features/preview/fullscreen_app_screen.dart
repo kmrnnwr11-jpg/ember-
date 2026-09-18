@@ -46,17 +46,17 @@ class _FullscreenAppScreenState extends State<FullscreenAppScreen> {
     super.dispose();
   }
 
-  /// Sends the sign-in to the real browser and puts the preview back where it was.
+  /// Puts the preview back on the app and says why the Google button did nothing.
   ///
-  /// Google will not run its sign-in inside a window like this one. Leaving the
-  /// attempt where it died shows a black screen, so the app is reloaded here and
-  /// opened in the browser, where the same login works.
+  /// Google refuses to run its sign-in inside a window like this one, and a
+  /// session created in the real browser does not reach here either: they are
+  /// separate browsers. The app's own email sign-in works, so say that instead
+  /// of sending the user on a trip that ends where it started.
   Future<void> _signInElsewhere() async {
     final messenger = ScaffoldMessenger.of(context);
     final text = AppLocalizations.of(context).previewLoginInBrowser;
-    await launchUrl(Uri.parse(widget.url), mode: LaunchMode.externalApplication);
     await _web?.loadUrl(urlRequest: URLRequest(url: WebUri(widget.url)));
-    messenger.showSnackBar(SnackBar(content: Text(text), duration: const Duration(seconds: 6)));
+    messenger.showSnackBar(SnackBar(content: Text(text), duration: const Duration(seconds: 8)));
   }
 
   Future<void> _back() async {

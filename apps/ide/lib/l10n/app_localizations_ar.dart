@@ -1497,5 +1497,5 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get previewLoginInBrowser =>
-      'لا تسمح Google بتسجيل الدخول داخل هذه النافذة: فتح Ember تطبيقك في المتصفح، أكمل الدخول هناك.';
+      'لا تسمح Google بتسجيل الدخول داخل هذه النافذة، وتسجيل الدخول من المتصفح لا ينتقل إلى هنا. استخدم البريد وكلمة المرور هنا؛ ودخول Google يعمل في المتصفح وعلى الهاتف.';
 }

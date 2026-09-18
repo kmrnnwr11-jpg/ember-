@@ -189,9 +189,14 @@
   /** Opens one App content section from the list page. */
   /** Everything on the page a person could click, ignoring Ember's own panel. */
   function clickables() {
-    return [...document.querySelectorAll('a[href], [role="link"], button, [role="button"], [role="listitem"], li')].filter(
-      (el) => onScreen(el) && !el.closest('#ember-panel') && el.id !== 'ember-button',
-    );
+    // Play Console builds its checklists out of plain elements with click handlers,
+    // so anything short and clickable-looking counts, not only links and buttons.
+    const tagged = [...document.querySelectorAll('a[href], [role="link"], button, [role="button"], [role="listitem"], li')];
+    const rows = [...document.querySelectorAll('div, span, td')].filter((el) => {
+      const t = text(el);
+      return t.length > 2 && t.length < 60 && el.children.length <= 2 && (el.onclick || getComputedStyle(el).cursor === 'pointer');
+    });
+    return [...new Set([...tagged, ...rows])].filter((el) => onScreen(el) && !el.closest('#ember-panel') && el.id !== 'ember-button');
   }
 
   /** The link that opens a section, chosen as the shortest text that names it. */
@@ -262,11 +267,13 @@
 
       let answered = 0;
       let saved = false;
-      let seen = `sezione non trovata fra ${clickables().length} voci`;
+      const short = (t) => t.replace(/\s+/g, ' ').trim().slice(0, 40);
+      let seen = `non trovata · voci: ${clickables().map(short).filter(Boolean).slice(0, 6).join(' | ')}`;
       const opened = await openRow(row);
       if (opened) {
-        // Kept so a section that fills nothing can be told apart from one that was never opened.
-        seen = `${readFields().length} domande, ${readOptions().length} risposte possibili`;
+        // The labels Ember read: without them a section that fills nothing cannot be understood.
+        const options = readOptions().map((o) => short(o.label));
+        seen = `${readFields().length} domande · ${options.slice(0, 5).join(' | ')}`;
         // The content rating questionnaire is several screens long.
         for (let screen = 0; screen < 14; screen++) {
           answered += await answerHere(app);

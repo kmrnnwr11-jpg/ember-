@@ -2,7 +2,7 @@
 import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
 import { backupKey } from './drive.js';
-import { installAndRun, listDevices } from './devices.js';
+import { installAndRun, lanAddress, listDevices } from './devices.js';
 import { fix as fixFinding, inspectCloud, inspectProject, inspectRunning } from './doctor.js';
 import { GitHubError, saveToGitHub } from './github.js';
 import { fillAppContent } from './play_console.js';
@@ -513,7 +513,7 @@ export async function buildApp(
     });
 
     // The phones plugged into this computer, so an app can be tried where it counts.
-    r.get('/v1/devices', async () => ({ devices: await listDevices() }));
+    r.get('/v1/devices', async () => ({ devices: await listDevices(), lanAddress: lanAddress() }));
 
     r.post('/v1/projects/:projectId/run-on-device', async (req, reply) => {
       const { projectId } = req.params as { projectId: string };

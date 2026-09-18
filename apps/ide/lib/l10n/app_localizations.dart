@@ -2737,6 +2737,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Look for phones again'**
   String get phoneLookAgain;
+
+  /// No description provided for @phoneOpenHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Open on the phone now'**
+  String get phoneOpenHere;
+
+  /// No description provided for @phoneSameWifi.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the phone camera at the code. The phone must be on the same Wi-Fi as this computer.'**
+  String get phoneSameWifi;
 }
 
 class _AppLocalizationsDelegate

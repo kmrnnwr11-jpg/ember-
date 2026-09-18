@@ -1524,4 +1524,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get phoneLookAgain => 'ابحث عن الهواتف مجددًا';
+
+  @override
+  String get phoneOpenHere => 'افتحه الآن على الهاتف';
+
+  @override
+  String get phoneSameWifi =>
+      'وجّه كاميرا الهاتف نحو الرمز. يجب أن يكون الهاتف على نفس شبكة Wi-Fi لهذا الحاسوب.';
 }

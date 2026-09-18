@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ide_core/ide_core.dart' show RunnerException;
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
@@ -22,9 +24,50 @@ class PhoneCard extends ConsumerStatefulWidget {
 
 class _PhoneCardState extends ConsumerState<PhoneCard> {
   List<Map<String, dynamic>> _devices = const [];
+  String? _lanAddress;
   bool _busy = false;
   String? _message;
   bool _error = false;
+
+  /// The preview, at an address another device on the same Wi-Fi can reach.
+  String? get _phoneUrl {
+    final preview = widget.builder.preview;
+    final session = ref.read(sessionProvider).value;
+    if (preview == null || session == null || _lanAddress == null) return null;
+    final local = preview.resolve(session.runnerUrl);
+    return local.replaceFirst(RegExp(r'//(localhost|127\.0\.0\.1)'), '//$_lanAddress');
+  }
+
+  /// Shows the address as a QR code: the phone points its camera and is there.
+  void _showQr(String url) {
+    final l = AppLocalizations.of(context);
+    showDialog<void>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text(l.phoneOpenHere),
+        content: SizedBox(
+          width: 280,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(color: Colors.white, padding: const EdgeInsets.all(12), child: QrImageView(data: url, size: 240)),
+              const SizedBox(height: 12),
+              SelectableText(url, textAlign: TextAlign.center),
+              const SizedBox(height: 8),
+              Text(l.phoneSameWifi, style: Theme.of(d).textTheme.bodySmall, textAlign: TextAlign.center),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Clipboard.setData(ClipboardData(text: url)),
+            child: Text(l.copy),
+          ),
+          FilledButton(onPressed: () => Navigator.pop(d), child: Text(l.close)),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -34,8 +77,14 @@ class _PhoneCardState extends ConsumerState<PhoneCard> {
 
   Future<void> _look() async {
     try {
-      final found = await (await ref.read(runnerApiProvider.future)).devices();
-      if (mounted) setState(() => _devices = found);
+      final api = await ref.read(runnerApiProvider.future);
+      final res = await api.devicesAndNetwork();
+      if (mounted) {
+        setState(() {
+          _devices = (res['devices'] as List? ?? const []).cast<Map<String, dynamic>>();
+          _lanAddress = res['lanAddress'] as String?;
+        });
+      }
     } catch (_) {
       // No phone, no card: a failed look is simply nothing to show.
     }
@@ -75,7 +124,8 @@ class _PhoneCardState extends ConsumerState<PhoneCard> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    if (_devices.isEmpty) return const SizedBox.shrink();
+    final phoneUrl = _phoneUrl;
+    if (_devices.isEmpty && phoneUrl == null) return const SizedBox.shrink();
 
     return Card(
       margin: const EdgeInsets.only(top: 12),
@@ -106,6 +156,12 @@ class _PhoneCardState extends ConsumerState<PhoneCard> {
               spacing: 8,
               runSpacing: 8,
               children: [
+                if (phoneUrl != null)
+                  OutlinedButton.icon(
+                    onPressed: () => _showQr(phoneUrl),
+                    icon: const Icon(Icons.qr_code_2),
+                    label: Text(l.phoneOpenHere),
+                  ),
                 for (final d in _devices)
                   if (d['state'] == 'device')
                     FilledButton.icon(

@@ -1549,4 +1549,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get phoneLookAgain => 'Chercher à nouveau les téléphones';
+
+  @override
+  String get phoneOpenHere => 'Ouvrir tout de suite sur le téléphone';
+
+  @override
+  String get phoneSameWifi =>
+      'Visez le code avec la caméra du téléphone. Le téléphone doit être sur le même Wi-Fi que cet ordinateur.';
 }

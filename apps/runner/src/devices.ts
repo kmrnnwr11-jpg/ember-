@@ -35,6 +35,27 @@ export function adbPath(env: NodeJS.ProcessEnv = process.env): string {
   return exe;
 }
 
+/**
+ * The address of this computer on the home network, so a phone can reach it.
+ *
+ * `localhost` means nothing to another device, and virtual-machine adapters
+ * (VirtualBox's 192.168.56.x, Docker, WSL) answer only to the PC itself: they
+ * would produce a QR code that leads nowhere.
+ */
+export function lanAddress(interfaces: Record<string, Array<{ family: string; internal: boolean; address: string }> | undefined> = os.networkInterfaces() as never): string | null {
+  const candidates: string[] = [];
+  for (const [name, addresses] of Object.entries(interfaces)) {
+    if (/virtualbox|vmware|docker|wsl|loopback/i.test(name)) continue;
+    for (const a of addresses ?? []) {
+      if (a.family !== 'IPv4' || a.internal) continue;
+      if (a.address.startsWith('192.168.56.')) continue;
+      candidates.push(a.address);
+    }
+  }
+  // A home router hands out 192.168.x.x, so prefer those over anything exotic.
+  return candidates.sort((a, b) => Number(b.startsWith('192.168.')) - Number(a.startsWith('192.168.')))[0] ?? null;
+}
+
 function run(bin: string, args: string[], timeoutMs = 120_000): Promise<{ code: number; out: string }> {
   return new Promise((resolve) => {
     const p = spawn(bin, args, { windowsHide: true });

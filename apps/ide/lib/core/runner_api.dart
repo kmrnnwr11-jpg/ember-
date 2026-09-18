@@ -156,11 +156,8 @@ class RunnerApi {
   Future<Map<String, dynamic>> sendToHelper(String projectId) =>
       _call(() => _dio.post('/v1/projects/$projectId/helper', data: const <String, dynamic>{}), (d) => d as Map<String, dynamic>);
 
-  /// The phones plugged into the Runner's computer.
-  Future<List<Map<String, dynamic>>> devices() => _call(
-    () => _dio.get('/v1/devices'),
-    (d) => ((d as Map<String, dynamic>)['devices'] as List? ?? const []).cast<Map<String, dynamic>>(),
-  );
+  /// The phones plugged into the Runner's computer, and its address on the network.
+  Future<Map<String, dynamic>> devicesAndNetwork() => _call(() => _dio.get('/v1/devices'), (d) => d as Map<String, dynamic>);
 
   /// Installs the built APK on a phone and opens it.
   Future<Map<String, dynamic>> runOnDevice(String projectId, {String? deviceId}) => _call(

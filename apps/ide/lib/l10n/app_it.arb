@@ -438,5 +438,7 @@
   "phoneUnauthorized": "{name}: sbloccalo e consenti il debug USB",
   "phoneBuilding": "Preparo l'app per il telefono…",
   "phoneInstalling": "Installo sul telefono…",
-  "phoneLookAgain": "Cerca di nuovo i telefoni"
+  "phoneLookAgain": "Cerca di nuovo i telefoni",
+  "phoneOpenHere": "Apri subito sul telefono",
+  "phoneSameWifi": "Inquadra il codice con la fotocamera del telefono. Il telefono deve essere sullo stesso Wi-Fi di questo computer."
 }

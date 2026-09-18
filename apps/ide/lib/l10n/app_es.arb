@@ -438,5 +438,7 @@
   "phoneUnauthorized": "{name}: desbloquéalo y permite la depuración USB",
   "phoneBuilding": "Preparando la app para el teléfono…",
   "phoneInstalling": "Instalando en el teléfono…",
-  "phoneLookAgain": "Buscar teléfonos otra vez"
+  "phoneLookAgain": "Buscar teléfonos otra vez",
+  "phoneOpenHere": "Abrir ahora en el teléfono",
+  "phoneSameWifi": "Enfoca el código con la cámara del teléfono. El teléfono debe estar en el mismo Wi-Fi que este ordenador."
 }

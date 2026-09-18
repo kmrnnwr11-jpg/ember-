@@ -438,5 +438,7 @@
   "phoneUnauthorized": "{name} : déverrouillez-le et autorisez le débogage USB",
   "phoneBuilding": "Préparation de l'app pour le téléphone…",
   "phoneInstalling": "Installation sur le téléphone…",
-  "phoneLookAgain": "Chercher à nouveau les téléphones"
+  "phoneLookAgain": "Chercher à nouveau les téléphones",
+  "phoneOpenHere": "Ouvrir tout de suite sur le téléphone",
+  "phoneSameWifi": "Visez le code avec la caméra du téléphone. Le téléphone doit être sur le même Wi-Fi que cet ordinateur."
 }

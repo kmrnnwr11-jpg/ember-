@@ -42,11 +42,25 @@ declare module 'fastify' {
   }
 }
 
-/** The name the app carries on the store, when the listing has one. */
+/**
+ * What to call an app, in the order a person would: the name on the store, the
+ * name on the phone's home screen, the name the app calls itself in its own
+ * config. Only when all three are missing does the folder name show through.
+ */
 async function storeTitle(projectRoot: string): Promise<{ title?: string }> {
-  const raw = await readFileAsync(path.join(projectRoot, 'store', 'listing.json'), 'utf8').catch(() => 'null');
-  const title = `${(JSON.parse(raw) as { title?: string } | null)?.title ?? ''}`.trim();
-  return title ? { title } : {};
+  const read = (...rel: string[]) => readFileAsync(path.join(projectRoot, ...rel), 'utf8').catch(() => '');
+
+  const listing = await read('store', 'listing.json');
+  const fromListing = `${(JSON.parse(listing || 'null') as { title?: string } | null)?.title ?? ''}`.trim();
+  if (fromListing) return { title: fromListing };
+
+  const manifest = await read('android', 'app', 'src', 'main', 'AndroidManifest.xml');
+  const label = /android:label\s*=\s*"([^"@]{2,60})"/.exec(manifest)?.[1]?.trim();
+  if (label) return { title: label };
+
+  const config = await read('lib', 'config', 'app_config.dart');
+  const appName = /static const String appName\s*=\s*'([^']{2,60})'/.exec(config)?.[1]?.trim();
+  return appName ? { title: appName } : {};
 }
 
 export interface AppDeps {

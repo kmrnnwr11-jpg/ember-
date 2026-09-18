@@ -188,33 +188,39 @@
 
   /** Opens one App content section from the list page. */
   /** Everything on the page a person could click, ignoring Ember's own panel. */
-  function clickables() {
-    // Play Console builds its checklists out of plain elements with click handlers,
-    // so anything short and clickable-looking counts, not only links and buttons.
-    const tagged = [...document.querySelectorAll('a[href], [role="link"], button, [role="button"], [role="listitem"], li')];
-    const rows = [...document.querySelectorAll('div, span, td')].filter((el) => {
+  /**
+   * The short pieces of text on the page, as a person reads them.
+   *
+   * Only elements that hold text and nothing else: one cheap pass, no style
+   * computation. An earlier version measured every element on the page and
+   * froze Play Console, which then showed its own error.
+   */
+  function labels() {
+    const out = [];
+    for (const el of document.querySelectorAll('span, a, button, div, li, td')) {
+      if (el.childElementCount > 1 || el.closest('#ember-panel')) continue;
       const t = text(el);
-      return t.length > 2 && t.length < 60 && el.children.length <= 2 && (el.onclick || getComputedStyle(el).cursor === 'pointer');
-    });
-    return [...new Set([...tagged, ...rows])].filter((el) => onScreen(el) && !el.closest('#ember-panel') && el.id !== 'ember-button');
+      if (t && t.length < 60) out.push({ el, t: t.toLowerCase() });
+      if (out.length > 800) break;
+    }
+    return out;
   }
 
-  /** The link that opens a section, chosen as the shortest text that names it. */
+  /** The thing to click to open a section: the shortest text that names it. */
   function rowLink(row) {
-    const matches = clickables()
-      .filter((el) => {
-        const t = lower(el);
-        return t.length < 120 && row.words.some((w) => t.includes(w));
-      })
-      .sort((a, b) => lower(a).length - lower(b).length);
-    return matches[0] ?? null;
+    const matches = labels()
+      .filter(({ t }) => row.words.some((w) => t.includes(w)))
+      .sort((a, b) => a.t.length - b.t.length);
+    const hit = matches[0]?.el;
+    return hit && onScreen(hit) ? hit : null;
   }
 
   async function openRow(row) {
     const before = location.href;
-    const link = await waitFor(() => rowLink(row), 8000);
+    const link = await waitFor(() => rowLink(row), 8000, 800);
     if (!link) return false;
-    (link.closest('a[href], button') ?? link).click();
+    // The words sit inside the row; what answers to a click is the row itself.
+    (link.closest('a[href], button, [role="link"], [role="button"], li, tr') ?? link).click();
     // The section is open once the address changed and something answerable is on screen.
     await waitFor(() => location.href !== before, 8000);
     await waitFor(() => readOptions().length > 0 || readTextInputs().length > 0, 12000);
@@ -268,7 +274,7 @@
       let answered = 0;
       let saved = false;
       const short = (t) => t.replace(/\s+/g, ' ').trim().slice(0, 40);
-      let seen = `non trovata · voci: ${clickables().map(short).filter(Boolean).slice(0, 6).join(' | ')}`;
+      let seen = 'sezione non trovata';
       const opened = await openRow(row);
       if (opened) {
         // The labels Ember read: without them a section that fills nothing cannot be understood.

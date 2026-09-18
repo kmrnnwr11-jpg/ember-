@@ -46,6 +46,19 @@ class _FullscreenAppScreenState extends State<FullscreenAppScreen> {
     super.dispose();
   }
 
+  /// Sends the sign-in to the real browser and puts the preview back where it was.
+  ///
+  /// Google will not run its sign-in inside a window like this one. Leaving the
+  /// attempt where it died shows a black screen, so the app is reloaded here and
+  /// opened in the browser, where the same login works.
+  Future<void> _signInElsewhere() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final text = AppLocalizations.of(context).previewLoginInBrowser;
+    await launchUrl(Uri.parse(widget.url), mode: LaunchMode.externalApplication);
+    await _web?.loadUrl(urlRequest: URLRequest(url: WebUri(widget.url)));
+    messenger.showSnackBar(SnackBar(content: Text(text), duration: const Duration(seconds: 6)));
+  }
+
   Future<void> _back() async {
     // Let the generated app handle back navigation first (its own routes).
     if (_web != null && await _web!.canGoBack()) {
@@ -87,11 +100,16 @@ class _FullscreenAppScreenState extends State<FullscreenAppScreen> {
               shouldOverrideUrlLoading: (_, action) async {
                 final host = action.request.url?.host ?? '';
                 if (!host.contains('accounts.google.com')) return NavigationActionPolicy.ALLOW;
-                final messenger = ScaffoldMessenger.of(context);
-                final text = AppLocalizations.of(context).previewLoginInBrowser;
-                await launchUrl(Uri.parse(widget.url), mode: LaunchMode.externalApplication);
-                messenger.showSnackBar(SnackBar(content: Text(text)));
+                await _signInElsewhere();
                 return NavigationActionPolicy.CANCEL;
+              },
+              // A popup window would open empty and stay black: the sign-in it
+              // wants to show is the one Google refuses to run here.
+              onCreateWindow: (_, request) async {
+                final host = request.request.url?.host ?? '';
+                if (!host.contains('accounts.google.com')) return false;
+                await _signInElsewhere();
+                return false;
               },
             ),
             if (_progress < 1)

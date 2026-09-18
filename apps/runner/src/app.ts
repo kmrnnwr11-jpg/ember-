@@ -1,8 +1,8 @@
-import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+﻿import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
 import { backupKey } from './drive.js';
-import { fix as fixFinding, inspectCloud, inspectProject } from './doctor.js';
+import { fix as fixFinding, inspectCloud, inspectProject, inspectRunning } from './doctor.js';
 import { GitHubError, saveToGitHub } from './github.js';
 import { fillAppContent } from './play_console.js';
 import { detectDataFacts, fillCsv, findExportedCsv, uploadDataSafety, validateFilledCsv } from './data_safety.js';
@@ -85,11 +85,11 @@ export async function buildApp(
   const app = Fastify({
     logger: {
       level: cfg.LOG_LEVEL,
-      // Never log credentials (Ã‚Â§4).
+      // Never log credentials (Ãƒâ€šÃ‚Â§4).
       redact: ['req.headers.authorization', 'req.query.token', 'req.headers["x-provider-key"]', 'req.headers["x-provider-base-url"]', 'req.body.serviceAccount'],
     },
     bodyLimit: cfg.MAX_WS_FILE_BYTES + 1024 * 64,
-    // preview.<domain>/<ws>/<project>/Ã¢â‚¬Â¦ is served by the /preview route.
+    // preview.<domain>/<ws>/<project>/ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ is served by the /preview route.
     rewriteUrl: (req) => {
       const host = (req.headers.host ?? '').toLowerCase();
       const url = req.url ?? '/';
@@ -175,7 +175,7 @@ export async function buildApp(
     if (!raw) return reply.status(404).type('text/html').send('<h1>Privacy policy not published yet</h1>');
     const appName = /^<!-- (.*) -->/.exec(raw)?.[1] ?? project.name;
     reply.header('Cache-Control', 'public, max-age=300');
-    return reply.type('text/html; charset=utf-8').send(privacyHtml(`Privacy Policy Ã¢â‚¬â€œ ${appName}`, raw.replace(/^<!-- .* -->\n/, '')));
+    return reply.type('text/html; charset=utf-8').send(privacyHtml(`Privacy Policy ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ ${appName}`, raw.replace(/^<!-- .* -->\n/, '')));
   });
 
   // ---------------- Android artifacts (same capability-link model as preview) ----------------
@@ -194,7 +194,7 @@ export async function buildApp(
     return reply.sendFile(artifact.rel, root, { contentType: false });
   });
 
-  // ---------------- preview (public by unguessable ids, Ã‚Â§2) ----------------
+  // ---------------- preview (public by unguessable ids, Ãƒâ€šÃ‚Â§2) ----------------
 
   app.get('/preview/:workspaceId/:projectId', async (req, reply) => {
     return reply.redirect(`${req.url.split('?')[0]}/`, 301);
@@ -228,7 +228,7 @@ export async function buildApp(
           .status(building ? 202 : 404)
           .header('Refresh', building ? '3' : '')
           .type('text/html')
-          .send(previewPlaceholder(building ? 'BuildingÃ¢â‚¬Â¦ this page refreshes automatically.' : 'Not built yet. Press Run Web in FlutterCursor.'));
+          .send(previewPlaceholder(building ? 'BuildingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ this page refreshes automatically.' : 'Not built yet. Press Run Web in FlutterCursor.'));
       }
     }
     const noCache = /(^|\/)(index\.html|flutter_bootstrap\.js|flutter_service_worker\.js|version\.json|manifest\.json)$/.test(rel);
@@ -437,7 +437,7 @@ export async function buildApp(
       }
     });
 
-    // Logo proposals drawn by the AI (SVG Ã¢â€ â€™ PNG); "more logos" just calls again.
+    // Logo proposals drawn by the AI (SVG ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ PNG); "more logos" just calls again.
     r.post('/v1/projects/:projectId/logos', async (req, reply) => {
       const { projectId } = req.params as { projectId: string };
       const { project } = await services.ownedProject(req.user.id, projectId);
@@ -516,8 +516,10 @@ export async function buildApp(
       const { projectId } = req.params as { projectId: string };
       const { project } = await services.ownedProject(req.user.id, projectId);
       const root = services.projectRoot(project);
+      const { previewUrl } = z.object({ previewUrl: z.string().url().max(500).optional() }).parse(req.query ?? {});
       const checked = await inspectProject(root);
-      return { ...checked, findings: [...checked.findings, ...(await inspectCloud(checked.firebaseProject))] };
+      const [cloud, running] = await Promise.all([inspectCloud(checked.firebaseProject), inspectRunning(previewUrl ?? null)]);
+      return { ...checked, findings: [...checked.findings, ...cloud, ...running] };
     });
 
     r.post('/v1/projects/:projectId/check/fix', async (req, reply) => {
@@ -619,7 +621,7 @@ export async function buildApp(
       const csvPath = body.csv ? null : await findExportedCsv();
       const csv = body.csv ?? (csvPath ? await readFileAsync(csvPath, 'utf8') : null);
       if (!csv || !/Question ID|PSL_/i.test(csv)) {
-        return reply.status(409).send({ code: 'needs_csv', message: 'Export the Data safety CSV from Play Console first (Data safety Ã¢â€ â€™ Export to CSV), then try again' });
+        return reply.status(409).send({ code: 'needs_csv', message: 'Export the Data safety CSV from Play Console first (Data safety ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Export to CSV), then try again' });
       }
       const info = await (deps.androidInfo ?? androidAppInfo)(cfg, project.id, root, project.name);
       if (!info.applicationId) return reply.status(409).send({ code: 'not_ready', message: 'Android package name not found' });
@@ -705,7 +707,7 @@ export async function buildApp(
     });
   });
 
-  // ---------------- AI (Ã‚Â§5B) ----------------
+  // ---------------- AI (Ãƒâ€šÃ‚Â§5B) ----------------
 
   await registerAiRoutes(app, { cfg, authenticate, upstreams: deps.aiUpstreams });
   await registerResearchRoutes(app, { authenticate, fetchImpl: deps.playFetch });

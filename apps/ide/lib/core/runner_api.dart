@@ -157,8 +157,12 @@ class RunnerApi {
       _call(() => _dio.post('/v1/projects/$projectId/helper', data: const <String, dynamic>{}), (d) => d as Map<String, dynamic>);
 
   /// What is missing for this app to work, checked in the project and on Google.
-  Future<Map<String, dynamic>> checkApp(String projectId) => _call(
-    () => _dio.get('/v1/projects/$projectId/check', options: Options(receiveTimeout: const Duration(minutes: 3))),
+  Future<Map<String, dynamic>> checkApp(String projectId, {String? previewUrl}) => _call(
+    () => _dio.get(
+      '/v1/projects/$projectId/check',
+      queryParameters: {if (previewUrl != null && previewUrl.isNotEmpty) 'previewUrl': previewUrl},
+      options: Options(receiveTimeout: const Duration(minutes: 3)),
+    ),
     (d) => d as Map<String, dynamic>,
   );
 

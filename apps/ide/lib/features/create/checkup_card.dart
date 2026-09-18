@@ -11,8 +11,11 @@ import '../../l10n/app_localizations.dart';
 /// costs the user, and waits for a yes. The things it cannot fix alone are
 /// listed too, because knowing about them is worth more than hiding them.
 class CheckupCard extends ConsumerStatefulWidget {
-  const CheckupCard({super.key, required this.projectId});
+  const CheckupCard({super.key, required this.projectId, this.previewUrl});
   final String projectId;
+
+  /// Where the built app can be opened, so the check can watch it run.
+  final String? previewUrl;
 
   @override
   ConsumerState<CheckupCard> createState() => _CheckupCardState();
@@ -33,7 +36,7 @@ class _CheckupCardState extends ConsumerState<CheckupCard> {
 
   Future<void> _check() async {
     try {
-      final res = await (await ref.read(runnerApiProvider.future)).checkApp(widget.projectId);
+      final res = await (await ref.read(runnerApiProvider.future)).checkApp(widget.projectId, previewUrl: widget.previewUrl);
       final found = (res['findings'] as List? ?? const []).cast<Map<String, dynamic>>();
       if (mounted) {
         setState(() {

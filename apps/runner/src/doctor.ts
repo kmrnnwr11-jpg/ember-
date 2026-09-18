@@ -2,6 +2,8 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import puppeteer from 'puppeteer-core';
+import { findBrowser } from './screenshots.js';
 
 /**
  * What is missing for an app to actually work, checked the way a person would:
@@ -102,10 +104,42 @@ function run(bin: string, args: string[], cwd?: string, timeoutMs = 180_000): Pr
   });
 }
 
+const IDENTITY = 'https://identitytoolkit.googleapis.com/admin/v2/projects';
+
+/** The addresses Firebase accepts a sign-in from. Ember's preview runs on 127.0.0.1. */
+const NEEDED_DOMAINS = ['localhost', '127.0.0.1'];
+
+async function googleToken(): Promise<string | null> {
+  const t = await run('gcloud', ['auth', 'print-access-token'], undefined, 60_000);
+  const token = t.out.trim().split(/\r?\n/).pop() ?? '';
+  return t.code === 0 && token.length > 50 ? token : null;
+}
+
+async function authConfig(project: string, fetchImpl: typeof fetch): Promise<{ token: string; config: Record<string, unknown> } | null> {
+  const token = await googleToken();
+  if (!token) return null;
+  const res = await fetchImpl(`${IDENTITY}/${project}/config`, {
+    headers: { authorization: `Bearer ${token}`, 'x-goog-user-project': project },
+  }).catch(() => null);
+  if (!res?.ok) return null;
+  return { token, config: (await res.json()) as Record<string, unknown> };
+}
+
 /** What Google itself says about the project: a database that does not exist is a black screen. */
-export async function inspectCloud(firebaseProject: string | null): Promise<Finding[]> {
+export async function inspectCloud(firebaseProject: string | null, fetchImpl: typeof fetch = fetch): Promise<Finding[]> {
   if (!firebaseProject) return [];
   const findings: Finding[] = [];
+
+  const auth = await authConfig(firebaseProject, fetchImpl);
+  const domains = (auth?.config.authorizedDomains as string[] | undefined) ?? null;
+  if (domains && NEEDED_DOMAINS.some((d) => !domains.includes(d))) {
+    findings.push({
+      id: 'auth_domains',
+      title: 'Google sign-in is refused where the app is being tested',
+      detail: 'Firebase only accepts a sign-in from addresses it knows, and the preview address is not one of them: the user signs in and the screen stays black.',
+      fixable: true,
+    });
+  }
   const db = await run('gcloud', ['firestore', 'databases', 'list', `--project=${firebaseProject}`, '--format=value(name)'], undefined, 90_000);
   if (db.code !== 0 || !db.out.trim()) {
     findings.push({
@@ -116,6 +150,46 @@ export async function inspectCloud(firebaseProject: string | null): Promise<Find
     });
   }
   return findings;
+}
+
+/**
+ * Opens the built app in a real browser and reports what it complains about.
+ *
+ * Reading the files only finds what is missing; a running app is the only place
+ * where a wrong setting shows itself. The app keeps running: nothing is clicked.
+ */
+export async function inspectRunning(previewUrl: string | null, launch = puppeteer.launch): Promise<Finding[]> {
+  if (!previewUrl) return [];
+  const executablePath = await findBrowser();
+  if (!executablePath) return [];
+  const problems: string[] = [];
+  let browser;
+  try {
+    browser = await launch({ executablePath, headless: true, args: ['--no-sandbox'] });
+    const page = await browser.newPage();
+    page.on('pageerror', (e) => {
+      problems.push((e as Error).message);
+    });
+    page.on('console', (m) => {
+      if (m.type() === 'error') problems.push(m.text());
+    });
+    await page.goto(previewUrl, { waitUntil: 'networkidle2', timeout: 90_000 });
+    await page.evaluate(() => new Promise((r) => setTimeout(r, 8000)));
+  } catch (e) {
+    problems.push((e as Error).message);
+  } finally {
+    await browser?.close().catch(() => {});
+  }
+  const real = problems.filter((p) => p && !/favicon|service worker|DevTools/i.test(p)).slice(0, 3);
+  if (real.length === 0) return [];
+  return [
+    {
+      id: 'runtime_errors',
+      title: 'The app reports errors while running',
+      detail: `${real.join(' · ').slice(0, 300)}. Ask Ember in the chat to fix this: it can read the same error.`,
+      fixable: false,
+    },
+  ];
 }
 
 /** Creates what is missing. Returns what was done, in the user's words. */
@@ -133,6 +207,20 @@ export async function fix(id: string, input: { projectRoot: string; firebaseProj
     const rules = await run('firebase', ['deploy', '--only', 'firestore:rules', '--project', firebaseProject], projectRoot, 300_000);
     if (rules.code !== 0) throw new Error(`Database created, but the rules were refused: ${rules.out.slice(-300)}`);
     return 'Database created, with rules that let each person read and write only their own data.';
+  }
+  if (id === 'auth_domains') {
+    if (!firebaseProject) throw new Error('This app has no Firebase project yet');
+    const auth = await authConfig(firebaseProject, fetch);
+    if (!auth) throw new Error('Could not read the Firebase sign-in settings');
+    const current = (auth.config.authorizedDomains as string[] | undefined) ?? [];
+    const authorizedDomains = [...new Set([...current, ...NEEDED_DOMAINS])];
+    const res = await fetch(`${IDENTITY}/${firebaseProject}/config?updateMask=authorizedDomains`, {
+      method: 'PATCH',
+      headers: { authorization: `Bearer ${auth.token}`, 'x-goog-user-project': firebaseProject, 'content-type': 'application/json' },
+      body: JSON.stringify({ authorizedDomains }),
+    });
+    if (!res.ok) throw new Error(`Google refused the change: ${(await res.text()).slice(0, 200)}`);
+    return 'Sign-in now accepted from the address the preview runs on.';
   }
   if (id === 'no_internet_permission') {
     const file = path.join(projectRoot, 'android', 'app', 'src', 'main', 'AndroidManifest.xml');

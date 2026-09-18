@@ -1494,4 +1494,8 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get checkAsked => 'تم الطلب. يعمل Ember عليها: تابع المحادثة بالأسفل.';
+
+  @override
+  String get previewLoginInBrowser =>
+      'لا تسمح Google بتسجيل الدخول داخل هذه النافذة: فتح Ember تطبيقك في المتصفح، أكمل الدخول هناك.';
 }

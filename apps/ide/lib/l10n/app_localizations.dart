@@ -2689,6 +2689,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Asked. Ember is working on it: watch the chat below.'**
   String get checkAsked;
+
+  /// No description provided for @previewLoginInBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Google does not allow signing in inside this window: Ember opened your app in the browser, finish the login there.'**
+  String get previewLoginInBrowser;
 }
 
 class _AppLocalizationsDelegate

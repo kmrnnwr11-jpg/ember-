@@ -1519,4 +1519,8 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get checkAsked =>
       'Demandé. Ember s\'en occupe : regardez la discussion ci-dessous.';
+
+  @override
+  String get previewLoginInBrowser =>
+      'Google n\'autorise pas la connexion dans cette fenêtre : Ember a ouvert votre app dans le navigateur, connectez-vous là.';
 }

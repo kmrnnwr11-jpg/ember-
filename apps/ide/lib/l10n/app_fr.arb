@@ -430,5 +430,6 @@
   "checkFixing": "Réparation…",
   "checkAgain": "Vérifier à nouveau",
   "checkAskEmber": "Faire corriger par Ember",
-  "checkAsked": "Demandé. Ember s'en occupe : regardez la discussion ci-dessous."
+  "checkAsked": "Demandé. Ember s'en occupe : regardez la discussion ci-dessous.",
+  "previewLoginInBrowser": "Google n'autorise pas la connexion dans cette fenêtre : Ember a ouvert votre app dans le navigateur, connectez-vous là."
 }

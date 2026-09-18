@@ -81,6 +81,18 @@ class _FullscreenAppScreenState extends State<FullscreenAppScreen> {
               ),
               onWebViewCreated: (c) => _web = c,
               onProgressChanged: (_, p) => setState(() => _progress = p / 100),
+              // Google refuses to sign anyone in inside a window like this one, and
+              // the app is left on a black screen. Hand the whole thing to the real
+              // browser instead, where the same app and the same login do work.
+              shouldOverrideUrlLoading: (_, action) async {
+                final host = action.request.url?.host ?? '';
+                if (!host.contains('accounts.google.com')) return NavigationActionPolicy.ALLOW;
+                final messenger = ScaffoldMessenger.of(context);
+                final text = AppLocalizations.of(context).previewLoginInBrowser;
+                await launchUrl(Uri.parse(widget.url), mode: LaunchMode.externalApplication);
+                messenger.showSnackBar(SnackBar(content: Text(text)));
+                return NavigationActionPolicy.CANCEL;
+              },
             ),
             if (_progress < 1)
               Positioned(top: 0, left: 0, right: 0, child: LinearProgressIndicator(value: _progress == 0 ? null : _progress)),

@@ -430,5 +430,6 @@
   "checkFixing": "Arreglando…",
   "checkAgain": "Revisar otra vez",
   "checkAskEmber": "Que lo arregle Ember",
-  "checkAsked": "Pedido. Ember está trabajando: mira el chat de abajo."
+  "checkAsked": "Pedido. Ember está trabajando: mira el chat de abajo.",
+  "previewLoginInBrowser": "Google no permite iniciar sesión dentro de esta ventana: Ember abrió tu app en el navegador, inicia sesión allí."
 }

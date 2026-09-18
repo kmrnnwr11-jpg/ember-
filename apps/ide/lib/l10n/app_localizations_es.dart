@@ -1518,4 +1518,8 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get checkAsked =>
       'Pedido. Ember está trabajando: mira el chat de abajo.';
+
+  @override
+  String get previewLoginInBrowser =>
+      'Google no permite iniciar sesión dentro de esta ventana: Ember abrió tu app en el navegador, inicia sesión allí.';
 }

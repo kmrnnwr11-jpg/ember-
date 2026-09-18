@@ -420,5 +420,7 @@
   "adsNo": "Sin anuncios",
   "adsDeclined": "Sin anuncios en esta app. Pídeselos a Ember cuando cambies de idea.",
   "adsRemove": "Quitar los anuncios",
-  "adsRemoveChat": "Quitar AdMob de esta app"
+  "adsRemoveChat": "Quitar AdMob de esta app",
+  "adsAppIdHelp": "El código con la ~ , junto al icono de Android. Es el mismo para todas las unidades.",
+  "adsUnitHelp": "El código con la / , junto al icono de la tarjeta. Uno distinto para cada formato."
 }

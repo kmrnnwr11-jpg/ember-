@@ -1481,4 +1481,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get adsRemoveChat => 'Quitar AdMob de esta app';
+
+  @override
+  String get adsAppIdHelp =>
+      'El código con la ~ , junto al icono de Android. Es el mismo para todas las unidades.';
+
+  @override
+  String get adsUnitHelp =>
+      'El código con la / , junto al icono de la tarjeta. Uno distinto para cada formato.';
 }

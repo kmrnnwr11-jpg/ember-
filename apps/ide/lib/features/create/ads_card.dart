@@ -54,6 +54,23 @@ class _AdsCardState extends State<AdsCard> {
       'during a video or a call; never ask anyone to click an ad, and never click them yourself while testing. '
       'End your reply with the line EMBER_ADS: banner,interstitial';
 
+  /// AdMob shows two codes on the same screen, and they are easy to swap: the
+  /// app id carries a "~", an ad unit a "/". Put whatever was pasted where it
+  /// belongs instead of complaining about it.
+  void _sort(String value, TextEditingController typedIn) {
+    final id = value.trim();
+    if (!id.startsWith('ca-app-pub-')) return;
+    final isAppId = id.contains('~');
+    if (isAppId && typedIn != _appId) {
+      typedIn.clear();
+      setState(() => _appId.text = id);
+    } else if (!isAppId && typedIn == _appId) {
+      final free = _units.values.firstWhere((c) => c.text.trim().isEmpty, orElse: () => _units.values.first);
+      _appId.clear();
+      setState(() => free.text = id);
+    }
+  }
+
   /// Adds ads to an app that was built without them, with Google's test ids first.
   void _addAds() {
     widget.builder.improve(_adsPolicy, display: AppLocalizations.of(context).adsAddChat);
@@ -139,10 +156,34 @@ class _AdsCardState extends State<AdsCard> {
                   label: Text(l.adsOpenAdmob),
                 ),
               ),
-              TextField(controller: _appId, decoration: InputDecoration(labelText: l.adsAppId, hintText: 'ca-app-pub-0000000000000000~0000000000', isDense: true, border: const OutlineInputBorder())),
+              TextField(
+                controller: _appId,
+                onChanged: (v) => _sort(v, _appId),
+                decoration: InputDecoration(
+                  labelText: l.adsAppId,
+                  hintText: 'ca-app-pub-0000000000000000~0000000000',
+                  helperText: l.adsAppIdHelp,
+                  helperMaxLines: 2,
+                  prefixIcon: const Icon(Icons.android, size: 20),
+                  isDense: true,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
               for (final e in _units.entries) ...[
-                const SizedBox(height: 8),
-                TextField(controller: e.value, decoration: InputDecoration(labelText: l.adsUnitId(e.key), hintText: 'ca-app-pub-0000000000000000/0000000000', isDense: true, border: const OutlineInputBorder())),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: e.value,
+                  onChanged: (v) => _sort(v, e.value),
+                  decoration: InputDecoration(
+                    labelText: l.adsUnitId(e.key),
+                    hintText: 'ca-app-pub-0000000000000000/0000000000',
+                    helperText: l.adsUnitHelp,
+                    helperMaxLines: 2,
+                    prefixIcon: const Icon(Icons.crop_16_9, size: 20),
+                    isDense: true,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
               ],
               if (_error != null) ...[
                 const SizedBox(height: 8),

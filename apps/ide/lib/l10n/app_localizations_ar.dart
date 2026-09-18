@@ -1458,4 +1458,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adsRemoveChat => 'إزالة AdMob من هذا التطبيق';
+
+  @override
+  String get adsAppIdHelp =>
+      'الرمز الذي يحتوي على ~ بجانب أيقونة Android. وهو نفسه لكل الوحدات.';
+
+  @override
+  String get adsUnitHelp =>
+      'الرمز الذي يحتوي على / بجانب أيقونة البطاقة. رمز مختلف لكل صيغة.';
 }

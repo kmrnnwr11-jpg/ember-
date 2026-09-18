@@ -2629,6 +2629,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove AdMob from this app'**
   String get adsRemoveChat;
+
+  /// No description provided for @adsAppIdHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The code with the ~ , next to the Android icon. The same one for every ad unit.'**
+  String get adsAppIdHelp;
+
+  /// No description provided for @adsUnitHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The code with the / , next to the card icon. A different one for each format.'**
+  String get adsUnitHelp;
 }
 
 class _AppLocalizationsDelegate

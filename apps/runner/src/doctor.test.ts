@@ -83,6 +83,15 @@ describe('inspectProject', () => {
     await rm(root, { recursive: true, force: true });
   });
 
+  it('warns that the preview window cannot do a Google sign-in', async () => {
+    const root = await project({
+      'pubspec.yaml': 'dependencies:\n  google_sign_in: ^7.2.0\n',
+      'lib/services/auth_service.dart': 'final provider = GoogleAuthProvider();\n',
+    });
+    expect(ids(await inspectProject(root))).toContain('google_login_preview');
+    await rm(root, { recursive: true, force: true });
+  });
+
   it('has nothing to say about a plain, finished app', async () => {
     const root = await project({
       'pubspec.yaml': 'dependencies:\n  flutter:\n    sdk: flutter\n',

@@ -99,6 +99,17 @@ export async function inspectProject(root: string): Promise<Checked> {
     });
   }
 
+  // Google refuses its own sign-in inside an embedded browser window, so the
+  // preview shows a black screen after login while the app is perfectly fine.
+  if ((await grepLib(root, 'GoogleAuthProvider')).length > 0 || /google_sign_in:/.test(pubspec)) {
+    findings.push({
+      id: 'google_login_preview',
+      title: 'Google sign-in does not work inside the preview window',
+      detail: 'Google blocks its sign-in in embedded windows. Press "Open in browser" to try it, or install the app on a phone: there it works.',
+      fixable: false,
+    });
+  }
+
   if (usesFirebase && !existsSync(path.join(root, 'android', 'app', 'google-services.json'))) {
     findings.push({
       id: 'no_google_services',

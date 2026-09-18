@@ -17,9 +17,10 @@ class _AdsCardState extends State<AdsCard> {
   static final _appIdRe = RegExp(r'^ca-app-pub-\d{16}~\d{10}$');
   static final _unitRe = RegExp(r'^ca-app-pub-\d{16}/\d{10}$');
   final _appId = TextEditingController();
-  late final Map<String, TextEditingController> _units = {
-    for (final f in const ['banner', 'interstitial', 'rewarded'])
-      if (widget.builder.ads?[f] == true) f: TextEditingController(),
+  /// One box per ad format. Ember's apps carry all three, so all three are asked
+  /// for: an empty one is simply left alone.
+  final Map<String, TextEditingController> _units = {
+    for (final f in const ['banner', 'interstitial', 'rewarded']) f: TextEditingController(),
   };
   String? _error;
 
@@ -71,8 +72,12 @@ class _AdsCardState extends State<AdsCard> {
   void _apply() {
     final l = AppLocalizations.of(context);
     final app = _appId.text.trim();
-    final units = {for (final e in _units.entries) e.key: e.value.text.trim()};
-    if (!_appIdRe.hasMatch(app) || units.values.any((u) => !_unitRe.hasMatch(u))) {
+    // Only the formats the user actually created in AdMob; the rest keep test ids.
+    final units = {
+      for (final e in _units.entries)
+        if (e.value.text.trim().isNotEmpty) e.key: e.value.text.trim(),
+    };
+    if (!_appIdRe.hasMatch(app) || units.isEmpty || units.values.any((u) => !_unitRe.hasMatch(u))) {
       setState(() => _error = l.adsInvalid);
       return;
     }
@@ -123,7 +128,7 @@ class _AdsCardState extends State<AdsCard> {
                   ],
                 ),
             ],
-            if (widget.builder.ads != null) ...[
+            if (widget.builder.ads != null || !_declined) ...[
               const SizedBox(height: 8),
               Text(l.adsSteps, style: theme.textTheme.bodySmall),
               Align(

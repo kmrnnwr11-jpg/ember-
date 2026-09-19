@@ -53,7 +53,17 @@ class AppSessionStore {
 
 /// Arguments passed when arriving from the home prompt.
 class CreateAppArgs {
-  const CreateAppArgs({required this.prompt, required this.engine, this.modelKey, this.quality = 'fast', this.design, this.designName, this.reference});
+  const CreateAppArgs({
+    required this.prompt,
+    required this.engine,
+    this.modelKey,
+    this.quality = 'fast',
+    this.design,
+    this.designName,
+    this.reference,
+    this.referenceId,
+    this.referenceTopics = const [],
+  });
   final String prompt;
   final BuildEngine engine;
   final String? modelKey;
@@ -65,6 +75,11 @@ class CreateAppArgs {
 
   /// Brief of a Play Store app to take as a model (see [ReferenceApp.brief]).
   final String? reference;
+
+  /// That app's Play Store id, to fetch its screens, and the subjects its
+  /// listing promises, checked off once the app is built.
+  final String? referenceId;
+  final List<String> referenceTopics;
 }
 
 /// One builder per project, kept alive so a build continues if the user navigates away.
@@ -80,6 +95,10 @@ final appBuilderProvider = ChangeNotifierProvider.family<AppBuilder, (String, St
     events: socket.events,
     fetchJobLog: (jobId) async => (await ref.read(runnerApiProvider.future)).jobLog(jobId),
     resolveProvider: ref.read(aiProviderFactory),
+    saveReferenceShots: (playAppId) async {
+      final res = await (await ref.read(runnerApiProvider.future)).saveReferenceShots(projectId, playAppId);
+      return (res['saved'] as num?)?.toInt() ?? 0;
+    },
     androidInfo: () async {
       final info = await (await ref.read(runnerApiProvider.future)).androidInfo(projectId);
       return 'ANDROID APP INFO (use for Firebase Android app and Google Sign-In):\n'
@@ -333,7 +352,16 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
         : catalog.where((m) => m.key == args.modelKey).firstOrNull ??
             catalog.where((m) => m.provider == args.engine.provider && m.id == args.engine.defaultModel).firstOrNull ??
             catalog.where((m) => m.provider == args.engine.provider).firstOrNull;
-    b.build(prompt: args.prompt, engine: args.engine, model: model, quality: args.quality, design: args.design, designName: args.designName);
+    b.build(
+      prompt: args.prompt,
+      engine: args.engine,
+      model: model,
+      quality: args.quality,
+      design: args.design,
+      designName: args.designName,
+      referenceId: args.referenceId,
+      referenceTopics: args.referenceTopics,
+    );
   }
 
   @override

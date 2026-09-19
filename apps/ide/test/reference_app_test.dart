@@ -15,7 +15,40 @@ void main() {
     const a = ReferenceApp(id: 'x.y', title: 'BonusX', developer: 'BonusX Srl', icon: '', url: 'https://play.google.com/store/apps/details?id=x.y', description: 'Trova bonus e ISEE');
     final b = a.brief();
     expect(b, contains('Trova bonus e ISEE'));
-    expect(b, contains('never copy its name'));
+    expect(b, contains('Never the reference\'s name'));
+  });
+
+  test('reads every subject the listing promises, so none is left out', () {
+    const kids = ReferenceApp(
+      id: 'com.kids.preschool.learning.games',
+      title: 'Kids Preschool Learning Games',
+      developer: 'GunjanApps Studios',
+      icon: '',
+      url: 'u',
+      description: '''
+This app has over 150 games that cover topics, such as:
+
+Alphabets: Learn to recognize and write letters.
+Numbers: Learn to count and trace numbers.
+Colors: Learn to name and match colors.
+Shapes: Learn to recognize basic shapes.
+Animals: Learn to name animals.
+Bedtime Stories: Listen to soothing stories.
+
+All the games are designed with interactive graphics.''',
+    );
+
+    expect(kids.topics(), ['Alphabets', 'Numbers', 'Colors', 'Shapes', 'Animals', 'Bedtime Stories']);
+    final b = kids.brief();
+    expect(b, contains('none left out (6)'));
+    expect(b, contains('6. Bedtime Stories'));
+    // The size the listing brags about, so three examples per subject is not enough.
+    expect(b, contains('150 games'));
+    // Look and law: drawings instead of emoji, animation, and no copied branding.
+    expect(b, contains('never stand in for the artwork'));
+    expect(b, contains('animate yours'));
+    expect(b, contains('reference/'));
+    expect(b, contains('5% different'));
   });
 
   test('copies how the model app earns, because that is part of the app', () {

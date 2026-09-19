@@ -849,6 +849,20 @@ class AppLocalizationsIt extends AppLocalizations {
   String get bIpa => 'Genero l\'app per iPhone (IPA)…';
 
   @override
+  String bReferenceShots(int count) {
+    return 'Salvate $count schermate dell\'app da copiare: il motore la vede, non solo la legge';
+  }
+
+  @override
+  String get bReferenceShotsFailed =>
+      'Non sono riuscito a scaricare le schermate dell\'app da copiare: vado solo con la descrizione';
+
+  @override
+  String bMissingTopics(String topics) {
+    return 'Mancano rispetto all\'app da copiare: $topics. Le aggiungo adesso…';
+  }
+
+  @override
   String get bIosReady => 'App iPhone pronta ✓';
 
   @override

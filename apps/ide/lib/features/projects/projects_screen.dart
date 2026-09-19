@@ -107,7 +107,18 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       reference = await pickReferenceApp(context, api, prompt);
     } catch (_) {}
     if (!mounted) return;
-    context.push('/mockups', extra: CreateAppArgs(prompt: prompt, engine: engine, modelKey: model?.key, quality: quality, reference: reference?.brief()));
+    context.push(
+      '/mockups',
+      extra: CreateAppArgs(
+        prompt: prompt,
+        engine: engine,
+        modelKey: model?.key,
+        quality: quality,
+        reference: reference?.brief(),
+        referenceId: reference?.id,
+        referenceTopics: reference?.topics() ?? const [],
+      ),
+    );
   }
 
   /// Opens an app saved on GitHub: the same apps from Windows and from a Mac.

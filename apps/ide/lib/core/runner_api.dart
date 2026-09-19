@@ -78,6 +78,13 @@ class RunnerApi {
   Future<Map<String, dynamic>> playApp(String id, {String lang = 'it'}) =>
       _call(() => _dio.get('/v1/research/play/app', queryParameters: {'id': id, 'lang': lang}), (d) => d as Map<String, dynamic>);
 
+  /// Saves the Play Store screenshots of the app being copied inside the
+  /// project, so the engine can see it instead of only reading about it.
+  Future<Map<String, dynamic>> saveReferenceShots(String projectId, String playAppId) => _call(
+    () => _dio.post('/v1/projects/$projectId/reference-shots', data: {'appId': playAppId}, options: Options(receiveTimeout: const Duration(minutes: 3))),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// Android package name + SHA-1 fingerprints (release upload key, debug key).
   Future<Map<String, dynamic>> androidInfo(String projectId) =>
       _call(() => _dio.get('/v1/projects/$projectId/android-info'), (d) => d as Map<String, dynamic>);

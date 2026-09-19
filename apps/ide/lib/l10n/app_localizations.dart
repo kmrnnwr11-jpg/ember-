@@ -1604,6 +1604,24 @@ abstract class AppLocalizations {
   /// **'Building the iPhone app (IPA)…'**
   String get bIpa;
 
+  /// No description provided for @bReferenceShots.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} screens of the app to copy saved: the engine can see it, not just read about it'**
+  String bReferenceShots(int count);
+
+  /// No description provided for @bReferenceShotsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not fetch the screens of the app to copy: working from its description only'**
+  String get bReferenceShotsFailed;
+
+  /// No description provided for @bMissingTopics.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing from the app to copy: {topics}. Adding them now…'**
+  String bMissingTopics(String topics);
+
   /// No description provided for @bIosReady.
   ///
   /// In en, this message translates to:

@@ -140,6 +140,7 @@ class AppBuilder extends ChangeNotifier {
     required Future<String> Function(String jobId) fetchJobLog,
     required Future<AiProvider> Function(AiModel model) resolveProvider,
     this.androidInfo,
+    this.saveReferenceShots,
     this.onSession,
     AppLocalizations? strings,
     this.maxFixRounds = 3,
@@ -160,6 +161,10 @@ class AppBuilder extends ChangeNotifier {
 
   /// Returns a text block with package name and SHA-1s (for Firebase/Google Sign-In).
   final Future<String?> Function()? androidInfo;
+
+  /// Puts the reference app's Play Store screenshots inside the project, so the
+  /// engine copies screens it has seen instead of screens it imagined.
+  final Future<int> Function(String playAppId)? saveReferenceShots;
   /// UI language for log lines and errors; updated when the user switches language.
   AppLocalizations strings;
   /// Called with [toSession] whenever the chat changes, so the app can be reopened later.
@@ -285,11 +290,35 @@ class AppBuilder extends ChangeNotifier {
     String quality = 'fast',
     String? design,
     String? designName,
+    String? referenceId,
+    List<String> referenceTopics = const [],
   }) {
     this.quality = quality;
     this.design = design;
     this.designName = designName;
+    this.referenceId = referenceId;
+    this.referenceTopics = referenceTopics;
+    _coverageChecked = false;
     return _run(prompt: prompt, engine: engine, model: model, change: null);
+  }
+
+  /// The Play Store app being copied, and the subjects its listing promises.
+  String? referenceId;
+  List<String> referenceTopics = const [];
+  bool _coverageChecked = false;
+
+  /// A subject is covered when some file written for the app is named after it.
+  static String slug(String topic) => topic.toLowerCase().replaceAll(RegExp('[^a-z0-9]+'), '');
+
+  /// Subjects from the reference listing that no written file answers for.
+  List<String> missingTopics() {
+    if (referenceTopics.isEmpty || writtenFiles.isEmpty) return const [];
+    final written = writtenFiles.map((f) => slug(f)).join(' ');
+    return [
+      for (final topic in referenceTopics)
+        // First word is enough: "Fruits and Vegetables" lives in fruits_screen.dart.
+        if (!written.contains(slug(topic.split(RegExp(r'[ /&]')).first)) && !written.contains(slug(topic))) topic,
+    ];
   }
 
   /// Applies a follow-up change to an already built app.
@@ -332,6 +361,13 @@ class AppBuilder extends ChangeNotifier {
     // Saved right away: if the app is closed mid-build, reopening the project picks the work up again.
     _saveSession();
     try {
+      // Seeing the app being copied beats reading about it: the screenshots go
+      // into the project before a single line is written.
+      final refId = referenceId;
+      if (change == null && refId != null && saveReferenceShots != null) {
+        final saved = await saveReferenceShots!(refId).catchError((_) => 0);
+        _log(saved > 0 ? strings.bReferenceShots(saved) : strings.bReferenceShotsFailed, kind: saved > 0 ? 'info' : 'error');
+      }
       if (engine.isCli) {
         await _runClaudeCode('${change ?? '$prompt${design ?? ''}'}${await _androidBlock()}', resume: change != null);
       } else {
@@ -345,6 +381,21 @@ class AppBuilder extends ChangeNotifier {
       _setPhase(BuildPhase.ready);
       _saveSession();
       _log(strings.bAppReady, kind: 'info');
+      // An app copied from a listing is only done when every subject of that
+      // listing exists: one automatic round finishes what the engine left out.
+      if (change == null && !_coverageChecked) {
+        _coverageChecked = true;
+        final missing = missingTopics();
+        if (missing.isNotEmpty && !_cancelled) {
+          _log(strings.bMissingTopics(missing.join(', ')), kind: 'error');
+          await improve(
+            'The app is missing these subjects from the reference listing: ${missing.join(', ')}. '
+            'Add one screen for each, reachable from the home screen, with real content and at least two things to do in it, '
+            'drawn in code like the screens that already exist. Keep everything already built.',
+            display: strings.bMissingTopics(missing.join(', ')),
+          );
+        }
+      }
     } on _Cancelled {
       _status = 'cancelled';
       _saveSession();

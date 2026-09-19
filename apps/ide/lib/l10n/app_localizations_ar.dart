@@ -838,6 +838,20 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bIpa => 'Building the iPhone app (IPA)…';
 
   @override
+  String bReferenceShots(int count) {
+    return '$count screens of the app to copy saved: the engine can see it, not just read about it';
+  }
+
+  @override
+  String get bReferenceShotsFailed =>
+      'Could not fetch the screens of the app to copy: working from its description only';
+
+  @override
+  String bMissingTopics(String topics) {
+    return 'Missing from the app to copy: $topics. Adding them now…';
+  }
+
+  @override
   String get bIosReady => 'iPhone app ready ✓';
 
   @override

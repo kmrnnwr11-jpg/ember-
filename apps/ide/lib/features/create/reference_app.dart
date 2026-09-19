@@ -71,18 +71,68 @@ class ReferenceApp {
         : parts.join('\n');
   }
 
+  /// Every subject the listing names, in its own order: "Alphabets: …",
+  /// "• Puzzles", "- Timer". This is the checklist the built app must cover;
+  /// without it an engine copies the first few and calls the app done.
+  List<String> topics() {
+    final out = <String>[];
+    for (final raw in description.split('\n')) {
+      final line = raw.trim().replaceFirst(RegExp(r'^[•\-*✓✔●▪️👉👍🔹🎯⭐️\d.)]+\s*'), '').trim();
+      if (line.length < 3 || line.length > 120) continue;
+      // A subject reads as "Name: what it does", or as a short bullet on its own.
+      final head = RegExp(r'^([\p{L}\p{N}][\p{L}\p{N} &/+-]{2,40}):', unicode: true).firstMatch(line);
+      final name = head?.group(1)?.trim() ?? (raw.trimLeft().startsWith(RegExp(r'[•\-*✓✔●▪️]')) ? line.split(RegExp(r'[.:;]')).first.trim() : null);
+      if (name == null || name.length < 3) continue;
+      if (!out.any((t) => t.toLowerCase() == name.toLowerCase())) out.add(name);
+    }
+    return out.take(30).toList();
+  }
+
+  /// "over 150 games", "50+ filters": the size the listing promises.
+  String get _size {
+    final m = RegExp(r'(?:over|more than|oltre|più di|más de|plus de)\s*([\d.,]+)\s*([\p{L}]+)', unicode: true, caseSensitive: false).firstMatch(description) ??
+        RegExp(r'([\d.,]{2,6})\+?\s*(games|giochi|levels|livelli|filters|filtri|effects|effetti|stickers|templates|modelli|tools|strumenti|sounds|suoni)', unicode: true, caseSensitive: false).firstMatch(description);
+    return m == null ? '' : '${m.group(1)} ${m.group(2)}';
+  }
+
   /// Instructions appended to the build/mockup prompt (hidden from the chat).
-  String brief() => '''
+  String brief() {
+    final list = topics();
+    final checklist = list.isEmpty
+        ? ''
+        : '''
+
+EVERY SUBJECT THE LISTING NAMES — build them all, none left out (${list.length}):
+${[for (var i = 0; i < list.length; i++) '${i + 1}. ${list[i]}'].join('\n')}
+Each one gets its own screen reachable from the home screen, with real content and at least two things to do in it (learn / play, browse / use), not a placeholder and not a screen that only shows a title.
+If the work is long, still cover them all: fewer frills per subject, never a missing subject.''';
+    final size = _size.isEmpty ? '' : '\nThat app advertises $_size: aim for that order of magnitude of real content, not three examples per subject.';
+
+    return '''
 
 
-REFERENCE APP — the user wants an app like this Play Store app. Study its listing below and build the same complete product: every feature, screen, flow and user role it describes, working for real (not placeholders). Use your own app name, branding, texts and graphics: never copy its name, logo, trademarks, screenshots or description text.
+REFERENCE APP — the user wants this Play Store app rebuilt. Match it feature by feature: the same subjects, the same screens, the same order of the screens, the same way of moving between them, all working for real (not placeholders).
 Name: $title${developer.isEmpty ? '' : ' (by $developer)'}
 Play Store: $url
 Listing:
-$description
+$description$checklist$size
+
+LOOK — an app people pay attention to is drawn, not typed:
+- Draw the pictures in code: CustomPainter / shapes / gradients, or inline SVG-like vector paths. Give every item its own drawing.
+- Emoji may season a label, never stand in for the artwork: a screen whose content is a row of emoji is a failed screen.
+- No downloaded images and no network pictures: everything ships inside the app.
+- Sound and speech where the reference has them (flutter_tts for speech), with a way to turn them off.
+- Movement where the reference has movement: if its screens are animated, animate yours — characters that react to a tap, things that slide, bounce, pop and celebrate a right answer. A still screen where the reference moves is not the same app.
+- The screenshots of the reference are saved in the project folder `reference/`: look at every one of them and rebuild what they show — the layout, the order of the screens, what sits where, how many items a screen holds.
+
+STAYING LEGAL — Google removes copies and can close the developer account:
+- Your own app name, your own icon, your own colours, your own wording. Never the reference's name, logo, characters, screenshots or description text, not even translated.
+- Same purpose and same features, different skin: pick a different colour palette and a different mascot/illustration style, and lay out the home screen your own way. Around 5% different by design, 100% the same usefulness.
+- Never mention the reference app, its developer or its brand anywhere in the app, its store listing or its code.
 
 HOW IT EARNS — copy this too, it is part of the app:
 $_money''';
+  }
 }
 
 /// Detects "an app like X" in a request and returns X, or a Play Store id from a link.

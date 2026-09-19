@@ -1,25 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { parseDetails, parseSearchIds } from './research.js';
+import { parseScreenshots } from './research.js';
 
-describe('Play Store research', () => {
-  it('lists app ids from a search page in order, without duplicates', () => {
-    const html = '<a href="/store/apps/details?id=it.bonusx.app.prod">x</a><a href="/store/apps/details?id=it.pagopa.io.app"></a><a href="/store/apps/details?id=it.bonusx.app.prod"></a>';
-    expect(parseSearchIds(html)).toEqual(['it.bonusx.app.prod', 'it.pagopa.io.app']);
+/** The shapes Play puts on a listing page: icon, badges, and the screenshots. */
+const page = `
+  <img src="https://play-lh.googleusercontent.com/ICONICONICON=w240-h480-rw" alt="Icon">
+  <img src="https://play-lh.googleusercontent.com/AAAAAAAAAAA=w526-h296" srcset="https://play-lh.googleusercontent.com/AAAAAAAAAAA=w1052-h592 2x">
+  <img src="https://play-lh.googleusercontent.com/BBBBBBBBBBB=w526-h296">
+  <img src="https://play-lh.googleusercontent.com/SQUARESQUARE=w512-h512">
+  <img src="https://play-lh.googleusercontent.com/TINYTINYTINY=w64-h64">
+`;
+
+describe('Play Store listing', () => {
+  it('takes the screenshots and leaves icons and badges alone', () => {
+    const shots = parseScreenshots(page);
+    expect(shots).toEqual([
+      'https://play-lh.googleusercontent.com/AAAAAAAAAAA=w1080',
+      'https://play-lh.googleusercontent.com/BBBBBBBBBBB=w1080',
+    ]);
   });
 
-  it('extracts title, icon and the full description from a details page', () => {
-    const html = `<meta property="og:title" content="BonusX - ISEE, 730 e 600 bonus - App su Google Play"><meta property="og:image" content="https://img/icon.png">
-      <a href="/store/apps/dev?id=123"><span>BonusX Srl</span></a>
-      <div data-g-id="description" inert>Trova i bonus.<br><br>Richiedi ISEE &amp; 730.</div>`;
-    const a = parseDetails('it.bonusx.app.prod', html, 'it')!;
-    expect(a.title).toBe('BonusX - ISEE, 730 e 600 bonus');
-    expect(a.developer).toBe('BonusX Srl');
-    expect(a.icon).toBe('https://img/icon.png');
-    expect(a.description).toBe('Trova i bonus.\n\nRichiedi ISEE & 730.');
-    expect(a.url).toContain('id=it.bonusx.app.prod');
+  it('keeps one copy of a picture that appears at several sizes', () => {
+    const twice = `${page}<img src="https://play-lh.googleusercontent.com/AAAAAAAAAAA=w2104-h1184">`;
+    expect(parseScreenshots(twice).filter((u) => u.includes('AAAAAAAAAAA'))).toHaveLength(1);
   });
 
-  it('returns null when the page is not an app listing', () => {
-    expect(parseDetails('x.y', '<html></html>', 'it')).toBeNull();
+  it('stops at the number asked for', () => {
+    expect(parseScreenshots(page, 1)).toHaveLength(1);
+    expect(parseScreenshots('<html></html>')).toEqual([]);
   });
 });

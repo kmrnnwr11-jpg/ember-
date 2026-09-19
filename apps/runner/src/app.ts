@@ -19,7 +19,7 @@ import { PreviewService } from './preview.js';
 import { DEFAULT_UPSTREAMS, GEMINI_FALLBACKS, registerAiRoutes } from './ai.js';
 import { applyLogo, generateLogos, storeState } from './logos.js';
 import { captureScreenshots, findBrowser, hasScreenshotMode, SCREENSHOT_UPGRADE_REQUEST } from './screenshots.js';
-import { registerResearchRoutes } from './research.js';
+import { parseScreenshots, registerResearchRoutes, saveReferenceShots } from './research.js';
 import { ClaudeCodeEngine, detectClis } from './agent_cli.js';
 import { z } from 'zod';
 import { Authenticator, bearer, type AuthUser } from './auth.js';
@@ -510,6 +510,20 @@ export async function buildApp(
       const { title } = await storeTitle(root);
       helperApp = { ...facts, email, name: title || project.name, at: new Date().toISOString() };
       return { ok: true, name: helperApp.name };
+    });
+
+    // Puts the screenshots of a Play Store listing inside the project, as a model
+    // for the engine: a described app and a seen app are not the same thing.
+    r.post('/v1/projects/:projectId/reference-shots', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const { appId } = z.object({ appId: z.string().regex(/^[A-Za-z][\w]*(\.[\w]+)+$/) }).parse(req.body);
+      const page = await fetch(`https://play.google.com/store/apps/details?id=${appId}&hl=en`, {
+        headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130 Safari/537.36' },
+      }).catch(() => null);
+      if (!page?.ok) return reply.status(502).send({ code: 'store_unreachable', message: 'Could not read that app page on the Play Store' });
+      const shots = parseScreenshots(await page.text());
+      return saveReferenceShots(services.projectRoot(project), shots);
     });
 
     // The phones plugged into this computer, so an app can be tried where it counts.

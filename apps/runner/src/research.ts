@@ -1,3 +1,5 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 /** Public Play Store data about an app the user wants to take as a model. */
@@ -8,6 +10,8 @@ export interface PlayApp {
   icon: string;
   url: string;
   description: string;
+  /** The listing's screenshots: what the app actually looks like. */
+  screenshots: string[];
 }
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36';
@@ -27,6 +31,28 @@ const decode = (s: string) =>
 
 const meta = (html: string, prop: string) => new RegExp(`<meta (?:property|name)="${prop}" content="([^"]*)"`).exec(html)?.[1];
 
+/**
+ * The screenshot images of a listing, at a size worth looking at.
+ *
+ * Play serves them from its image host with the wanted size in the path
+ * (`=w526-h296`), and the same picture appears several times: keep the first
+ * of each, in the order the page shows them.
+ */
+export function parseScreenshots(html: string, limit = 8): string[] {
+  const found: string[] = [];
+  for (const m of html.matchAll(/https:\/\/play-lh\.googleusercontent\.com\/[\w-]+=w(\d+)-h(\d+)[^"&\s]*/g)) {
+    const [url, width, height] = [m[0], Number(m[1]), Number(m[2])];
+    // Icons and badges are small or square; a screenshot is wide enough to read
+    // and never square. Play lists them at 526x296, so the floor stays low.
+    if (width < 300 || height < 150 || width === height) continue;
+    const base = url.split('=')[0]!;
+    if (found.some((f) => f.startsWith(base))) continue;
+    found.push(`${base}=w1080`);
+    if (found.length >= limit) break;
+  }
+  return found;
+}
+
 /** Extracts the listing from a Play Store details page. */
 export function parseDetails(id: string, html: string, lang: string): PlayApp | null {
   const rawTitle = meta(html, 'og:title');
@@ -42,6 +68,7 @@ export function parseDetails(id: string, html: string, lang: string): PlayApp | 
     icon: meta(html, 'og:image') ?? '',
     url: `https://play.google.com/store/apps/details?id=${id}&hl=${lang}`,
     description,
+    screenshots: parseScreenshots(html),
   };
 }
 
@@ -52,6 +79,31 @@ export function parseSearchIds(html: string): string[] {
     if (!ids.includes(m[1]!)) ids.push(m[1]!);
   }
   return ids;
+}
+
+/**
+ * Saves a listing's screenshots inside the project, for the engine to study.
+ *
+ * Reading a description and seeing the app are different things: with the real
+ * screens in front of it, the engine copies the layout and the order of the
+ * screens instead of inventing them. They are reference material only — the
+ * app being built needs its own name, colours and drawings.
+ */
+export async function saveReferenceShots(
+  projectRoot: string,
+  screenshots: string[],
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ saved: number; dir: string }> {
+  const dir = path.join(projectRoot, 'reference');
+  await mkdir(dir, { recursive: true });
+  let saved = 0;
+  for (const [index, url] of screenshots.entries()) {
+    const res = await fetchImpl(url, { headers: { 'user-agent': UA } }).catch(() => null);
+    if (!res?.ok) continue;
+    await writeFile(path.join(dir, `screen_${index + 1}.png`), Buffer.from(await res.arrayBuffer()));
+    saved++;
+  }
+  return { saved, dir };
 }
 
 export async function registerResearchRoutes(

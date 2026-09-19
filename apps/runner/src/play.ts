@@ -57,6 +57,11 @@ export interface PublishInput {
   track: PlayTrack;
   status: ReleaseStatus;
   listing?: PlayListing;
+  /**
+   * The same listing in other languages. Each one becomes its own store page
+   * on Google Play, so a user in Madrid or Cairo reads the app in their tongue.
+   */
+  translations?: PlayListing[];
   releaseNotes?: { language: string; text: string };
   contactEmail?: string;
   /** Store graphics (PNG paths): replaced on every upload when present. */
@@ -185,17 +190,23 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
   const defaultLanguage = typeof details.defaultLanguage === 'string' ? details.defaultLanguage : undefined;
   const languages = [...new Set([defaultLanguage, input.listing?.language].filter((x): x is string => !!x))];
   const uploaded = { languages: [] as string[], listing: false, icon: false, featureGraphic: false, screenshots: 0 };
-  if (input.listing && (input.listing.title || input.listing.shortDescription || input.listing.fullDescription)) {
-    const l = input.listing;
-    for (const lang of languages) {
-      await json('PUT', `${base}/listings/${encodeURIComponent(lang)}`, {
-        language: lang,
-        ...(l.title ? { title: l.title.slice(0, 30) } : {}),
-        ...(l.shortDescription ? { shortDescription: l.shortDescription.slice(0, 80) } : {}),
-        ...(l.fullDescription ? { fullDescription: l.fullDescription.slice(0, 4000) } : {}),
-      });
-      uploaded.languages.push(lang);
-    }
+
+  // One page per language. The main listing fills the default language too (or
+  // Play Console shows it empty), but a real translation for that language wins:
+  // an English store page must not carry the Italian text.
+  const pages = new Map<string, PlayListing>();
+  const hasText = (l?: PlayListing) => !!l && !!(l.title || l.shortDescription || l.fullDescription);
+  if (hasText(input.listing)) for (const lang of languages) pages.set(lang, input.listing!);
+  for (const t of input.translations ?? []) if (t.language && hasText(t)) pages.set(t.language, t);
+
+  for (const [lang, l] of pages) {
+    await json('PUT', `${base}/listings/${encodeURIComponent(lang)}`, {
+      language: lang,
+      ...(l.title ? { title: l.title.slice(0, 30) } : {}),
+      ...(l.shortDescription ? { shortDescription: l.shortDescription.slice(0, 80) } : {}),
+      ...(l.fullDescription ? { fullDescription: l.fullDescription.slice(0, 4000) } : {}),
+    });
+    uploaded.languages.push(lang);
     uploaded.listing = true;
   }
   if (input.contactEmail) {

@@ -1554,4 +1554,10 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get phoneSameWifi =>
       'Inquadra il codice con la fotocamera del telefono. Il telefono deve essere sullo stesso Wi-Fi di questo computer.';
+
+  @override
+  String get playLanguages => 'Lingue della scheda';
+
+  @override
+  String get playTranslating => 'Scrivo la scheda nelle altre lingue…';
 }

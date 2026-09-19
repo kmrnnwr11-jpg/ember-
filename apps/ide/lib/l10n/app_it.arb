@@ -440,5 +440,7 @@
   "phoneInstalling": "Installo sul telefono…",
   "phoneLookAgain": "Cerca di nuovo i telefoni",
   "phoneOpenHere": "Apri subito sul telefono",
-  "phoneSameWifi": "Inquadra il codice con la fotocamera del telefono. Il telefono deve essere sullo stesso Wi-Fi di questo computer."
+  "phoneSameWifi": "Inquadra il codice con la fotocamera del telefono. Il telefono deve essere sullo stesso Wi-Fi di questo computer.",
+  "playLanguages": "Lingue della scheda",
+  "playTranslating": "Scrivo la scheda nelle altre lingue…"
 }

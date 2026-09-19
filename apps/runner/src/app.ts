@@ -401,6 +401,17 @@ export async function buildApp(
               fullDescription: z.string().max(4000).optional(),
             })
             .optional(),
+          translations: z
+            .array(
+              z.object({
+                language: z.string().min(2).max(10),
+                title: z.string().max(30).optional(),
+                shortDescription: z.string().max(80).optional(),
+                fullDescription: z.string().max(4000).optional(),
+              }),
+            )
+            .max(20)
+            .optional(),
           releaseNotes: z.object({ language: z.string().default('it-IT'), text: z.string().max(500) }).optional(),
           contactEmail: z.string().email().optional(),
         })
@@ -421,6 +432,7 @@ export async function buildApp(
             track: body.track,
             status: body.status,
             listing: body.listing,
+            translations: body.translations,
             releaseNotes: body.releaseNotes,
             contactEmail: body.contactEmail,
             images: await storeImages(root),
@@ -605,6 +617,8 @@ export async function buildApp(
           dataSafety: z.string().max(20000).default(''),
           contentRating: z.string().max(20000).default(''),
           otherDeclarations: z.string().max(20000).default(''),
+          // The listing in other languages, kept as the JSON the app wrote it in.
+          translations: z.string().max(80000).default(''),
         })
         .parse(req.body);
       const dir = path.join(services.projectRoot(project), 'store');

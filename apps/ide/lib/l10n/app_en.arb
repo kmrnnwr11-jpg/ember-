@@ -894,5 +894,7 @@
     }
   },
   "phoneOpenHere": "Open on the phone now",
-  "phoneSameWifi": "Point the phone camera at the code. The phone must be on the same Wi-Fi as this computer."
+  "phoneSameWifi": "Point the phone camera at the code. The phone must be on the same Wi-Fi as this computer.",
+  "playLanguages": "Store languages",
+  "playTranslating": "Writing the listing in the other languages…"
 }

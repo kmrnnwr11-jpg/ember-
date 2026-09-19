@@ -112,6 +112,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
           _dataSafety = '${listing['dataSafety'] ?? ''}';
           _contentRating = '${listing['contentRating'] ?? ''}';
           _otherDeclarations = '${listing['otherDeclarations'] ?? ''}';
+          _loadTranslations('${listing['translations'] ?? ''}');
         });
       }
     } catch (_) {}
@@ -174,11 +175,93 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       // Only as a suggestion: the Runner address is not reachable by Google, the user pastes a public link.
       _privacyUrl = '${session.runnerUrl}$path';
       if (_privacyLink.text.trim().isEmpty) _privacyLink.text = _privacyUrl!;
+      // A new listing means new translations: the old ones describe other words.
+      _translations = {};
       await _saveListing();
     } catch (e) {
       _error = e is RunnerException ? e.message : e.toString();
     }
     if (mounted) setState(() => _generating = false);
+    await _translate();
+  }
+
+  /// Store languages offered, as Google Play names them. The first five are
+  /// switched on by default: together they reach most of the world.
+  static const storeLanguages = <String, String>{
+    'en-US': 'English',
+    'fr-FR': 'Français',
+    'es-ES': 'Español',
+    'ar': 'العربية',
+    'de-DE': 'Deutsch',
+    'pt-BR': 'Português',
+    'tr-TR': 'Türkçe',
+    'hi-IN': 'हिन्दी',
+    'ru-RU': 'Русский',
+  };
+  final Set<String> _languages = {'en-US', 'fr-FR', 'es-ES', 'ar'};
+
+  /// The listing in each language, as {language: {title, shortDescription, fullDescription}}.
+  Map<String, Map<String, String>> _translations = {};
+  bool _translating = false;
+
+  void _loadTranslations(String saved) {
+    if (saved.isEmpty) return;
+    try {
+      final j = jsonDecode(saved) as Map<String, dynamic>;
+      final langs = (j['languages'] as List?)?.cast<String>();
+      if (langs != null) {
+        _languages
+          ..clear()
+          ..addAll(langs);
+      }
+      _translations = {
+        for (final e in ((j['pages'] as Map?) ?? const {}).entries) '${e.key}': (e.value as Map).map((k, v) => MapEntry('$k', '$v')),
+      };
+    } catch (_) {
+      // An unreadable old value just means translating again.
+    }
+  }
+
+  /// Writes the listing in the chosen languages, from the Italian one on screen.
+  ///
+  /// One call for all of them: the same model keeps the same tone and the same
+  /// app name in every language, which separate calls tend not to.
+  Future<void> _translate() async {
+    final wanted = _languages.where((l) => !_translations.containsKey(l)).toList();
+    if (wanted.isEmpty || _title.text.trim().isEmpty) return;
+    setState(() => _translating = true);
+    try {
+      final complete = await _completer();
+      final prompt = [
+        'Translate this Google Play store listing into these languages: ${wanted.join(', ')}.',
+        'Keep the app name "${_title.text.trim().split(':').first.trim()}" unchanged in every language.',
+        'Limits: title 30 characters, shortDescription 80, fullDescription 4000. Write naturally for each market, not word for word.',
+        'Reply with JSON only: {"<language code>": {"title": "...", "shortDescription": "...", "fullDescription": "..."}}',
+        '',
+        'title: ${_title.text.trim()}',
+        'shortDescription: ${_short.text.trim()}',
+        'fullDescription:',
+        _full.text.trim(),
+      ].join('\n');
+      final res = await complete('You translate app store listings for Google Play. You answer with JSON only.', prompt);
+      final text = res.text.trim();
+      final start = text.indexOf('{');
+      final end = text.lastIndexOf('}');
+      if (start < 0 || end <= start) throw const FormatException('Risposta AI non valida');
+      final j = jsonDecode(text.substring(start, end + 1)) as Map<String, dynamic>;
+      for (final entry in j.entries) {
+        final v = (entry.value as Map).cast<String, dynamic>();
+        _translations[entry.key] = {
+          'title': '${v['title'] ?? ''}',
+          'shortDescription': '${v['shortDescription'] ?? ''}',
+          'fullDescription': '${v['fullDescription'] ?? ''}',
+        };
+      }
+      await _saveListing();
+    } catch (e) {
+      _error = e is RunnerException ? e.message : e.toString();
+    }
+    if (mounted) setState(() => _translating = false);
   }
 
   Future<void> _saveListing() async {
@@ -193,6 +276,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
         'dataSafety': _dataSafety,
         'contentRating': _contentRating,
         'otherDeclarations': _otherDeclarations,
+        'translations': jsonEncode({'languages': _languages.toList(), 'pages': _translations}),
       });
     } catch (_) {}
   }
@@ -202,6 +286,8 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       _publishing = true;
       _error = null;
     });
+    // Languages switched on after the listing was written still need their page.
+    await _translate();
     await _saveListing();
     try {
       await ref.read(keyValueStoreProvider).write(_saKey, _sa.text.trim());
@@ -216,6 +302,10 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
           if (_short.text.trim().isNotEmpty) 'shortDescription': _short.text.trim(),
           if (_full.text.trim().isNotEmpty) 'fullDescription': _full.text.trim(),
         },
+        'translations': [
+          for (final lang in _languages)
+            if (_translations[lang] != null) {'language': lang, ..._translations[lang]!},
+        ],
         if (_notes.text.trim().isNotEmpty) 'releaseNotes': {'language': 'it-IT', 'text': _notes.text.trim()},
         if (_email.text.trim().isNotEmpty) 'contactEmail': _email.text.trim(),
       });
@@ -371,6 +461,33 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                     icon: _generating ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.auto_awesome),
                     label: Text(l.playGenerateWithAi),
                   ),
+                  const SizedBox(height: 12),
+                  // The other store pages: Italian is the one below, these are written from it.
+                  Text(l.playLanguages, style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      const Chip(label: Text('Italiano')),
+                      for (final e in storeLanguages.entries)
+                        FilterChip(
+                          label: Text(e.value),
+                          selected: _languages.contains(e.key),
+                          avatar: _translations.containsKey(e.key) ? const Icon(Icons.check, size: 16) : null,
+                          onSelected: _translating
+                              ? null
+                              : (on) {
+                                  setState(() => on ? _languages.add(e.key) : _languages.remove(e.key));
+                                  if (on) _translate();
+                                },
+                        ),
+                    ],
+                  ),
+                  if (_translating) ...[
+                    const SizedBox(height: 6),
+                    Row(children: [const SizedBox.square(dimension: 14, child: CircularProgressIndicator(strokeWidth: 2)), const SizedBox(width: 8), Text(l.playTranslating)]),
+                  ],
                   const SizedBox(height: 12),
                   TextField(
                     controller: _title,

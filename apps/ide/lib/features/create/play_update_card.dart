@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -85,6 +87,7 @@ class _PlayUpdateCardState extends ConsumerState<PlayUpdateCard> {
           if ('${listing['shortDescription'] ?? ''}'.isNotEmpty) 'shortDescription': listing['shortDescription'],
           if ('${listing['fullDescription'] ?? ''}'.isNotEmpty) 'fullDescription': listing['fullDescription'],
         },
+        'translations': _savedTranslations(listing),
         if ('${listing['releaseNotes'] ?? ''}'.isNotEmpty) 'releaseNotes': {'language': 'it-IT', 'text': listing['releaseNotes']},
         if ('${listing['contactEmail'] ?? ''}'.contains('@')) 'contactEmail': listing['contactEmail'],
       });
@@ -99,6 +102,21 @@ class _PlayUpdateCardState extends ConsumerState<PlayUpdateCard> {
       });
     } finally {
       if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  /// The listing in the other languages, as written on the publishing screen.
+  List<Map<String, dynamic>> _savedTranslations(Map<String, dynamic> listing) {
+    try {
+      final j = jsonDecode('${listing['translations'] ?? ''}') as Map<String, dynamic>;
+      final langs = (j['languages'] as List? ?? const []).cast<String>();
+      final pages = (j['pages'] as Map? ?? const {}).cast<String, dynamic>();
+      return [
+        for (final lang in langs)
+          if (pages[lang] is Map) {'language': lang, ...(pages[lang] as Map).cast<String, dynamic>()},
+      ];
+    } catch (_) {
+      return const [];
     }
   }
 

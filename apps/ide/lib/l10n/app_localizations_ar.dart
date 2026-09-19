@@ -1531,4 +1531,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get phoneSameWifi =>
       'وجّه كاميرا الهاتف نحو الرمز. يجب أن يكون الهاتف على نفس شبكة Wi-Fi لهذا الحاسوب.';
+
+  @override
+  String get playLanguages => 'لغات صفحة المتجر';
+
+  @override
+  String get playTranslating => 'جارٍ كتابة الصفحة باللغات الأخرى…';
 }

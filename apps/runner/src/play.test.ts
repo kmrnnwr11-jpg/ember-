@@ -87,6 +87,33 @@ describe('Google Play publishing', () => {
     expect(g.calls[6]!.body).toMatchObject({ track: 'internal', releases: [{ versionCodes: ['7'], status: 'completed', releaseNotes: [{ text: 'Prima versione' }] }] });
   });
 
+  it('writes one store page per language, each in its own language', async () => {
+    const g = fakeGoogle();
+    const r = await publishToPlay(
+      {
+        serviceAccount: parseServiceAccount(saJson),
+        packageName: 'a.b',
+        aabPath: aab,
+        track: 'internal',
+        status: 'completed',
+        listing: { language: 'it-IT', title: 'Doodle Dino', shortDescription: 'Colora e disegna', fullDescription: 'Italiano' },
+        translations: [
+          { language: 'en-US', title: 'Doodle Dino', shortDescription: 'Color and draw', fullDescription: 'English' },
+          { language: 'fr-FR', title: 'Doodle Dino', shortDescription: 'Colorie et dessine', fullDescription: 'Français' },
+          { language: 'es-ES', title: 'Doodle Dino', shortDescription: 'Colorea y dibuja', fullDescription: 'Español' },
+          { language: 'ar', title: 'Doodle Dino', shortDescription: 'لوّن وارسم', fullDescription: 'عربي' },
+        ],
+      },
+      g.impl,
+    );
+    expect(r.uploaded.languages.sort()).toEqual(['ar', 'en-US', 'es-ES', 'fr-FR', 'it-IT']);
+    const page = (lang: string) => g.calls.find((c) => c.method === 'PUT' && c.url.endsWith(`/listings/${lang}`))!.body as { fullDescription: string };
+    // The default language (en-US here) gets its own translation, not the Italian text.
+    expect(page('en-US').fullDescription).toBe('English');
+    expect(page('it-IT').fullDescription).toBe('Italiano');
+    expect(page('ar').fullDescription).toBe('عربي');
+  });
+
   it('falls back to a draft release for never-published apps', async () => {
     const g = fakeGoogle({ draftOnly: true });
     const r = await publishToPlay(

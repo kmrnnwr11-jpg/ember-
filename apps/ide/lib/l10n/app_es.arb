@@ -440,5 +440,7 @@
   "phoneInstalling": "Instalando en el teléfono…",
   "phoneLookAgain": "Buscar teléfonos otra vez",
   "phoneOpenHere": "Abrir ahora en el teléfono",
-  "phoneSameWifi": "Enfoca el código con la cámara del teléfono. El teléfono debe estar en el mismo Wi-Fi que este ordenador."
+  "phoneSameWifi": "Enfoca el código con la cámara del teléfono. El teléfono debe estar en el mismo Wi-Fi que este ordenador.",
+  "playLanguages": "Idiomas de la ficha",
+  "playTranslating": "Escribiendo la ficha en los demás idiomas…"
 }

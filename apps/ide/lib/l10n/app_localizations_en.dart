@@ -1538,4 +1538,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get phoneSameWifi =>
       'Point the phone camera at the code. The phone must be on the same Wi-Fi as this computer.';
+
+  @override
+  String get playLanguages => 'Store languages';
+
+  @override
+  String get playTranslating => 'Writing the listing in the other languages…';
 }

@@ -2749,6 +2749,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Point the phone camera at the code. The phone must be on the same Wi-Fi as this computer.'**
   String get phoneSameWifi;
+
+  /// No description provided for @playLanguages.
+  ///
+  /// In en, this message translates to:
+  /// **'Store languages'**
+  String get playLanguages;
+
+  /// No description provided for @playTranslating.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing the listing in the other languages…'**
+  String get playTranslating;
 }
 
 class _AppLocalizationsDelegate

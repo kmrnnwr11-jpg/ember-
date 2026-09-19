@@ -1556,4 +1556,11 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get phoneSameWifi =>
       'Visez le code avec la caméra du téléphone. Le téléphone doit être sur le même Wi-Fi que cet ordinateur.';
+
+  @override
+  String get playLanguages => 'Langues de la fiche';
+
+  @override
+  String get playTranslating =>
+      'Rédaction de la fiche dans les autres langues…';
 }

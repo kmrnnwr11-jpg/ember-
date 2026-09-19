@@ -7,17 +7,34 @@ import '../../l10n/app_localizations.dart';
 
 /// A Play Store app the user wants to take as a model.
 class ReferenceApp {
-  const ReferenceApp({required this.id, required this.title, required this.developer, required this.icon, required this.url, this.summary = '', this.description = ''});
+  const ReferenceApp({
+    required this.id,
+    required this.title,
+    required this.developer,
+    required this.icon,
+    required this.url,
+    this.summary = '',
+    this.description = '',
+    this.ads = false,
+    this.purchases = false,
+    this.priceRange = '',
+  });
 
-  factory ReferenceApp.fromJson(Map<String, dynamic> j) => ReferenceApp(
-    id: j['id'] as String,
-    title: j['title'] as String? ?? '',
-    developer: j['developer'] as String? ?? '',
-    icon: j['icon'] as String? ?? '',
-    url: j['url'] as String? ?? '',
-    summary: j['summary'] as String? ?? '',
-    description: j['description'] as String? ?? '',
-  );
+  factory ReferenceApp.fromJson(Map<String, dynamic> j) {
+    final money = (j['money'] as Map?)?.cast<String, dynamic>() ?? const {};
+    return ReferenceApp(
+      id: j['id'] as String,
+      title: j['title'] as String? ?? '',
+      developer: j['developer'] as String? ?? '',
+      icon: j['icon'] as String? ?? '',
+      url: j['url'] as String? ?? '',
+      summary: j['summary'] as String? ?? '',
+      description: j['description'] as String? ?? '',
+      ads: money['ads'] == true,
+      purchases: money['purchases'] == true,
+      priceRange: '${money['priceRange'] ?? ''}',
+    );
+  }
 
   final String id;
   final String title;
@@ -26,6 +43,33 @@ class ReferenceApp {
   final String url;
   final String summary;
   final String description;
+
+  /// How the model app earns, as its Play Store listing declares it.
+  final bool ads;
+  final bool purchases;
+  final String priceRange;
+
+  /// The same way of earning, written as an instruction for the engine.
+  String get _money {
+    final parts = <String>[];
+    if (ads) {
+      parts.add(
+        'That app earns from ads, so this one does too: add google_mobile_ads with Google TEST ad unit ids — a banner on the main screens, '
+        'an interstitial after a completed action, and a rewarded ad wherever the user can gain something by watching one. '
+        'Never on first launch, at most one interstitial a minute, never under a button the user is about to press.',
+      );
+    }
+    if (purchases) {
+      parts.add(
+        'That app also sells things${priceRange.isEmpty ? '' : ' ($priceRange)'}, so add in_app_purchase with the products that fit it — '
+        'typically removing the ads, and a subscription for the extras. Declare each product with EMBER_PRODUCTS.',
+      );
+    }
+    if (ads) parts.add('End your reply with the line EMBER_ADS: banner,interstitial,rewarded');
+    return parts.isEmpty
+        ? 'That app shows no ads and sells nothing, so leave this one free of both.'
+        : parts.join('\n');
+  }
 
   /// Instructions appended to the build/mockup prompt (hidden from the chat).
   String brief() => '''
@@ -37,7 +81,8 @@ Play Store: $url
 Listing:
 $description
 
-If that app is free and ad-supported, this one earns the same way: add AdMob with google_mobile_ads using Google's TEST ad unit ids, a banner on the main screen and an interstitial after a completed action — never on first launch, never more than once a minute, never next to a button the user is about to press. Then end your reply with the line EMBER_ADS: banner,interstitial''';
+HOW IT EARNS — copy this too, it is part of the app:
+$_money''';
 }
 
 /// Detects "an app like X" in a request and returns X, or a Play Store id from a link.

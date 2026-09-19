@@ -41,7 +41,8 @@ Rules:
 - Output EXACTLY two things and nothing else:
   1) First line: STYLE: {"name": "...", "palette": ["#hex", "#hex", "#hex", "#hex"], "font": "...", "tagline": "one short sentence in the user's language explaining the style"}
   2) A fenced block ```html mockup.html ... ``` with the complete HTML document.
-- The HTML must work offline: inline <style>, no JavaScript frameworks, no external images (use CSS gradients, shapes, inline SVG and emoji as imagery). Google Fonts <link> is allowed with a system font fallback.
+- The HTML must work offline: inline <style>, no JavaScript frameworks, no external images (use CSS gradients, shapes and inline SVG as imagery). Google Fonts <link> is allowed with a system font fallback.
+- Icons: draw them as inline SVG in the current line style — a 24px grid, 1.5-2px strokes, round caps, no fill, inheriting the text colour. This is what a phone looks like today. Never use emoji as an interface icon: an emoji in a toolbar is the mark of a mockup, not of an app. Emoji are allowed only inside fake content, where a person would have typed one.
 - Designed for a 390px-wide phone viewport (<meta name="viewport" content="width=device-width, initial-scale=1">). No horizontal scrolling.
 - Show the app's 3 most important screens stacked vertically (e.g. onboarding/home + 2 key screens). Each screen is a full-width section about 844px tall, looking like a real app screen (status bar area, headers, content, bottom navigation where it makes sense), separated by a thin label with the screen name.
 - Realistic fake content in the same language as the app description. Polished spacing, hierarchy and consistent components.

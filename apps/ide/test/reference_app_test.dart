@@ -17,4 +17,19 @@ void main() {
     expect(b, contains('Trova bonus e ISEE'));
     expect(b, contains('never copy its name'));
   });
+
+  test('copies how the model app earns, because that is part of the app', () {
+    const free = ReferenceApp(id: 'x.y', title: 'Demo', developer: '', icon: '', url: 'u');
+    expect(free.brief(), contains('shows no ads and sells nothing'));
+
+    const withAds = ReferenceApp(id: 'x.y', title: 'Demo', developer: '', icon: '', url: 'u', ads: true);
+    expect(withAds.brief(), contains('google_mobile_ads'));
+    expect(withAds.brief(), contains('EMBER_ADS: banner,interstitial,rewarded'));
+    expect(withAds.brief(), isNot(contains('in_app_purchase')));
+
+    const both = ReferenceApp(id: 'x.y', title: 'Demo', developer: '', icon: '', url: 'u', ads: true, purchases: true, priceRange: '\$0.99 - \$49.99 per item');
+    expect(both.brief(), contains('in_app_purchase'));
+    expect(both.brief(), contains('\$0.99 - \$49.99'));
+    expect(both.brief(), contains('EMBER_PRODUCTS'));
+  });
 }

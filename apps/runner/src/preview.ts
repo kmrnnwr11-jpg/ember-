@@ -113,7 +113,21 @@ export class PreviewService extends EventEmitter<PreviewEvents> {
       projectId: project.id,
       cwd: `projects/${project.name}`,
       cmd: 'flutter',
-      args: ['build', 'web', '--release', '--base-href', this.basePath(project), '--no-wasm-dry-run'],
+      // The preview is for looking at the app, not for shipping it: light
+      // optimisation and no source maps cut the wait roughly in half, and the
+      // published build is a different job that keeps every optimisation.
+      args: [
+        'build',
+        'web',
+        '--release',
+        '--base-href',
+        this.basePath(project),
+        '--no-wasm-dry-run',
+        '--no-source-maps',
+        '--dart2js-optimization',
+        'O1',
+        '--no-tree-shake-icons',
+      ],
     });
     this.emit('building', ownerId, project.id, job.id);
     return job;

@@ -12,6 +12,9 @@ export interface PlayApp {
   description: string;
   /** The listing's screenshots: what the app actually looks like. */
   screenshots: string[];
+
+  /** How that app makes money, as the Play Store itself declares it. */
+  money: { ads: boolean; purchases: boolean; priceRange: string };
 }
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36';
@@ -53,6 +56,20 @@ export function parseScreenshots(html: string, limit = 8): string[] {
   return found;
 }
 
+/**
+ * How an app earns, read from the badges Play shows on every listing:
+ * "Contains ads", "In-app purchases", and the price range of those purchases.
+ * Copying an app means copying how it makes money, not only how it looks.
+ */
+export function parseMoney(html: string): { ads: boolean; purchases: boolean; priceRange: string } {
+  const text = html.replace(/<[^>]+>/g, ' ');
+  return {
+    ads: /Contains ads|Contiene annunci|Contiene anuncios|Contient des annonces/i.test(text),
+    purchases: /In-app purchases|Acquisti in-app|Compras en la aplicación|Achats via l'application/i.test(text),
+    priceRange: /((?:[$€£]\s?[\d.,]+)\s*(?:-|–|per item)\s*(?:[$€£]\s?[\d.,]+)[^<]{0,20})/i.exec(text)?.[1]?.trim() ?? '',
+  };
+}
+
 /** Extracts the listing from a Play Store details page. */
 export function parseDetails(id: string, html: string, lang: string): PlayApp | null {
   const rawTitle = meta(html, 'og:title');
@@ -69,6 +86,7 @@ export function parseDetails(id: string, html: string, lang: string): PlayApp | 
     url: `https://play.google.com/store/apps/details?id=${id}&hl=${lang}`,
     description,
     screenshots: parseScreenshots(html),
+    money: parseMoney(html),
   };
 }
 

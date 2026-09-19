@@ -63,6 +63,7 @@ class CreateAppArgs {
     this.reference,
     this.referenceId,
     this.referenceTopics = const [],
+    this.styleBrief = '',
   });
   final String prompt;
   final BuildEngine engine;
@@ -80,6 +81,9 @@ class CreateAppArgs {
   /// listing promises, checked off once the app is built.
   final String? referenceId;
   final List<String> referenceTopics;
+
+  /// Who the app is for, from the reference listing: decides how the mockups look.
+  final String styleBrief;
 }
 
 /// One builder per project, kept alive so a build continues if the user navigates away.

@@ -48,12 +48,37 @@ Rules:
 - Realistic fake content in the same language as the app description. Polished spacing, hierarchy and consistent components.
 - Follow the requested visual style strictly so different styles look clearly different.''';
 
-String mockupUserPrompt(String appDescription, MockupStyle style, {String? previousHtml, String? change}) {
+/// The styles worth showing for an app like this one. A children's app has no
+/// business being offered a dark premium direction, and a banking app has no
+/// business being offered a retro one: the pasted link decides the order.
+List<MockupStyle> stylePoolFor(String styleBrief) {
+  final audience = RegExp(r'^AUDIENCE:\s*(\w+)', multiLine: true).firstMatch(styleBrief)?.group(1);
+  final wanted = switch (audience) {
+    'kids' => ['playful', 'pastel', 'retro', 'brutal', 'nature'],
+    'game' => ['playful', 'retro', 'tech', 'brutal', 'glass'],
+    'serious' => ['corporate', 'material', 'minimal', 'mono', 'ios'],
+    'creative' => ['dark', 'glass', 'tech', 'mono', 'brutal'],
+    'social' => ['playful', 'glass', 'material', 'pastel', 'ios'],
+    'calm' => ['pastel', 'nature', 'minimal', 'luxury', 'ios'],
+    _ => const <String>[],
+  };
+  if (wanted.isEmpty) return mockupStylePool;
+  final picked = [for (final id in wanted) ...mockupStylePool.where((s) => s.id == id)];
+  return [...picked, ...mockupStylePool.where((s) => !picked.contains(s))];
+}
+
+String mockupUserPrompt(String appDescription, MockupStyle style, {String? previousHtml, String? change, String styleBrief = ''}) {
   final b = StringBuffer()
     ..writeln('App description:')
     ..writeln(appDescription)
     ..writeln()
     ..writeln('Visual style: ${style.name} — ${style.direction}');
+  if (styleBrief.trim().isNotEmpty) {
+    b
+      ..writeln()
+      ..writeln('WHO IT IS FOR — this outranks the visual style above wherever the two disagree:')
+      ..writeln(styleBrief.trim());
+  }
   if (previousHtml != null && change != null) {
     b
       ..writeln()
@@ -117,10 +142,14 @@ typedef CompleteText = Future<({String text, double? costUsd})> Function(String 
 
 /// Generates and manages mockup sets for one app description (§1B step 3).
 class MockupController extends ChangeNotifier {
-  MockupController({required this.description, required this.engine, required CompleteText complete, this.model})
+  MockupController({required this.description, required this.engine, required CompleteText complete, this.model, this.styleBrief = ''})
     : _complete = complete;
 
   final String description;
+
+  /// Who the app is for, when the reference app makes that plain: it decides
+  /// which styles are offered and overrides them where they disagree.
+  final String styleBrief;
   final BuildEngine engine;
   final AiModel? model;
   final CompleteText _complete;
@@ -136,13 +165,14 @@ class MockupController extends ChangeNotifier {
 
   /// Generates 5 new, different styles in parallel (keeps previous sets).
   Future<void> generateSet() async {
-    final styles = [for (var i = 0; i < 5; i++) mockupStylePool[(_poolOffset + i) % mockupStylePool.length]];
+    final pool = stylePoolFor(styleBrief);
+    final styles = [for (var i = 0; i < 5; i++) pool[(_poolOffset + i) % pool.length]];
     _poolOffset += 5;
     final set = [for (final s in styles) Mockup(s)];
     sets.add(set);
     viewingSet = sets.length - 1;
     notifyListeners();
-    await Future.wait([for (final m in set) _generate(m, mockupUserPrompt(description, m.style))]);
+    await Future.wait([for (final m in set) _generate(m, mockupUserPrompt(description, m.style, styleBrief: styleBrief))]);
   }
 
   /// Regenerates one mockup applying the user's change ("Modifica questo").
@@ -152,10 +182,10 @@ class MockupController extends ChangeNotifier {
       ..status = MockupStatus.loading
       ..error = null;
     notifyListeners();
-    await _generate(m, mockupUserPrompt(description, m.style, previousHtml: previous, change: change), fallbackHtml: previous);
+    await _generate(m, mockupUserPrompt(description, m.style, previousHtml: previous, change: change, styleBrief: styleBrief), fallbackHtml: previous);
   }
 
-  Future<void> retry(Mockup m) => _generate(m, mockupUserPrompt(description, m.style));
+  Future<void> retry(Mockup m) => _generate(m, mockupUserPrompt(description, m.style, styleBrief: styleBrief));
 
   Future<void> _generate(Mockup m, String prompt, {String? fallbackHtml}) async {
     m

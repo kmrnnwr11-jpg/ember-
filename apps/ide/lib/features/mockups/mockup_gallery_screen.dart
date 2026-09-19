@@ -64,7 +64,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
           catalog.firstWhere((m) => m.provider == engine.provider);
       complete = apiCompleter(ref.read(aiProviderFactory), model);
     }
-    final c = MockupController(description: '${a.prompt}${a.reference ?? ''}', engine: a.engine, model: model, complete: complete);
+    final c = MockupController(description: '${a.prompt}${a.reference ?? ''}', engine: a.engine, model: model, complete: complete, styleBrief: a.styleBrief);
     c.addListener(() {
       if (mounted) setState(() {});
     });
@@ -150,6 +150,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
             reference: widget.args.reference,
             referenceId: widget.args.referenceId,
             referenceTopics: widget.args.referenceTopics,
+            styleBrief: widget.args.styleBrief,
             designName: m?.name,
           ),
         );

@@ -95,6 +95,64 @@ class ReferenceApp {
     return m == null ? '' : '${m.group(1)} ${m.group(2)}';
   }
 
+  /// Apps for small children look nothing like apps for grown-ups, and a
+  /// listing says plainly which one it is.
+  bool get isForKids => RegExp(
+        r'\b(kids?|toddlers?|preschool|kindergarten|children|nursery|baby|babies|bambin\w*|infanzia|prescolare|niños|enfants|kinder)\b',
+        caseSensitive: false,
+      ).hasMatch('$title $description');
+
+  /// Who the app is for, read from its own listing. What a banking app must
+  /// look like and what a toddler's app must look like have nothing in common,
+  /// and the mockups have to belong to the same world as the app being copied.
+  String get audience {
+    final text = '$title $description'.toLowerCase();
+    bool has(String words) => RegExp('\\b(?:$words)\\b', caseSensitive: false).hasMatch(text);
+    if (isForKids) return 'kids';
+    if (has('game|games|puzzle|arcade|gioco|giochi|juego|jeu|level|levels')) return 'game';
+    if (has('bank|banking|invoice|tax|isee|finance|financial|wallet|payment|fattur\\w*|conto|business|crm|enterprise')) return 'serious';
+    if (has('photo|camera|video|editor|filter|filtri|collage|selfie|beauty|reel')) return 'creative';
+    if (has('dating|chat|match|friends|incontri|social|community|profile')) return 'social';
+    if (has('fitness|workout|meditation|health|diet|yoga|salute|benessere|sleep')) return 'calm';
+    return 'general';
+  }
+
+  /// How the mockups must look to belong to the same world as the reference.
+  /// The link the user pasted decides the look, not a generic style list.
+  String visualDirection() {
+    final world = switch (audience) {
+      'kids' =>
+        'This is an app for small children, so it must look like one: a home screen of big full-colour tiles, '
+            'each tile a different strong colour with a drawn illustration inside and its name on a coloured band. '
+            'Drawn backgrounds (sky, meadow, ice), a friendly animal mascot on every screen, fat rounded letters and '
+            'numbers, buttons a three-year-old can hit. Draw people, animals and objects as inline SVG illustrations '
+            'with outlines and flat colour — not line icons, not emoji. No white minimalism, no thin lines, no small '
+            'grey text, no tidy adult dashboard.',
+      'game' =>
+        'This is a game: a playful screen, big play buttons, scores, coins, levels and rewards on show, drawn artwork '
+            'and characters rather than icons, deep saturated colours, no business-app layout.',
+      'serious' =>
+        'This is a money/work app: sober and trustworthy, clear figures, strong hierarchy, restrained palette, '
+            'tables and cards that read at a glance, nothing cartoonish.',
+      'creative' =>
+        'This is a photo/video app: dark working surface so the picture is the brightest thing on screen, thumbnails '
+            'and filter strips, bold controls, colour used as accent only.',
+      'social' =>
+        'This is a people app: faces and profile pictures fill the screen, big cards, rounded avatars, warm accents, '
+            'chat bubbles and prominent action buttons.',
+      'calm' => 'This is a health/wellbeing app: calm and airy, soft palette, breathing room, gentle progress rings and charts.',
+      _ => '',
+    };
+    if (world.isEmpty && description.trim().isEmpty) return '';
+    return '''
+AUDIENCE: $audience
+THE MOCKUPS MUST LOOK LIKE THE APP BEING COPIED — the user pasted its Play Store link, so its world sets the look.
+${world.isEmpty ? '' : '$world\n'}Read the listing below and design for the same people, the same job and the same feel: the same kind of home screen, the same amount of colour, the same size of buttons, the same kind of imagery.
+Use your own palette, your own wording and your own drawings: same world, not a copy.
+The app being copied: $title${developer.isEmpty ? '' : ' by $developer'}
+$description''';
+  }
+
   /// Instructions appended to the build/mockup prompt (hidden from the chat).
   String brief() {
     final list = topics();

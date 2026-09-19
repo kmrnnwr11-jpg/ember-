@@ -117,6 +117,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         reference: reference?.brief(),
         referenceId: reference?.id,
         referenceTopics: reference?.topics() ?? const [],
+        styleBrief: reference?.visualDirection() ?? '',
       ),
     );
   }

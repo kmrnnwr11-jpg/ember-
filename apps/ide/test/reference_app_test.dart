@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ide/features/create/reference_app.dart';
+import 'package:ide/features/mockups/mockup_controller.dart';
 
 void main() {
   test('finds the app a request is modelled on', () {
@@ -49,6 +50,24 @@ All the games are designed with interactive graphics.''',
     expect(b, contains('animate yours'));
     expect(b, contains('reference/'));
     expect(b, contains('5% different'));
+  });
+
+  test('the pasted link decides how the mockups look, not a generic style list', () {
+    const kids = ReferenceApp(id: 'a.b', title: 'Kids Preschool Learning Games', developer: 'Gunjan', icon: '', url: 'u', description: 'Learning games for toddlers aged 2 to 5.');
+    expect(kids.audience, 'kids');
+    expect(kids.visualDirection(), contains('AUDIENCE: kids'));
+    expect(kids.visualDirection(), contains('No white minimalism'));
+    expect(stylePoolFor(kids.visualDirection()).take(3).map((s) => s.id), ['playful', 'pastel', 'retro']);
+
+    const bank = ReferenceApp(id: 'a.b', title: 'Fatture in Cloud', developer: '', icon: '', url: 'u', description: 'Gestisci fatture, tasse e il conto della tua attività.');
+    expect(bank.audience, 'serious');
+    expect(bank.visualDirection(), contains('sober and trustworthy'));
+    expect(stylePoolFor(bank.visualDirection()).take(3).map((s) => s.id), ['corporate', 'material', 'minimal']);
+
+    // Every reference still carries its own listing into the mockups.
+    expect(bank.visualDirection(), contains('Fatture in Cloud'));
+    // Without a reference, the usual styles stay as they are.
+    expect(stylePoolFor('').first.id, mockupStylePool.first.id);
   });
 
   test('copies how the model app earns, because that is part of the app', () {

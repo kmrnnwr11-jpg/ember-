@@ -24,7 +24,13 @@ class GeminiProvider implements AiProvider {
     for (final m in messages) {
       switch (m.role) {
         case AiRole.user || AiRole.system:
-          out.add({'role': 'user', 'parts': [{'text': m.content}]});
+          out.add({
+            'role': 'user',
+            'parts': [
+              for (final img in m.images) {'inline_data': {'mime_type': img.mimeType, 'data': img.base64}},
+              {'text': m.content},
+            ],
+          });
         case AiRole.assistant:
           out.add({
             'role': 'model',

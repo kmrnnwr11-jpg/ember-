@@ -37,10 +37,18 @@ class AiToolCallPart {
   final Map<String, dynamic> arguments;
 }
 
-class AiMessage {
-  const AiMessage(this.role, this.content, {this.toolCalls = const [], this.toolCallId, this.toolName});
+/// A picture sent along with a user message (screenshot, photo).
+class AiImage {
+  const AiImage({required this.mimeType, required this.base64});
 
-  const AiMessage.user(String content) : this(AiRole.user, content);
+  final String mimeType;
+  final String base64;
+}
+
+class AiMessage {
+  const AiMessage(this.role, this.content, {this.toolCalls = const [], this.toolCallId, this.toolName, this.images = const []});
+
+  const AiMessage.user(String content, {List<AiImage> images = const []}) : this(AiRole.user, content, images: images);
   const AiMessage.assistant(String content, {List<AiToolCallPart> toolCalls = const []})
     : this(AiRole.assistant, content, toolCalls: toolCalls);
 
@@ -53,6 +61,9 @@ class AiMessage {
   final List<AiToolCallPart> toolCalls;
   final String? toolCallId;
   final String? toolName;
+
+  /// Pictures attached to a user message. Providers that cannot see images ignore them.
+  final List<AiImage> images;
 
   Map<String, dynamic> toJson() => {
     'role': role.name,

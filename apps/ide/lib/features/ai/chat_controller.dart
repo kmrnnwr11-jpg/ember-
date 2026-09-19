@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:ai_connect/ai_connect.dart';
 import 'package:flutter/foundation.dart';
@@ -32,6 +33,9 @@ class ChatEntry {
   String? stopReason;
   final DateTime at;
   bool streaming = false;
+
+  /// Pictures sent with this message (kept in memory only, not saved).
+  List<Uint8List> images = const [];
 
   Map<String, dynamic> toJson() => {
     'role': role.name,
@@ -92,6 +96,7 @@ class ChatController extends ChangeNotifier {
     Future<void> Function(List<Map<String, dynamic>>)? saveHistory,
     this.systemPrompt = chatSystemPrompt,
     bool attachFiles = true,
+    this.contextBuilder,
   }) : _resolve = resolveProvider,
        attachOpenFile = attachFiles,
        _save = saveHistory {
@@ -113,6 +118,10 @@ class ChatController extends ChangeNotifier {
   AiModel? model;
   bool attachOpenFile;
   final String systemPrompt;
+
+  /// Fresh facts appended to the system prompt before every message
+  /// (e.g. the app's package name, store listing, Firebase setup).
+  final Future<String?> Function()? contextBuilder;
   StreamSubscription<AiEvent>? _sub;
   Completer<void>? _done;
 
@@ -133,7 +142,7 @@ class ChatController extends ChangeNotifier {
 
   /// Builds the provider message list from history plus the new turn.
   @visibleForTesting
-  static List<AiMessage> buildMessages(List<ChatEntry> history, String userText, ChatFileContext? file) {
+  static List<AiMessage> buildMessages(List<ChatEntry> history, String userText, ChatFileContext? file, [List<AiImage> images = const []]) {
     final msgs = <AiMessage>[
       for (final e in history)
         if (e.error == null && e.text.isNotEmpty && (e.role == AiRole.user || e.role == AiRole.assistant))
@@ -145,16 +154,17 @@ class ChatController extends ChangeNotifier {
           ? '(The open file ${file.path} is too large to attach: ${file.content.length} characters.)\n\n$userText'
           : 'Open file: ${file.path}\n```${ProjectPath.languageOf(file.path)} ${file.path}\n${file.content}\n```\n\n$userText';
     }
-    msgs.add(AiMessage.user(content));
+    msgs.add(AiMessage.user(content, images: images));
     return msgs;
   }
 
-  Future<void> send(String text, {ChatFileContext? openFile}) async {
+  Future<void> send(String text, {ChatFileContext? openFile, List<({String mimeType, Uint8List bytes})> images = const []}) async {
     final m = model;
-    if (m == null || text.trim().isEmpty || busy) return;
+    if (m == null || (text.trim().isEmpty && images.isEmpty) || busy) return;
+    if (text.trim().isEmpty) text = 'Look at this image.';
     final file = attachOpenFile ? openFile : null;
     final history = List<ChatEntry>.of(entries);
-    entries.add(ChatEntry(role: AiRole.user, text: text.trim(), contextPath: file?.path));
+    entries.add(ChatEntry(role: AiRole.user, text: text.trim(), contextPath: file?.path)..images = [for (final i in images) i.bytes]);
     final reply = ChatEntry(role: AiRole.assistant, text: '', model: m.key)..streaming = true;
     entries.add(reply);
     notifyListeners();
@@ -171,9 +181,14 @@ class ChatController extends ChangeNotifier {
       return;
     }
 
+    var system = systemPrompt;
+    final extra = await contextBuilder?.call().catchError((_) => null);
+    if (extra != null && extra.isNotEmpty) system = '$system\n\n$extra';
+    final aiImages = [for (final i in images) AiImage(mimeType: i.mimeType, base64: base64Encode(i.bytes))];
+
     final done = _done = Completer<void>();
     _sub = provider
-        .chat(model: m.id, system: systemPrompt, messages: buildMessages(history, text.trim(), file))
+        .chat(model: m.id, system: system, messages: buildMessages(history, text.trim(), file, aiImages))
         .listen(
           (event) {
             switch (event) {

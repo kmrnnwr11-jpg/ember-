@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:ai_connect/ai_connect.dart';
+import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
@@ -44,10 +48,64 @@ final projectAssistantProvider = ChangeNotifierProvider.family<ChatController, (
         AiEndpoint.proxy(apiKey: '', runnerUrl: session.runnerUrl, runnerToken: await session.token(), proxyPath: 'assistant'),
       );
     },
-    systemPrompt: '$assistantSystemPrompt\n\nThe user is working on their app "${app.name}". Assume every question is about that app unless they say otherwise.',
+    systemPrompt: '''
+$assistantSystemPrompt
+
+The user is working on their app "${app.name}", made with Ember. You are connected to this app: below you get its REAL data, read live from the project.
+Every question is about this app. Answer with the exact values from the data (package name, version, listing, Firebase, SHA-1...), never say you cannot see the app.
+If a value is not in the data, say it is not set yet and which Ember button sets it.
+Only talk about this app and apps made with Ember; politely decline unrelated topics.
+The user may attach screenshots: read them carefully (Play Console pages, errors, the app's screens) and say exactly what to click or type.''',
     attachFiles: false,
+    contextBuilder: () => appFacts(ref, app.id),
   )..selectModel(const AiModel(provider: AiProviderId.gemini, id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', inputPerMTok: 0, outputPerMTok: 0));
 });
+
+/// Everything Ember knows about one app, as text for the assistant.
+Future<String?> appFacts(Ref ref, String projectId) async {
+  final api = await ref.read(runnerApiProvider.future);
+  final out = StringBuffer('APP DATA (live):\n');
+  Future<void> add(String label, Future<Object?> Function() read) async {
+    try {
+      final v = await read().timeout(const Duration(seconds: 20));
+      out.writeln('$label: ${const JsonEncoder.withIndent(' ').convert(v)}');
+    } catch (_) {
+      out.writeln('$label: not available');
+    }
+  }
+
+  await Future.wait([
+    add('Project', () async {
+      final p = await api.project(projectId);
+      return {'appName': p.title ?? p.name, 'folder': p.name, 'createdAt': '${p.createdAt}'};
+    }),
+    add('Android (package name = applicationId, SHA-1 of the upload key and debug key)', () async {
+      final info = await api.androidInfo(projectId);
+      final id = info['applicationId'] as String? ?? '';
+      return {
+        ...info,
+        if (id.startsWith('dev.fluttercursor.app.'))
+          'note': 'Temporary placeholder: Ember replaces it with the final name (com.dreamcodestudio.<appname>) at the first release build (APK/AAB). After Play has it, it never changes.',
+      };
+    }),
+    add('Store listing, logos, screenshots', () async {
+      final s = await api.storeState(projectId);
+      final listing = Map<String, dynamic>.of(s['listing'] as Map<String, dynamic>? ?? {});
+      // Long JSON blobs would drown the useful fields.
+      for (final k in ['dataSafety', 'contentRating', 'otherDeclarations', 'translations']) {
+        final v = listing[k];
+        if (v is String && v.length > 1500) listing[k] = '${v.substring(0, 1500)}…';
+      }
+      return {
+        'listing': listing,
+        'logoApplied': s['applied'] != null,
+        'screenshots': (s['screenshots'] as List?)?.length ?? 0,
+      };
+    }),
+    add('Play Console App content answers + detected data use', () => api.appContent(projectId)),
+  ]);
+  return out.toString();
+}
 
 class HomeAssistantPanel extends ConsumerStatefulWidget {
   const HomeAssistantPanel({super.key, this.onClose, this.app});
@@ -64,6 +122,7 @@ class HomeAssistantPanel extends ConsumerStatefulWidget {
 class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
+  final _images = <({String mimeType, Uint8List bytes})>[];
 
   @override
   void dispose() {
@@ -72,11 +131,29 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
     super.dispose();
   }
 
+  Future<void> _pickImages() async {
+    const group = XTypeGroup(label: 'Immagini', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif']);
+    final files = await openFiles(acceptedTypeGroups: [group]);
+    for (final f in files) {
+      final bytes = await f.readAsBytes();
+      // The Runner accepts about 5 MB per request.
+      if (bytes.length > 3500000) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${f.name}: immagine troppo grande (max 3,5 MB)')));
+        continue;
+      }
+      final ext = f.name.split('.').last.toLowerCase();
+      final mime = switch (ext) { 'png' => 'image/png', 'webp' => 'image/webp', 'gif' => 'image/gif', _ => 'image/jpeg' };
+      setState(() => _images.add((mimeType: mime, bytes: bytes)));
+    }
+  }
+
   void _send(ChatController c, [String? preset]) {
     final text = (preset ?? _input.text).trim();
-    if (text.isEmpty || c.busy) return;
+    if ((text.isEmpty && _images.isEmpty) || c.busy) return;
     _input.clear();
-    c.send(text);
+    final images = List.of(_images);
+    setState(_images.clear);
+    c.send(text, images: images);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
     });
@@ -156,6 +233,15 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                if (e.images.isNotEmpty)
+                                  Wrap(
+                                    spacing: 4,
+                                    runSpacing: 4,
+                                    children: [
+                                      for (final b in e.images)
+                                        ClipRRect(borderRadius: BorderRadius.circular(6), child: Image.memory(b, height: 120, fit: BoxFit.contain)),
+                                    ],
+                                  ),
                                 if (user)
                                   SelectableText(e.text)
                                 else if (e.text.isEmpty && e.streaming)
@@ -178,6 +264,33 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
             ),
           ),
           const Divider(height: 1),
+          if (_images.isNotEmpty)
+            SizedBox(
+              height: 76,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                children: [
+                  for (var i = 0; i < _images.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: Stack(
+                        children: [
+                          ClipRRect(borderRadius: BorderRadius.circular(6), child: Image.memory(_images[i].bytes, height: 68, width: 68, fit: BoxFit.cover)),
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: InkWell(
+                              onTap: () => setState(() => _images.removeAt(i)),
+                              child: const CircleAvatar(radius: 10, backgroundColor: Colors.black54, child: Icon(Icons.close, size: 14, color: Colors.white)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.all(8),
             child: ListenableBuilder(
@@ -185,6 +298,12 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
               builder: (context, _) => Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  IconButton(
+                    key: const Key('assistantImage'),
+                    tooltip: 'Aggiungi immagine',
+                    icon: const Icon(Icons.add_photo_alternate_outlined),
+                    onPressed: enabled && !c.busy ? _pickImages : null,
+                  ),
                   Expanded(
                     child: CallbackShortcuts(
                       bindings: {const SingleActivator(LogicalKeyboardKey.enter, control: true): () => _send(c)},

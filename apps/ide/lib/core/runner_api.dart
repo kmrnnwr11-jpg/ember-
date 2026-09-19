@@ -201,8 +201,11 @@ class RunnerApi {
   );
 
   /// Stores the privacy policy and returns its public path.
-  Future<String> savePrivacyPolicy(String projectId, String markdown, String appName) =>
-      _call(() => _dio.put('/v1/projects/$projectId/store/privacy', data: {'markdown': markdown, 'appName': appName}), (d) => d['path'] as String);
+  /// Saves the policy and publishes it; `publicUrl` is the address to give Google, when it could be made.
+  Future<({String path, String? publicUrl})> savePrivacyPolicy(String projectId, String markdown, String appName, {String? email}) => _call(
+    () => _dio.put('/v1/projects/$projectId/store/privacy', data: {'markdown': markdown, 'appName': appName, 'email': ?email}),
+    (d) => (path: d['path'] as String, publicUrl: d['publicUrl'] as String?),
+  );
 
   Future<String> jobLog(String jobId) =>
       _call(() => _dio.get('/v1/jobs/$jobId'), (d) => d['log'] as String? ?? '');

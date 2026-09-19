@@ -170,11 +170,12 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       _contentRating = '${j['contentRatingGuide'] ?? ''}';
       _otherDeclarations = '${j['otherDeclarationsGuide'] ?? ''}';
       final api = await ref.read(runnerApiProvider.future);
-      final path = await api.savePrivacyPolicy(widget.projectId, _privacy, _title.text);
+      final saved = await api.savePrivacyPolicy(widget.projectId, _privacy, _title.text, email: _email.text.trim());
       final session = ref.read(sessionProvider).value!;
-      // Only as a suggestion: the Runner address is not reachable by Google, the user pastes a public link.
-      _privacyUrl = '${session.runnerUrl}$path';
-      if (_privacyLink.text.trim().isEmpty) _privacyLink.text = _privacyUrl!;
+      // The published page is what Google can open; the local one only works on this computer.
+      _privacyUrl = saved.publicUrl ?? '${session.runnerUrl}${saved.path}';
+      final current = _privacyLink.text.trim();
+      if (current.isEmpty || current.contains('localhost') || current.contains('127.0.0.1')) _privacyLink.text = _privacyUrl!;
       // A new listing means new translations: the old ones describe other words.
       _translations = {};
       await _saveListing();

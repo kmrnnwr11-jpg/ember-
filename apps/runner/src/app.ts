@@ -6,6 +6,7 @@ import { installAndRun, lanAddress, listDevices } from './devices.js';
 import { fix as fixFinding, inspectCloud, inspectProject, inspectRunning } from './doctor.js';
 import { GitHubError, saveToGitHub } from './github.js';
 import { fillAppContent } from './play_console.js';
+import { fillPolicy, publishPolicy } from './publish_prep.js';
 import { detectDataFacts, fillCsv, findExportedCsv, uploadDataSafety, validateFilledCsv } from './data_safety.js';
 import { createServiceAccountKey, gcloudStatus, invitePlayUser, storeImages } from './play_setup.js';
 import { cliLogins, cliModels } from './subscription_clis.js';
@@ -739,11 +740,20 @@ export async function buildApp(
     r.put('/v1/projects/:projectId/store/privacy', async (req) => {
       const { projectId } = req.params as { projectId: string };
       const { project } = await services.ownedProject(req.user.id, projectId);
-      const { markdown, appName } = z.object({ markdown: z.string().min(50).max(60000), appName: z.string().max(80).optional() }).parse(req.body);
-      const dir = path.join(services.projectRoot(project), 'store');
+      const { markdown, appName, email } = z
+        .object({ markdown: z.string().min(50).max(60000), appName: z.string().max(80).optional(), email: z.string().max(200).optional() })
+        .parse(req.body);
+      const root = services.projectRoot(project);
+      const dir = path.join(root, 'store');
       await mkdirAsync(dir, { recursive: true });
-      await writeFileAsync(path.join(dir, 'privacy_policy.md'), `<!-- ${appName ?? project.name} -->\n${markdown}`);
-      return { path: `/privacy/${project.workspaceId}/${project.id}` };
+      const name = appName ?? project.name;
+      // A policy with "[EMAIL]" left in it is refused at review: fill the blanks first.
+      const listing = JSON.parse(await readFileAsync(path.join(dir, 'listing.json'), 'utf8').catch(() => '{}')) as { contactEmail?: string };
+      const filled = fillPolicy(markdown, { name: cfg.STUDIO_NAME || name, email: email || listing.contactEmail || '' });
+      await writeFileAsync(path.join(dir, 'privacy_policy.md'), `<!-- ${name} -->\n${filled}`);
+      // Google needs an address anyone can open; this computer is not one.
+      const publicUrl = await publishPolicy(filled, name).catch(() => null);
+      return { path: `/privacy/${project.workspaceId}/${project.id}`, publicUrl };
     });
 
     r.get('/v1/projects/:projectId/android-info', async (req) => {

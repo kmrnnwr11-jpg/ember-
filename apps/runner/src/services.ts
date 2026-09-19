@@ -1,11 +1,12 @@
 import path from 'node:path';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { nanoid } from 'nanoid';
 import type { Config } from './config.js';
 import { FsError, ProjectFs } from './fs.js';
 import type { Job, JobKind, JobManager } from './jobs.js';
 import { validateProjectName } from './paths.js';
-import { prepareSignedBuild } from './signing.js';
+import { claimPackageName } from './publish_prep.js';
+import { lastPublishedVersionCode, prepareSignedBuild } from './signing.js';
 import { pinProjectSdk, tuneGradle } from './sdk_pins.js';
 import type { ProjectRow, Store, WorkspaceRow } from './store.js';
 import type { WorkspaceDriver } from './workspaces/driver.js';
@@ -164,6 +165,17 @@ export class Services {
     await tuneGradle(this.projectRoot(project));
     let env: Record<string, string> | undefined;
     if (kind === 'build_apk' || kind === 'build_aab') {
+      // The package name is forever once Google has it: swap the placeholder for
+      // the app's real name before the first file that could reach the store.
+      const root = this.projectRoot(project);
+      const listing = JSON.parse(await readFile(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '{}')) as { title?: string };
+      const manifest = await readFile(path.join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml'), 'utf8').catch(() => '');
+      const appName = listing.title || /android:label\s*=\s*"([^"@]+)"/.exec(manifest)?.[1] || '';
+      await claimPackageName(root, {
+        appName,
+        prefix: this.cfg.PACKAGE_PREFIX,
+        alreadyPublished: (await lastPublishedVersionCode(root)) > 0,
+      }).catch(() => null);
       // Signed release for Play Console: upload key + bumped versionCode.
       try {
         env = (await this.prepareSigned(this.cfg, project.id, this.projectRoot(project), project.name)).env;

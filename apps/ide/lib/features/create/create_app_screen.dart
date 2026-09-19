@@ -20,6 +20,7 @@ import 'access_links.dart';
 import 'logo_card.dart';
 import '../assistant/home_assistant.dart';
 import 'checkup_card.dart';
+import 'ios_card.dart';
 import 'phone_card.dart';
 import 'github_card.dart';
 import 'play_update_card.dart';
@@ -295,6 +296,9 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
   bool _showLog = true;
   bool _showAssistant = false;
 
+  /// Which store this page is working on: Android (false) or iPhone (true).
+  bool _ios = false;
+
   @override
   void dispose() {
     _change.dispose();
@@ -402,15 +406,17 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                       const SizedBox(height: 12),
                       _Steps(builder: b),
                       const SizedBox(height: 12),
-                      if (b.phase == BuildPhase.ready)
+                      if (b.phase == BuildPhase.ready) PlatformTabs(ios: _ios, onChanged: (v) => setState(() => _ios = v)),
+                      if (b.phase == BuildPhase.ready && _ios) IosCard(builder: b),
+                      if (b.phase == BuildPhase.ready && !_ios)
                         CheckupCard(
                           projectId: project.id,
                           builder: b,
                           previewUrl: b.preview?.resolve(ref.read(sessionProvider).value?.runnerUrl ?? ''),
                         ),
-                      if (b.phase == BuildPhase.ready) _ReadyCard(builder: b, projectId: project.id),
-                      if (b.phase == BuildPhase.ready) PhoneCard(projectId: project.id, builder: b),
-                      if (b.phase == BuildPhase.ready) PlayUpdateCard(builder: b, projectId: project.id),
+                      if (b.phase == BuildPhase.ready && !_ios) _ReadyCard(builder: b, projectId: project.id),
+                      if (b.phase == BuildPhase.ready && !_ios) PhoneCard(projectId: project.id, builder: b),
+                      if (b.phase == BuildPhase.ready && !_ios) PlayUpdateCard(builder: b, projectId: project.id),
                       if (b.phase == BuildPhase.ready) GitHubCard(projectId: project.id),
                       if (b.phase == BuildPhase.ready) LogoCard(builder: b, projectId: project.id),
                       if (b.phase == BuildPhase.ready || b.phase == BuildPhase.generating) ScreenshotsCard(builder: b, projectId: project.id),

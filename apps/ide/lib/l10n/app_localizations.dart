@@ -1598,6 +1598,78 @@ abstract class AppLocalizations {
   /// **'Building the AAB for the Play Store…'**
   String get bAab;
 
+  /// No description provided for @bIpa.
+  ///
+  /// In en, this message translates to:
+  /// **'Building the iPhone app (IPA)…'**
+  String get bIpa;
+
+  /// No description provided for @bIosReady.
+  ///
+  /// In en, this message translates to:
+  /// **'iPhone app ready ✓'**
+  String get bIosReady;
+
+  /// No description provided for @bIosFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'iPhone build failed'**
+  String get bIosFailed;
+
+  /// No description provided for @platformAndroid.
+  ///
+  /// In en, this message translates to:
+  /// **'Android'**
+  String get platformAndroid;
+
+  /// No description provided for @platformIos.
+  ///
+  /// In en, this message translates to:
+  /// **'iPhone'**
+  String get platformIos;
+
+  /// No description provided for @iosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'iPhone app'**
+  String get iosTitle;
+
+  /// No description provided for @iosHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The same app for iPhone and iPad: same name, same screens, same ads. The file (IPA) goes to App Store Connect.'**
+  String get iosHint;
+
+  /// No description provided for @iosNeedsMac.
+  ///
+  /// In en, this message translates to:
+  /// **'Only a Mac can build the iPhone app. Save this app on GitHub, open Ember on your Mac and build it there. Everything else works from here.'**
+  String get iosNeedsMac;
+
+  /// No description provided for @iosBuild.
+  ///
+  /// In en, this message translates to:
+  /// **'Build iPhone app'**
+  String get iosBuild;
+
+  /// No description provided for @iosBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Building the iPhone app…'**
+  String get iosBuilding;
+
+  /// No description provided for @iosReady.
+  ///
+  /// In en, this message translates to:
+  /// **'iPhone app ready. It is signed with your Apple account and can go to App Store Connect.'**
+  String get iosReady;
+
+  /// No description provided for @iosAppleAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple Developer account: 99 USD a year, paid to Apple.'**
+  String get iosAppleAccount;
+
   /// No description provided for @bAndroidFailed.
   ///
   /// In en, this message translates to:

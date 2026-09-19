@@ -7,7 +7,10 @@ import { loadConfig } from './config.js';
 import {
   bumpBuildNumber,
   ensureUploadKey,
+  lastAppStoreBuildNumber,
+  lastPublishedBuildNumber,
   lastPublishedVersionCode,
+  rememberAppStoreBuildNumber,
   openSecret,
   patchGradleKts,
   rememberPublishedVersionCode,
@@ -57,6 +60,16 @@ describe('signing helpers', () => {
     expect(await lastPublishedVersionCode(root)).toBe(5);
     await writeFile(path.join(store, 'play.json'), 'not json at all');
     expect(await lastPublishedVersionCode(root)).toBe(0);
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it('keeps one build number above both stores', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'ember-signing-'));
+    await rememberPublishedVersionCode(root, 9);
+    await rememberAppStoreBuildNumber(root, 12);
+    expect(await lastPublishedBuildNumber(root)).toBe(12);
+    // The next build of either store starts above what Apple already has.
+    expect(bumpBuildNumber('name: demo\nversion: 1.0.0+3\n', await lastPublishedBuildNumber(root)).version).toBe('1.0.0+13');
     await rm(root, { recursive: true, force: true });
   });
 

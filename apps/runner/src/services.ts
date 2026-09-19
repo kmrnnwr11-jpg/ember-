@@ -1,12 +1,12 @@
 import path from 'node:path';
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { nanoid } from 'nanoid';
 import type { Config } from './config.js';
 import { FsError, ProjectFs } from './fs.js';
 import type { Job, JobKind, JobManager } from './jobs.js';
 import { validateProjectName } from './paths.js';
-import { claimPackageName } from './publish_prep.js';
-import { lastPublishedVersionCode, prepareSignedBuild } from './signing.js';
+import { claimBundleId, claimPackageName } from './publish_prep.js';
+import { bumpBuildNumber, lastPublishedBuildNumber, lastPublishedVersionCode, prepareSignedBuild } from './signing.js';
 import { pinProjectSdk, tuneGradle } from './sdk_pins.js';
 import type { ProjectRow, Store, WorkspaceRow } from './store.js';
 import type { WorkspaceDriver } from './workspaces/driver.js';
@@ -29,6 +29,8 @@ const JOB_COMMANDS: Partial<Record<JobKind, string[]>> = {
   // For trying the app on a phone: no shrinking, no obfuscation, minutes faster.
   build_apk_fast: ['build', 'apk', '--debug'],
   build_aab: ['build', 'appbundle', '--release'],
+  // iPhone: only a Mac can make this file, so it is refused elsewhere (see startJob).
+  build_ipa: ['build', 'ipa', '--release'],
   launcher_icons: ['pub', 'run', 'flutter_launcher_icons'],
 };
 
@@ -183,6 +185,10 @@ export class Services {
     const { project } = await this.projectFs(ownerId, projectId);
     const args = typeof kind === 'string' ? JOB_COMMANDS[kind as JobKind] : undefined;
     if (!args) throw new FsError('bad_job', `unsupported job kind; available: ${Object.keys(JOB_COMMANDS).join(', ')}`);
+    // Apple only allows building for iPhone on a Mac: say so instead of failing deep in Xcode.
+    if (kind === 'build_ipa' && process.platform !== 'darwin') {
+      throw new FsError('needs_mac', 'Only a Mac can build the iPhone app. Open Ember on your Mac, take this app back from GitHub, and build it there.');
+    }
     // Keep AI-chosen dependencies compatible with this Runner's Flutter SDK.
     await pinProjectSdk(this.projectRoot(project));
     await tuneGradle(this.projectRoot(project));
@@ -204,6 +210,22 @@ export class Services {
         env = (await this.prepareSigned(this.cfg, project.id, this.projectRoot(project), project.name)).env;
       } catch (e) {
         throw new FsError('signing_failed', (e as Error).message);
+      }
+    }
+    if (kind === 'build_ipa') {
+      // The iPhone app carries the same name as the Android one, and its build
+      // number must rise on every upload, exactly like Google's version code.
+      const root = this.projectRoot(project);
+      const gradle = await readFile(path.join(root, 'android', 'app', 'build.gradle.kts'), 'utf8').catch(() => '');
+      const applicationId = /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
+      if (applicationId && !applicationId.startsWith('dev.fluttercursor.app.')) {
+        await claimBundleId(root, applicationId, (await lastPublishedBuildNumber(root)) > 0).catch(() => null);
+      }
+      const pubspecPath = path.join(root, 'pubspec.yaml');
+      const pubspec = await readFile(pubspecPath, 'utf8').catch(() => '');
+      if (pubspec) {
+        const { text } = bumpBuildNumber(pubspec, await lastPublishedBuildNumber(root));
+        await writeFile(pubspecPath, text);
       }
     }
     return this.jobs.enqueue({

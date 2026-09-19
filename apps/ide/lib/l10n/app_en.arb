@@ -446,6 +446,18 @@
   },
   "bApk": "Building the APK (the first time can take a few minutes)…",
   "bAab": "Building the AAB for the Play Store…",
+  "bIpa": "Building the iPhone app (IPA)…",
+  "bIosReady": "iPhone app ready ✓",
+  "bIosFailed": "iPhone build failed",
+  "platformAndroid": "Android",
+  "platformIos": "iPhone",
+  "iosTitle": "iPhone app",
+  "iosHint": "The same app for iPhone and iPad: same name, same screens, same ads. The file (IPA) goes to App Store Connect.",
+  "iosNeedsMac": "Only a Mac can build the iPhone app. Save this app on GitHub, open Ember on your Mac and build it there. Everything else works from here.",
+  "iosBuild": "Build iPhone app",
+  "iosBuilding": "Building the iPhone app…",
+  "iosReady": "iPhone app ready. It is signed with your Apple account and can go to App Store Connect.",
+  "iosAppleAccount": "Apple Developer account: 99 USD a year, paid to Apple.",
   "bAndroidFailed": "{kind} build failed",
   "@bAndroidFailed": {
     "placeholders": {

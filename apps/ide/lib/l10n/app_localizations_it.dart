@@ -846,6 +846,46 @@ class AppLocalizationsIt extends AppLocalizations {
   String get bAab => 'Genero l\'AAB per il Play Store…';
 
   @override
+  String get bIpa => 'Genero l\'app per iPhone (IPA)…';
+
+  @override
+  String get bIosReady => 'App iPhone pronta ✓';
+
+  @override
+  String get bIosFailed => 'Generazione app iPhone non riuscita';
+
+  @override
+  String get platformAndroid => 'Android';
+
+  @override
+  String get platformIos => 'iPhone';
+
+  @override
+  String get iosTitle => 'App per iPhone';
+
+  @override
+  String get iosHint =>
+      'La stessa app per iPhone e iPad: stesso nome, stesse schermate, stessi annunci. Il file (IPA) va su App Store Connect.';
+
+  @override
+  String get iosNeedsMac =>
+      'L\'app per iPhone si può creare solo su un Mac. Salva l\'app su GitHub, apri Ember sul Mac e creala lì. Tutto il resto lo fai da qui.';
+
+  @override
+  String get iosBuild => 'Crea app iPhone';
+
+  @override
+  String get iosBuilding => 'Sto creando l\'app per iPhone…';
+
+  @override
+  String get iosReady =>
+      'App iPhone pronta. È firmata col tuo account Apple e può andare su App Store Connect.';
+
+  @override
+  String get iosAppleAccount =>
+      'Account Apple Developer: 99 dollari l\'anno, pagati ad Apple.';
+
+  @override
   String bAndroidFailed(String kind) {
     return 'Generazione $kind non riuscita';
   }

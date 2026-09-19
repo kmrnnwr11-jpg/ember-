@@ -837,6 +837,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bAab => 'Building the AAB for the Play Store…';
 
   @override
+  String get bIpa => 'Building the iPhone app (IPA)…';
+
+  @override
+  String get bIosReady => 'iPhone app ready ✓';
+
+  @override
+  String get bIosFailed => 'iPhone build failed';
+
+  @override
+  String get platformAndroid => 'Android';
+
+  @override
+  String get platformIos => 'iPhone';
+
+  @override
+  String get iosTitle => 'iPhone app';
+
+  @override
+  String get iosHint =>
+      'The same app for iPhone and iPad: same name, same screens, same ads. The file (IPA) goes to App Store Connect.';
+
+  @override
+  String get iosNeedsMac =>
+      'Only a Mac can build the iPhone app. Save this app on GitHub, open Ember on your Mac and build it there. Everything else works from here.';
+
+  @override
+  String get iosBuild => 'Build iPhone app';
+
+  @override
+  String get iosBuilding => 'Building the iPhone app…';
+
+  @override
+  String get iosReady =>
+      'iPhone app ready. It is signed with your Apple account and can go to App Store Connect.';
+
+  @override
+  String get iosAppleAccount =>
+      'Apple Developer account: 99 USD a year, paid to Apple.';
+
+  @override
   String bAndroidFailed(String kind) {
     return '$kind build failed';
   }

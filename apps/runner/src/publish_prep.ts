@@ -48,6 +48,24 @@ export async function claimPackageName(
   return next;
 }
 
+/**
+ * Gives the iPhone app the same name Android has (Apple calls it the Bundle
+ * ID), so the two stores hold the same app. Like the Android one, it is fixed
+ * for good after the first upload, so an app Apple already has keeps its own.
+ */
+export async function claimBundleId(projectRoot: string, bundleId: string, alreadyPublished = false): Promise<string | null> {
+  if (alreadyPublished || !/^[A-Za-z][\w.-]+\.[\w.-]+$/.test(bundleId)) return null;
+  const pbx = path.join(projectRoot, 'ios', 'Runner.xcodeproj', 'project.pbxproj');
+  const text = await readFile(pbx, 'utf8').catch(() => null);
+  if (!text) return null;
+  // Xcode repeats the setting for Debug, Release and Profile, plus the test
+  // bundle, which must stay a child of the app's own id.
+  const next = text.replace(/PRODUCT_BUNDLE_IDENTIFIER = ([\w.-]+?)(\.RunnerTests)?;/g, (_all, _id: string, tests?: string) => `PRODUCT_BUNDLE_IDENTIFIER = ${bundleId}${tests ?? ''};`);
+  if (next === text) return null;
+  await writeFile(pbx, next);
+  return bundleId;
+}
+
 /** Fills the blanks an AI-written policy leaves for the owner's name and address. */
 export function fillPolicy(markdown: string, owner: { name: string; email: string }): string {
   return markdown

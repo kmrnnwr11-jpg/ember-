@@ -895,6 +895,42 @@ class AppBuilder extends ChangeNotifier {
     notifyListeners();
   }
 
+  // -------------------------------------------------------------- iPhone file
+
+  /// `building` | `ready` | `failed`; null if never requested.
+  String? iosStatus;
+  String? iosError;
+
+  bool get iosBuilding => iosStatus == 'building';
+
+  /// Builds the iPhone app (IPA). Only a Mac can do it: elsewhere the Runner
+  /// answers `needs_mac` and the message explains what to do.
+  Future<void> buildIos() async {
+    if (running || iosBuilding) return;
+    iosStatus = 'building';
+    iosError = null;
+    _cancelled = false;
+    if (_cancelSignal.isCompleted) _cancelSignal = Completer<void>();
+    _log(strings.bIpa);
+    notifyListeners();
+    try {
+      final job = await _runJob('build_ipa');
+      if (job.status != 'succeeded') {
+        iosError = _tail(await _fetchJobLog(job.jobId), 30);
+        iosStatus = 'failed';
+        _log(strings.bIosFailed, kind: 'error');
+      } else {
+        iosStatus = 'ready';
+        _log(strings.bIosReady);
+      }
+    } catch (e) {
+      iosError = e is RunnerException ? e.message : e.toString();
+      iosStatus = 'failed';
+      _log(iosError!, kind: 'error');
+    }
+    notifyListeners();
+  }
+
   Future<void> cancel() async {
     if (!running) return;
     _cancelled = true;

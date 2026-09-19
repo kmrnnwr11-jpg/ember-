@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { claimPackageName, fillPolicy, packageName } from './publish_prep.js';
+import { claimBundleId, claimPackageName, fillPolicy, packageName } from './publish_prep.js';
 
 async function project(applicationId: string, withFirebase = false): Promise<string> {
   const root = await mkdtemp(path.join(os.tmpdir(), 'ember-prep-'));
@@ -41,6 +41,34 @@ describe('package name', () => {
     const chosen = await project('com.mine.app');
     expect(await claimPackageName(chosen, { appName: 'Demo', prefix: 'com.x', alreadyPublished: false })).toBeNull();
     for (const r of [published, firebase, chosen]) await rm(r, { recursive: true, force: true });
+  });
+});
+
+describe('iPhone bundle id', () => {
+  async function iosProject(current: string): Promise<string> {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'ember-ios-'));
+    await mkdir(path.join(root, 'ios', 'Runner.xcodeproj'), { recursive: true });
+    await writeFile(
+      path.join(root, 'ios', 'Runner.xcodeproj', 'project.pbxproj'),
+      `\t\t\t\tPRODUCT_BUNDLE_IDENTIFIER = ${current};\n\t\t\t\tPRODUCT_BUNDLE_IDENTIFIER = ${current};\n\t\t\t\tPRODUCT_BUNDLE_IDENTIFIER = ${current}.RunnerTests;\n`,
+    );
+    return root;
+  }
+
+  it('gives the iPhone app the same name as the Android one, tests included', async () => {
+    const root = await iosProject('com.example.demo');
+    expect(await claimBundleId(root, 'com.dreamcodestudio.doodledino')).toBe('com.dreamcodestudio.doodledino');
+    const pbx = await readFile(path.join(root, 'ios', 'Runner.xcodeproj', 'project.pbxproj'), 'utf8');
+    expect(pbx.match(/PRODUCT_BUNDLE_IDENTIFIER = com\.dreamcodestudio\.doodledino;/g)).toHaveLength(2);
+    expect(pbx).toContain('com.dreamcodestudio.doodledino.RunnerTests;');
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it('never renames an app Apple already has', async () => {
+    const root = await iosProject('com.mine.app');
+    expect(await claimBundleId(root, 'com.other.app', true)).toBeNull();
+    expect(await readFile(path.join(root, 'ios', 'Runner.xcodeproj', 'project.pbxproj'), 'utf8')).toContain('com.mine.app;');
+    await rm(root, { recursive: true, force: true });
   });
 });
 

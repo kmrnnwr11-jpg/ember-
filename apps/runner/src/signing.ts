@@ -182,6 +182,31 @@ export async function rememberPublishedVersionCode(projectRoot: string, versionC
   await writeFile(path.join(dir, 'play.json'), JSON.stringify({ lastVersionCode: Math.max(previous, versionCode) }, null, 2));
 }
 
+/** Highest build number Apple accepted for this project, if known. */
+export async function lastAppStoreBuildNumber(projectRoot: string): Promise<number> {
+  const raw = await readFile(path.join(projectRoot, 'store', 'appstore.json'), 'utf8').catch(() => null);
+  if (!raw) return 0;
+  const n = Number(/"lastBuildNumber"\s*:\s*(\d+)/.exec(raw)?.[1] ?? 0);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/** Remembers what Apple accepted, so the next iPhone build starts above it. */
+export async function rememberAppStoreBuildNumber(projectRoot: string, buildNumber: number): Promise<void> {
+  const dir = path.join(projectRoot, 'store');
+  await mkdir(dir, { recursive: true });
+  const previous = await lastAppStoreBuildNumber(projectRoot);
+  await writeFile(path.join(dir, 'appstore.json'), JSON.stringify({ lastBuildNumber: Math.max(previous, buildNumber) }, null, 2));
+}
+
+/**
+ * The number both stores must stay above: one app, one rising build number,
+ * whichever store saw it last.
+ */
+export async function lastPublishedBuildNumber(projectRoot: string): Promise<number> {
+  const [play, apple] = await Promise.all([lastPublishedVersionCode(projectRoot), lastAppStoreBuildNumber(projectRoot)]);
+  return Math.max(play, apple);
+}
+
 /** SHA-1 of a keystore entry via keytool, or null. */
 export async function keystoreSha1(keystore: string, alias: string, password: string, keytool: string): Promise<string | null> {
   if (!existsSync(keystore)) return null;

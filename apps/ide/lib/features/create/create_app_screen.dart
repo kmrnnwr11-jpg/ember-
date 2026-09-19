@@ -20,6 +20,7 @@ import 'access_links.dart';
 import 'logo_card.dart';
 import '../assistant/home_assistant.dart';
 import 'checkup_card.dart';
+import 'appstore_card.dart';
 import 'ios_card.dart';
 import 'phone_card.dart';
 import 'github_card.dart';
@@ -408,6 +409,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                       const SizedBox(height: 12),
                       if (b.phase == BuildPhase.ready) PlatformTabs(ios: _ios, onChanged: (v) => setState(() => _ios = v)),
                       if (b.phase == BuildPhase.ready && _ios) IosCard(builder: b),
+                      if (b.phase == BuildPhase.ready && _ios) AppStoreCard(projectId: project.id),
                       if (b.phase == BuildPhase.ready && !_ios)
                         CheckupCard(
                           projectId: project.id,

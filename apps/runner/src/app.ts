@@ -1,6 +1,7 @@
 ﻿import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
+import { AppStoreError, parseAppStoreKey, projectVersion, publishToAppStore, type AppStoreListing } from './appstore.js';
 import { backupKey } from './drive.js';
 import { installAndRun, lanAddress, listDevices } from './devices.js';
 import { fix as fixFinding, inspectCloud, inspectProject, inspectRunning } from './doctor.js';
@@ -29,7 +30,7 @@ import { errorPayload, httpStatus } from './errors.js';
 import { WatchHub } from './fs.js';
 import { JobManager, jobPublic } from './jobs.js';
 import { ARTIFACTS, Services, TEMPLATES, type SignedBuildPreparer } from './services.js';
-import { androidAppInfo, ensureUploadKey, rememberPublishedVersionCode } from './signing.js';
+import { androidAppInfo, ensureUploadKey, rememberAppStoreBuildNumber, rememberPublishedVersionCode } from './signing.js';
 import { parseServiceAccount, PlayError, privacyHtml, publishToPlay } from './play.js';
 import { readFile as readFileAsync, writeFile as writeFileAsync, mkdir as mkdirAsync } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
@@ -370,6 +371,54 @@ export async function buildApp(
         return await (deps.saveToGitHub ?? saveToGitHub)({ ...body, projectRoot: root, appName: title || project.name });
       } catch (e) {
         if (e instanceof GitHubError) return reply.status(422).send({ code: e.code, message: e.message });
+        throw e;
+      }
+    });
+
+    // Apple's side of publishing: build upload, store page in every language,
+    // privacy answers, and (when asked) sending the version for review.
+    r.post('/v1/projects/:projectId/appstore/publish', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const root = services.projectRoot(project);
+      const body = z
+        .object({
+          keyId: z.string().max(40),
+          issuerId: z.string().max(60),
+          privateKey: z.string().max(8000),
+          listing: z.record(z.string(), z.unknown()).optional(),
+          translations: z.array(z.record(z.string(), z.unknown())).max(20).optional(),
+          privacyPolicyUrl: z.string().max(500).optional(),
+          uploadBuild: z.boolean().default(false),
+          submit: z.boolean().default(false),
+        })
+        .parse(req.body);
+      const gradle = await readFileAsync(path.join(root, 'android', 'app', 'build.gradle.kts'), 'utf8').catch(() => '');
+      const bundleId = /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
+      if (!bundleId) return reply.status(422).send({ code: 'no_bundle_id', message: 'Build the app once before publishing: its name is set at the first build.' });
+      try {
+        const key = parseAppStoreKey(body);
+        const result = await publishToAppStore({
+          key,
+          bundleId,
+          versionString: await projectVersion(root),
+          projectRoot: root,
+          listing: body.listing as AppStoreListing | undefined,
+          translations: body.translations as AppStoreListing[] | undefined,
+          privacyPolicyUrl: body.privacyPolicyUrl,
+          facts: await detectDataFacts(root),
+          uploadBuild: body.uploadBuild,
+          submit: body.submit,
+        });
+        if (result.buildUploaded) {
+          // Remember what Apple now has, so the next build of either store starts above it.
+          const pubspec = await readFileAsync(path.join(root, 'pubspec.yaml'), 'utf8').catch(() => '');
+          const build = Number(/^version:\s*[0-9]+\.[0-9]+\.[0-9]+\+([0-9]+)/m.exec(pubspec)?.[1] ?? 0);
+          if (build > 0) await rememberAppStoreBuildNumber(root, build).catch(() => {});
+        }
+        return { ...result, bundleId };
+      } catch (e) {
+        if (e instanceof AppStoreError) return reply.status(e.status === 401 || e.status === 403 ? 422 : 422).send({ code: e.code, message: e.message });
         throw e;
       }
     });

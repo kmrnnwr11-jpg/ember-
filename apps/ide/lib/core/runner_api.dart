@@ -136,6 +136,13 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// Apple: sends the build, writes the store page in every language, sets the
+  /// privacy answers and (when asked) submits the version for review.
+  Future<Map<String, dynamic>> publishToAppStore(String projectId, Map<String, dynamic> body) => _call(
+    () => _dio.post('/v1/projects/$projectId/appstore/publish', data: body, options: Options(receiveTimeout: const Duration(minutes: 40))),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// The apps this GitHub account saved from Ember, from any computer.
   Future<List<Map<String, dynamic>>> githubApps(String token) => _call(
     () => _dio.post('/v1/github/apps', data: {'token': token}, options: Options(receiveTimeout: const Duration(minutes: 2))),

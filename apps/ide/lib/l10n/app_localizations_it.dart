@@ -886,6 +886,53 @@ class AppLocalizationsIt extends AppLocalizations {
       'Account Apple Developer: 99 dollari l\'anno, pagati ad Apple.';
 
   @override
+  String get ascTitle => 'Manda all\'App Store';
+
+  @override
+  String get ascHint =>
+      'Ember scrive su Apple quello che scrive su Google: titolo, descrizione, novità, link privacy e le risposte sulla privacy, in tutte le lingue della tua scheda.';
+
+  @override
+  String get ascKeyHelp =>
+      'In App Store Connect: Utenti e accessi → Integrazioni → App Store Connect API → + . Scegli il ruolo App Manager, poi scarica il file .p8 (Apple te lo fa scaricare una volta sola).';
+
+  @override
+  String get ascKeyId => 'Key ID';
+
+  @override
+  String get ascIssuerId => 'Issuer ID';
+
+  @override
+  String get ascPrivateKey => 'Contenuto del file AuthKey_….p8';
+
+  @override
+  String get ascUploadBuild => 'Manda anche il file iPhone (serve il Mac)';
+
+  @override
+  String get ascSubmit => 'Manda alla revisione di Apple quando è tutto pronto';
+
+  @override
+  String get ascPublish => 'Pubblica sull\'App Store';
+
+  @override
+  String get ascWorking => 'Sto parlando con App Store Connect…';
+
+  @override
+  String ascDone(String version, String languages) {
+    return 'Fatto su Apple: versione $version, lingue: $languages';
+  }
+
+  @override
+  String get ascOpen => 'Apri App Store Connect';
+
+  @override
+  String get ascForget => 'Dimentica la chiave Apple';
+
+  @override
+  String get ascManual =>
+      'Su Apple restano a mano: gli screenshot (misure iPhone), le domande sull\'età, prezzo e paesi.';
+
+  @override
   String bAndroidFailed(String kind) {
     return 'Generazione $kind non riuscita';
   }

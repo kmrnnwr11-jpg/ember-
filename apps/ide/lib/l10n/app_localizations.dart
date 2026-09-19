@@ -1670,6 +1670,90 @@ abstract class AppLocalizations {
   /// **'Apple Developer account: 99 USD a year, paid to Apple.'**
   String get iosAppleAccount;
 
+  /// No description provided for @ascTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to the App Store'**
+  String get ascTitle;
+
+  /// No description provided for @ascHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember writes on Apple what it writes on Google: title, description, what\'s new, privacy address and the privacy answers, in every language of your listing.'**
+  String get ascHint;
+
+  /// No description provided for @ascKeyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'In App Store Connect: Users and Access → Integrations → App Store Connect API → + . Choose the App Manager role, then download the .p8 file (Apple lets you download it once).'**
+  String get ascKeyHelp;
+
+  /// No description provided for @ascKeyId.
+  ///
+  /// In en, this message translates to:
+  /// **'Key ID'**
+  String get ascKeyId;
+
+  /// No description provided for @ascIssuerId.
+  ///
+  /// In en, this message translates to:
+  /// **'Issuer ID'**
+  String get ascIssuerId;
+
+  /// No description provided for @ascPrivateKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Contents of the AuthKey_….p8 file'**
+  String get ascPrivateKey;
+
+  /// No description provided for @ascUploadBuild.
+  ///
+  /// In en, this message translates to:
+  /// **'Send the iPhone file too (needs a Mac)'**
+  String get ascUploadBuild;
+
+  /// No description provided for @ascSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Send for Apple\'s review when everything is set'**
+  String get ascSubmit;
+
+  /// No description provided for @ascPublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish on the App Store'**
+  String get ascPublish;
+
+  /// No description provided for @ascWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Talking to App Store Connect…'**
+  String get ascWorking;
+
+  /// No description provided for @ascDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done on Apple: version {version}, languages: {languages}'**
+  String ascDone(String version, String languages);
+
+  /// No description provided for @ascOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open App Store Connect'**
+  String get ascOpen;
+
+  /// No description provided for @ascForget.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget the Apple key'**
+  String get ascForget;
+
+  /// No description provided for @ascManual.
+  ///
+  /// In en, this message translates to:
+  /// **'What stays manual on Apple: the screenshots (iPhone sizes), the age rating questions, price and countries.'**
+  String get ascManual;
+
   /// No description provided for @bAndroidFailed.
   ///
   /// In en, this message translates to:

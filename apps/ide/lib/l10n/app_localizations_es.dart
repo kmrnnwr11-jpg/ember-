@@ -888,6 +888,53 @@ class AppLocalizationsEs extends AppLocalizations {
       'Apple Developer account: 99 USD a year, paid to Apple.';
 
   @override
+  String get ascTitle => 'Send to the App Store';
+
+  @override
+  String get ascHint =>
+      'Ember writes on Apple what it writes on Google: title, description, what\'s new, privacy address and the privacy answers, in every language of your listing.';
+
+  @override
+  String get ascKeyHelp =>
+      'In App Store Connect: Users and Access → Integrations → App Store Connect API → + . Choose the App Manager role, then download the .p8 file (Apple lets you download it once).';
+
+  @override
+  String get ascKeyId => 'Key ID';
+
+  @override
+  String get ascIssuerId => 'Issuer ID';
+
+  @override
+  String get ascPrivateKey => 'Contents of the AuthKey_….p8 file';
+
+  @override
+  String get ascUploadBuild => 'Send the iPhone file too (needs a Mac)';
+
+  @override
+  String get ascSubmit => 'Send for Apple\'s review when everything is set';
+
+  @override
+  String get ascPublish => 'Publish on the App Store';
+
+  @override
+  String get ascWorking => 'Talking to App Store Connect…';
+
+  @override
+  String ascDone(String version, String languages) {
+    return 'Done on Apple: version $version, languages: $languages';
+  }
+
+  @override
+  String get ascOpen => 'Open App Store Connect';
+
+  @override
+  String get ascForget => 'Forget the Apple key';
+
+  @override
+  String get ascManual =>
+      'What stays manual on Apple: the screenshots (iPhone sizes), the age rating questions, price and countries.';
+
+  @override
   String bAndroidFailed(String kind) {
     return 'Falló la generación de $kind';
   }

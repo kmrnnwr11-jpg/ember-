@@ -458,6 +458,26 @@
   "iosBuilding": "Building the iPhone app…",
   "iosReady": "iPhone app ready. It is signed with your Apple account and can go to App Store Connect.",
   "iosAppleAccount": "Apple Developer account: 99 USD a year, paid to Apple.",
+  "ascTitle": "Send to the App Store",
+  "ascHint": "Ember writes on Apple what it writes on Google: title, description, what's new, privacy address and the privacy answers, in every language of your listing.",
+  "ascKeyHelp": "In App Store Connect: Users and Access → Integrations → App Store Connect API → + . Choose the App Manager role, then download the .p8 file (Apple lets you download it once).",
+  "ascKeyId": "Key ID",
+  "ascIssuerId": "Issuer ID",
+  "ascPrivateKey": "Contents of the AuthKey_….p8 file",
+  "ascUploadBuild": "Send the iPhone file too (needs a Mac)",
+  "ascSubmit": "Send for Apple's review when everything is set",
+  "ascPublish": "Publish on the App Store",
+  "ascWorking": "Talking to App Store Connect…",
+  "ascDone": "Done on Apple: version {version}, languages: {languages}",
+  "@ascDone": {
+    "placeholders": {
+      "version": { "type": "String" },
+      "languages": { "type": "String" }
+    }
+  },
+  "ascOpen": "Open App Store Connect",
+  "ascForget": "Forget the Apple key",
+  "ascManual": "What stays manual on Apple: the screenshots (iPhone sizes), the age rating questions, price and countries.",
   "bAndroidFailed": "{kind} build failed",
   "@bAndroidFailed": {
     "placeholders": {

@@ -1403,6 +1403,29 @@ class AppLocalizationsIt extends AppLocalizations {
   String get ghGetToken => 'Crea un token su GitHub';
 
   @override
+  String get ghRestoreTitle => 'Apri un\'app salvata su GitHub';
+
+  @override
+  String get ghRestoreHint =>
+      'Le app che hai salvato su GitHub tornano su questo computer con tutto quello che avevano. Così lavori sulla stessa app da Windows e dal Mac.';
+
+  @override
+  String get ghRestoreLoad => 'Mostra le mie app';
+
+  @override
+  String get ghRestoreNone =>
+      'Su questo account GitHub non c\'è ancora nessuna app salvata da Ember.';
+
+  @override
+  String get ghRestoreHere => 'Già su questo computer';
+
+  @override
+  String get ghRestoreAction => 'Da GitHub';
+
+  @override
+  String get refresh => 'Aggiorna';
+
+  @override
   String get ghSave => 'Salva su GitHub';
 
   @override

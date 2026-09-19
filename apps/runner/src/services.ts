@@ -149,6 +149,29 @@ export class Services {
     return { project, job };
   }
 
+  /**
+   * Registers an app whose files another computer made (restored from GitHub).
+   * Returns the row and the folder the files must be written into.
+   */
+  async importProject(ownerId: string, workspaceId: string, rawName: unknown): Promise<{ project: ProjectRow; root: string }> {
+    await this.ownedWorkspace(ownerId, workspaceId);
+    const name = validateProjectName(rawName);
+    const existing = await this.store.listProjects(workspaceId);
+    if (existing.some((p) => p.name === name)) throw new FsError('exists', `project ${name} already exists`);
+    const project: ProjectRow = {
+      id: nanoid(12),
+      workspaceId,
+      name,
+      template: 'empty',
+      status: 'ready',
+      lastModel: null,
+      createdAt: new Date().toISOString(),
+    };
+    await this.store.insertProject(project);
+    await mkdir(path.join(this.driver.hostRoot(workspaceId), PROJECTS_DIR), { recursive: true });
+    return { project, root: this.projectRoot(project) };
+  }
+
   async deleteProject(ownerId: string, projectId: string) {
     const { project } = await this.ownedProject(ownerId, projectId);
     const { rm } = await import('node:fs/promises');

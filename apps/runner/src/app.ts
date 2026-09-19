@@ -4,7 +4,7 @@ import { appContentAnswers } from './app_content.js';
 import { backupKey } from './drive.js';
 import { installAndRun, lanAddress, listDevices } from './devices.js';
 import { fix as fixFinding, inspectCloud, inspectProject, inspectRunning } from './doctor.js';
-import { GitHubError, saveToGitHub } from './github.js';
+import { GitHubError, listEmberApps, restoreFromGitHub, saveToGitHub } from './github.js';
 import { fillAppContent } from './play_console.js';
 import { fillPolicy, publishPolicy } from './publish_prep.js';
 import { detectDataFacts, fillCsv, findExportedCsv, uploadDataSafety, validateFilledCsv } from './data_safety.js';
@@ -64,6 +64,16 @@ async function storeTitle(projectRoot: string): Promise<{ title?: string }> {
   const config = await read('lib', 'config', 'app_config.dart');
   const appName = /static const String appName\s*=\s*'([^']{2,60})'/.exec(config)?.[1]?.trim();
   return appName ? { title: appName } : {};
+}
+
+/** A repository name ("beauty-camera") as a project folder ("beauty_camera"). */
+export function folderName(repo: string): string {
+  const slug = repo
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 60);
+  return /^[a-z]/.test(slug) ? slug : `app_${slug || 'ember'}`;
 }
 
 export interface AppDeps {
@@ -359,6 +369,36 @@ export async function buildApp(
       try {
         return await (deps.saveToGitHub ?? saveToGitHub)({ ...body, projectRoot: root, appName: title || project.name });
       } catch (e) {
+        if (e instanceof GitHubError) return reply.status(422).send({ code: e.code, message: e.message });
+        throw e;
+      }
+    });
+
+    // The apps this GitHub account saved from Ember, from any computer.
+    r.post('/v1/github/apps', async (req, reply) => {
+      const { token } = z.object({ token: z.string().min(20).max(400) }).parse(req.body);
+      try {
+        return { apps: await listEmberApps(token) };
+      } catch (e) {
+        if (e instanceof GitHubError) return reply.status(422).send({ code: e.code, message: e.message });
+        throw e;
+      }
+    });
+
+    // Bring one of those apps back onto this computer, ready to open.
+    r.post('/v1/workspaces/:workspaceId/github/restore', async (req, reply) => {
+      const { workspaceId } = req.params as { workspaceId: string };
+      const body = z
+        .object({ token: z.string().min(20).max(400), repo: z.string().min(1).max(100), owner: z.string().max(100).optional() })
+        .parse(req.body);
+      const folder = folderName(body.repo);
+      const { project, root } = await services.importProject(req.user.id, workspaceId, folder);
+      try {
+        const { app } = await restoreFromGitHub({ ...body, dest: root });
+        return { project: { ...project, title: app } };
+      } catch (e) {
+        // A half-restored app must not linger in the list.
+        await services.deleteProject(req.user.id, project.id).catch(() => {});
         if (e instanceof GitHubError) return reply.status(422).send({ code: e.code, message: e.message });
         throw e;
       }

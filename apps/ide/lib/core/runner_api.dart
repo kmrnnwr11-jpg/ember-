@@ -136,6 +136,22 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// The apps this GitHub account saved from Ember, from any computer.
+  Future<List<Map<String, dynamic>>> githubApps(String token) => _call(
+    () => _dio.post('/v1/github/apps', data: {'token': token}, options: Options(receiveTimeout: const Duration(minutes: 2))),
+    (d) => ((d as Map<String, dynamic>)['apps'] as List).cast<Map<String, dynamic>>(),
+  );
+
+  /// Brings one saved app back onto this computer.
+  Future<Project> restoreFromGitHub(String workspaceId, String token, String repo, {String? owner}) => _call(
+    () => _dio.post(
+      '/v1/workspaces/$workspaceId/github/restore',
+      data: {'token': token, 'repo': repo, if (owner != null && owner.isNotEmpty) 'owner': owner},
+      options: Options(receiveTimeout: const Duration(minutes: 15)),
+    ),
+    (d) => Project.fromJson((d as Map<String, dynamic>)['project'] as Map<String, dynamic>),
+  );
+
   /// Copies the app's upload key and password to the user's Google Drive.
   Future<Map<String, dynamic>> backupSigningKey(String projectId) => _call(
     () => _dio.post('/v1/projects/$projectId/signing/backup', data: const <String, dynamic>{}, options: Options(receiveTimeout: const Duration(minutes: 6))),

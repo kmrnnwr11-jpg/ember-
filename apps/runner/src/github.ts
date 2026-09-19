@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 /**
@@ -78,6 +78,10 @@ export function repoName(appName: string): string {
   return slug || 'ember-app';
 }
 
+/** Marks a repository as an Ember app, so any computer can find it again. */
+export const EMBER_TOPIC = 'ember-app';
+const MARKER = path.join('.ember', 'app.json');
+
 export interface SaveInput {
   projectRoot: string;
   token: string;
@@ -108,6 +112,11 @@ export async function saveToGitHub(input: SaveInput, fetchImpl: typeof fetch = f
   }
 
   const root = input.projectRoot;
+  // What this repository is, so Ember on another computer recognises the app.
+  await mkdir(path.join(root, '.ember'), { recursive: true });
+  await writeFile(path.join(root, MARKER), `${JSON.stringify({ app: input.appName, folder: path.basename(root), savedAt: new Date().toISOString() }, null, 2)}\n`);
+  await api(input.token, 'PUT', `/repos/${owner}/${repo}/topics`, { names: [EMBER_TOPIC] }, fetchImpl).catch(() => ({}));
+
   const ignore = path.join(root, '.gitignore');
   if (!existsSync(ignore)) await writeFile(ignore, GITIGNORE);
   else {
@@ -135,4 +144,75 @@ export async function saveToGitHub(input: SaveInput, fetchImpl: typeof fetch = f
     throw new GitHubError('push_failed', `GitHub refused the upload: ${reason}`);
   }
   return { url: `https://github.com/${owner}/${repo}`, repo, owner, created, pushed: !nothingToCommit || push.code === 0 };
+}
+
+export interface RemoteApp {
+  repo: string;
+  owner: string;
+  app: string;
+  url: string;
+  updatedAt: string;
+  private: boolean;
+}
+
+/**
+ * The apps this account saved from Ember, newest first: every repository
+ * carrying the Ember topic, wherever it was saved from.
+ */
+export async function listEmberApps(token: string, fetchImpl: typeof fetch = fetch): Promise<RemoteApp[]> {
+  const me = (await api(token, 'GET', '/user', undefined, fetchImpl)) as { login?: string };
+  const owner = String(me.login ?? '');
+  const rows = (await api(token, 'GET', `/user/repos?per_page=100&sort=updated&affiliation=owner`, undefined, fetchImpl)) as unknown as Array<{
+    name: string;
+    owner?: { login?: string };
+    topics?: string[];
+    description?: string;
+    html_url?: string;
+    updated_at?: string;
+    private?: boolean;
+  }>;
+  return (Array.isArray(rows) ? rows : [])
+    .filter((r) => (r.topics ?? []).includes(EMBER_TOPIC))
+    .map((r) => ({
+      repo: r.name,
+      owner: r.owner?.login ?? owner,
+      app: r.name.replace(/-/g, ' '),
+      url: r.html_url ?? `https://github.com/${owner}/${r.name}`,
+      updatedAt: r.updated_at ?? '',
+      private: r.private ?? true,
+    }));
+}
+
+export interface RestoreInput {
+  token: string;
+  repo: string;
+  owner?: string;
+  /** Folder to create the app in; it must not exist yet. */
+  dest: string;
+  runGit?: (args: string[], cwd: string) => Promise<{ code: number; out: string; err: string }>;
+}
+
+/** Brings one saved app back onto this computer. Returns its name on the store. */
+export async function restoreFromGitHub(input: RestoreInput, fetchImpl: typeof fetch = fetch): Promise<{ app: string; dest: string }> {
+  const run = input.runGit ?? ((args: string[], cwd: string) => git(args, cwd));
+  let owner = input.owner?.trim() ?? '';
+  if (!owner) {
+    const me = (await api(input.token, 'GET', '/user', undefined, fetchImpl)) as { login?: string };
+    owner = String(me.login ?? '');
+  }
+  if (existsSync(input.dest)) throw new GitHubError('exists', `An app already exists in ${path.basename(input.dest)}`);
+  await mkdir(path.dirname(input.dest), { recursive: true });
+
+  const url = `https://x-access-token:${input.token}@github.com/${owner}/${input.repo}.git`;
+  const clone = await run(['clone', '--depth', '1', url, input.dest], path.dirname(input.dest));
+  if (clone.code !== 0) {
+    const reason = (clone.err || clone.out).replace(input.token, '***').slice(-300);
+    throw new GitHubError('clone_failed', `GitHub could not send the app back: ${reason}`);
+  }
+  // The clone keeps the token in the remote: replace it with the plain address.
+  await run(['remote', 'set-url', 'origin', `https://github.com/${owner}/${input.repo}.git`], input.dest);
+
+  const marker = await readFile(path.join(input.dest, MARKER), 'utf8').catch(() => '');
+  const app = `${(JSON.parse(marker || 'null') as { app?: string } | null)?.app ?? ''}`.trim() || input.repo.replace(/-/g, ' ');
+  return { app, dest: input.dest };
 }

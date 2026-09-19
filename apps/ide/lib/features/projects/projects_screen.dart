@@ -14,6 +14,7 @@ import '../assistant/home_assistant.dart';
 import '../create/app_builder.dart';
 import '../create/create_app_screen.dart';
 import '../create/reference_app.dart';
+import 'restore_from_github.dart';
 import 'package:ai_connect/ai_connect.dart';
 
 /// The user's default workspace (created on first use).
@@ -109,6 +110,19 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     context.push('/mockups', extra: CreateAppArgs(prompt: prompt, engine: engine, modelKey: model?.key, quality: quality, reference: reference?.brief()));
   }
 
+  /// Opens an app saved on GitHub: the same apps from Windows and from a Mac.
+  Future<void> _restoreFromGitHub() async {
+    final ws = await ref.read(workspaceProvider.future);
+    final here = {for (final p in ref.read(projectsProvider).value ?? const <Project>[]) p.name};
+    if (!mounted) return;
+    final project = await showDialog<Project>(
+      context: context,
+      builder: (_) => RestoreFromGitHubDialog(workspaceId: ws.id, alreadyHere: here),
+    );
+    ref.invalidate(projectsProvider);
+    if (project != null && mounted) context.go('/projects/${project.id}/create');
+  }
+
   Future<void> _delete(Project p) async {
     final l = AppLocalizations.of(context);
     final confirm = await showDialog<bool>(
@@ -153,6 +167,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                   ? setState(() => _assistantOpen = !_assistantOpen)
                   : _openAssistantFullScreen(),
             ),
+          ),
+          IconButton(
+            key: const Key('restoreFromGitHub'),
+            tooltip: l.ghRestoreTitle,
+            icon: const Icon(Icons.cloud_download_outlined),
+            onPressed: _restoreFromGitHub,
           ),
           IconButton(
             tooltip: l.aiSettings,

@@ -2498,6 +2498,48 @@ abstract class AppLocalizations {
   /// **'Create a token on GitHub'**
   String get ghGetToken;
 
+  /// No description provided for @ghRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open an app saved on GitHub'**
+  String get ghRestoreTitle;
+
+  /// No description provided for @ghRestoreHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The apps you saved on GitHub come back onto this computer, with everything they had. This is how you work on the same app from Windows and from a Mac.'**
+  String get ghRestoreHint;
+
+  /// No description provided for @ghRestoreLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Show my apps'**
+  String get ghRestoreLoad;
+
+  /// No description provided for @ghRestoreNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No app saved from Ember yet on this GitHub account.'**
+  String get ghRestoreNone;
+
+  /// No description provided for @ghRestoreHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Already on this computer'**
+  String get ghRestoreHere;
+
+  /// No description provided for @ghRestoreAction.
+  ///
+  /// In en, this message translates to:
+  /// **'From GitHub'**
+  String get ghRestoreAction;
+
+  /// No description provided for @refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
   /// No description provided for @ghSave.
   ///
   /// In en, this message translates to:

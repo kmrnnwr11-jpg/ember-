@@ -119,6 +119,9 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       final info = await (await ref.read(runnerApiProvider.future)).androidInfo(widget.projectId);
       if (mounted) setState(() => _packageName = info['applicationId'] as String?);
     } catch (_) {}
+    // An app with nothing written yet gets its listing written now: the user came
+    // here to publish, not to face five empty boxes.
+    if (mounted && _title.text.trim().isEmpty && !_generating) await _generate();
   }
 
   @override

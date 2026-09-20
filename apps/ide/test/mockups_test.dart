@@ -41,7 +41,8 @@ void main() {
     await c.generateSet();
     expect(c.current.length, 5);
     expect(c.current.every((m) => m.status == MockupStatus.ready), isTrue);
-    expect(maxInFlight, 5);
+    // Two at a time: five long answers at once get throttled or cut short.
+    expect(maxInFlight, 2);
     final firstNames = c.current.map((m) => m.style.id).toSet();
     expect(firstNames.length, 5);
 
@@ -76,5 +77,14 @@ void main() {
     expect(prompt, contains('the rest of the brief goes to the build'));
     // A short description is passed whole.
     expect(mockupUserPrompt('app di ricette', mockupStylePool.first), contains('app di ricette'));
+  });
+
+  test('each proposal commits to its own colour, and the subject leads', () {
+    final first = mockupUserPrompt('app PDF', mockupStylePool.first, accent: mockupAccents.first);
+    final second = mockupUserPrompt('app PDF', mockupStylePool[1], accent: mockupAccents[1]);
+    expect(first, contains('red / crimson'));
+    expect(second, contains('deep blue'));
+    expect(first, contains('the subject of the app calls for its own colour, which always wins'));
+    expect(mockupSystemPrompt, contains('PDF and documents red'));
   });
 }

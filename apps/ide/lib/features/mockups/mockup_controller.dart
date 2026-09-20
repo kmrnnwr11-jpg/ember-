@@ -44,9 +44,11 @@ Rules:
 - The HTML must work offline: inline <style>, no JavaScript frameworks, no external images (use CSS gradients, shapes and inline SVG as imagery). Google Fonts <link> is allowed with a system font fallback.
 - Icons: draw them as inline SVG in the current line style — a 24px grid, 1.5-2px strokes, round caps, no fill, inheriting the text colour. This is what a phone looks like today. Never use emoji as an interface icon: an emoji in a toolbar is the mark of a mockup, not of an app. Emoji are allowed only inside fake content, where a person would have typed one.
 - Designed for a 390px-wide phone viewport (<meta name="viewport" content="width=device-width, initial-scale=1">). No horizontal scrolling.
+- Keep the whole file under 700 lines: a page cut off in the middle is useless, so prefer fewer decorative flourishes and finish the document.
 - Show the app's 3 most important screens stacked vertically (e.g. onboarding/home + 2 key screens). Each screen is a full-width section about 844px tall, looking like a real app screen (status bar area, headers, content, bottom navigation where it makes sense), separated by a thin label with the screen name.
 - Realistic fake content in the same language as the app description. Polished spacing, hierarchy and consistent components.
-- Follow the requested visual style strictly so different styles look clearly different.''';
+- Follow the requested visual style strictly so different styles look clearly different.
+- COLOUR COMES FROM THE SUBJECT, not from habit: use the colour people already associate with this kind of app (PDF and documents red, money and banking green, water and travel blue, food warm orange, night and sleep deep indigo, health teal) and build the palette around it.''';
 
 /// The styles worth showing for an app like this one. A children's app has no
 /// business being offered a dark premium direction, and a banking app has no
@@ -77,12 +79,22 @@ String shortDescription(String description) =>
         ? description
         : '${description.substring(0, maxMockupDescription)}\n…(the rest of the brief goes to the build, not to the drawing)';
 
-String mockupUserPrompt(String appDescription, MockupStyle style, {String? previousHtml, String? change, String styleBrief = ''}) {
+/// Each mockup of a set gets its own accent, so five proposals are five real
+/// choices and not the same page five times.
+const mockupAccents = ['red / crimson', 'deep blue', 'emerald green', 'violet', 'amber orange', 'teal', 'magenta', 'indigo'];
+
+String mockupUserPrompt(String appDescription, MockupStyle style, {String? previousHtml, String? change, String styleBrief = '', String? accent}) {
   final b = StringBuffer()
     ..writeln('App description:')
     ..writeln(shortDescription(appDescription))
     ..writeln()
     ..writeln('Visual style: ${style.name} — ${style.direction}');
+  if (accent != null) {
+    b.writeln(
+      'Accent colour for this proposal: $accent. Lead with it, so this proposal is visibly a different choice from the others — '
+      'unless the subject of the app calls for its own colour, which always wins.',
+    );
+  }
   if (styleBrief.trim().isNotEmpty) {
     b
       ..writeln()
@@ -180,12 +192,20 @@ class MockupController extends ChangeNotifier {
   Future<void> generateSet() async {
     final pool = stylePoolFor(styleBrief);
     final styles = [for (var i = 0; i < 5; i++) pool[(_poolOffset + i) % pool.length]];
+    final accents = [for (var i = 0; i < 5; i++) mockupAccents[(_poolOffset + i) % mockupAccents.length]];
     _poolOffset += 5;
     final set = [for (final s in styles) Mockup(s)];
     sets.add(set);
     viewingSet = sets.length - 1;
     notifyListeners();
-    await Future.wait([for (final m in set) _generate(m, mockupUserPrompt(description, m.style, styleBrief: styleBrief))]);
+    // Two at a time: five long answers at once get throttled or cut short on a
+    // free tier, and a cut page is a failed mockup.
+    for (var i = 0; i < set.length; i += 2) {
+      await Future.wait([
+        for (final (j, m) in set.skip(i).take(2).indexed)
+          _generate(m, mockupUserPrompt(description, m.style, styleBrief: styleBrief, accent: accents[i + j])),
+      ]);
+    }
   }
 
   /// Regenerates one mockup applying the user's change ("Modifica questo").
@@ -241,11 +261,11 @@ class MockupController extends ChangeNotifier {
 }
 
 /// Text completion through an API provider (Gemini, Claude, ChatGPT, Grok).
-CompleteText apiCompleter(Future<AiProvider> Function(AiModel) resolve, AiModel model) => (system, prompt) async {
+CompleteText apiCompleter(Future<AiProvider> Function(AiModel) resolve, AiModel model, {int maxTokens = 32000}) => (system, prompt) async {
   final provider = await resolve(model);
   final buf = StringBuffer();
   var input = 0, output = 0;
-  await for (final e in provider.chat(model: model.id, system: system, maxTokens: 16000, messages: [AiMessage.user(prompt)])) {
+  await for (final e in provider.chat(model: model.id, system: system, maxTokens: maxTokens, messages: [AiMessage.user(prompt)])) {
     switch (e) {
       case AiTextDelta(:final text):
         buf.write(text);

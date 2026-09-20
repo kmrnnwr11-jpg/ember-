@@ -121,6 +121,31 @@ describe('Play products', () => {
     expect(bodies.at(-1)).toContain('en-US');
   });
 
+  it('falls back to the current API when Google refuses the old one-time product call', async () => {
+    const calls: Array<{ method: string; url: string }> = [];
+    const fake = (async (url: string | URL | Request, init?: RequestInit) => {
+      const u = String(url);
+      const method = init?.method ?? 'GET';
+      calls.push({ method, url: u });
+      if (u.includes('oauth2')) return new Response('{"access_token":"t"}', { status: 200 });
+      if (u.endsWith('pricing:convertRegionPrices')) {
+        return new Response(JSON.stringify({ convertedRegionPrices: { IT: { regionCode: 'IT', price: { currencyCode: 'EUR', units: '0', nanos: 990000000 } } } }), { status: 200 });
+      }
+      if (u.includes('/inappproducts/')) {
+        return new Response(JSON.stringify({ error: { message: 'The caller does not have permission' } }), { status: 403 });
+      }
+      return new Response('{}', { status: 200 });
+    }) as typeof fetch;
+
+    const [res] = await syncProducts(
+      { serviceAccount: sa, packageName: 'com.demo.app', products: [{ id: 'remove_ads', type: 'inapp', title: 'No ads', description: 'Remove the ads', price: '3.99', currency: 'EUR' }] },
+      fake,
+    );
+    expect(res).toMatchObject({ id: 'remove_ads', ok: true, status: 'active' });
+    expect(calls.some((c) => c.method === 'PATCH' && c.url.includes('/oneTimeProducts/remove_ads'))).toBe(true);
+    expect(calls.some((c) => c.url.endsWith('/purchaseOptions:batchUpdateStates'))).toBe(true);
+  });
+
   it('explains the usual Google errors', () => {
     expect(explainProductError(403, 'The caller does not have permission')).toContain('Manage orders and subscriptions');
     expect(explainProductError(400, 'This app does not have BILLING permission')).toContain('upload the AAB');

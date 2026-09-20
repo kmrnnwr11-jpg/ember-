@@ -100,8 +100,65 @@ async function upsertInApp(fetchImpl: Fetch, token: string, pkg: string, p: Prod
     listings: { [lang]: { title: p.title, description: p.description || p.title } },
   };
   const r = await call(fetchImpl, token, 'PUT', `${API}/${pkg}/inappproducts/${encodeURIComponent(p.id)}?autoConvertMissingPrices=true&allowMissing=true`, body);
-  if (!r.res.ok) return { id: p.id, ok: false, error: explainProductError(r.res.status, r.message) };
-  return { id: p.id, ok: true, status: 'active' };
+  if (r.res.ok) return { id: p.id, ok: true, status: 'active' };
+  // Google is retiring this way of selling one-time products, and refuses it on
+  // newer apps. Try the way subscriptions already use before giving up.
+  if (r.res.status === 403 || r.res.status === 404 || r.res.status === 400) {
+    const viaNewApi = await upsertOneTimeProduct(fetchImpl, token, pkg, p);
+    if (viaNewApi.ok) return viaNewApi;
+  }
+  return { id: p.id, ok: false, error: explainProductError(r.res.status, r.message) };
+}
+
+/** One-time products on the current API (`monetization.oneTimeProducts`). */
+async function upsertOneTimeProduct(fetchImpl: Fetch, token: string, pkg: string, p: ProductSpec): Promise<ProductResult> {
+  const lang = p.language ?? 'it-IT';
+  const conv = await call(fetchImpl, token, 'POST', `${API}/${pkg}/pricing:convertRegionPrices`, { price: toMoney(p.price, p.currency) });
+  if (!conv.res.ok) return { id: p.id, ok: false, error: explainProductError(conv.res.status, conv.message) };
+  const converted = Object.values((conv.json.convertedRegionPrices ?? {}) as Record<string, { regionCode: string; price: unknown }>);
+  const purchaseOptionId = 'buy';
+  const product = {
+    packageName: pkg,
+    productId: p.id,
+    listings: [lang, ...(lang === 'en-US' ? [] : ['en-US'])].map((languageCode) => ({
+      languageCode,
+      title: p.title,
+      description: (p.description || p.title).slice(0, 200),
+    })),
+    purchaseOptions: [
+      {
+        purchaseOptionId,
+        state: 'DRAFT',
+        buyOption: {},
+        regionalPricingAndAvailabilityConfigs: converted.map((c) => ({ regionCode: c.regionCode, price: c.price, availability: 'AVAILABLE' })),
+        newRegionsConfig: { availability: 'AVAILABLE' },
+      },
+    ],
+  };
+  const url = `${API}/${pkg}/oneTimeProducts/${encodeURIComponent(p.id)}?updateMask=listings,purchaseOptions&allowMissing=true&regionsVersion.version=${REGIONS_VERSION}`;
+  const dropped: string[] = [];
+  let up = await call(fetchImpl, token, 'PATCH', url, product);
+  for (let i = 0; i < 12 && !up.res.ok; i++) {
+    const region = /region\s*code\s*"?([A-Z]{2})/i.exec(up.message)?.[1];
+    if (!region) break;
+    dropped.push(region);
+    product.purchaseOptions[0]!.regionalPricingAndAvailabilityConfigs = product.purchaseOptions[0]!.regionalPricingAndAvailabilityConfigs.filter((c) => !dropped.includes(c.regionCode));
+    up = await call(fetchImpl, token, 'PATCH', url, product);
+  }
+  if (!up.res.ok) return { id: p.id, ok: false, error: explainProductError(up.res.status, up.message) };
+
+  const act = await call(fetchImpl, token, 'POST', `${API}/${pkg}/oneTimeProducts/${encodeURIComponent(p.id)}/purchaseOptions:batchUpdateStates`, {
+    requests: [{ packageName: pkg, productId: p.id, activatePurchaseOption: { purchaseOptionId } }],
+  });
+  if (!act.res.ok && !/already active/i.test(act.message)) {
+    return { id: p.id, ok: false, status: 'created', error: explainProductError(act.res.status, act.message) };
+  }
+  return {
+    id: p.id,
+    ok: true,
+    status: 'active',
+    ...(dropped.length > 0 ? { error: `On sale everywhere except ${dropped.join(', ')}: Google would not accept the converted price there.` } : {}),
+  };
 }
 
 async function upsertSubscription(fetchImpl: Fetch, token: string, pkg: string, p: ProductSpec): Promise<ProductResult> {

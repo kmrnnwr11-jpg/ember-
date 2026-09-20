@@ -316,9 +316,12 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
 
   cancel(runId: string): boolean {
     const run = this.runs.get(runId);
-    const child = this.procs.get(runId);
-    if (!run || !child) return false;
+    if (!run) return false;
+    // The process may already be gone (the machine slept, the CLI died): the
+    // run must still stop counting as running, or the project stays blocked.
     run.status = 'cancelled';
+    const child = this.procs.get(runId);
+    if (!child) return false;
     if (process.platform === 'win32' && child.pid) {
       this.spawnImpl('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true });
     } else {

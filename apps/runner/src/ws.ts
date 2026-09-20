@@ -278,7 +278,13 @@ export class Session {
         const prompt = str(p.prompt, 'prompt');
         // Sent via stdin: long requests (reference app listing + design brief + Android info) are fine.
         if (!prompt.trim() || prompt.length > 200_000) throw Object.assign(new Error('prompt must be 1-200000 characters'), { code: 'bad_request' });
-        if (this.claudeCode.activeFor(project.id)) throw Object.assign(new Error('an agent is already running on this project'), { code: 'bad_request' });
+        // A run left behind by a dropped connection would block the project for
+        // good. The owner asking again outranks it: stop it and take over.
+        const stale = this.claudeCode.activeFor(project.id);
+        if (stale) {
+          this.claudeCode.cancel(stale.id);
+          await new Promise((r) => setTimeout(r, 500));
+        }
         const run = this.claudeCode.start({
           ownerId: uid,
           projectId: project.id,

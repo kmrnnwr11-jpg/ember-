@@ -85,6 +85,18 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// Reads a website as the model for an app (no project needed yet).
+  Future<Map<String, dynamic>> readSite(String url) => _call(
+    () => _dio.get('/v1/research/site', queryParameters: {'url': url}, options: Options(receiveTimeout: const Duration(seconds: 60))),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Photographs the site's pages into the project, as a model for the engine.
+  Future<Map<String, dynamic>> saveSiteShots(String projectId, String url) => _call(
+    () => _dio.post('/v1/projects/$projectId/site-reference', data: {'url': url, 'shots': true}, options: Options(receiveTimeout: const Duration(minutes: 6))),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// Android package name + SHA-1 fingerprints (release upload key, debug key).
   Future<Map<String, dynamic>> androidInfo(String projectId) =>
       _call(() => _dio.get('/v1/projects/$projectId/android-info'), (d) => d as Map<String, dynamic>);

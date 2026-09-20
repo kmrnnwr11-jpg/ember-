@@ -197,6 +197,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
             referenceId: widget.args.referenceId,
             referenceTopics: widget.args.referenceTopics,
             styleBrief: widget.args.styleBrief,
+            referenceSiteUrl: widget.args.referenceSiteUrl,
             designName: m?.name,
             appName: appName,
           ),

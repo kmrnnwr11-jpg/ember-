@@ -141,6 +141,7 @@ class AppBuilder extends ChangeNotifier {
     required Future<AiProvider> Function(AiModel model) resolveProvider,
     this.androidInfo,
     this.saveReferenceShots,
+    this.saveSiteShots,
     this.onSession,
     AppLocalizations? strings,
     this.maxFixRounds = 3,
@@ -165,6 +166,9 @@ class AppBuilder extends ChangeNotifier {
   /// Puts the reference app's Play Store screenshots inside the project, so the
   /// engine copies screens it has seen instead of screens it imagined.
   final Future<int> Function(String playAppId)? saveReferenceShots;
+
+  /// The same, for a website being turned into an app.
+  final Future<int> Function(String url)? saveSiteShots;
   /// UI language for log lines and errors; updated when the user switches language.
   AppLocalizations strings;
   /// Called with [toSession] whenever the chat changes, so the app can be reopened later.
@@ -304,6 +308,7 @@ class AppBuilder extends ChangeNotifier {
     String? referenceId,
     List<String> referenceTopics = const [],
     String? appName,
+    String? referenceSiteUrl,
   }) {
     this.quality = quality;
     this.design = design;
@@ -311,12 +316,16 @@ class AppBuilder extends ChangeNotifier {
     this.referenceId = referenceId;
     this.referenceTopics = referenceTopics;
     this.appName = appName;
+    this.referenceSiteUrl = referenceSiteUrl;
     _coverageChecked = false;
     return _run(prompt: prompt, engine: engine, model: model, change: null);
   }
 
   /// The name the user chose: it must appear everywhere the app names itself.
   String? appName;
+
+  /// A website being copied, photographed before the build.
+  String? referenceSiteUrl;
 
   /// The Play Store app being copied, and the subjects its listing promises.
   String? referenceId;
@@ -382,6 +391,11 @@ class AppBuilder extends ChangeNotifier {
       final refId = referenceId;
       if (change == null && refId != null && saveReferenceShots != null) {
         final saved = await saveReferenceShots!(refId).catchError((_) => 0);
+        _log(saved > 0 ? strings.bReferenceShots(saved) : strings.bReferenceShotsFailed, kind: saved > 0 ? 'info' : 'error');
+      }
+      final siteUrl = referenceSiteUrl;
+      if (change == null && siteUrl != null && saveSiteShots != null) {
+        final saved = await saveSiteShots!(siteUrl).catchError((_) => 0);
         _log(saved > 0 ? strings.bReferenceShots(saved) : strings.bReferenceShotsFailed, kind: saved > 0 ? 'info' : 'error');
       }
       if (engine.isCli) {

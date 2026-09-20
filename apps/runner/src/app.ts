@@ -22,6 +22,7 @@ import { DEFAULT_UPSTREAMS, GEMINI_FALLBACKS, registerAiRoutes } from './ai.js';
 import { applyLogo, generateLogos, storeState } from './logos.js';
 import { captureScreenshots, findBrowser, hasScreenshotMode, SCREENSHOT_UPGRADE_REQUEST } from './screenshots.js';
 import { parseScreenshots, registerResearchRoutes, saveReferenceShots } from './research.js';
+import { readSite, saveSiteShots } from './web_reference.js';
 import { ClaudeCodeEngine, detectClis } from './agent_cli.js';
 import { z } from 'zod';
 import { Authenticator, bearer, type AuthUser } from './auth.js';
@@ -626,6 +627,26 @@ export async function buildApp(
       if (!page?.ok) return reply.status(502).send({ code: 'store_unreachable', message: 'Could not read that app page on the Play Store' });
       const shots = parseScreenshots(await page.text());
       return saveReferenceShots(services.projectRoot(project), shots);
+    });
+
+    // A website taken as the model for an app: what it offers, its other pages,
+    // how it earns, and photographs of it as a phone sees it.
+    r.post('/v1/projects/:projectId/site-reference', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const { url, shots } = z.object({ url: z.string().url().max(2000), shots: z.boolean().default(true) }).parse(req.body);
+      try {
+        const site = await readSite(url);
+        let saved = 0;
+        const browser = findBrowser();
+        if (shots && browser) {
+          const urls = [site.url, ...site.pages.slice(0, 5).map((p) => p.url)];
+          saved = (await saveSiteShots({ projectRoot: services.projectRoot(project), urls, browser }).catch(() => ({ saved: 0 }))).saved;
+        }
+        return { site, shotsSaved: saved };
+      } catch (e) {
+        return reply.status(502).send({ code: 'site_unreachable', message: `Could not read that website: ${(e as Error).message}` });
+      }
     });
 
     // The phones plugged into this computer, so an app can be tried where it counts.

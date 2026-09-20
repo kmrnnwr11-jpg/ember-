@@ -70,6 +70,30 @@ All the games are designed with interactive graphics.''',
     expect(stylePoolFor('').first.id, mockupStylePool.first.id);
   });
 
+  test('turns a website link into the app to build', () {
+    expect(referenceSiteUrl('fammi app da https://zendocs.com/it/edit-pdf?id=abc'), 'https://zendocs.com/it/edit-pdf?id=abc');
+    // A Play Store link is the other kind of reference, handled elsewhere.
+    expect(referenceSiteUrl('https://play.google.com/store/apps/details?id=x.y'), isNull);
+    expect(referenceSiteUrl('un app di ricette'), isNull);
+
+    const site = ReferenceSite(
+      url: 'https://zendocs.com/it/edit-pdf',
+      title: 'ZenDocs',
+      description: 'Modifica PDF online',
+      features: ['Modifica PDF', 'Comprimi PDF'],
+      pages: [(url: 'https://zendocs.com/it/merge-pdf', label: 'Unisci PDF')],
+      prices: ['9,99 € / mese'],
+      colors: ['#2f6df6'],
+      shotsSaved: 4,
+    );
+    final b = site.brief();
+    expect(b, contains('none left out (3)'));
+    expect(b, contains('- Unisci PDF'));
+    expect(b, contains('9,99'));
+    expect(b, contains('reference/'));
+    expect(b, contains('Never the site'));
+  });
+
   test('copies how the model app earns, because that is part of the app', () {
     const free = ReferenceApp(id: 'x.y', title: 'Demo', developer: '', icon: '', url: 'u');
     expect(free.brief(), contains('shows no ads and sells nothing'));

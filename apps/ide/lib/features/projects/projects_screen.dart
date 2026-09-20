@@ -99,13 +99,24 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
   /// Describe → see 5 style mockups full screen → choose → build (§1B).
   Future<void> _createFromPrompt(String prompt, BuildEngine engine, AiModel? model, String quality) async {
-    // "Make an app like X": study X on the Play Store first, then design and build the same features.
+    // "Make an app like X": study X first — on the Play Store, or the website
+    // itself when the link is a site — then design and build the same features.
     ReferenceApp? reference;
+    ReferenceSite? site;
+    final siteUrl = referenceSiteUrl(prompt);
     try {
       final api = await ref.read(runnerApiProvider.future);
       if (!mounted) return;
-      reference = await pickReferenceApp(context, api, prompt);
-    } catch (_) {}
+      if (siteUrl != null) {
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).researchingApp(Uri.parse(siteUrl).host))));
+        site = ReferenceSite.fromJson(await api.readSite(siteUrl));
+      } else {
+        reference = await pickReferenceApp(context, api, prompt);
+      }
+    } catch (e) {
+      if (mounted && siteUrl != null) _snack(AppLocalizations.of(context).error(e is RunnerException ? e.message : e.toString()));
+    }
     if (!mounted) return;
     context.push(
       '/mockups',
@@ -114,10 +125,11 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         engine: engine,
         modelKey: model?.key,
         quality: quality,
-        reference: reference?.brief(),
+        reference: reference?.brief() ?? site?.brief(),
         referenceId: reference?.id,
-        referenceTopics: reference?.topics() ?? const [],
+        referenceTopics: reference?.topics() ?? [for (final f in site?.features.take(20) ?? const <String>[]) f],
         styleBrief: reference?.visualDirection() ?? '',
+        referenceSiteUrl: site?.url,
       ),
     );
   }

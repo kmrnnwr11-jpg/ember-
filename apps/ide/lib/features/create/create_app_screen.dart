@@ -65,6 +65,7 @@ class CreateAppArgs {
     this.referenceTopics = const [],
     this.styleBrief = '',
     this.appName,
+    this.referenceSiteUrl,
   });
   final String prompt;
   final BuildEngine engine;
@@ -89,6 +90,10 @@ class CreateAppArgs {
   /// The name the user chose before the build: store listing, privacy policy
   /// and package name all come from it.
   final String? appName;
+
+  /// A website being turned into an app: its pages are photographed into the
+  /// project before the build, the way a Play listing's screenshots are.
+  final String? referenceSiteUrl;
 }
 
 /// One builder per project, kept alive so a build continues if the user navigates away.
@@ -107,6 +112,10 @@ final appBuilderProvider = ChangeNotifierProvider.family<AppBuilder, (String, St
     saveReferenceShots: (playAppId) async {
       final res = await (await ref.read(runnerApiProvider.future)).saveReferenceShots(projectId, playAppId);
       return (res['saved'] as num?)?.toInt() ?? 0;
+    },
+    saveSiteShots: (url) async {
+      final res = await (await ref.read(runnerApiProvider.future)).saveSiteShots(projectId, url);
+      return (res['shotsSaved'] as num?)?.toInt() ?? 0;
     },
     androidInfo: () async {
       final info = await (await ref.read(runnerApiProvider.future)).androidInfo(projectId);
@@ -371,6 +380,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
       referenceId: args.referenceId,
       referenceTopics: args.referenceTopics,
       appName: args.appName,
+      referenceSiteUrl: args.referenceSiteUrl,
     );
   }
 

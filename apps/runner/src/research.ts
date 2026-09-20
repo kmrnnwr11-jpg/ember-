@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { readSite } from './web_reference.js';
 
 /** Public Play Store data about an app the user wants to take as a model. */
 export interface PlayApp {
@@ -152,6 +153,17 @@ export async function registerResearchRoutes(
         return { apps: apps.map(({ description, ...a }) => ({ ...a, summary: description.slice(0, 160) })) };
       } catch {
         return reply.status(502).send({ code: 'upstream_unreachable', message: 'Play Store unreachable' });
+      }
+    });
+
+    // A website read as the model for an app, before a project exists.
+    r.get('/v1/research/site', async (req, reply) => {
+      const { url } = req.query as { url?: string };
+      if (!url || !/^https?:\/\//.test(url)) return reply.status(400).send({ code: 'bad_request', message: 'url is required' });
+      try {
+        return { site: await readSite(url, fetchImpl) };
+      } catch (e) {
+        return reply.status(502).send({ code: 'site_unreachable', message: `Could not read that website: ${(e as Error).message}` });
       }
     });
 

@@ -193,6 +193,80 @@ $_money''';
   }
 }
 
+/// A website the user wants turned into an app, read from its own pages.
+class ReferenceSite {
+  const ReferenceSite({
+    required this.url,
+    required this.title,
+    required this.description,
+    this.features = const [],
+    this.pages = const [],
+    this.prices = const [],
+    this.colors = const [],
+    this.shotsSaved = 0,
+  });
+
+  factory ReferenceSite.fromJson(Map<String, dynamic> j, {int shotsSaved = 0}) {
+    final site = (j['site'] as Map?)?.cast<String, dynamic>() ?? j;
+    List<String> list(String key) => [for (final v in (site[key] as List? ?? const [])) '$v'];
+    return ReferenceSite(
+      url: '${site['url'] ?? ''}',
+      title: '${site['title'] ?? ''}',
+      description: '${site['description'] ?? ''}',
+      features: list('features'),
+      prices: list('prices'),
+      colors: list('colors'),
+      pages: [
+        for (final p in (site['pages'] as List? ?? const []))
+          (url: '${(p as Map)['url']}', label: '${p['label']}'),
+      ],
+      shotsSaved: (j['shotsSaved'] as num?)?.toInt() ?? shotsSaved,
+    );
+  }
+
+  final String url;
+  final String title;
+  final String description;
+
+  /// What the site says it does: headings, buttons, tool names.
+  final List<String> features;
+  final List<({String url, String label})> pages;
+  final List<String> prices;
+  final List<String> colors;
+
+  /// Pages photographed into the project's `reference/` folder.
+  final int shotsSaved;
+
+  /// Instructions appended to the build prompt: the whole site, as an app.
+  String brief() {
+    final tools = <String>{
+      for (final f in features.take(25)) '- $f',
+      for (final p in pages.take(20)) '- ${p.label}',
+    }.toList();
+
+    return '''
+
+
+REFERENCE WEBSITE — the user wants this website rebuilt as a mobile app. Everything the site does, the app does, working offline on the phone where that is possible.
+Site: ${title.isEmpty ? url : title}
+Address: $url
+${description.isEmpty ? '' : 'What it says it is: $description\n'}
+EVERYTHING IT OFFERS — build them all, none left out (${tools.length}):
+${tools.join('\n')}
+Each of these is a real, working feature with its own screen, not a menu entry that opens a placeholder. A tool that processes files does the processing on the phone, with a native file picker, progress, a result the user can save or share, and an honest message when something cannot be done on a phone.
+${prices.isEmpty ? '' : 'HOW IT EARNS — the site charges ${prices.take(4).join(', ')}: put the same kind of free tier and paid upgrade in the app, with in_app_purchase and EMBER_PRODUCTS.\n'}${shotsSaved > 0 ? 'The site\'s pages are photographed in the project folder `reference/`: look at every one and rebuild what they show — the order of things, what sits where, how a task starts and ends.\n' : ''}${colors.isEmpty ? '' : 'Its colours are ${colors.take(4).join(', ')}: take them as a starting point and depart from them — your own palette, near enough to feel related, different enough to be yours.\n'}
+STAYING LEGAL — same purpose, your own skin: your own app name, your own logo, your own wording. Never the site's name, logo, trademarks or copied text, and never claim to be them or to be official.''';
+  }
+}
+
+/// A website link in the request (not a Play Store one), or null.
+String? referenceSiteUrl(String prompt) {
+  final m = RegExp(r'https?://[^\s<>"]+').firstMatch(prompt);
+  final url = m?.group(0);
+  if (url == null || url.contains('play.google.com') || url.contains('apps.apple.com')) return null;
+  return url;
+}
+
 /// Detects "an app like X" in a request and returns X, or a Play Store id from a link.
 String? referenceQuery(String prompt) {
   final link = RegExp(r'play\.google\.com/store/apps/details\?id=([A-Za-z][\w.]+)').firstMatch(prompt);

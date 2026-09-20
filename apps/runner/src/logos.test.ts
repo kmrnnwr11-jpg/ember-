@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { applyLogo, generateLogos, sanitizeSvg, withLauncherIcons } from './logos.js';
+import { applyLogo, generateLogos, LOGO_SYSTEM, sanitizeSvg, withLauncherIcons } from './logos.js';
 
 const SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#123"/><circle cx="256" cy="256" r="120" fill="#fc3"/></svg>';
 
@@ -16,6 +16,12 @@ describe('logos', () => {
     expect(sanitizeSvg('no svg here')).toBeNull();
   });
 
+  it('tells the designer to fill the icon and draw the thing that was asked for', () => {
+    expect(LOGO_SYSTEM).toContain('at least 440 of the 512 units');
+    expect(LOGO_SYSTEM).toContain('Draw exactly what was asked for');
+    expect(LOGO_SYSTEM).not.toContain('360x360');
+  });
+
   it('generates proposals, then applies one as icon, Play icon and feature graphic', async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'fc-logo-'));
     await writeFile(path.join(root, 'pubspec.yaml'), 'name: demo\ndependencies:\n  flutter:\n    sdk: flutter\ndev_dependencies:\n  flutter_test:\n    sdk: flutter\n');
@@ -23,7 +29,11 @@ describe('logos', () => {
     const logos = await generateLogos({ projectRoot: root, appName: 'Demo', about: 'reads PDFs', hint: 'blue shield', count: 3, complete: async (_s, p) => (prompts.push(p), SVG) });
     expect(logos).toHaveLength(3);
     expect(new Set(prompts).size).toBe(3);
-    expect(prompts[0]).toContain('blue shield');
+    // What the user asked for leads the prompt and outranks the style, and the
+    // drawing must fill the icon instead of floating in empty space.
+    expect(prompts[0]!.startsWith('DRAW THIS, exactly this, as the subject of the icon: blue shield')).toBe(true);
+    expect(prompts[0]).toContain('never replaces the subject');
+    expect(prompts[0]).toContain('90% of the canvas');
     const applied = await applyLogo(root, logos[0]!.id);
     for (const f of [applied.icon, applied.playIcon, applied.featureGraphic]) expect((await stat(path.join(root, f))).size).toBeGreaterThan(1000);
     const pubspec = await readFile(path.join(root, 'pubspec.yaml'), 'utf8');

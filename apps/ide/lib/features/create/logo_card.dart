@@ -124,7 +124,14 @@ class _LogoCardState extends ConsumerState<LogoCard> {
             TextField(
               key: const Key('logoHint'),
               controller: _hint,
-              maxLines: 2,
+              // One line, so Enter means "go" instead of a new line.
+              maxLines: 1,
+              // Enter starts the drawing: typing then pressing enter is what a
+              // person expects here, not a hunt for the button.
+              textInputAction: TextInputAction.go,
+              onSubmitted: (_) {
+                if (!_busy) _generate();
+              },
               decoration: InputDecoration(labelText: l.logoDescribe, hintText: l.logoDescribeHint, border: const OutlineInputBorder(), isDense: true),
             ),
             const SizedBox(height: 10),

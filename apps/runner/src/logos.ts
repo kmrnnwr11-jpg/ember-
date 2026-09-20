@@ -27,18 +27,22 @@ export const LOGO_SYSTEM = `You are a senior brand designer who draws mobile app
 Rules:
 - Output ONLY one SVG, starting with <svg and ending with </svg>. No markdown, no explanations.
 - viewBox="0 0 512 512", width="512" height="512". Full-bleed square background (the launcher masks corners): fill the whole canvas.
-- Centered symbol with generous padding (keep it inside the central 360x360 area), readable at 48 px.
+- THE SUBJECT FILLS THE ICON: it spans at least 440 of the 512 units in its larger dimension — roughly 90% of the canvas, leaving only a thin margin (about 36 units) around it. A small mark floating in empty space is the most common failure and is rejected. Centre it, and let it touch that margin on the sides where its shape allows.
+- Draw exactly what was asked for, recognisably: if the user names a thing, that thing is the icon — its real silhouette, seen straight on, in a shape a person names at a glance and at 48 px. No unrelated shapes, no abstract blob standing in for the subject.
 - No text except at most one or two letters when the style asks for a monogram. No photos, no <image>, no external links, no scripts, no fonts.
 - Use gradients, shapes and paths only. Make it professional, distinctive and on-brand for the app.`;
 
 export function logoPrompt(opts: { appName: string; about: string; hint?: string; style: string; avoid?: string[] }): string {
   return [
+    // What the user asked for outranks everything else, so it goes first.
+    opts.hint ? `DRAW THIS, exactly this, as the subject of the icon: ${opts.hint.slice(0, 500)}\nIt must be immediately recognisable as that, and fill about 90% of the canvas.` : '',
     `App name: ${opts.appName}`,
     `What the app does: ${opts.about.slice(0, 1500)}`,
-    opts.hint ? `The user wants the logo to be: ${opts.hint.slice(0, 500)}` : '',
-    `Visual style for this proposal: ${opts.style}.`,
+    opts.hint
+      ? `Visual style for this proposal: ${opts.style}. The style changes how the subject is drawn; it never replaces the subject.`
+      : `Visual style for this proposal: ${opts.style}.`,
     opts.avoid?.length ? `It must look clearly different from these previous proposals: ${opts.avoid.join(' | ')}` : '',
-    'Draw the icon now.',
+    'Draw the icon now, big, filling the canvas.',
   ]
     .filter(Boolean)
     .join('\n');

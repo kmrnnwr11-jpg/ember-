@@ -68,4 +68,13 @@ void main() {
     expect(m.html, contains('<h1>A</h1>'));
     expect(m.error, contains('quota'));
   });
+
+  test('a whole website does not drown the drawing brief', () {
+    final long = 'x' * (maxMockupDescription + 500);
+    final prompt = mockupUserPrompt(long, mockupStylePool.first);
+    expect(prompt.length, lessThan(maxMockupDescription + 1200));
+    expect(prompt, contains('the rest of the brief goes to the build'));
+    // A short description is passed whole.
+    expect(mockupUserPrompt('app di ricette', mockupStylePool.first), contains('app di ricette'));
+  });
 }

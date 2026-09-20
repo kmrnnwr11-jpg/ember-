@@ -67,10 +67,20 @@ List<MockupStyle> stylePoolFor(String styleBrief) {
   return [...picked, ...mockupStylePool.where((s) => !picked.contains(s))];
 }
 
+/// A mockup is drawn from a brief, not from an encyclopaedia: a reference
+/// listing or a whole website runs to tens of thousands of characters, and the
+/// model then answers with a cut, unusable page.
+const maxMockupDescription = 4000;
+
+String shortDescription(String description) =>
+    description.length <= maxMockupDescription
+        ? description
+        : '${description.substring(0, maxMockupDescription)}\n…(the rest of the brief goes to the build, not to the drawing)';
+
 String mockupUserPrompt(String appDescription, MockupStyle style, {String? previousHtml, String? change, String styleBrief = ''}) {
   final b = StringBuffer()
     ..writeln('App description:')
-    ..writeln(appDescription)
+    ..writeln(shortDescription(appDescription))
     ..writeln()
     ..writeln('Visual style: ${style.name} — ${style.direction}');
   if (styleBrief.trim().isNotEmpty) {
@@ -190,7 +200,7 @@ class MockupController extends ChangeNotifier {
 
   Future<void> retry(Mockup m) => _generate(m, mockupUserPrompt(description, m.style, styleBrief: styleBrief));
 
-  Future<void> _generate(Mockup m, String prompt, {String? fallbackHtml}) async {
+  Future<void> _generate(Mockup m, String prompt, {String? fallbackHtml, bool retry = true}) async {
     m
       ..status = MockupStatus.loading
       ..error = null;
@@ -200,6 +210,15 @@ class MockupController extends ChangeNotifier {
       costUsd += res.costUsd ?? 0;
       if (m.apply(res.text)) {
         m.status = MockupStatus.ready;
+      } else if (retry) {
+        // A cut or malformed page is usually a one-off: ask again, once,
+        // insisting on the part that was missing.
+        return _generate(
+          m,
+          '$prompt\n\nThe previous answer was cut off. Answer again, complete, ending with the closing html tag, and keep the page compact.',
+          fallbackHtml: fallbackHtml,
+          retry: false,
+        );
       } else {
         m
           ..html = fallbackHtml

@@ -79,11 +79,23 @@ String shortDescription(String description) =>
         ? description
         : '${description.substring(0, maxMockupDescription)}\n…(the rest of the brief goes to the build, not to the drawing)';
 
-/// Each mockup of a set gets its own accent, so five proposals are five real
-/// choices and not the same page five times.
+/// Each mockup of a set gets its own accent, so the proposals are real
+/// choices and not the same page over and over.
 const mockupAccents = ['red / crimson', 'deep blue', 'emerald green', 'violet', 'amber orange', 'teal', 'magenta', 'indigo'];
 
-String mockupUserPrompt(String appDescription, MockupStyle style, {String? previousHtml, String? change, String styleBrief = '', String? accent}) {
+/// …and its own skeleton, because a different colour on the same layout is not
+/// a different proposal. These decide where things sit and how they are drawn.
+const mockupLayouts = [
+  'Layout: a grid of square tiles, two or three per row, each tile a filled colour block with its icon drawn large inside. Bottom navigation bar. Icons: solid, filled shapes.',
+  'Layout: a vertical list of wide rows, each with a round icon on the left, title and one line of description, a chevron on the right. Top app bar with a search field. Icons: thin outline, 1.5px strokes.',
+  'Layout: one big hero card for the main action, then a horizontal carousel of secondary cards under it. No bottom bar; a floating action button instead. Icons: duotone, two shades of the accent.',
+  'Layout: sectioned cards with clear headings, generous padding, hairline dividers between rows, a segmented control at the top. Icons: rounded, hand-drawn feel.',
+  'Layout: a dashboard of small stat tiles at the top, then a dense two-column grid of actions. Side drawer instead of a bottom bar. Icons: geometric, built from circles and squares.',
+  'Layout: full-bleed panels one per screen, big type, the action as a wide pill button at the bottom, a page indicator. Icons: minimal glyphs, almost text.',
+  'Layout: a sticky toolbar with tabs at the top, cards with a coloured left stripe, a compact list below. Icons: badge-style, icon inside a rounded square.',
+];
+
+String mockupUserPrompt(String appDescription, MockupStyle style, {String? previousHtml, String? change, String styleBrief = '', String? accent, String? layout}) {
   final b = StringBuffer()
     ..writeln('App description:')
     ..writeln(shortDescription(appDescription))
@@ -94,6 +106,9 @@ String mockupUserPrompt(String appDescription, MockupStyle style, {String? previ
       'Accent colour for this proposal: $accent. Lead with it, so this proposal is visibly a different choice from the others — '
       'unless the subject of the app calls for its own colour, which always wins.',
     );
+  }
+  if (layout != null) {
+    b.writeln('$layout\nFollow this arrangement: the proposals must differ in how the screens are built and how the icons are drawn, not only in colour.');
   }
   if (styleBrief.trim().isNotEmpty) {
     b
@@ -188,23 +203,32 @@ class MockupController extends ChangeNotifier {
   List<Mockup> get current => sets.isEmpty ? const [] : sets[viewingSet];
   bool get loading => current.any((m) => m.status == MockupStatus.loading);
 
-  /// Generates 5 new, different styles in parallel (keeps previous sets).
+  /// How many proposals a set holds, and how many are drawn at once. Four at a
+  /// time keeps it quick without asking a free tier for seven long answers in
+  /// the same second.
+  static const setSize = 7;
+  static const _atOnce = 4;
+
+  /// Generates a set of proposals, each with its own style, colour and layout.
   Future<void> generateSet() async {
     final pool = stylePoolFor(styleBrief);
-    final styles = [for (var i = 0; i < 5; i++) pool[(_poolOffset + i) % pool.length]];
-    final accents = [for (var i = 0; i < 5; i++) mockupAccents[(_poolOffset + i) % mockupAccents.length]];
-    _poolOffset += 5;
-    final set = [for (final s in styles) Mockup(s)];
+    final set = [for (var i = 0; i < setSize; i++) Mockup(pool[(_poolOffset + i) % pool.length])];
+    final prompts = [
+      for (var i = 0; i < setSize; i++)
+        mockupUserPrompt(
+          description,
+          set[i].style,
+          styleBrief: styleBrief,
+          accent: mockupAccents[(_poolOffset + i) % mockupAccents.length],
+          layout: mockupLayouts[(_poolOffset + i) % mockupLayouts.length],
+        ),
+    ];
+    _poolOffset += setSize;
     sets.add(set);
     viewingSet = sets.length - 1;
     notifyListeners();
-    // Two at a time: five long answers at once get throttled or cut short on a
-    // free tier, and a cut page is a failed mockup.
-    for (var i = 0; i < set.length; i += 2) {
-      await Future.wait([
-        for (final (j, m) in set.skip(i).take(2).indexed)
-          _generate(m, mockupUserPrompt(description, m.style, styleBrief: styleBrief, accent: accents[i + j])),
-      ]);
+    for (var i = 0; i < set.length; i += _atOnce) {
+      await Future.wait([for (final (j, m) in set.skip(i).take(_atOnce).indexed) _generate(m, prompts[i + j])]);
     }
   }
 

@@ -33,11 +33,11 @@ Future<List<String>> suggestNames(CompleteText complete, String description, {in
 /// the store listing, the privacy policy and the package name, and the package
 /// name can never be changed once Google has it.
 class NamePickerSheet extends StatefulWidget {
-  const NamePickerSheet({super.key, required this.names, required this.loading, this.onRetry});
+  const NamePickerSheet({super.key, required this.load});
 
-  final List<String> names;
-  final bool loading;
-  final Future<void> Function()? onRetry;
+  /// Asks the engine for names. Called once when the sheet opens, and again
+  /// only when the user asks for others.
+  final Future<List<String>> Function() load;
 
   @override
   State<NamePickerSheet> createState() => _NamePickerSheetState();
@@ -46,6 +46,25 @@ class NamePickerSheet extends StatefulWidget {
 class _NamePickerSheetState extends State<NamePickerSheet> {
   final _own = TextEditingController();
   String? _picked;
+  List<String> _names = const [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    final got = await widget.load().catchError((_) => const <String>[]);
+    if (mounted) {
+      setState(() {
+        _names = got;
+        _loading = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -74,7 +93,7 @@ class _NamePickerSheetState extends State<NamePickerSheet> {
             const SizedBox(height: 4),
             Text(l.nameHint, style: theme.textTheme.bodySmall),
             const SizedBox(height: 12),
-            if (widget.loading)
+            if (_loading)
               const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Center(child: CircularProgressIndicator()))
             else
               ConstrainedBox(
@@ -84,7 +103,7 @@ class _NamePickerSheetState extends State<NamePickerSheet> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      for (final n in widget.names)
+                      for (final n in _names)
                         ChoiceChip(
                           label: Text(n),
                           selected: _picked == n && _own.text.trim().isEmpty,
@@ -112,12 +131,11 @@ class _NamePickerSheetState extends State<NamePickerSheet> {
             const SizedBox(height: 12),
             Row(
               children: [
-                if (widget.onRetry != null)
-                  TextButton.icon(
-                    onPressed: widget.loading ? null : () => widget.onRetry!(),
-                    icon: const Icon(Icons.refresh),
-                    label: Text(l.nameMore),
-                  ),
+                TextButton.icon(
+                  onPressed: _loading ? null : _load,
+                  icon: const Icon(Icons.refresh),
+                  label: Text(l.nameMore),
+                ),
                 const Spacer(),
                 FilledButton(
                   key: const Key('confirmAppName'),

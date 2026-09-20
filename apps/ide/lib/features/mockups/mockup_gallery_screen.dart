@@ -132,32 +132,11 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
   Future<String?> _askName() async {
     final complete = _c?.completeText;
     if (complete == null) return null;
-    var names = <String>[];
-    var loading = true;
-
-    Future<void> load(void Function(void Function()) refresh) async {
-      final got = await suggestNames(complete, '${widget.args.prompt}${widget.args.reference ?? ''}').catchError((_) => const <String>[]);
-      refresh(() {
-        names = got;
-        loading = false;
-      });
-    }
-
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      builder: (d) => StatefulBuilder(
-        builder: (d, refresh) {
-          if (loading && names.isEmpty) unawaited(load(refresh));
-          return NamePickerSheet(
-            names: names,
-            loading: loading,
-            onRetry: () async {
-              refresh(() => loading = true);
-              await load(refresh);
-            },
-          );
-        },
+      builder: (d) => NamePickerSheet(
+        load: () => suggestNames(complete, '${widget.args.prompt}${widget.args.reference ?? ''}'),
       ),
     );
   }

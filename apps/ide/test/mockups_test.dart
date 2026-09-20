@@ -39,19 +39,23 @@ void main() {
       },
     );
     await c.generateSet();
-    expect(c.current.length, 5);
+    expect(c.current.length, MockupController.setSize);
     expect(c.current.every((m) => m.status == MockupStatus.ready), isTrue);
-    // Two at a time: five long answers at once get throttled or cut short.
-    expect(maxInFlight, 2);
+    // Four at a time: quick, without asking a free tier for seven long answers at once.
+    expect(maxInFlight, 4);
     final firstNames = c.current.map((m) => m.style.id).toSet();
-    expect(firstNames.length, 5);
+    expect(firstNames.length, MockupController.setSize);
+    // Each proposal is a different build, not the same page recoloured.
+    expect(prompts.where((p) => p.contains('grid of square tiles')), hasLength(1));
+    expect(prompts.where((p) => p.contains('vertical list of wide rows')), hasLength(1));
 
     await c.generateSet();
     expect(c.sets.length, 2);
     expect(c.current.map((m) => m.style.id).toSet().intersection(firstNames), isEmpty);
     c.showSet(0);
     expect(c.current.first.style.id, 'minimal');
-    expect(c.costUsd, closeTo(0.10, 1e-9));
+    // Two sets of MockupController.setSize proposals, at 0.01 each.
+    expect(c.costUsd, closeTo(0.01 * 2 * MockupController.setSize, 1e-9));
   });
 
   test('edit keeps the previous mockup if regeneration fails', () async {

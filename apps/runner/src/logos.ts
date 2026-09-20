@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { nanoid } from 'nanoid';
@@ -134,7 +135,77 @@ export async function applyLogo(projectRoot: string, logoId: string): Promise<{ 
   const pubspecPath = path.join(projectRoot, 'pubspec.yaml');
   const pubspec = await readFile(pubspecPath, 'utf8').catch(() => null);
   if (pubspec !== null) await writeFile(pubspecPath, withLauncherIcons(pubspec));
+  await applySplash(projectRoot, svg).catch(() => undefined);
   return { icon: 'assets/icon/app_icon.png', playIcon: 'store/play_icon_512.png', featureGraphic: 'store/feature_graphic.png' };
+}
+
+/** The colour in the middle of the icon: the ground a splash screen sits on. */
+export async function iconBackgroundColor(iconPng: Buffer): Promise<string> {
+  const { data } = await sharp(iconPng).resize(1, 1, { fit: 'cover' }).raw().toBuffer({ resolveWithObject: true });
+  const hex = (n: number) => (n ?? 0).toString(16).padStart(2, '0');
+  return `#${hex(data[0] ?? 255)}${hex(data[1] ?? 255)}${hex(data[2] ?? 255)}`;
+}
+
+/** Android: the launch screen shows the app's own icon, centred, on its colour. */
+export function withSplashBitmap(launchBackground: string, color: string): string {
+  const item = `    <item>\n        <bitmap\n            android:gravity="center"\n            android:src="@mipmap/launch_image" />\n    </item>`;
+  const withColour = launchBackground.replace(/<item android:drawable="[^"]*"\s*\/>/, `<item android:drawable="@color/launchBackground" />`);
+  // The template ships the bitmap commented out; replace it, or add it before </layer-list>.
+  const uncommented = withColour.replace(/<!--\s*You can insert your own image assets here\s*-->\s*<!--[\s\S]*?-->/, item);
+  const out = uncommented.includes('@mipmap/launch_image') ? uncommented : uncommented.replace('</layer-list>', `${item}\n</layer-list>`);
+  return out.replace(/<!--\s*Modify this file[^>]*-->\n?/, `<!-- Launch screen: the app's own icon on ${color} -->\n`);
+}
+
+/**
+ * The picture a phone shows while the app starts. Without this every app made
+ * with Ember opens on Flutter's blank white screen, whatever its icon is.
+ */
+export async function applySplash(projectRoot: string, svg: string): Promise<void> {
+  const icon512 = await renderPng(svg, 512);
+  const color = await iconBackgroundColor(icon512);
+
+  // Android: one launch image per screen density, plus the colour behind it.
+  const res = path.join(projectRoot, 'android', 'app', 'src', 'main', 'res');
+  const densities: Array<[string, number]> = [
+    ['mipmap-mdpi', 160],
+    ['mipmap-hdpi', 240],
+    ['mipmap-xhdpi', 320],
+    ['mipmap-xxhdpi', 480],
+    ['mipmap-xxxhdpi', 640],
+  ];
+  for (const [dir, size] of densities) {
+    await mkdir(path.join(res, dir), { recursive: true });
+    await writeFile(path.join(res, dir, 'launch_image.png'), await renderPng(svg, size));
+  }
+  for (const dir of ['drawable', 'drawable-v21']) {
+    const file = path.join(res, dir, 'launch_background.xml');
+    const current = await readFile(file, 'utf8').catch(() => null);
+    if (current !== null) await writeFile(file, withSplashBitmap(current, color));
+  }
+  await mkdir(path.join(res, 'values'), { recursive: true });
+  const colorsFile = path.join(res, 'values', 'colors.xml');
+  const colors = await readFile(colorsFile, 'utf8').catch(() => null);
+  const entry = `    <color name="launchBackground">${color}</color>`;
+  await writeFile(
+    colorsFile,
+    colors === null
+      ? `<?xml version="1.0" encoding="utf-8"?>\n<resources>\n${entry}\n</resources>\n`
+      : /name="launchBackground"/.test(colors)
+        ? colors.replace(/<color name="launchBackground">[^<]*<\/color>/, entry.trim())
+        : colors.replace('</resources>', `${entry}\n</resources>`),
+  );
+
+  // iPhone: the launch image set Flutter's storyboard already points at.
+  const launchSet = path.join(projectRoot, 'ios', 'Runner', 'Assets.xcassets', 'LaunchImage.imageset');
+  if (existsSync(launchSet)) {
+    for (const [name, size] of [
+      ['LaunchImage.png', 160],
+      ['LaunchImage@2x.png', 320],
+      ['LaunchImage@3x.png', 480],
+    ] as Array<[string, number]>) {
+      await writeFile(path.join(launchSet, name), await renderPng(svg, size));
+    }
+  }
 }
 
 /** Adds flutter_launcher_icons (dev dependency + config for Android, iOS, web, Windows) once. */

@@ -16,6 +16,32 @@ describe('logos', () => {
     expect(sanitizeSvg('no svg here')).toBeNull();
   });
 
+  it('puts the app own icon on the launch screen, instead of Flutter blank one', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'fc-splash-'));
+    const { mkdir } = await import('node:fs/promises');
+    const res = path.join(root, 'android', 'app', 'src', 'main', 'res');
+    await mkdir(path.join(res, 'drawable'), { recursive: true });
+    await mkdir(path.join(root, 'ios', 'Runner', 'Assets.xcassets', 'LaunchImage.imageset'), { recursive: true });
+    await writeFile(
+      path.join(res, 'drawable', 'launch_background.xml'),
+      '<?xml version="1.0" encoding="utf-8"?>\n<!-- Modify this file to customize your launch splash screen -->\n<layer-list xmlns:android="http://schemas.android.com/apk/res/android">\n    <item android:drawable="@android:color/white" />\n\n    <!-- You can insert your own image assets here -->\n    <!-- <item>\n        <bitmap\n            android:gravity="center"\n            android:src="@mipmap/launch_image" />\n    </item> -->\n</layer-list>\n',
+    );
+    await writeFile(path.join(root, 'pubspec.yaml'), 'name: demo\n');
+
+    const logos = await generateLogos({ projectRoot: root, appName: 'Demo', about: 'x', count: 1, complete: async () => SVG });
+    await applyLogo(root, logos[0]!.id);
+
+    const xml = await readFile(path.join(res, 'drawable', 'launch_background.xml'), 'utf8');
+    expect(xml).toContain('@mipmap/launch_image');
+    expect(xml).not.toContain('<!-- <item>');
+    expect(xml).toContain('@color/launchBackground');
+    expect(await readFile(path.join(res, 'values', 'colors.xml'), 'utf8')).toMatch(/launchBackground">#[0-9a-f]{6}</);
+    // One image per screen density, and the iPhone set Flutter already uses.
+    for (const d of ['mipmap-mdpi', 'mipmap-xxxhdpi']) expect((await stat(path.join(res, d, 'launch_image.png'))).size).toBeGreaterThan(100);
+    expect((await stat(path.join(root, 'ios', 'Runner', 'Assets.xcassets', 'LaunchImage.imageset', 'LaunchImage@3x.png'))).size).toBeGreaterThan(100);
+    await rm(root, { recursive: true, force: true });
+  });
+
   it('tells the designer to fill the icon and draw the thing that was asked for', () => {
     expect(LOGO_SYSTEM).toContain('at least 440 of the 512 units');
     expect(LOGO_SYSTEM).toContain('Draw exactly what was asked for');

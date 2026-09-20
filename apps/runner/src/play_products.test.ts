@@ -48,6 +48,44 @@ describe('Play products', () => {
     expect(calls.some((c) => c.url.endsWith('/basePlans/monthly:activate'))).toBe(true);
   });
 
+  it('sells everywhere else when a country changed its money', async () => {
+    // Bulgaria moved from lev to euro: Google converts the price to EUR and
+    // then refuses it. The subscription must still go live in every other country.
+    const bodies: string[] = [];
+    const fake = (async (url: string | URL | Request, init?: RequestInit) => {
+      const u = String(url);
+      if (u.includes('oauth2')) return new Response('{"access_token":"t"}', { status: 200 });
+      if (u.endsWith('pricing:convertRegionPrices')) {
+        return new Response(
+          JSON.stringify({
+            convertedRegionPrices: {
+              IT: { regionCode: 'IT', price: { currencyCode: 'EUR', units: '4', nanos: 990000000 } },
+              BG: { regionCode: 'BG', price: { currencyCode: 'EUR', units: '4', nanos: 990000000 } },
+            },
+          }),
+          { status: 200 },
+        );
+      }
+      if ((init?.method ?? 'GET') === 'PATCH' && u.includes('/subscriptions/')) {
+        const body = typeof init?.body === 'string' ? init.body : '';
+        bodies.push(body);
+        if (body.includes('"BG"')) {
+          return new Response(JSON.stringify({ error: { message: 'Invalid currency for region code BG at the specified regions version 2022/02. Expected BGN but got EUR.' } }), { status: 400 });
+        }
+      }
+      return new Response('{}', { status: 200 });
+    }) as typeof fetch;
+
+    const [res] = await syncProducts(
+      { serviceAccount: sa, packageName: 'com.demo.app', products: [{ id: 'premium', type: 'subscription', title: 'Premium', description: 'All', price: '4.99', currency: 'EUR', period: 'P1M' }] },
+      fake,
+    );
+    expect(res).toMatchObject({ id: 'premium', ok: true, status: 'active' });
+    expect(res!.error).toContain('BG');
+    expect(bodies.at(-1)).toContain('"IT"');
+    expect(bodies.at(-1)).not.toContain('"BG"');
+  });
+
   it('explains the usual Google errors', () => {
     expect(explainProductError(403, 'The caller does not have permission')).toContain('Manage orders and subscriptions');
     expect(explainProductError(400, 'This app does not have BILLING permission')).toContain('upload the AAB');

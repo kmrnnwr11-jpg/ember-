@@ -128,18 +128,31 @@ async function upsertSubscription(fetchImpl: Fetch, token: string, pkg: string, 
     ],
   };
   const url = `${API}/${pkg}/subscriptions/${encodeURIComponent(p.id)}?updateMask=listings,basePlans&allowMissing=true&regionsVersion.version=${REGIONS_VERSION}`;
-  const up = await call(fetchImpl, token, 'PATCH', url, subscription);
+  // A country can change its money (Bulgaria: lev → euro), and Google then
+  // refuses the price it converted itself. Drop the countries it argues about
+  // and sell everywhere else, rather than failing the whole subscription.
+  const dropped: string[] = [];
+  let up = await call(fetchImpl, token, 'PATCH', url, subscription);
+  for (let i = 0; i < 12 && !up.res.ok; i++) {
+    const region = /region code ([A-Z]{2})/.exec(up.message)?.[1];
+    if (!region) break;
+    dropped.push(region);
+    const keep = (c: { regionCode: string }) => !dropped.includes(c.regionCode);
+    subscription.basePlans[0]!.regionalConfigs = subscription.basePlans[0]!.regionalConfigs.filter(keep);
+    up = await call(fetchImpl, token, 'PATCH', url, subscription);
+  }
   if (!up.res.ok) return { id: p.id, ok: false, error: explainProductError(up.res.status, up.message) };
 
+  const keptRegions = subscription.basePlans[0]!.regionalConfigs.map((c) => c.regionCode);
   if (trial) {
     const offer = {
       packageName: pkg,
       productId: p.id,
       basePlanId,
       offerId: 'free-trial',
-      phases: [{ recurrenceCount: 1, duration: `P${p.freeTrialDays}D`, regionalConfigs: Object.values(converted).map((c) => ({ regionCode: c.regionCode, free: {} })), otherRegionsConfig: { free: {} } }],
+      phases: [{ recurrenceCount: 1, duration: `P${p.freeTrialDays}D`, regionalConfigs: keptRegions.map((regionCode) => ({ regionCode, free: {} })), otherRegionsConfig: { free: {} } }],
       targeting: { acquisitionRule: { scope: { anySubscriptionInApp: {} } } },
-      regionalConfigs: Object.values(converted).map((c) => ({ regionCode: c.regionCode, newSubscriberAvailability: true })),
+      regionalConfigs: keptRegions.map((regionCode) => ({ regionCode, newSubscriberAvailability: true })),
       otherRegionsConfig: { otherRegionsNewSubscriberAvailability: true },
     };
     const o = await call(fetchImpl, token, 'POST', `${API}/${pkg}/subscriptions/${encodeURIComponent(p.id)}/basePlans/${basePlanId}/offers?offerId=free-trial&regionsVersion.version=${REGIONS_VERSION}`, offer);
@@ -152,7 +165,12 @@ async function upsertSubscription(fetchImpl: Fetch, token: string, pkg: string, 
   if (!act.res.ok && !/already active/i.test(act.message)) {
     return { id: p.id, ok: false, status: 'created', error: explainProductError(act.res.status, act.message) };
   }
-  return { id: p.id, ok: true, status: 'active' };
+  return {
+    id: p.id,
+    ok: true,
+    status: 'active',
+    ...(dropped.length > 0 ? { error: `On sale everywhere except ${dropped.join(', ')}: Google would not accept the converted price there. Set those prices by hand in Play Console if you want them.` } : {}),
+  };
 }
 
 /** Creates or updates every product, one by one, and reports each result. */

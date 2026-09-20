@@ -116,7 +116,13 @@ async function upsertSubscription(fetchImpl: Fetch, token: string, pkg: string, 
   const subscription = {
     packageName: pkg,
     productId: p.id,
-    listings: [{ languageCode: lang, title: p.title, description: (p.description || p.title).slice(0, 80) }],
+    // An app's default language on Play is usually en-US, and Google refuses a
+    // subscription that has no listing in it. Ship both from the start.
+    listings: [lang, ...(lang === 'en-US' ? [] : ['en-US'])].map((languageCode) => ({
+      languageCode,
+      title: p.title,
+      description: (p.description || p.title).slice(0, 80),
+    })),
     basePlans: [
       {
         basePlanId,

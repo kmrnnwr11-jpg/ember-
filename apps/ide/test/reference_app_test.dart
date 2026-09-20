@@ -92,6 +92,8 @@ All the games are designed with interactive graphics.''',
     expect(b, contains('9,99'));
     expect(b, contains('reference/'));
     expect(b, contains('Never the site'));
+    // Copying a site means copying what the user does on it, not only its look.
+    expect(b, contains('COPY THE GESTURE'));
   });
 
   test('copies how the model app earns, because that is part of the app', () {

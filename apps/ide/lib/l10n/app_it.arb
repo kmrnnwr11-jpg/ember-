@@ -251,6 +251,7 @@
   "bAab": "Genero l'AAB per il Play Store…",
   "chooseDesignAi": "Chi disegna (logo, mockup, schermate)",
   "chooseDesignAiHint": "Gemini disegna bene ed è gratis; il motore qui sopra scrive il codice.",
+  "bLookingAtModel": "Guardo l'app da copiare…",
   "bIpa": "Genero l'app per iPhone (IPA)…",
   "nameTitle": "Come si chiama la tua app?",
   "nameHint": "Questo nome va sul Play Store, nell'informativa privacy e dentro il nome pacchetto, che dopo non si cambia più.",

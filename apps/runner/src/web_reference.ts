@@ -111,13 +111,15 @@ export async function saveSiteShots(opts: { projectRoot: string; urls: string[];
   });
   let saved = 0;
   try {
-    for (const url of opts.urls.slice(0, opts.limit ?? 6)) {
+    for (const url of opts.urls.slice(0, opts.limit ?? 4)) {
       const page = await browser.newPage();
       try {
         await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 45_000 });
-        await new Promise((r) => setTimeout(r, 1500));
-        const png = Buffer.from(await page.screenshot({ type: 'png', fullPage: true }));
+        // The first screenful, quickly: a model looks at the layout, not at the
+        // footer, and a slow page must not hold up the whole build.
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20_000 });
+        await new Promise((r) => setTimeout(r, 1200));
+        const png = Buffer.from(await page.screenshot({ type: 'png' }));
         await writeFile(path.join(dir, `site_${saved + 1}.png`), png);
         saved++;
       } catch {

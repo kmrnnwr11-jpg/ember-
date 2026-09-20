@@ -640,7 +640,7 @@ export async function buildApp(
         let saved = 0;
         const browser = findBrowser();
         if (shots && browser) {
-          const urls = [site.url, ...site.pages.slice(0, 5).map((p) => p.url)];
+          const urls = [site.url, ...site.pages.slice(0, 3).map((p) => p.url)];
           saved = (await saveSiteShots({ projectRoot: services.projectRoot(project), urls, browser }).catch(() => ({ saved: 0 }))).saved;
         }
         return { site, shotsSaved: saved };

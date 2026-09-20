@@ -394,6 +394,9 @@ class AppBuilder extends ChangeNotifier {
       // Seeing the app being copied beats reading about it: the screenshots go
       // into the project before a single line is written.
       final refId = referenceId;
+      // Say what is happening before the waiting starts: photographing a site
+      // takes a moment, and silence looks like a hang.
+      if (change == null && (refId != null || referenceSiteUrl != null)) _log(strings.bLookingAtModel);
       if (change == null && refId != null && saveReferenceShots != null) {
         final saved = await saveReferenceShots!(refId).catchError((_) => 0);
         _log(saved > 0 ? strings.bReferenceShots(saved) : strings.bReferenceShotsFailed, kind: saved > 0 ? 'info' : 'error');

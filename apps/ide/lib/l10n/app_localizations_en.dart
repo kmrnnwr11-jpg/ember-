@@ -844,6 +844,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Gemini draws well and is free; the engine above writes the code.';
 
   @override
+  String get bLookingAtModel => 'Looking at the app being copied…';
+
+  @override
   String get bIpa => 'Building the iPhone app (IPA)…';
 
   @override

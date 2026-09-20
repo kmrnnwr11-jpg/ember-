@@ -1610,6 +1610,12 @@ abstract class AppLocalizations {
   /// **'Gemini draws well and is free; the engine above writes the code.'**
   String get chooseDesignAiHint;
 
+  /// No description provided for @bLookingAtModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking at the app being copied…'**
+  String get bLookingAtModel;
+
   /// No description provided for @bIpa.
   ///
   /// In en, this message translates to:

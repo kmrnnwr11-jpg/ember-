@@ -1604,6 +1604,36 @@ abstract class AppLocalizations {
   /// **'Building the iPhone app (IPA)…'**
   String get bIpa;
 
+  /// No description provided for @nameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What is your app called?'**
+  String get nameTitle;
+
+  /// No description provided for @nameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This name goes on the Play Store, in the privacy policy and into the package name, which can never change once Google has it.'**
+  String get nameHint;
+
+  /// No description provided for @nameYourOwn.
+  ///
+  /// In en, this message translates to:
+  /// **'Or write your own name'**
+  String get nameYourOwn;
+
+  /// No description provided for @nameMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Other names'**
+  String get nameMore;
+
+  /// No description provided for @nameUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this name'**
+  String get nameUse;
+
   /// No description provided for @bReferenceShots.
   ///
   /// In en, this message translates to:

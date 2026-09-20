@@ -64,6 +64,7 @@ class CreateAppArgs {
     this.referenceId,
     this.referenceTopics = const [],
     this.styleBrief = '',
+    this.appName,
   });
   final String prompt;
   final BuildEngine engine;
@@ -84,6 +85,10 @@ class CreateAppArgs {
 
   /// Who the app is for, from the reference listing: decides how the mockups look.
   final String styleBrief;
+
+  /// The name the user chose before the build: store listing, privacy policy
+  /// and package name all come from it.
+  final String? appName;
 }
 
 /// One builder per project, kept alive so a build continues if the user navigates away.
@@ -365,6 +370,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
       designName: args.designName,
       referenceId: args.referenceId,
       referenceTopics: args.referenceTopics,
+      appName: args.appName,
     );
   }
 

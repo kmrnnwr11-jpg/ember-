@@ -154,6 +154,9 @@ class MockupController extends ChangeNotifier {
   final AiModel? model;
   final CompleteText _complete;
 
+  /// The same engine the mockups were drawn with, for the app's name.
+  CompleteText get completeText => _complete;
+
   /// All generated sets; the last one is the current set ("Precedenti" = earlier ones).
   final List<List<Mockup>> sets = [];
   int viewingSet = 0;

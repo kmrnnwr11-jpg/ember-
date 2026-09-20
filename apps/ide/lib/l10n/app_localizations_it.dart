@@ -849,6 +849,22 @@ class AppLocalizationsIt extends AppLocalizations {
   String get bIpa => 'Genero l\'app per iPhone (IPA)…';
 
   @override
+  String get nameTitle => 'Come si chiama la tua app?';
+
+  @override
+  String get nameHint =>
+      'Questo nome va sul Play Store, nell\'informativa privacy e dentro il nome pacchetto, che dopo non si cambia più.';
+
+  @override
+  String get nameYourOwn => 'Oppure scrivi il tuo nome';
+
+  @override
+  String get nameMore => 'Altri nomi';
+
+  @override
+  String get nameUse => 'Usa questo nome';
+
+  @override
   String bReferenceShots(int count) {
     return 'Salvate $count schermate dell\'app da copiare: il motore la vede, non solo la legge';
   }

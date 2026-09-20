@@ -247,6 +247,17 @@ class AppBuilder extends ChangeNotifier {
 
   String? _replyText;
 
+  /// The name the user chose, stated so the app calls itself that everywhere:
+  /// the home screen title, the launcher label, AppConfig, the About screen.
+  String get _nameBlock {
+    final name = appName?.trim() ?? '';
+    return name.isEmpty
+        ? ''
+        : '\n\nAPP NAME: "$name". Use exactly this name everywhere the app names itself: '
+            'AppConfig.appName, the android:label in AndroidManifest.xml, CFBundleDisplayName in ios/Runner/Info.plist, '
+            'the title on the home screen and anywhere the app introduces itself. Never invent another name.';
+  }
+
   Future<String> _androidBlock() async {
     try {
       final info = await androidInfo?.call();
@@ -292,15 +303,20 @@ class AppBuilder extends ChangeNotifier {
     String? designName,
     String? referenceId,
     List<String> referenceTopics = const [],
+    String? appName,
   }) {
     this.quality = quality;
     this.design = design;
     this.designName = designName;
     this.referenceId = referenceId;
     this.referenceTopics = referenceTopics;
+    this.appName = appName;
     _coverageChecked = false;
     return _run(prompt: prompt, engine: engine, model: model, change: null);
   }
+
+  /// The name the user chose: it must appear everywhere the app names itself.
+  String? appName;
 
   /// The Play Store app being copied, and the subjects its listing promises.
   String? referenceId;
@@ -369,7 +385,7 @@ class AppBuilder extends ChangeNotifier {
         _log(saved > 0 ? strings.bReferenceShots(saved) : strings.bReferenceShotsFailed, kind: saved > 0 ? 'info' : 'error');
       }
       if (engine.isCli) {
-        await _runClaudeCode('${change ?? '$prompt${design ?? ''}'}${await _androidBlock()}', resume: change != null);
+        await _runClaudeCode('${change ?? '$prompt${design ?? ''}$_nameBlock'}${await _androidBlock()}', resume: change != null);
       } else {
         await _runApiEngine(change: change);
       }
@@ -517,7 +533,7 @@ class AppBuilder extends ChangeNotifier {
     final String userMessage;
     if (change == null) {
       _log(strings.bWriting(m.label));
-      userMessage = '$prompt${design ?? ''}\n\n(Project package name: $projectName)${await _androidBlock()}';
+      userMessage = '$prompt${design ?? ''}$_nameBlock\n\n(Project package name: $projectName)${await _androidBlock()}';
     } else {
       _log(strings.bApplying(m.label, change));
       userMessage = '${improvePrompt(prompt, await _readProjectFiles(), change)}${await _androidBlock()}';

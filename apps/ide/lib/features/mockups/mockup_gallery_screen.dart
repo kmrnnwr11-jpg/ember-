@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:ai_connect/ai_connect.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +16,7 @@ import '../create/app_builder.dart';
 import '../create/create_app_screen.dart';
 import '../projects/projects_screen.dart';
 import 'mockup_controller.dart';
+import 'name_picker.dart';
 
 /// Full-screen gallery of 5 style mockups shown right after the user
 /// describes the app (§1B step 3). Choosing one creates the project and
@@ -123,9 +126,47 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
     if (change != null && change.isNotEmpty) await _c?.edit(m, change);
   }
 
+  /// The app's name, chosen before anything is built: it reaches the store
+  /// listing, the privacy policy and the package name, which is final once
+  /// Google has it.
+  Future<String?> _askName() async {
+    final complete = _c?.completeText;
+    if (complete == null) return null;
+    var names = <String>[];
+    var loading = true;
+
+    Future<void> load(void Function(void Function()) refresh) async {
+      final got = await suggestNames(complete, '${widget.args.prompt}${widget.args.reference ?? ''}').catchError((_) => const <String>[]);
+      refresh(() {
+        names = got;
+        loading = false;
+      });
+    }
+
+    return showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (d) => StatefulBuilder(
+        builder: (d, refresh) {
+          if (loading && names.isEmpty) unawaited(load(refresh));
+          return NamePickerSheet(
+            names: names,
+            loading: loading,
+            onRetry: () async {
+              refresh(() => loading = true);
+              await load(refresh);
+            },
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> _choose(Mockup? m) async {
     if (_creating) return;
     final l = AppLocalizations.of(context);
+    final appName = await _askName();
+    if (!mounted) return;
     setState(() => _creating = true);
     try {
       final api = await ref.read(runnerApiProvider.future);
@@ -138,6 +179,11 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
         barrierDismissible: false,
         builder: (_) => JobLogDialog(title: l.creatingProject(project.name), jobId: job.jobId),
       );
+      // The name is saved before the build: from here on the package name, the
+      // privacy policy and the store listing all read it from the same place.
+      if (ok == true && appName != null && appName.isNotEmpty) {
+        await api.saveListing(project.id, {'title': appName}).catchError((_) {});
+      }
       if (ok == true && mounted) {
         context.go(
           '/projects/${project.id}/create',
@@ -152,6 +198,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
             referenceTopics: widget.args.referenceTopics,
             styleBrief: widget.args.styleBrief,
             designName: m?.name,
+            appName: appName,
           ),
         );
       }

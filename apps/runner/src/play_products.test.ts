@@ -93,6 +93,34 @@ describe('Play products', () => {
     expect(bodies.at(-1)).not.toContain('"MN"');
   });
 
+  it('adds the listing in the app default language when Google asks for it', async () => {
+    const bodies: string[] = [];
+    const fake = (async (url: string | URL | Request, init?: RequestInit) => {
+      const u = String(url);
+      if (u.includes('oauth2')) return new Response('{"access_token":"t"}', { status: 200 });
+      if (u.endsWith('pricing:convertRegionPrices')) {
+        return new Response(JSON.stringify({ convertedRegionPrices: { IT: { regionCode: 'IT', price: { currencyCode: 'EUR', units: '4', nanos: 990000000 } } } }), { status: 200 });
+      }
+      if ((init?.method ?? 'GET') === 'PATCH' && u.includes('/subscriptions/')) {
+        const body = typeof init?.body === 'string' ? init.body : '';
+        bodies.push(body);
+        if (!body.includes('en-US')) {
+          return new Response(JSON.stringify({ error: { message: 'Subscription must contain a listing in the default language of the app: en-US' } }), { status: 400 });
+        }
+      }
+      return new Response('{}', { status: 200 });
+    }) as typeof fetch;
+
+    const [res] = await syncProducts(
+      { serviceAccount: sa, packageName: 'com.demo.app', products: [{ id: 'premium', type: 'subscription', title: 'Premium', description: 'All', price: '4.99', currency: 'EUR', period: 'P1M', language: 'it-IT' }] },
+      fake,
+    );
+    expect(res).toMatchObject({ id: 'premium', ok: true });
+    // The Italian listing is kept; the English one is added beside it.
+    expect(bodies.at(-1)).toContain('it-IT');
+    expect(bodies.at(-1)).toContain('en-US');
+  });
+
   it('explains the usual Google errors', () => {
     expect(explainProductError(403, 'The caller does not have permission')).toContain('Manage orders and subscriptions');
     expect(explainProductError(400, 'This app does not have BILLING permission')).toContain('upload the AAB');

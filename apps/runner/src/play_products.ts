@@ -133,6 +133,13 @@ async function upsertSubscription(fetchImpl: Fetch, token: string, pkg: string, 
   // and sell everywhere else, rather than failing the whole subscription.
   const dropped: string[] = [];
   let up = await call(fetchImpl, token, 'PATCH', url, subscription);
+  // Google insists on a listing in the app's own default language, whatever the
+  // product was written in: add it with the same words and try again.
+  const missingLanguage = /default language of the app:\s*([\w-]+)/i.exec(up.message)?.[1];
+  if (!up.res.ok && missingLanguage) {
+    subscription.listings = [...subscription.listings, { ...subscription.listings[0]!, languageCode: missingLanguage }];
+    up = await call(fetchImpl, token, 'PATCH', url, subscription);
+  }
   for (let i = 0; i < 12 && !up.res.ok; i++) {
     // Google names the country in several ways: a changed currency, a country
     // it will not bill in, a region it does not know at this regions version.

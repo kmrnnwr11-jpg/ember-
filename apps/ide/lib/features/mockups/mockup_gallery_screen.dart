@@ -55,15 +55,15 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
     final a = widget.args;
     final CompleteText complete;
     AiModel? model;
-    if (a.engine == BuildEngine.claudeCode) {
+    // The drawing engine, not the coding one: mockups and names are graphics.
+    if (a.designEngine == BuildEngine.claudeCode) {
       final socket = ref.read(runnerSocketProvider);
       complete = claudeCodeCompleter((t, p) => socket.request(t, p, timeout: const Duration(minutes: 6)));
     } else {
       final catalog = await ref.read(aiCatalogProvider.future);
       // Subscription CLIs have no one-shot mode: their mockups use Gemini (Runner key or the user's).
-      final engine = a.engine.isCli ? BuildEngine.gemini : a.engine;
-      model = catalog.where((m) => m.key == a.modelKey).firstOrNull ??
-          catalog.where((m) => m.provider == engine.provider && m.id == engine.defaultModel).firstOrNull ??
+      final engine = a.designEngine.isCli ? BuildEngine.gemini : a.designEngine;
+      model = catalog.where((m) => m.provider == engine.provider && m.id == engine.defaultModel).firstOrNull ??
           catalog.firstWhere((m) => m.provider == engine.provider);
       complete = apiCompleter(ref.read(aiProviderFactory), model);
     }
@@ -198,6 +198,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
             referenceTopics: widget.args.referenceTopics,
             styleBrief: widget.args.styleBrief,
             referenceSiteUrl: widget.args.referenceSiteUrl,
+            designEngine: widget.args.designEngine,
             designName: m?.name,
             appName: appName,
           ),

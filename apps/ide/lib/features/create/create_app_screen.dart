@@ -66,6 +66,7 @@ class CreateAppArgs {
     this.styleBrief = '',
     this.appName,
     this.referenceSiteUrl,
+    this.designEngine = BuildEngine.gemini,
   });
   final String prompt;
   final BuildEngine engine;
@@ -94,6 +95,10 @@ class CreateAppArgs {
   /// A website being turned into an app: its pages are photographed into the
   /// project before the build, the way a Play listing's screenshots are.
   final String? referenceSiteUrl;
+
+  /// Who draws the mockups, the logo and the screenshots: kept apart from the
+  /// engine that writes the code.
+  final BuildEngine designEngine;
 }
 
 /// One builder per project, kept alive so a build continues if the user navigates away.
@@ -162,7 +167,8 @@ List<EngineOption> engineOptions(AppLocalizations l, AiSettings s, bool claudeCo
 class AppPromptComposer extends ConsumerStatefulWidget {
   const AppPromptComposer({super.key, required this.onSubmit, this.initialPrompt = '', this.busy = false, this.buttonLabel});
 
-  final void Function(String prompt, BuildEngine engine, AiModel? model, String quality) onSubmit;
+  /// `engine` writes the code; `design` draws (mockups, logos, screenshots).
+  final void Function(String prompt, BuildEngine engine, AiModel? model, String quality, BuildEngine design) onSubmit;
   final String initialPrompt;
   final bool busy;
   final String? buttonLabel;
@@ -178,6 +184,10 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
 
   /// Model picked for a subscription engine (Claude Code / Codex / Gemini CLI).
   String? _cliModel;
+
+  /// Who draws: kept apart from who writes the code, because the best engine
+  /// for one is rarely the best for the other. Gemini draws for free.
+  BuildEngine? _design;
 
   @override
   void dispose() {
@@ -209,10 +219,16 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
     ];
     final cliModel = cliModels.any((m) => m.id == _cliModel) ? _cliModel : cliModels.firstOrNull?.id;
 
+    // Drawing engines only: a subscription CLI has no one-shot drawing mode.
+    final designOptions = options.where((o) => !o.engine.isCli).toList();
+    final design = designOptions.any((o) => o.engine == _design && o.available)
+        ? _design!
+        : designOptions.firstWhere((o) => o.engine == BuildEngine.gemini && o.available, orElse: () => designOptions.firstWhere((o) => o.available, orElse: () => designOptions.first)).engine;
+
     void submit() {
       if (_text.text.trim().isEmpty || !option.available || widget.busy) return;
       // For subscription engines the chosen CLI model travels in `quality`.
-      widget.onSubmit(_text.text.trim(), engine, model, engine.isCli ? (cliModel ?? 'fast') : 'fast');
+      widget.onSubmit(_text.text.trim(), engine, model, engine.isCli ? (cliModel ?? 'fast') : 'fast', design);
     }
 
     return Column(
@@ -251,6 +267,25 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
                   _model = null;
                   _cliModel = null;
                 }),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(l.chooseDesignAi, style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 2),
+        Text(l.chooseDesignAiHint, style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final o in designOptions)
+              ChoiceChip(
+                key: Key('design_${o.engine.name}'),
+                avatar: Icon(o.icon, size: 16),
+                label: Text(o.label),
+                selected: design == o.engine,
+                onSelected: o.available ? (_) => setState(() => _design = o.engine) : null,
               ),
           ],
         ),
@@ -381,6 +416,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
       referenceTopics: args.referenceTopics,
       appName: args.appName,
       referenceSiteUrl: args.referenceSiteUrl,
+      designEngine: args.designEngine,
     );
   }
 

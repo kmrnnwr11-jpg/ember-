@@ -64,7 +64,8 @@ class _LogoCardState extends ConsumerState<LogoCard> {
         'about': widget.builder.prompt,
         if (_hint.text.trim().isNotEmpty) 'hint': _hint.text.trim(),
         'count': _logos.isEmpty ? 6 : 5,
-        'engine': widget.builder.engine == BuildEngine.claudeCode ? 'claude' : 'auto',
+        // Drawing is the graphics engine's job, not the coding engine's.
+        'engine': widget.builder.designEngine == BuildEngine.claudeCode ? 'claude' : 'auto',
       });
       final list = (res['logos'] as List).cast<Map<String, dynamic>>();
       setState(() {

@@ -848,6 +848,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get bAab => 'Génération de l\'AAB pour le Play Store…';
 
   @override
+  String get chooseDesignAi => 'Who draws (logo, mockups, screens)';
+
+  @override
+  String get chooseDesignAiHint =>
+      'Gemini draws well and is free; the engine above writes the code.';
+
+  @override
   String get bIpa => 'Building the iPhone app (IPA)…';
 
   @override

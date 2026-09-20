@@ -446,6 +446,8 @@
   },
   "bApk": "Building the APK (the first time can take a few minutes)…",
   "bAab": "Building the AAB for the Play Store…",
+  "chooseDesignAi": "Who draws (logo, mockups, screens)",
+  "chooseDesignAiHint": "Gemini draws well and is free; the engine above writes the code.",
   "bIpa": "Building the iPhone app (IPA)…",
   "nameTitle": "What is your app called?",
   "nameHint": "This name goes on the Play Store, in the privacy policy and into the package name, which can never change once Google has it.",

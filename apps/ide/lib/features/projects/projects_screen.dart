@@ -98,7 +98,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   }
 
   /// Describe → see 5 style mockups full screen → choose → build (§1B).
-  Future<void> _createFromPrompt(String prompt, BuildEngine engine, AiModel? model, String quality) async {
+  Future<void> _createFromPrompt(String prompt, BuildEngine engine, AiModel? model, String quality, BuildEngine design) async {
     // "Make an app like X": study X first — on the Play Store, or the website
     // itself when the link is a site — then design and build the same features.
     ReferenceApp? reference;
@@ -130,6 +130,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         referenceTopics: reference?.topics() ?? [for (final f in site?.features.take(20) ?? const <String>[]) f],
         styleBrief: reference?.visualDirection() ?? '',
         referenceSiteUrl: site?.url,
+        designEngine: design,
       ),
     );
   }

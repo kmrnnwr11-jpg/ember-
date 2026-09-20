@@ -309,6 +309,7 @@ class AppBuilder extends ChangeNotifier {
     List<String> referenceTopics = const [],
     String? appName,
     String? referenceSiteUrl,
+    BuildEngine designEngine = BuildEngine.gemini,
   }) {
     this.quality = quality;
     this.design = design;
@@ -317,12 +318,16 @@ class AppBuilder extends ChangeNotifier {
     this.referenceTopics = referenceTopics;
     this.appName = appName;
     this.referenceSiteUrl = referenceSiteUrl;
+    this.designEngine = designEngine;
     _coverageChecked = false;
     return _run(prompt: prompt, engine: engine, model: model, change: null);
   }
 
   /// The name the user chose: it must appear everywhere the app names itself.
   String? appName;
+
+  /// Who draws for this app (logo, mockups): apart from who writes the code.
+  BuildEngine designEngine = BuildEngine.gemini;
 
   /// A website being copied, photographed before the build.
   String? referenceSiteUrl;

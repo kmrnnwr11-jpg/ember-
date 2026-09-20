@@ -1598,6 +1598,18 @@ abstract class AppLocalizations {
   /// **'Building the AAB for the Play Store…'**
   String get bAab;
 
+  /// No description provided for @chooseDesignAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Who draws (logo, mockups, screens)'**
+  String get chooseDesignAi;
+
+  /// No description provided for @chooseDesignAiHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Gemini draws well and is free; the engine above writes the code.'**
+  String get chooseDesignAiHint;
+
   /// No description provided for @bIpa.
   ///
   /// In en, this message translates to:

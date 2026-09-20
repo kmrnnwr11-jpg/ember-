@@ -134,7 +134,9 @@ async function upsertSubscription(fetchImpl: Fetch, token: string, pkg: string, 
   const dropped: string[] = [];
   let up = await call(fetchImpl, token, 'PATCH', url, subscription);
   for (let i = 0; i < 12 && !up.res.ok; i++) {
-    const region = /region code ([A-Z]{2})/.exec(up.message)?.[1];
+    // Google names the country in several ways: a changed currency, a country
+    // it will not bill in, a region it does not know at this regions version.
+    const region = /region\s*code\s*"?([A-Z]{2})/i.exec(up.message)?.[1];
     if (!region) break;
     dropped.push(region);
     const keep = (c: { regionCode: string }) => !dropped.includes(c.regionCode);

@@ -61,6 +61,7 @@ describe('Play products', () => {
             convertedRegionPrices: {
               IT: { regionCode: 'IT', price: { currencyCode: 'EUR', units: '4', nanos: 990000000 } },
               BG: { regionCode: 'BG', price: { currencyCode: 'EUR', units: '4', nanos: 990000000 } },
+              MN: { regionCode: 'MN', price: { currencyCode: 'MNT', units: '15000', nanos: 0 } },
             },
           }),
           { status: 200 },
@@ -72,6 +73,10 @@ describe('Play products', () => {
         if (body.includes('"BG"')) {
           return new Response(JSON.stringify({ error: { message: 'Invalid currency for region code BG at the specified regions version 2022/02. Expected BGN but got EUR.' } }), { status: 400 });
         }
+        // The same problem, worded another way, must be understood too.
+        if (body.includes('"MN"')) {
+          return new Response(JSON.stringify({ error: { message: 'Region code MN is not billable at the specified regions version 2022/02.' } }), { status: 400 });
+        }
       }
       return new Response('{}', { status: 200 });
     }) as typeof fetch;
@@ -82,8 +87,10 @@ describe('Play products', () => {
     );
     expect(res).toMatchObject({ id: 'premium', ok: true, status: 'active' });
     expect(res!.error).toContain('BG');
+    expect(res!.error).toContain('MN');
     expect(bodies.at(-1)).toContain('"IT"');
     expect(bodies.at(-1)).not.toContain('"BG"');
+    expect(bodies.at(-1)).not.toContain('"MN"');
   });
 
   it('explains the usual Google errors', () => {

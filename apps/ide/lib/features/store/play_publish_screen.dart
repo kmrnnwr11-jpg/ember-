@@ -21,7 +21,7 @@ const _enablePublisherApi = 'https://console.cloud.google.com/apis/library/andro
 
 const storeKitSystemPrompt = '''
 You prepare everything needed to publish an Android app on Google Play, for a non-technical owner.
-Reply with ONE JSON object only (no markdown fences), in the app's language, with these keys:
+Reply with ONE JSON object only (no markdown fences), with these keys. Write the store texts (title, descriptions, release notes) in ENGLISH: it is the listing's main language and the one Google shows wherever there is no local page. The guides and the privacy policy stay in the owner's language.
 {
  "title": "max 30 chars",
  "shortDescription": "max 80 chars",
@@ -186,10 +186,14 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     await _translate();
   }
 
-  /// Store languages offered, as Google Play names them. The first five are
-  /// switched on by default: together they reach most of the world.
+  /// The listing's own language: English, the one Google falls back to for a
+  /// country with no page of its own, so it reaches everyone.
+  static const mainLanguage = 'en-US';
+
+  /// The other store languages offered, as Google Play names them. All on by
+  /// default: a page in the reader's language costs nothing and sells more.
   static const storeLanguages = <String, String>{
-    'en-US': 'English',
+    'it-IT': 'Italiano',
     'fr-FR': 'Français',
     'es-ES': 'Español',
     'ar': 'العربية',
@@ -199,7 +203,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     'hi-IN': 'हिन्दी',
     'ru-RU': 'Русский',
   };
-  final Set<String> _languages = {'en-US', 'fr-FR', 'es-ES', 'ar'};
+  final Set<String> _languages = {...storeLanguages.keys};
 
   /// The listing in each language, as {language: {title, shortDescription, fullDescription}}.
   Map<String, Map<String, String>> _translations = {};
@@ -223,7 +227,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     }
   }
 
-  /// Writes the listing in the chosen languages, from the Italian one on screen.
+  /// Writes the listing in the chosen languages, from the English one on screen.
   ///
   /// One call for all of them: the same model keeps the same tone and the same
   /// app name in every language, which separate calls tend not to.
@@ -298,7 +302,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
         'track': _track,
         'status': 'completed',
         'listing': {
-          'language': 'it-IT',
+          'language': mainLanguage,
           if (_title.text.trim().isNotEmpty) 'title': _title.text.trim(),
           if (_short.text.trim().isNotEmpty) 'shortDescription': _short.text.trim(),
           if (_full.text.trim().isNotEmpty) 'fullDescription': _full.text.trim(),
@@ -307,7 +311,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
           for (final lang in _languages)
             if (_translations[lang] != null) {'language': lang, ..._translations[lang]!},
         ],
-        if (_notes.text.trim().isNotEmpty) 'releaseNotes': {'language': 'it-IT', 'text': _notes.text.trim()},
+        if (_notes.text.trim().isNotEmpty) 'releaseNotes': {'language': mainLanguage, 'text': _notes.text.trim()},
         if (_email.text.trim().isNotEmpty) 'contactEmail': _email.text.trim(),
       });
       _step = 4;
@@ -463,14 +467,14 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                     label: Text(l.playGenerateWithAi),
                   ),
                   const SizedBox(height: 12),
-                  // The other store pages: Italian is the one below, these are written from it.
+                  // The other store pages: English is the one below, these are written from it.
                   Text(l.playLanguages, style: Theme.of(context).textTheme.titleSmall),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
                     children: [
-                      const Chip(label: Text('Italiano')),
+                      const Chip(label: Text('English')),
                       for (final e in storeLanguages.entries)
                         FilterChip(
                           label: Text(e.value),

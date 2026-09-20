@@ -19,6 +19,24 @@ const _playConsoleSignup = 'https://play.google.com/console/signup';
 const _cloudServiceAccounts = 'https://console.cloud.google.com/iam-admin/serviceaccounts';
 const _enablePublisherApi = 'https://console.cloud.google.com/apis/library/androidpublisher.googleapis.com';
 
+/// Google's limits are hard: a translated title of 31 characters stops the
+/// whole upload. Better a title one word shorter than a publish that fails.
+Map<String, String> fitToStore(Map<String, String> page) {
+  String cut(String? text, int max) {
+    final String t = (text ?? '').trim();
+    if (t.length <= max) return t;
+    final String short = t.substring(0, max);
+    final int space = short.lastIndexOf(' ');
+    return (space > max - 12 ? short.substring(0, space) : short).trim();
+  }
+
+  return <String, String>{
+    'title': cut(page['title'], 30),
+    'shortDescription': cut(page['shortDescription'], 80),
+    'fullDescription': cut(page['fullDescription'], 4000),
+  };
+}
+
 const storeKitSystemPrompt = '''
 You prepare everything needed to publish an Android app on Google Play, for a non-technical owner.
 Reply with ONE JSON object only (no markdown fences), with these keys. Write the store texts (title, descriptions, release notes) in ENGLISH: it is the listing's main language and the one Google shows wherever there is no local page. The guides and the privacy policy stay in the owner's language.
@@ -309,7 +327,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
         },
         'translations': [
           for (final lang in _languages)
-            if (_translations[lang] != null) {'language': lang, ..._translations[lang]!},
+            if (_translations[lang] != null) {'language': lang, ...fitToStore(_translations[lang]!)},
         ],
         if (_notes.text.trim().isNotEmpty) 'releaseNotes': {'language': mainLanguage, 'text': _notes.text.trim()},
         if (_email.text.trim().isNotEmpty) 'contactEmail': _email.text.trim(),

@@ -142,7 +142,7 @@ describe('Play products', () => {
       fake,
     );
     expect(res).toMatchObject({ id: 'remove_ads', ok: true, status: 'active' });
-    expect(calls.some((c) => c.method === 'PATCH' && c.url.includes('/oneTimeProducts/remove_ads'))).toBe(true);
+    expect(calls.some((c) => c.method === 'PATCH' && c.url.includes('/onetimeproducts/remove_ads'))).toBe(true);
     expect(calls.some((c) => c.url.endsWith('/purchaseOptions:batchUpdateStates'))).toBe(true);
   });
 

@@ -85,7 +85,7 @@ export function explainProductError(status: number, message: string): string {
     return 'Permission denied: in Play Console → Users and permissions, give the service account "Manage store presence" and "Manage orders and subscriptions" for this app.';
   }
   if (status === 404) return 'App not found on Google Play: create it in Play Console with this package name and upload the AAB once.';
-  return `Google Play: ${message}`;
+  return `Google Play (${status}): ${message}`;
 }
 
 async function upsertInApp(fetchImpl: Fetch, token: string, pkg: string, p: ProductSpec): Promise<ProductResult> {
@@ -105,7 +105,9 @@ async function upsertInApp(fetchImpl: Fetch, token: string, pkg: string, p: Prod
   // newer apps. Try the way subscriptions already use before giving up.
   if (r.res.status === 403 || r.res.status === 404 || r.res.status === 400) {
     const viaNewApi = await upsertOneTimeProduct(fetchImpl, token, pkg, p);
-    if (viaNewApi.ok) return viaNewApi;
+    // When both ways fail, the second message is the useful one: it says what
+    // Google actually objects to, not just "permission".
+    if (viaNewApi.ok || viaNewApi.error) return viaNewApi;
   }
   return { id: p.id, ok: false, error: explainProductError(r.res.status, r.message) };
 }
@@ -116,6 +118,7 @@ async function upsertOneTimeProduct(fetchImpl: Fetch, token: string, pkg: string
   const conv = await call(fetchImpl, token, 'POST', `${API}/${pkg}/pricing:convertRegionPrices`, { price: toMoney(p.price, p.currency) });
   if (!conv.res.ok) return { id: p.id, ok: false, error: explainProductError(conv.res.status, conv.message) };
   const converted = Object.values((conv.json.convertedRegionPrices ?? {}) as Record<string, { regionCode: string; price: unknown }>);
+  const other = conv.json.convertedOtherRegionsPrice as { usdPrice?: unknown; eurPrice?: unknown } | undefined;
   const purchaseOptionId = 'buy';
   const product = {
     packageName: pkg,
@@ -128,14 +131,15 @@ async function upsertOneTimeProduct(fetchImpl: Fetch, token: string, pkg: string
     purchaseOptions: [
       {
         purchaseOptionId,
-        state: 'DRAFT',
+        state: 'ACTIVE',
         buyOption: {},
         regionalPricingAndAvailabilityConfigs: converted.map((c) => ({ regionCode: c.regionCode, price: c.price, availability: 'AVAILABLE' })),
-        newRegionsConfig: { availability: 'AVAILABLE' },
+        ...(other ? { newRegionsConfig: { usdPrice: other.usdPrice, eurPrice: other.eurPrice, availability: 'AVAILABLE' } } : {}),
       },
     ],
   };
-  const url = `${API}/${pkg}/oneTimeProducts/${encodeURIComponent(p.id)}?updateMask=listings,purchaseOptions&allowMissing=true&regionsVersion.version=${REGIONS_VERSION}`;
+  // Google spells this resource in lower case, unlike subscriptions.
+  const url = `${API}/${pkg}/onetimeproducts/${encodeURIComponent(p.id)}?updateMask=listings,purchaseOptions&allowMissing=true&regionsVersion.version=${REGIONS_VERSION}`;
   const dropped: string[] = [];
   let up = await call(fetchImpl, token, 'PATCH', url, product);
   for (let i = 0; i < 12 && !up.res.ok; i++) {
@@ -147,12 +151,11 @@ async function upsertOneTimeProduct(fetchImpl: Fetch, token: string, pkg: string
   }
   if (!up.res.ok) return { id: p.id, ok: false, error: explainProductError(up.res.status, up.message) };
 
-  const act = await call(fetchImpl, token, 'POST', `${API}/${pkg}/oneTimeProducts/${encodeURIComponent(p.id)}/purchaseOptions:batchUpdateStates`, {
+  // The product is written as ACTIVE above; this only nudges an older draft
+  // into life, so a refusal here is not a failure.
+  await call(fetchImpl, token, 'POST', `${API}/${pkg}/onetimeproducts/${encodeURIComponent(p.id)}/purchaseOptions:batchUpdateStates`, {
     requests: [{ packageName: pkg, productId: p.id, activatePurchaseOption: { purchaseOptionId } }],
   });
-  if (!act.res.ok && !/already active/i.test(act.message)) {
-    return { id: p.id, ok: false, status: 'created', error: explainProductError(act.res.status, act.message) };
-  }
   return {
     id: p.id,
     ok: true,

@@ -108,12 +108,19 @@ Future<String?> appFacts(Ref ref, String projectId) async {
 }
 
 class HomeAssistantPanel extends ConsumerStatefulWidget {
-  const HomeAssistantPanel({super.key, this.onClose, this.app});
+  const HomeAssistantPanel({super.key, this.onClose, this.app, this.onFixApp, this.fixing = false});
 
   final VoidCallback? onClose;
 
   /// When set, the assistant answers about this app instead of in general.
   final ({String id, String name})? app;
+
+  /// When set, the chat can change the app: the message is sent to the builder,
+  /// which edits the code and rebuilds. Used to fix a rejected app by chat.
+  final void Function(String request)? onFixApp;
+
+  /// True while the builder is applying a change, so the button waits.
+  final bool fixing;
 
   @override
   ConsumerState<HomeAssistantPanel> createState() => _HomeAssistantPanelState();
@@ -305,18 +312,38 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
                     onPressed: enabled && !c.busy ? _pickImages : null,
                   ),
                   Expanded(
-                    child: CallbackShortcuts(
-                      bindings: {const SingleActivator(LogicalKeyboardKey.enter, control: true): () => _send(c)},
-                      child: TextField(
-                        key: const Key('assistantInput'),
-                        controller: _input,
-                        enabled: enabled,
-                        minLines: 1,
-                        maxLines: 6,
-                        decoration: InputDecoration(hintText: l.assistantHint, isDense: true, border: const OutlineInputBorder()),
-                      ),
+                    // Enter sends the message; Shift+Enter goes to a new line.
+                    child: TextField(
+                      key: const Key('assistantInput'),
+                      controller: _input,
+                      enabled: enabled,
+                      minLines: 1,
+                      maxLines: 6,
+                      textInputAction: TextInputAction.send,
+                      keyboardType: TextInputType.multiline,
+                      onSubmitted: (_) => _send(c),
+                      decoration: InputDecoration(hintText: l.assistantHint, isDense: true, border: const OutlineInputBorder()),
                     ),
                   ),
+                  const SizedBox(width: 6),
+                  // "Fix the app": send the text to the builder so it changes
+                  // the code, instead of just answering in the chat.
+                  if (widget.onFixApp != null)
+                    IconButton.filledTonal(
+                      key: const Key('assistantFixApp'),
+                      tooltip: 'Sistema l\'app con questa richiesta',
+                      icon: widget.fixing
+                          ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.auto_fix_high),
+                      onPressed: widget.fixing || !enabled
+                          ? null
+                          : () {
+                              final text = _input.text.trim();
+                              if (text.isEmpty) return;
+                              _input.clear();
+                              widget.onFixApp!(text);
+                            },
+                    ),
                   const SizedBox(width: 6),
                   c.busy
                       ? IconButton.filledTonal(icon: const Icon(Icons.stop), onPressed: c.stop)

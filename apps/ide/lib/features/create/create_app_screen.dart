@@ -457,6 +457,8 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                   child: HomeAssistantPanel(
                     app: (id: project.id, name: project.displayName),
                     onClose: () => setState(() => _showAssistant = false),
+                    fixing: b.running,
+                    onFixApp: (request) => b.improve(request),
                   ),
                 ),
               ],
@@ -466,7 +468,12 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
           endDrawer: MediaQuery.sizeOf(context).width < 900
               ? Drawer(
                   width: 380,
-                  child: HomeAssistantPanel(app: (id: project.id, name: project.displayName), onClose: () => Navigator.pop(context)),
+                  child: HomeAssistantPanel(
+                    app: (id: project.id, name: project.displayName),
+                    onClose: () => Navigator.pop(context),
+                    fixing: b.running,
+                    onFixApp: (request) => b.improve(request),
+                  ),
                 )
               : null,
         );

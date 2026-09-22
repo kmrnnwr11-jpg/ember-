@@ -193,6 +193,7 @@
   "playStepFinish": "Completa nel Play Console",
   "playUploaded": "✅ Caricata! Versione {version} sulla traccia «{track}». {draft}",
   "playDraftNote": "Poiché l'app non è ancora mai stata pubblicata, Google l'ha salvata come bozza: completa i passaggi qui sotto e premi «Invia per la revisione» nel Play Console.",
+  "playReviewNotSent": "Google non ha potuto inviare le modifiche in revisione automaticamente. Sono salvate: apri Play Console e premi \"Invia per la revisione\" per pubblicare.",
   "playManualChecklist": "Google richiede di confermare a mano queste voci nel Play Console (le risposte pronte sono qui sotto):\n- **Norme sulla privacy** → incolla il link: {privacyUrl}\n- **Sicurezza dei dati**\n- **Classificazione dei contenuti** (questionario)\n- **Pubblico di destinazione e contenuti**\n- **Annunci** e **Accesso all'app** (se serve il login, fornisci un account di prova)\n- **Scheda dello store**: icona 512×512 e almeno 2 screenshot\n- Account personali nuovi: Google può richiedere un **test chiuso** con un numero minimo di tester prima della produzione",
   "playDataSafety": "Risposte per «Sicurezza dei dati»",
   "playContentRating": "Risposte per «Classificazione dei contenuti»",

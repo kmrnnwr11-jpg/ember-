@@ -15,7 +15,7 @@ interface Call {
   body?: unknown;
 }
 
-function fakeGoogle(opts: { draftOnly?: boolean; missingApp?: boolean } = {}) {
+function fakeGoogle(opts: { draftOnly?: boolean; missingApp?: boolean; notSentForReview?: boolean } = {}) {
   const calls: Call[] = [];
   const impl = (async (input: string | URL | Request, init?: RequestInit) => {
     const url = String(input);
@@ -34,6 +34,12 @@ function fakeGoogle(opts: { draftOnly?: boolean; missingApp?: boolean } = {}) {
         return new Response(JSON.stringify({ error: { message: 'Only releases with status draft may be created on draft app.' } }), { status: 400 });
       }
       return ok(body);
+    }
+    if (url.includes(':commit')) {
+      if (opts.notSentForReview && !url.includes('changesNotSentForReview=true')) {
+        return new Response(JSON.stringify({ error: { message: 'Changes cannot be sent for review automatically. Please set the query parameter changesNotSentForReview to true.' } }), { status: 400 });
+      }
+      return ok({});
     }
     return ok({});
   }) as typeof fetch;
@@ -70,7 +76,7 @@ describe('Google Play publishing', () => {
       },
       g.impl,
     );
-    expect(r).toEqual({ editId: 'edit123', versionCode: 7, track: 'internal', status: 'completed', downgradedToDraft: false, uploaded: { languages: ['en-US', 'it-IT'], listing: true, icon: false, featureGraphic: false, screenshots: 0 } });
+    expect(r).toEqual({ editId: 'edit123', versionCode: 7, track: 'internal', status: 'completed', downgradedToDraft: false, reviewNotSent: false, uploaded: { languages: ['en-US', 'it-IT'], listing: true, icon: false, featureGraphic: false, screenshots: 0 } });
     const token = g.calls[0]!;
     expect(String(token.body)).toContain('grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer');
     expect(g.calls.map((c) => `${c.method} ${c.url.replace(/^https:\/\/[^/]+/, '')}`)).toEqual([
@@ -122,6 +128,17 @@ describe('Google Play publishing', () => {
     );
     expect(r.downgradedToDraft).toBe(true);
     expect(r.status).toBe('draft');
+  });
+
+  it('commits with changesNotSentForReview for first-time apps that cannot auto-submit', async () => {
+    const g = fakeGoogle({ notSentForReview: true });
+    const r = await publishToPlay(
+      { serviceAccount: parseServiceAccount(saJson), packageName: 'a.b', aabPath: aab, track: 'production', status: 'completed' },
+      g.impl,
+    );
+    expect(r.reviewNotSent).toBe(true);
+    const commits = g.calls.filter((c) => c.url.includes(':commit'));
+    expect(commits.some((c) => c.url.includes('changesNotSentForReview=true'))).toBe(true);
   });
 
   it('explains a missing app in Play Console', async () => {

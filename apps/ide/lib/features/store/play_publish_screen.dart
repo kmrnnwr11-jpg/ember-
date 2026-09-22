@@ -612,7 +612,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Text(
-                          '${l.playUploaded('${_result!['versionCode']}', '${_result!['track']}', _result!['downgradedToDraft'] == true ? l.playDraftNote : '')}\n${uploadSummary(l, _result!)}',
+                          '${l.playUploaded('${_result!['versionCode']}', '${_result!['track']}', _result!['downgradedToDraft'] == true ? l.playDraftNote : '')}\n${uploadSummary(l, _result!)}${_result!['reviewNotSent'] == true ? '\n\n${l.playReviewNotSent}' : ''}',
                         ),
                       ),
                     ),

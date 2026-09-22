@@ -304,6 +304,7 @@
     }
   },
   "playDraftNote": "Because the app was never published, Google saved it as a draft: complete the steps below and press “Send for review” in Play Console.",
+  "playReviewNotSent": "Google could not send the changes for review automatically. They are committed: open Play Console and press \"Send for review\" to publish.",
   "playManualChecklist": "Google requires confirming these manually in Play Console (ready answers below):\n- **Privacy policy** → paste the link: {privacyUrl}\n- **Data safety**\n- **Content rating** questionnaire\n- **Target audience and content**\n- **Ads** and **App access** (provide a test account if login is required)\n- **Store listing**: 512×512 icon and at least 2 screenshots\n- New personal accounts: Google may require **closed testing** with a minimum number of testers before production",
   "@playManualChecklist": {
     "placeholders": {
@@ -456,10 +457,22 @@
   "nameMore": "Other names",
   "nameUse": "Use this name",
   "bReferenceShots": "{count} screens of the app to copy saved: the engine can see it, not just read about it",
-  "@bReferenceShots": { "placeholders": { "count": { "type": "int" } } },
+  "@bReferenceShots": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "bReferenceShotsFailed": "Could not fetch the screens of the app to copy: working from its description only",
   "bMissingTopics": "Missing from the app to copy: {topics}. Adding them now…",
-  "@bMissingTopics": { "placeholders": { "topics": { "type": "String" } } },
+  "@bMissingTopics": {
+    "placeholders": {
+      "topics": {
+        "type": "String"
+      }
+    }
+  },
   "bIosReady": "iPhone app ready ✓",
   "bIosFailed": "iPhone build failed",
   "platformAndroid": "Android",
@@ -484,8 +497,12 @@
   "ascDone": "Done on Apple: version {version}, languages: {languages}",
   "@ascDone": {
     "placeholders": {
-      "version": { "type": "String" },
-      "languages": { "type": "String" }
+      "version": {
+        "type": "String"
+      },
+      "languages": {
+        "type": "String"
+      }
     }
   },
   "ascOpen": "Open App Store Connect",

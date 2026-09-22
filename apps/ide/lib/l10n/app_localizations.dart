@@ -1262,6 +1262,12 @@ abstract class AppLocalizations {
   /// **'Because the app was never published, Google saved it as a draft: complete the steps below and press “Send for review” in Play Console.'**
   String get playDraftNote;
 
+  /// No description provided for @playReviewNotSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Google could not send the changes for review automatically. They are committed: open Play Console and press \"Send for review\" to publish.'**
+  String get playReviewNotSent;
+
   /// No description provided for @playManualChecklist.
   ///
   /// In en, this message translates to:

@@ -641,6 +641,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Because the app was never published, Google saved it as a draft: complete the steps below and press “Send for review” in Play Console.';
 
   @override
+  String get playReviewNotSent =>
+      'Google could not send the changes for review automatically. They are committed: open Play Console and press \"Send for review\" to publish.';
+
+  @override
   String playManualChecklist(String privacyUrl) {
     return 'Google requires confirming these manually in Play Console (ready answers below):\n- **Privacy policy** → paste the link: $privacyUrl\n- **Data safety**\n- **Content rating** questionnaire\n- **Target audience and content**\n- **Ads** and **App access** (provide a test account if login is required)\n- **Store listing**: 512×512 icon and at least 2 screenshots\n- New personal accounts: Google may require **closed testing** with a minimum number of testers before production';
   }

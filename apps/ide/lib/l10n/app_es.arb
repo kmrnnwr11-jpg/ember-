@@ -193,6 +193,7 @@
   "playStepFinish": "Completa en Play Console",
   "playUploaded": "✅ ¡Subida! Versión {version} en el canal «{track}». {draft}",
   "playDraftNote": "Como la app nunca se ha publicado, Google la guardó como borrador: completa los pasos de abajo y pulsa «Enviar a revisión» en Play Console.",
+  "playReviewNotSent": "Google no pudo enviar los cambios a revision automaticamente. Estan guardados: abre Play Console y pulsa \"Enviar a revision\" para publicar.",
   "playManualChecklist": "Google exige confirmar manualmente estos puntos en Play Console (respuestas listas abajo):\n- **Política de privacidad** → pega el enlace: {privacyUrl}\n- **Seguridad de los datos**\n- Cuestionario de **clasificación de contenido**\n- **Público objetivo y contenido**\n- **Anuncios** y **Acceso a la app** (proporciona una cuenta de prueba si se requiere inicio de sesión)\n- **Ficha de Play Store**: icono de 512×512 y al menos 2 capturas de pantalla\n- Cuentas personales nuevas: Google puede exigir **pruebas cerradas** con un número mínimo de testers antes de producción",
   "playDataSafety": "Respuestas para «Seguridad de los datos»",
   "playContentRating": "Respuestas para «Clasificación de contenido»",

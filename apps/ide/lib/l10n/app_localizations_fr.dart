@@ -650,6 +650,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Comme l\'app n\'a jamais été publiée, Google l\'a enregistrée comme brouillon : terminez les étapes ci-dessous et appuyez sur « Envoyer pour examen » dans Play Console.';
 
   @override
+  String get playReviewNotSent =>
+      'Google n’a pas pu envoyer les modifications en revision automatiquement. Elles sont enregistrees : ouvrez Play Console et appuyez sur \"Envoyer pour examen\" pour publier.';
+
+  @override
   String playManualChecklist(String privacyUrl) {
     return 'Google exige de confirmer manuellement ces éléments dans Play Console (réponses prêtes ci-dessous) :\n- **Politique de confidentialité** → collez le lien : $privacyUrl\n- **Sécurité des données**\n- Questionnaire de **classification du contenu**\n- **Public cible et contenu**\n- **Annonces** et **Accès à l\'application** (fournissez un compte de test si une connexion est requise)\n- **Fiche Play Store** : icône 512×512 et au moins 2 captures d\'écran\n- Nouveaux comptes personnels : Google peut exiger des **tests fermés** avec un nombre minimal de testeurs avant la production';
   }

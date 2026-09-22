@@ -75,6 +75,9 @@ export interface PublishResult {
   status: ReleaseStatus;
   /** True when Google required a draft release because the app was never published. */
   downgradedToDraft: boolean;
+  /** True when Google would not auto-send the changes for review (new app): committed, but the
+   * user must press "Send for review" once in the Play Console. */
+  reviewNotSent: boolean;
   /** Listing languages written and graphics uploaded, so the client can say exactly what changed. */
   uploaded: { languages: string[]; listing: boolean; icon: boolean; featureGraphic: boolean; screenshots: number };
 }
@@ -249,9 +252,12 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
 
   let status = input.status;
   let downgradedToDraft = false;
-  const commit = async () => {
+  let reviewNotSent = false;
+  const commit = async (notSentForReview = false) => {
     await json('PUT', `${base}/tracks/${input.track}`, release(status));
-    await json('POST', `${base}:commit`);
+    // New apps (never reviewed) cannot be auto-submitted; Google requires this flag, then the
+    // user sends for review once from the Play Console UI.
+    await json('POST', `${base}:commit${notSentForReview ? '?changesNotSentForReview=true' : ''}`);
   };
   try {
     await commit();
@@ -260,12 +266,25 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
     if (status !== 'draft' && e instanceof PlayError && /draft/i.test(e.message)) {
       status = 'draft';
       downgradedToDraft = true;
-      await commit();
+      try {
+        await commit();
+      } catch (e2) {
+        if (e2 instanceof PlayError && /changesNotSentForReview/i.test(e2.message)) {
+          reviewNotSent = true;
+          await commit(true);
+        } else {
+          throw e2;
+        }
+      }
+    } else if (e instanceof PlayError && /changesNotSentForReview/i.test(e.message)) {
+      // First-time app: commit without auto-review, user submits from the Console.
+      reviewNotSent = true;
+      await commit(true);
     } else {
       throw e;
     }
   }
-  return { editId, versionCode: bundle.versionCode, track: input.track, status, downgradedToDraft, uploaded };
+  return { editId, versionCode: bundle.versionCode, track: input.track, status, downgradedToDraft, reviewNotSent, uploaded };
 }
 
 /** Minimal, safe Markdown → HTML for hosted privacy policies (headings, lists, bold, links, paragraphs). */

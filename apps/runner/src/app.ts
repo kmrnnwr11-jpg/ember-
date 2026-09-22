@@ -1,7 +1,8 @@
 ﻿import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
-import { AppStoreError, parseAppStoreKey, projectVersion, publishToAppStore, type AppStoreListing } from './appstore.js';
+import { AppStore, AppStoreError, parseAppStoreKey, projectVersion, publishToAppStore, type AppStoreListing } from './appstore.js';
+import { deleteAppleCreds, readAppleCredsPublic, readAppleKey, saveAppleCreds } from './apple_creds.js';
 import { backupKey } from './drive.js';
 import { installAndRun, lanAddress, listDevices } from './devices.js';
 import { fix as fixFinding, inspectCloud, inspectProject, inspectRunning } from './doctor.js';
@@ -100,7 +101,7 @@ export async function buildApp(
     logger: {
       level: cfg.LOG_LEVEL,
       // Never log credentials (Ãƒâ€šÃ‚Â§4).
-      redact: ['req.headers.authorization', 'req.query.token', 'req.headers["x-provider-key"]', 'req.headers["x-provider-base-url"]', 'req.body.serviceAccount'],
+      redact: ['req.headers.authorization', 'req.query.token', 'req.headers["x-provider-key"]', 'req.headers["x-provider-base-url"]', 'req.body.serviceAccount', 'req.body.privateKey'],
     },
     bodyLimit: cfg.MAX_WS_FILE_BYTES + 1024 * 64,
     // preview.<domain>/<ws>/<project>/ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ is served by the /preview route.
@@ -397,21 +398,52 @@ export async function buildApp(
       const root = services.projectRoot(project);
       const body = z
         .object({
-          keyId: z.string().max(40),
-          issuerId: z.string().max(60),
-          privateKey: z.string().max(8000),
+          // The key is optional here: it is normally the account key saved once
+          // under ~/.ember/apple. The fields stay accepted as a fallback.
+          keyId: z.string().max(40).optional(),
+          issuerId: z.string().max(60).optional(),
+          privateKey: z.string().max(8000).optional(),
           listing: z.record(z.string(), z.unknown()).optional(),
           translations: z.array(z.record(z.string(), z.unknown())).max(20).optional(),
           privacyPolicyUrl: z.string().max(500).optional(),
           uploadBuild: z.boolean().default(false),
           submit: z.boolean().default(false),
+          // iOS submission chores Ember now fills automatically.
+          category: z.string().max(40).optional(),
+          secondaryCategory: z.string().max(40).optional(),
+          free: z.boolean().default(false),
+          screenshots: z.boolean().default(false),
+          review: z
+            .object({
+              firstName: z.string().max(60).optional(),
+              lastName: z.string().max(60).optional(),
+              email: z.string().max(120).optional(),
+              phone: z.string().max(40).optional(),
+              demoUser: z.string().max(120).optional(),
+              demoPassword: z.string().max(120).optional(),
+              notes: z.string().max(4000).optional(),
+            })
+            .optional(),
         })
         .parse(req.body);
       const gradle = await readFileAsync(path.join(root, 'android', 'app', 'build.gradle.kts'), 'utf8').catch(() => '');
       const bundleId = /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
       if (!bundleId) return reply.status(422).send({ code: 'no_bundle_id', message: 'Build the app once before publishing: its name is set at the first build.' });
       try {
-        const key = parseAppStoreKey(body);
+        // Always prefer the saved account key; fall back to any key sent in the body.
+        const key = (await readAppleKey()) ?? parseAppStoreKey(body);
+        // Screenshots need the local web preview and a browser; only wire them up
+        // when the app has a screenshot mode and the preview is ready.
+        let screenshots: { previewUrl: string; browser: string } | undefined;
+        if (body.screenshots) {
+          const browser = findBrowser();
+          const info = await preview.info(project);
+          if (browser && info.built && !info.building && (await hasScreenshotMode(root))) {
+            screenshots = { previewUrl: `http://127.0.0.1:${cfg.PORT}${info.path}`, browser };
+          }
+        }
+        // Default the reviewer contact to the signed-in email so the form is never empty.
+        const review = body.review ?? (req.user.email ? { email: req.user.email } : undefined);
         const result = await publishToAppStore({
           key,
           bundleId,
@@ -423,6 +455,11 @@ export async function buildApp(
           facts: await detectDataFacts(root),
           uploadBuild: body.uploadBuild,
           submit: body.submit,
+          category: body.category,
+          secondaryCategory: body.secondaryCategory,
+          review,
+          free: body.free,
+          screenshots,
         });
         if (result.buildUploaded) {
           // Remember what Apple now has, so the next build of either store starts above it.
@@ -433,6 +470,47 @@ export async function buildApp(
         return { ...result, bundleId };
       } catch (e) {
         if (e instanceof AppStoreError) return reply.status(e.status === 401 || e.status === 403 ? 422 : 422).send({ code: e.code, message: e.message });
+        throw e;
+      }
+    });
+
+    // ---- Apple App Store Connect key, saved once for the whole account ----
+    // Kept in ~/.ember/apple (0600), outside the repo and never in the browser,
+    // so the Key ID / Issuer ID / .p8 come back filled for every project and
+    // survive a reload, a closed browser, a Runner restart or a reboot.
+
+    // The saved key, without ever revealing the .p8 contents.
+    r.get('/v1/appstore/credentials', async () => readAppleCredsPublic());
+
+    // Save or update the key. Send privateKey only when the .p8 itself changes.
+    r.put('/v1/appstore/credentials', async (req, reply) => {
+      const body = z
+        .object({ keyId: z.string().max(40), issuerId: z.string().max(60), privateKey: z.string().max(8000).optional() })
+        .parse(req.body);
+      try {
+        return await saveAppleCreds(body);
+      } catch (e) {
+        if (e instanceof AppStoreError) return reply.status(422).send({ code: e.code, message: e.message });
+        throw e;
+      }
+    });
+
+    // Forget the saved key.
+    r.delete('/v1/appstore/credentials', async (_req, reply) => {
+      await deleteAppleCreds();
+      return reply.status(204).send();
+    });
+
+    // Check the saved key against App Store Connect (GET /v1/apps).
+    r.post('/v1/appstore/credentials/verify', async (_req, reply) => {
+      const key = await readAppleKey();
+      if (!key) return reply.status(422).send({ code: 'no_key', message: 'Nessuna chiave Apple salvata: caricala prima di verificare.' });
+      try {
+        const store = await AppStore.open(key);
+        const { data } = await store.call<{ data: unknown[] }>('GET', '/apps?limit=1', undefined, 'Verifica connessione');
+        return { ok: true, apps: Array.isArray(data) ? data.length : 0 };
+      } catch (e) {
+        if (e instanceof AppStoreError) return reply.status(422).send({ code: e.code, message: e.message });
         throw e;
       }
     });

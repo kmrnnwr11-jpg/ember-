@@ -1,8 +1,10 @@
 import { spawn } from 'node:child_process';
-import { readdir, readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { importPKCS8, SignJWT } from 'jose';
 import type { AppDataFacts } from './data_safety.js';
+import { SCREEN_PARAM } from './screenshots.js';
 
 /**
  * App Store Connect: the Apple half of publishing. Same idea as play.ts —
@@ -273,6 +275,279 @@ export class AppStore {
       'Sending for review',
     );
   }
+
+  /**
+   * The age-rating questionnaire, the same one App Store Connect shows as a long
+   * list of yes/no rows. Written from the app's facts; a plain app lands on 4+.
+   */
+  async setAgeRating(versionId: string, decl: AgeRatingDeclaration): Promise<void> {
+    const { data } = await this.call<{ data: Resource }>('GET', `/appStoreVersions/${versionId}/ageRatingDeclaration`, undefined, 'Reading the age rating');
+    if (!data?.id) return;
+    await this.call('PATCH', `/ageRatingDeclarations/${data.id}`, { data: { type: 'ageRatingDeclarations', id: data.id, attributes: decl } }, 'Writing the age rating');
+  }
+
+  /** The app's category (and an optional second one), on the App Store shelf. */
+  async setCategories(appId: string, primary: string, secondary?: string): Promise<void> {
+    const { data: infos } = await this.call<{ data: Resource[] }>('GET', `/apps/${appId}/appInfos?limit=10`, undefined, 'Reading the app details');
+    const editable = new Set(['PREPARE_FOR_SUBMISSION', 'DEVELOPER_REJECTED', 'REJECTED', 'METADATA_REJECTED']);
+    const info = (infos ?? []).find((i) => editable.has(`${i.attributes?.appStoreState ?? ''}`)) ?? infos?.[0];
+    if (!info) return;
+    const relationships: Record<string, unknown> = { primaryCategory: { data: { type: 'appCategories', id: primary } } };
+    if (secondary) relationships.secondaryCategory = { data: { type: 'appCategories', id: secondary } };
+    await this.call('PATCH', `/appInfos/${info.id}`, { data: { type: 'appInfos', id: info.id, relationships } }, 'Writing the category');
+  }
+
+  /**
+   * The "App Review Information": who Apple can contact, and a demo login when
+   * the app needs one. Removes the reviewer-contact form before submitting.
+   */
+  async setReviewDetails(versionId: string, d: AppReviewDetails): Promise<void> {
+    const attributes = {
+      contactFirstName: d.firstName || undefined,
+      contactLastName: d.lastName || undefined,
+      contactEmail: d.email || undefined,
+      contactPhone: d.phone || undefined,
+      demoAccountName: d.demoUser || undefined,
+      demoAccountPassword: d.demoPassword || undefined,
+      demoAccountRequired: !!(d.demoUser && d.demoPassword),
+      notes: d.notes || undefined,
+    };
+    const existing = await this.call<{ data: Resource | null }>('GET', `/appStoreVersions/${versionId}/appStoreReviewDetail`, undefined, 'Reading the review details').catch(() => ({ data: null }));
+    if (existing.data?.id) {
+      await this.call('PATCH', `/appStoreReviewDetails/${existing.data.id}`, { data: { type: 'appStoreReviewDetails', id: existing.data.id, attributes } }, 'Writing the review details');
+      return;
+    }
+    await this.call(
+      'POST',
+      '/appStoreReviewDetails',
+      { data: { type: 'appStoreReviewDetails', attributes, relationships: { appStoreVersion: { data: { type: 'appStoreVersions', id: versionId } } } } },
+      'Writing the review details',
+    );
+  }
+
+  /** The store-page ids by Apple locale (created by writeVersionPage). */
+  async versionLocalizations(versionId: string): Promise<Map<string, string>> {
+    const { data } = await this.call<{ data: Resource[] }>('GET', `/appStoreVersions/${versionId}/appStoreVersionLocalizations?limit=50`, undefined, 'Reading the store pages');
+    const map = new Map<string, string>();
+    for (const l of data ?? []) map.set(`${l.attributes?.locale ?? ''}`, l.id);
+    return map;
+  }
+
+  /**
+   * Replace the screenshots of one device size for one language. Idempotent:
+   * old images are cleared first, so re-publishing does not pile them up.
+   */
+  async putScreenshots(localizationId: string, displayType: string, images: Array<{ fileName: string; bytes: Buffer }>): Promise<number> {
+    const { data: sets } = await this.call<{ data: Resource[] }>('GET', `/appStoreVersionLocalizations/${localizationId}/appScreenshotSets?limit=50`, undefined, 'Reading the screenshots');
+    let setId = (sets ?? []).find((s) => `${s.attributes?.screenshotDisplayType ?? ''}` === displayType)?.id;
+    if (!setId) {
+      const made = await this.call<{ data: Resource }>(
+        'POST',
+        '/appScreenshotSets',
+        { data: { type: 'appScreenshotSets', attributes: { screenshotDisplayType: displayType }, relationships: { appStoreVersionLocalization: { data: { type: 'appStoreVersionLocalizations', id: localizationId } } } } },
+        'Making the screenshot set',
+      );
+      setId = made.data.id;
+    } else {
+      const { data: old } = await this.call<{ data: Resource[] }>('GET', `/appScreenshotSets/${setId}/appScreenshots?limit=50`, undefined, 'Reading the screenshots');
+      for (const s of old ?? []) await this.call('DELETE', `/appScreenshots/${s.id}`, undefined, 'Clearing a screenshot').catch(() => ({}));
+    }
+    let done = 0;
+    for (const img of images) {
+      await this.uploadOneScreenshot(setId, img.fileName, img.bytes);
+      done++;
+    }
+    return done;
+  }
+
+  private async uploadOneScreenshot(setId: string, fileName: string, bytes: Buffer): Promise<void> {
+    const reserve = await this.call<{ data: { id: string; attributes?: { uploadOperations?: UploadOperation[] } } }>(
+      'POST',
+      '/appScreenshots',
+      { data: { type: 'appScreenshots', attributes: { fileName, fileSize: bytes.length }, relationships: { appScreenshotSet: { data: { type: 'appScreenshotSets', id: setId } } } } },
+      'Reserving a screenshot',
+    );
+    const id = reserve.data.id;
+    for (const op of reserve.data.attributes?.uploadOperations ?? []) {
+      const headers: Record<string, string> = {};
+      for (const h of op.requestHeaders ?? []) headers[h.name] = h.value;
+      const start = op.offset ?? 0;
+      const chunk = bytes.subarray(start, start + (op.length ?? bytes.length));
+      const res = await this.fetchImpl(op.url, { method: op.method ?? 'PUT', headers, body: new Uint8Array(chunk) });
+      if (!res.ok) throw new AppStoreError('upload_failed', `Apple ha rifiutato un pezzo dello screenshot: ${res.status}`);
+    }
+    const checksum = createHash('md5').update(bytes).digest('hex');
+    await this.call('PATCH', `/appScreenshots/${id}`, { data: { type: 'appScreenshots', id, attributes: { uploaded: true, sourceFileChecksum: checksum } } }, 'Finishing a screenshot');
+  }
+
+  /**
+   * Make the app free in every territory. Apple's price model is finicky, so the
+   * caller treats a failure as a note, not a stop.
+   */
+  async setFreePrice(appId: string): Promise<void> {
+    const { data: points } = await this.call<{ data: Resource[] }>('GET', `/apps/${appId}/appPricePoints?filter[territory]=USA&limit=200`, undefined, 'Reading the prices');
+    const free = (points ?? []).find((p) => {
+      const v = `${p.attributes?.customerPrice ?? ''}`;
+      return v === '0.00' || v === '0';
+    });
+    if (!free) throw new AppStoreError('no_free_point', 'Apple non offre il livello gratuito per questa app.');
+    await this.call(
+      'POST',
+      '/appPriceSchedules',
+      {
+        data: {
+          type: 'appPriceSchedules',
+          relationships: {
+            app: { data: { type: 'apps', id: appId } },
+            baseTerritory: { data: { type: 'territories', id: 'USA' } },
+            manualPrices: { data: [{ type: 'appPrices', id: '${price-free}' }] },
+          },
+        },
+        included: [
+          {
+            type: 'appPrices',
+            id: '${price-free}',
+            attributes: { startDate: null },
+            relationships: { appPricePoint: { data: { type: 'appPricePoints', id: free.id } } },
+          },
+        ],
+      },
+      'Setting the price to free',
+    );
+  }
+}
+
+interface UploadOperation {
+  method?: string;
+  url: string;
+  length?: number;
+  offset?: number;
+  requestHeaders?: Array<{ name: string; value: string }>;
+}
+
+/** iPhone 6.7", iPhone 6.5" and iPad 12.9" — the sizes App Store asks for. */
+export const APPLE_SHOT_SPECS: Array<{ type: string; width: number; height: number; scale: number; ipad?: boolean }> = [
+  { type: 'APP_IPHONE_67', width: 430, height: 932, scale: 3 }, // 1290×2796
+  { type: 'APP_IPHONE_65', width: 414, height: 896, scale: 3 }, // 1242×2688
+  { type: 'APP_IPAD_PRO_3GEN_129', width: 1024, height: 1366, scale: 2, ipad: true }, // 2048×2732
+];
+
+/**
+ * Open the web preview at each device size and screen and grab a PNG, exactly as
+ * the Play screenshots do — but at Apple's pixel sizes and grouped by device.
+ */
+export async function captureAppleScreenshots(opts: {
+  previewUrl: string;
+  browser: string;
+  count?: number;
+  specs?: typeof APPLE_SHOT_SPECS;
+}): Promise<Map<string, Buffer[]>> {
+  const { default: puppeteer } = await import('puppeteer-core');
+  const count = opts.count ?? 4;
+  const specs = opts.specs ?? APPLE_SHOT_SPECS;
+  const out = new Map<string, Buffer[]>();
+  const browser = await puppeteer.launch({
+    executablePath: opts.browser,
+    headless: true,
+    args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--no-first-run', '--no-default-browser-check', '--hide-scrollbars'],
+  });
+  try {
+    for (const spec of specs) {
+      const buffers: Buffer[] = [];
+      const seen = new Set<string>();
+      for (let i = 0; i < count; i++) {
+        const page = await browser.newPage();
+        try {
+          await page.setViewport({ width: spec.width, height: spec.height, deviceScaleFactor: spec.scale, isMobile: !spec.ipad, hasTouch: true });
+          const sep = opts.previewUrl.includes('?') ? '&' : '?';
+          await page.goto(`${opts.previewUrl}${sep}${SCREEN_PARAM}=${i}`, { waitUntil: 'networkidle0', timeout: 90_000 });
+          await page.waitForFunction(() => document.querySelector('flutter-view, flt-glass-pane') !== null, { timeout: 60_000 });
+          await new Promise((r) => setTimeout(r, 3500));
+          const png = Buffer.from(await page.screenshot({ type: 'png' }));
+          const hash = createHash('sha1').update(png).digest('hex');
+          if (seen.has(hash)) continue; // screen not implemented → same frame, skip
+          seen.add(hash);
+          buffers.push(png);
+        } finally {
+          await page.close().catch(() => undefined);
+        }
+      }
+      if (buffers.length > 0) out.set(spec.type, buffers);
+    }
+  } finally {
+    await browser.close().catch(() => undefined);
+  }
+  return out;
+}
+
+/**
+ * The one-line encryption answer, set in the app itself so App Store Connect
+ * never asks again: `ITSAppUsesNonExemptEncryption = false` in ios Info.plist.
+ * iOS-only file — Android is untouched.
+ */
+export async function setIosExportCompliance(projectRoot: string): Promise<boolean> {
+  const file = path.join(projectRoot, 'ios', 'Runner', 'Info.plist');
+  let xml = await readFile(file, 'utf8').catch(() => '');
+  if (!xml) return false;
+  if (xml.includes('ITSAppUsesNonExemptEncryption')) return true;
+  const idx = xml.lastIndexOf('</dict>');
+  if (idx < 0) return false;
+  xml = `${xml.slice(0, idx)}\t<key>ITSAppUsesNonExemptEncryption</key>\n\t<false/>\n${xml.slice(idx)}`;
+  await writeFile(file, xml);
+  return true;
+}
+
+/**
+ * The age-rating answers. Every level is NONE and every switch is off for a
+ * normal utility app — Apple reads that as 4+. Only bump what actually applies.
+ */
+export interface AgeRatingDeclaration {
+  alcoholTobaccoOrDrugUseOrReferences?: 'NONE' | 'INFREQUENT_OR_MILD' | 'FREQUENT_OR_INTENSE';
+  contests?: 'NONE' | 'INFREQUENT_OR_MILD' | 'FREQUENT_OR_INTENSE';
+  gamblingSimulated?: 'NONE' | 'INFREQUENT_OR_MILD' | 'FREQUENT_OR_INTENSE';
+  horrorOrFearThemes?: 'NONE' | 'INFREQUENT_OR_MILD' | 'FREQUENT_OR_INTENSE';
+  matureOrSuggestiveThemes?: 'NONE' | 'INFREQUENT_OR_MILD' | 'FREQUENT_OR_INTENSE';
+  medicalOrTreatmentInformation?: 'NONE' | 'INFREQUENT_OR_MILD' | 'FREQUENT_OR_INTENSE';
+  profanityOrCrudeHumor?: 'NONE' | 'INFREQUENT_OR_MILD' | 'FREQUENT_OR_INTENSE';
+  sexualContentGraphicAndNudity?: 'NONE' | 'INFREQUENT_OR_MILD' | 'FREQUENT_OR_INTENSE';
+  sexualContentOrNudity?: 'NONE' | 'INFREQUENT_OR_MILD' | 'FREQUENT_OR_INTENSE';
+  violenceCartoonOrFantasy?: 'NONE' | 'INFREQUENT_OR_MILD' | 'FREQUENT_OR_INTENSE';
+  violenceRealistic?: 'NONE' | 'INFREQUENT_OR_MILD' | 'FREQUENT_OR_INTENSE';
+  violenceRealisticProlongedGraphicOrSadistic?: 'NONE' | 'INFREQUENT_OR_MILD' | 'FREQUENT_OR_INTENSE';
+  gambling?: boolean;
+  unrestrictedWebAccess?: boolean;
+  kidsAgeBand?: null | 'FIVE_AND_UNDER' | 'SIX_TO_EIGHT' | 'NINE_TO_ELEVEN';
+}
+
+/** A safe, "nothing to declare" questionnaire → 4+. */
+export function ageRating4Plus(): AgeRatingDeclaration {
+  return {
+    alcoholTobaccoOrDrugUseOrReferences: 'NONE',
+    contests: 'NONE',
+    gamblingSimulated: 'NONE',
+    horrorOrFearThemes: 'NONE',
+    matureOrSuggestiveThemes: 'NONE',
+    medicalOrTreatmentInformation: 'NONE',
+    profanityOrCrudeHumor: 'NONE',
+    sexualContentGraphicAndNudity: 'NONE',
+    sexualContentOrNudity: 'NONE',
+    violenceCartoonOrFantasy: 'NONE',
+    violenceRealistic: 'NONE',
+    violenceRealisticProlongedGraphicOrSadistic: 'NONE',
+    gambling: false,
+    unrestrictedWebAccess: false,
+    kidsAgeBand: null,
+  };
+}
+
+export interface AppReviewDetails {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  demoUser?: string;
+  demoPassword?: string;
+  notes?: string;
 }
 
 export interface AppStoreListing {
@@ -387,6 +662,17 @@ export interface AppStorePublishInput {
   uploadBuild?: boolean;
   /** Hand the version to Apple's reviewers at the end. */
   submit?: boolean;
+  /** Age-rating answers. Defaults to 4+ when omitted. */
+  ageRating?: AgeRatingDeclaration;
+  /** App Store category id, e.g. "UTILITIES", "PRODUCTIVITY". */
+  category?: string;
+  secondaryCategory?: string;
+  /** Who Apple can contact for review, and an optional demo login. */
+  review?: AppReviewDetails;
+  /** Make the app free in every territory. */
+  free?: boolean;
+  /** Generate iPhone/iPad screenshots from the web preview and upload them. */
+  screenshots?: { previewUrl: string; browser: string; count?: number };
 }
 
 export interface AppStorePublishResult {
@@ -400,6 +686,14 @@ export interface AppStorePublishResult {
   buildUploaded: boolean;
   buildAttached: boolean;
   submitted: boolean;
+  /** The extra iOS chores Ember now fills so you do not have to. */
+  ageRated: boolean;
+  categorized: boolean;
+  reviewInfoSet: boolean;
+  exportCompliance: boolean;
+  pricedFree: boolean;
+  /** Screenshots uploaded per device size, e.g. { APP_IPHONE_67: 8 }. */
+  screenshots: Record<string, number>;
   notes: string[];
 }
 
@@ -430,6 +724,64 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
   }
 
   const privacy = input.facts ? await store.writePrivacy(app.id, input.facts) : null;
+
+  // ---- The chores that used to be filled by hand in App Store Connect ----
+
+  // Encryption question, answered once in the app itself (iOS Info.plist).
+  const exportCompliance = await setIosExportCompliance(input.projectRoot).catch(() => false);
+
+  // Age-rating questionnaire (defaults to 4+).
+  let ageRated = false;
+  await store.setAgeRating(version.id, input.ageRating ?? ageRating4Plus()).then(
+    () => (ageRated = true),
+    (e: unknown) => notes.push(`Fascia d'età non impostata: ${(e as Error).message}`),
+  );
+
+  // Store category.
+  let categorized = false;
+  if (input.category) {
+    await store.setCategories(app.id, input.category, input.secondaryCategory).then(
+      () => (categorized = true),
+      (e: unknown) => notes.push(`Categoria non impostata: ${(e as Error).message}`),
+    );
+  }
+
+  // Reviewer contact / demo login.
+  let reviewInfoSet = false;
+  if (input.review && (input.review.email || input.review.notes || input.review.demoUser)) {
+    await store.setReviewDetails(version.id, input.review).then(
+      () => (reviewInfoSet = true),
+      (e: unknown) => notes.push(`Info per la revisione non salvate: ${(e as Error).message}`),
+    );
+  }
+
+  // Price = free, everywhere (best-effort).
+  let pricedFree = false;
+  if (input.free) {
+    await store.setFreePrice(app.id).then(
+      () => (pricedFree = true),
+      (e: unknown) => notes.push(`Prezzo gratuito non impostato: ${(e as Error).message}`),
+    );
+  }
+
+  // iPhone/iPad screenshots, generated from the web preview and uploaded to
+  // every language of the store page.
+  const screenshots: Record<string, number> = {};
+  if (input.screenshots) {
+    try {
+      const byType = await captureAppleScreenshots({ previewUrl: input.screenshots.previewUrl, browser: input.screenshots.browser, count: input.screenshots.count });
+      const locs = [...(await store.versionLocalizations(version.id)).values()];
+      for (const [type, buffers] of byType) {
+        const images = buffers.map((bytes, i) => ({ fileName: `${type}_${i + 1}.png`, bytes }));
+        let uploaded = 0;
+        for (const locId of locs) uploaded += await store.putScreenshots(locId, type, images).catch(() => 0);
+        screenshots[type] = uploaded;
+      }
+      if (Object.keys(screenshots).length === 0) notes.push('Nessuno screenshot catturato: l’app ha la "modalità screenshot" e l’anteprima web è pronta?');
+    } catch (e) {
+      notes.push(`Screenshot non caricati: ${(e as Error).message}`);
+    }
+  }
 
   let buildAttached = false;
   const build = await store.latestBuild(app.id).catch(() => null);
@@ -463,6 +815,12 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
     buildUploaded,
     buildAttached,
     submitted,
+    ageRated,
+    categorized,
+    reviewInfoSet,
+    exportCompliance,
+    pricedFree,
+    screenshots,
     notes,
   };
 }

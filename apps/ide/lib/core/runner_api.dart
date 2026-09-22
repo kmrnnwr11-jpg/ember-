@@ -166,6 +166,29 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// The Apple App Store Connect key, saved once for the whole account. Returns
+  /// `{hasKey, keyId, issuerId, p8File}` — never the .p8 contents.
+  Future<Map<String, dynamic>> appStoreCredentials() =>
+      _call(() => _dio.get('/v1/appstore/credentials'), (d) => d as Map<String, dynamic>);
+
+  /// Saves or updates the account's Apple key. Pass [privateKey] only when the
+  /// .p8 itself changes; omit it to update just the Key ID / Issuer ID.
+  Future<Map<String, dynamic>> saveAppStoreCredentials({required String keyId, required String issuerId, String? privateKey}) => _call(
+    () => _dio.put('/v1/appstore/credentials', data: {'keyId': keyId, 'issuerId': issuerId, if (privateKey != null && privateKey.isNotEmpty) 'privateKey': privateKey}),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Forgets the saved Apple key.
+  Future<void> deleteAppStoreCredentials() async {
+    await _call<void>(() => _dio.delete('/v1/appstore/credentials'), (_) {});
+  }
+
+  /// Checks the saved key against App Store Connect (GET /v1/apps).
+  Future<Map<String, dynamic>> verifyAppStoreConnection() => _call(
+    () => _dio.post('/v1/appstore/credentials/verify', data: const <String, dynamic>{}, options: Options(receiveTimeout: const Duration(seconds: 30))),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// The apps this GitHub account saved from Ember, from any computer.
   Future<List<Map<String, dynamic>>> githubApps(String token) => _call(
     () => _dio.post('/v1/github/apps', data: {'token': token}, options: Options(receiveTimeout: const Duration(minutes: 2))),

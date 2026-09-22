@@ -841,6 +841,7 @@
   "acCopied": "Copied",
   "acAuto": "Ember does this one",
   "paste": "Paste",
+  "ghSavedOn": "Saved on GitHub",
   "ghTitle": "Save on GitHub",
   "ghHint": "Keeps a copy of this app's source in your own GitHub repository. The signing key, the build folder and the Google files are never uploaded.",
   "ghToken": "GitHub token",

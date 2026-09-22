@@ -145,6 +145,10 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// The GitHub repository this app is already linked to, if any.
+  Future<Map<String, dynamic>> githubLink(String projectId) =>
+      _call(() => _dio.get('/v1/projects/$projectId/github'), (d) => d as Map<String, dynamic>);
+
   /// Pushes the app's source to a GitHub repository the user owns.
   Future<Map<String, dynamic>> saveToGitHub(String projectId, String token, {String? repo, bool private = true, String? message}) => _call(
     () => _dio.post(

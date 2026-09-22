@@ -355,6 +355,19 @@ export async function buildApp(
     });
 
     // Push the app's source to a GitHub repository the user owns.
+    // The GitHub repository an app is already linked to, so the card can show
+    // "already saved on GitHub" with its name instead of only a Save button.
+    r.get('/v1/projects/:projectId/github', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const root = services.projectRoot(project);
+      const config = await readFileAsync(path.join(root, '.git', 'config'), 'utf8').catch(() => '');
+      const url = /\[remote "origin"\][^[]*?url\s*=\s*(\S+)/.exec(config)?.[1] ?? '';
+      const m = /github\.com[/:]([^/]+)\/([^/.]+)(?:\.git)?/.exec(url);
+      if (!m) return { linked: false };
+      return { linked: true, owner: m[1], repo: m[2], url: `https://github.com/${m[1]}/${m[2]}` };
+    });
+
     r.post('/v1/projects/:projectId/github', async (req, reply) => {
       const { projectId } = req.params as { projectId: string };
       const { project } = await services.ownedProject(req.user.id, projectId);

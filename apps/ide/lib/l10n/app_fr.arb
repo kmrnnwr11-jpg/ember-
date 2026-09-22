@@ -394,6 +394,7 @@
   "acCopied": "Copié",
   "acAuto": "Ember s'en charge",
   "paste": "Coller",
+  "ghSavedOn": "Enregistré sur GitHub",
   "ghTitle": "Enregistrer sur GitHub",
   "ghHint": "Conserve une copie du code de cette app dans votre propre dépôt GitHub. La clé de signature, le dossier build et les fichiers Google ne sont jamais envoyés.",
   "ghToken": "Jeton GitHub",

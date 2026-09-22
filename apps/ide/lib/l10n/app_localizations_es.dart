@@ -1515,6 +1515,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get paste => 'Pegar';
 
   @override
+  String get ghSavedOn => 'Guardado en GitHub';
+
+  @override
   String get ghTitle => 'Guardar en GitHub';
 
   @override

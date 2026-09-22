@@ -394,6 +394,7 @@
   "acCopied": "Copiado",
   "acAuto": "Lo hace Ember",
   "paste": "Pegar",
+  "ghSavedOn": "Guardado en GitHub",
   "ghTitle": "Guardar en GitHub",
   "ghHint": "Guarda una copia del código de esta app en tu propio repositorio de GitHub. La clave de firma, la carpeta build y los archivos de Google nunca se suben.",
   "ghToken": "Token de GitHub",

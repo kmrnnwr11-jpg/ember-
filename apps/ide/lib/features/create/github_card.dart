@@ -23,6 +23,7 @@ class _GitHubCardState extends ConsumerState<GitHubCard> {
   bool _busy = false;
   String? _message;
   String? _repoUrl;
+  String? _linkedRepo;
   bool _error = false;
 
   @override
@@ -31,6 +32,15 @@ class _GitHubCardState extends ConsumerState<GitHubCard> {
     ref.read(keyValueStoreProvider).read(_tokenKey).then((t) {
       if (mounted && t != null && t.isNotEmpty) setState(() => _hasToken = true);
     });
+    // Show right away whether this app is already saved on GitHub, and where.
+    ref.read(runnerApiProvider.future).then((api) => api.githubLink(widget.projectId)).then((info) {
+      if (mounted && info['linked'] == true) {
+        setState(() {
+          _linkedRepo = '${info['owner']}/${info['repo']}';
+          _repoUrl = info['url'] as String?;
+        });
+      }
+    }).catchError((_) {});
   }
 
   @override
@@ -93,6 +103,22 @@ class _GitHubCardState extends ConsumerState<GitHubCard> {
             Row(children: [const Icon(Icons.hub_outlined), const SizedBox(width: 8), Text(l.ghTitle, style: theme.textTheme.titleMedium)]),
             const SizedBox(height: 4),
             Text(l.ghHint, style: theme.textTheme.bodySmall),
+            // Already linked to a repository: show its name, so it is clear the
+            // app is saved and where, without pressing anything.
+            if (_linkedRepo != null) ...[
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: _repoUrl == null ? null : () => launchUrl(Uri.parse(_repoUrl!), mode: LaunchMode.externalApplication),
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle, size: 18, color: theme.colorScheme.primary),
+                    const SizedBox(width: 6),
+                    Expanded(child: Text('${l.ghSavedOn}: $_linkedRepo', style: TextStyle(color: theme.colorScheme.primary))),
+                    const Icon(Icons.open_in_new, size: 16),
+                  ],
+                ),
+              ),
+            ],
             if (!_hasToken) ...[
               const SizedBox(height: 10),
               TextField(

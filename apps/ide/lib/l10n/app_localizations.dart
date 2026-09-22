@@ -2690,6 +2690,12 @@ abstract class AppLocalizations {
   /// **'Paste'**
   String get paste;
 
+  /// No description provided for @ghSavedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on GitHub'**
+  String get ghSavedOn;
+
   /// No description provided for @ghTitle.
   ///
   /// In en, this message translates to:

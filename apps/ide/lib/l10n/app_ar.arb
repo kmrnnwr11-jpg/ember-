@@ -394,6 +394,7 @@
   "acCopied": "تم النسخ",
   "acAuto": "يتولاها Ember",
   "paste": "لصق",
+  "ghSavedOn": "محفوظ على GitHub",
   "ghTitle": "الحفظ على GitHub",
   "ghHint": "يحتفظ بنسخة من كود التطبيق في مستودعك على GitHub. لا يتم رفع مفتاح التوقيع ولا مجلد build ولا ملفات Google.",
   "ghToken": "رمز GitHub",

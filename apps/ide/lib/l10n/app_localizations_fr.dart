@@ -1515,6 +1515,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get paste => 'Coller';
 
   @override
+  String get ghSavedOn => 'Enregistré sur GitHub';
+
+  @override
   String get ghTitle => 'Enregistrer sur GitHub';
 
   @override

@@ -1493,6 +1493,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get paste => 'لصق';
 
   @override
+  String get ghSavedOn => 'محفوظ على GitHub';
+
+  @override
   String get ghTitle => 'الحفظ على GitHub';
 
   @override

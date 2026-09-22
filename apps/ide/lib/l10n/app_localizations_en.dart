@@ -1498,6 +1498,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paste => 'Paste';
 
   @override
+  String get ghSavedOn => 'Saved on GitHub';
+
+  @override
   String get ghTitle => 'Save on GitHub';
 
   @override

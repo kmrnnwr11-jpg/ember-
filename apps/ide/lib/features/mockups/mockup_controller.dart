@@ -79,9 +79,23 @@ String shortDescription(String description) =>
         ? description
         : '${description.substring(0, maxMockupDescription)}\n…(the rest of the brief goes to the build, not to the drawing)';
 
-/// Each mockup of a set gets its own accent, so the proposals are real
-/// choices and not the same page over and over.
-const mockupAccents = ['red / crimson', 'deep blue', 'emerald green', 'violet', 'amber orange', 'teal', 'magenta', 'indigo'];
+/// The colour always comes from the app's subject; what changes between
+/// proposals is HOW that one subject colour is used, so the set stays varied
+/// without ever drifting to a colour that fights the subject.
+const mockupAccents = [
+  'as one bold solid accent on neutral surfaces',
+  'in a rich two-tone gradient of the same colour',
+  'as a soft light tint across the surfaces',
+  'as a deep, saturated, high-contrast tone',
+  'paired with a small warm complementary highlight',
+  'as duotone — two shades of the same colour',
+  'as a vivid accent over a mostly monochrome layout',
+  'with a subtle pastel version of itself',
+];
+
+/// Styles that read naturally on a dark background; the other styles fill the
+/// light slots. A set is always half light, half dark (§ "4 dark + 4 normali").
+const _darkStyleIds = {'dark', 'glass', 'tech', 'retro', 'mono'};
 
 /// …and its own skeleton, because a different colour on the same layout is not
 /// a different proposal. These decide where things sit and how they are drawn.
@@ -95,16 +109,25 @@ const mockupLayouts = [
   'Layout: a sticky toolbar with tabs at the top, cards with a coloured left stripe, a compact list below. Icons: badge-style, icon inside a rounded square.',
 ];
 
-String mockupUserPrompt(String appDescription, MockupStyle style, {String? previousHtml, String? change, String styleBrief = '', String? accent, String? layout}) {
+String mockupUserPrompt(String appDescription, MockupStyle style, {String? previousHtml, String? change, String styleBrief = '', String? accent, String? layout, String? mode}) {
   final b = StringBuffer()
     ..writeln('App description:')
     ..writeln(shortDescription(appDescription))
     ..writeln()
     ..writeln('Visual style: ${style.name} — ${style.direction}');
+  if (mode != null) {
+    b.writeln(
+      mode == 'dark'
+          ? 'Theme: DARK — a near-black or very dark background, light text, and the subject colour glowing on top. This mockup MUST be dark.'
+          : 'Theme: LIGHT — a light/white background with dark text and the subject colour as the accent. This mockup MUST be light.',
+    );
+  }
   if (accent != null) {
     b.writeln(
-      'Accent colour for this proposal: $accent. Lead with it, so this proposal is visibly a different choice from the others — '
-      'unless the subject of the app calls for its own colour, which always wins.',
+      'COLOUR — this is the most important rule: build the whole mockup around the ONE colour people already associate with '
+      "this app's subject (PDF and documents → red, water, weather and travel → blue, money and banking → green, food → warm "
+      'orange, night and sleep → deep indigo, health → teal, nature → green). That subject colour is the dominant colour of the '
+      'app. For variety between proposals use it $accent here — but NEVER swap it for an unrelated colour.',
     );
   }
   if (layout != null) {
@@ -203,26 +226,39 @@ class MockupController extends ChangeNotifier {
   List<Mockup> get current => sets.isEmpty ? const [] : sets[viewingSet];
   bool get loading => current.any((m) => m.status == MockupStatus.loading);
 
-  /// How many proposals a set holds, and how many are drawn at once. Four at a
-  /// time keeps it quick without asking a free tier for seven long answers in
-  /// the same second.
-  static const setSize = 7;
+  /// How many proposals a set holds, and how many are drawn at once. A set is
+  /// always 8: four light and four dark. Four at a time keeps it quick without
+  /// asking a free tier for eight long answers in the same second.
+  static const setSize = 8;
   static const _atOnce = 4;
 
-  /// Generates a set of proposals, each with its own style, colour and layout.
+  /// Generates a set of 8 proposals — 4 light, 4 dark — each built around the
+  /// app's subject colour, with its own style and layout.
   Future<void> generateSet() async {
     final pool = stylePoolFor(styleBrief);
-    final set = [for (var i = 0; i < setSize; i++) Mockup(pool[(_poolOffset + i) % pool.length])];
-    final prompts = [
-      for (var i = 0; i < setSize; i++)
+    final darkPool = pool.where((s) => _darkStyleIds.contains(s.id)).toList();
+    final lightPool = pool.where((s) => !_darkStyleIds.contains(s.id)).toList();
+    // Fall back to the whole pool if a subset came out empty, so we never crash.
+    final darks = darkPool.isEmpty ? pool : darkPool;
+    final lights = lightPool.isEmpty ? pool : lightPool;
+
+    final set = <Mockup>[];
+    final prompts = <String>[];
+    for (var i = 0; i < setSize; i++) {
+      final dark = i.isOdd; // alternate → 4 light (even i) + 4 dark (odd i)
+      final chosen = dark ? darks[(_poolOffset ~/ 2 + i ~/ 2) % darks.length] : lights[(_poolOffset ~/ 2 + i ~/ 2) % lights.length];
+      set.add(Mockup(chosen));
+      prompts.add(
         mockupUserPrompt(
           description,
-          set[i].style,
+          chosen,
           styleBrief: styleBrief,
+          mode: dark ? 'dark' : 'light',
           accent: mockupAccents[(_poolOffset + i) % mockupAccents.length],
           layout: mockupLayouts[(_poolOffset + i) % mockupLayouts.length],
         ),
-    ];
+      );
+    }
     _poolOffset += setSize;
     sets.add(set);
     viewingSet = sets.length - 1;

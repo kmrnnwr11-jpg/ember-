@@ -21,6 +21,8 @@ export interface AppleCredsPublic {
   issuerId: string;
   /** Display name only, e.g. "AuthKey_Z47GM3ZDZ6.p8". Never the contents. */
   p8File: string;
+  /** The Apple Developer Team ID used to sign iPhone builds, e.g. "UBZ3HA24HT". */
+  teamId: string;
   updatedAt?: string;
 }
 
@@ -28,11 +30,15 @@ interface Stored {
   keyId: string;
   issuerId: string;
   p8File: string;
+  teamId?: string;
+  /** Phone Apple's reviewers may call, shared by every app of the account. */
+  reviewPhone?: string;
   updatedAt: string;
 }
 
 const KEY_ID = /^[A-Z0-9]{8,12}$/i;
 const ISSUER = /^[0-9a-f-]{36}$/i;
+const TEAM = /^[A-Z0-9]{10}$/;
 
 /** ~/.ember/apple, or EMBER_APPLE_DIR when set (tests, custom homes). */
 function home(): string {
@@ -62,13 +68,39 @@ async function writeSecret(file: string, data: string): Promise<void> {
 /** What the IDE may see: everything except the private key itself. */
 export async function readAppleCredsPublic(): Promise<AppleCredsPublic> {
   const m = await readMeta();
-  if (!m) return { hasKey: false, keyId: '', issuerId: '', p8File: '' };
+  if (!m) return { hasKey: false, keyId: '', issuerId: '', p8File: '', teamId: '' };
   // "Saved" only if the key file is really still there.
   const present = await readFile(path.join(home(), m.p8File), 'utf8').then(
     () => true,
     () => false,
   );
-  return { hasKey: present, keyId: m.keyId, issuerId: m.issuerId, p8File: m.p8File, updatedAt: m.updatedAt };
+  return { hasKey: present, keyId: m.keyId, issuerId: m.issuerId, p8File: m.p8File, teamId: m.teamId ?? '', updatedAt: m.updatedAt };
+}
+
+/** The saved IDs (no key contents), for the Runner's own use. */
+export async function readAppleCreds(): Promise<{ keyId: string; issuerId: string; teamId: string } | null> {
+  const m = await readMeta();
+  return m ? { keyId: m.keyId, issuerId: m.issuerId, teamId: m.teamId ?? '' } : null;
+}
+
+/** The review contact phone saved for the account, if any. */
+export async function readReviewPhone(): Promise<string> {
+  return (await readMeta())?.reviewPhone ?? '';
+}
+
+/** Remembers the review contact phone for the next apps. */
+export async function rememberReviewPhone(phone: string): Promise<void> {
+  const m = await readMeta();
+  const clean = phone.trim();
+  if (!m || !/^\+?[\d\s().-]{6,24}$/.test(clean) || m.reviewPhone === clean) return;
+  await writeSecret(metaFile(), JSON.stringify({ ...m, reviewPhone: clean }, null, 2));
+}
+
+/** Remembers the Team ID found on Apple, so the card can show it. */
+export async function rememberTeamId(teamId: string): Promise<void> {
+  const m = await readMeta();
+  if (!m || !TEAM.test(teamId) || m.teamId === teamId) return;
+  await writeSecret(metaFile(), JSON.stringify({ ...m, teamId }, null, 2));
 }
 
 /** The full key for signing — server-side only, never leaves the Runner. */
@@ -85,6 +117,8 @@ export interface SaveInput {
   issuerId?: unknown;
   /** The .p8 contents. Omit to change only the Key ID / Issuer ID. */
   privateKey?: unknown;
+  /** Apple Developer Team ID. Omit to keep the saved one, "" to forget it. */
+  teamId?: unknown;
 }
 
 /**
@@ -98,6 +132,8 @@ export async function saveAppleCreds(input: SaveInput): Promise<AppleCredsPublic
 
   if (!KEY_ID.test(keyId)) throw new AppStoreError('bad_request', 'Il Key ID è il codice breve accanto alla chiave in App Store Connect, es. Z47GM3ZDZ6.');
   if (!ISSUER.test(issuerId)) throw new AppStoreError('bad_request', "L'Issuer ID è il codice lungo (un UUID) in cima alla pagina Chiavi di App Store Connect.");
+  const teamIn = input.teamId === undefined || input.teamId === null ? null : `${input.teamId}`.trim().toUpperCase();
+  if (teamIn && !TEAM.test(teamIn)) throw new AppStoreError('bad_request', 'Il Team ID è un codice di 10 caratteri, es. UBZ3HA24HT: lo trovi su developer.apple.com → Membership.');
 
   const prev = await readMeta();
   let p8File = prev?.p8File ?? '';
@@ -123,9 +159,10 @@ export async function saveAppleCreds(input: SaveInput): Promise<AppleCredsPublic
     if (prev && prev.keyId !== keyId) throw new AppStoreError('bad_request', 'Hai cambiato il Key ID: carica anche il nuovo file .p8 corrispondente.');
   }
 
-  const meta: Stored = { keyId, issuerId, p8File, updatedAt: new Date().toISOString() };
+  const teamId = teamIn ?? prev?.teamId ?? '';
+  const meta: Stored = { keyId, issuerId, p8File, ...(teamId ? { teamId } : {}), updatedAt: new Date().toISOString() };
   await writeSecret(metaFile(), JSON.stringify(meta, null, 2));
-  return { hasKey: true, keyId, issuerId, p8File, updatedAt: meta.updatedAt };
+  return { hasKey: true, keyId, issuerId, p8File, teamId, updatedAt: meta.updatedAt };
 }
 
 export async function deleteAppleCreds(): Promise<void> {

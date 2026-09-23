@@ -37,11 +37,13 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
 
   static final _keyIdRe = RegExp(r'^[A-Za-z0-9]{8,12}$');
   static final _issuerRe = RegExp(r'^[0-9a-fA-F-]{36}$');
+  static final _teamRe = RegExp(r'^[A-Za-z0-9]{10}$');
   static final _fileKeyIdRe = RegExp(r'AuthKey_([A-Za-z0-9]{8,12})\.p8$', caseSensitive: false);
 
   final _keyId = TextEditingController();
   final _issuer = TextEditingController();
   final _p8 = TextEditingController();
+  final _team = TextEditingController(); // Apple Developer Team ID, found by the Runner when empty
 
   bool _loading = true;
   bool _hasKey = false; // a key is saved on the Runner
@@ -58,6 +60,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
   bool _free = false;
   bool _screenshots = false;
   final _reviewEmail = TextEditingController();
+  final _reviewPhone = TextEditingController();
   final _reviewNotes = TextEditingController();
   final _demoUser = TextEditingController();
   final _demoPass = TextEditingController();
@@ -112,6 +115,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
         _p8File = '${creds['p8File'] ?? ''}';
         _keyId.text = '${creds['keyId'] ?? ''}';
         _issuer.text = '${creds['issuerId'] ?? ''}';
+        _team.text = '${creds['teamId'] ?? ''}';
         _editingKey = !hasKey; // need the .p8 the first time
         _loading = false;
       });
@@ -126,7 +130,9 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
     _keyId.dispose();
     _issuer.dispose();
     _p8.dispose();
+    _team.dispose();
     _reviewEmail.dispose();
+    _reviewPhone.dispose();
     _reviewNotes.dispose();
     _demoUser.dispose();
     _demoPass.dispose();
@@ -141,6 +147,8 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
     _debounce = Timer(const Duration(milliseconds: 600), () {
       final keyId = _keyId.text.trim();
       final issuer = _issuer.text.trim();
+      final team = _team.text.trim();
+      if (team.isNotEmpty && !_teamRe.hasMatch(team)) return; // still typing
       if (_keyIdRe.hasMatch(keyId) && _issuerRe.hasMatch(issuer)) _save(keyId: keyId, issuer: issuer);
     });
   }
@@ -150,9 +158,10 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
   Future<void> _save({required String keyId, required String issuer, String? privateKey}) async {
     try {
       final api = await ref.read(runnerApiProvider.future);
-      final res = await api.saveAppStoreCredentials(keyId: keyId, issuerId: issuer, privateKey: privateKey);
+      final res = await api.saveAppStoreCredentials(keyId: keyId, issuerId: issuer, privateKey: privateKey, teamId: _team.text.trim().toUpperCase());
       if (!mounted) return;
       setState(() {
+        _team.text = '${res['teamId'] ?? _team.text}';
         _hasKey = res['hasKey'] == true;
         _p8File = '${res['p8File'] ?? _p8File}';
         _editingKey = false;
@@ -245,8 +254,13 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
       final res = await api.verifyAppStoreConnection();
       if (!mounted) return;
       final n = res['apps'];
+      final team = '${res['teamId'] ?? ''}';
       setState(() {
-        _message = n is int ? 'Connessione OK (App Store Connect raggiunto)' : 'Connessione OK';
+        if (team.isNotEmpty && _team.text.trim().isEmpty) _team.text = team;
+        _message = [
+          n is int ? 'Connessione OK (App Store Connect raggiunto)' : 'Connessione OK',
+          if (team.isNotEmpty) 'Team $team',
+        ].join(' · ');
         _error = false;
       });
     } on RunnerException catch (e) {
@@ -296,7 +310,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
       'releaseNotes': '${from['releaseNotes'] ?? ''}',
     };
 
-    final main = page('it-IT', listing);
+    final main = page('en-US', listing); // the main listing is written in English, like on Play
     final others = <Map<String, dynamic>>[];
     try {
       final j = jsonDecode('${listing['translations'] ?? ''}') as Map<String, dynamic>;
@@ -328,6 +342,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
       final (listing, translations, privacyUrl) = await _listing();
       final review = <String, dynamic>{
         if (_reviewEmail.text.trim().isNotEmpty) 'email': _reviewEmail.text.trim(),
+        if (_reviewPhone.text.trim().isNotEmpty) 'phone': _reviewPhone.text.trim(),
         if (_reviewNotes.text.trim().isNotEmpty) 'notes': _reviewNotes.text.trim(),
         if (_demoUser.text.trim().isNotEmpty) 'demoUser': _demoUser.text.trim(),
         if (_demoPass.text.trim().isNotEmpty) 'demoPassword': _demoPass.text.trim(),
@@ -421,6 +436,17 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _team,
+                onChanged: (_) => _onIdChanged(),
+                textCapitalization: TextCapitalization.characters,
+                decoration: const InputDecoration(
+                  labelText: 'Team ID (facoltativo)',
+                  helperText: 'Serve a firmare l’app iPhone. Se lo lasci vuoto lo leggo da Apple con la chiave.',
+                  border: OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 8),
               // The .p8 itself: a saved-state chip, or the input while (re)setting it.
@@ -540,6 +566,16 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
                 TextField(
                   controller: _reviewEmail,
                   decoration: const InputDecoration(labelText: 'Email di contatto (vuoto = il tuo account)', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _reviewPhone,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Telefono di contatto (obbligatorio per Apple, es. +39 333 1234567)',
+                    helperText: 'Lo vede solo chi rivede l’app. Lo ricordo per le prossime app.',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(

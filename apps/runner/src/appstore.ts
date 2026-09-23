@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { importPKCS8, SignJWT } from 'jose';
 import type { AppDataFacts } from './data_safety.js';
@@ -73,8 +74,11 @@ async function appleError(res: Response, what: string): Promise<AppStoreError> {
   let detail = `${res.status} ${res.statusText}`;
   try {
     const j = (await res.json()) as { errors?: Array<{ title?: string; detail?: string }> };
-    const first = j.errors?.[0];
+    const first = (j.errors as Array<{ title?: string; detail?: string; meta?: { associatedErrors?: Record<string, Array<{ detail?: string }>> } }> | undefined)?.[0];
     if (first) detail = `${first.title ?? ''}${first.detail ? `: ${first.detail}` : ''}`.trim() || detail;
+    // "Cannot be reviewed" hides the real reasons in associatedErrors: show them.
+    const why = Object.values(first?.meta?.associatedErrors ?? {}).flat().map((a) => a.detail).filter(Boolean);
+    if (why.length) detail = `${detail} — ${why.join(' · ')}`;
   } catch {
     // keep the status text
   }
@@ -135,7 +139,20 @@ export class AppStore {
     );
     const editable = new Set(['PREPARE_FOR_SUBMISSION', 'DEVELOPER_REJECTED', 'REJECTED', 'METADATA_REJECTED', 'INVALID_BINARY']);
     const open = (data ?? []).find((v) => editable.has(`${v.attributes?.appStoreState ?? ''}`));
-    if (open) return { id: open.id, versionString: `${open.attributes?.versionString ?? versionString}`, created: false };
+    if (open) {
+      // Apple attaches a build only to the version with its own number: the
+      // "1.0" App Store Connect makes with a new app must become e.g. "1.0.0".
+      const current = `${open.attributes?.versionString ?? ''}`;
+      if (versionString && current !== versionString) {
+        await this.call(
+          'PATCH',
+          `/appStoreVersions/${open.id}`,
+          { data: { type: 'appStoreVersions', id: open.id, attributes: { versionString } } },
+          'Renaming the version',
+        );
+      }
+      return { id: open.id, versionString: versionString || current, created: false };
+    }
 
     const created = await this.call<{ data: Resource }>(
       'POST',
@@ -151,26 +168,34 @@ export class AppStore {
     const locale = appleLocale(page.language);
     const attributes = {
       locale,
-      description: page.description?.slice(0, 4000) || undefined,
-      keywords: page.keywords?.slice(0, 100) || undefined,
-      whatsNew: page.releaseNotes?.slice(0, 4000) || undefined,
+      description: appleText(page.description).slice(0, 4000) || undefined,
+      keywords: appleText(page.keywords || keywordsFrom(page)).slice(0, 100) || undefined,
+      whatsNew: appleText(page.releaseNotes).slice(0, 4000) || undefined,
       supportUrl: page.supportUrl || undefined,
       marketingUrl: page.marketingUrl || undefined,
-      promotionalText: page.promotionalText?.slice(0, 170) || undefined,
+      promotionalText: appleText(page.promotionalText).slice(0, 170) || undefined,
     };
     const { data } = await this.call<{ data: Resource[] }>('GET', `/appStoreVersions/${versionId}/appStoreVersionLocalizations?limit=50`, undefined, 'Reading the store page');
     const existing = (data ?? []).find((l) => `${l.attributes?.locale ?? ''}` === locale);
-    if (existing) {
-      const { locale: _drop, ...rest } = attributes;
-      await this.call('PATCH', `/appStoreVersionLocalizations/${existing.id}`, { data: { type: 'appStoreVersionLocalizations', id: existing.id, attributes: rest } }, 'Writing the store page');
-      return;
+    const write = (attrs: typeof attributes) =>
+      existing
+        ? (() => {
+            const { locale: _drop, ...rest } = attrs;
+            return this.call('PATCH', `/appStoreVersionLocalizations/${existing.id}`, { data: { type: 'appStoreVersionLocalizations', id: existing.id, attributes: rest } }, 'Writing the store page');
+          })()
+        : this.call(
+            'POST',
+            '/appStoreVersionLocalizations',
+            { data: { type: 'appStoreVersionLocalizations', attributes: attrs, relationships: { appStoreVersion: { data: { type: 'appStoreVersions', id: versionId } } } } },
+            'Writing the store page',
+          );
+    try {
+      await write(attributes);
+    } catch (e) {
+      // The first version of an app has no "What's new": Apple refuses the field.
+      if (!(e instanceof AppStoreError) || !attributes.whatsNew || !/whatsNew/i.test(e.message)) throw e;
+      await write({ ...attributes, whatsNew: undefined });
     }
-    await this.call(
-      'POST',
-      '/appStoreVersionLocalizations',
-      { data: { type: 'appStoreVersionLocalizations', attributes, relationships: { appStoreVersion: { data: { type: 'appStoreVersions', id: versionId } } } } },
-      'Writing the store page',
-    );
   }
 
   /** Name, subtitle and privacy address: these belong to the app, not to one version. */
@@ -183,8 +208,8 @@ export class AppStore {
 
     const attributes = {
       locale,
-      name: page.title?.slice(0, 30) || undefined,
-      subtitle: page.subtitle?.slice(0, 30) || undefined,
+      name: cutAtWord(appleText(page.title), 30) || undefined,
+      subtitle: cutAtWord(appleText(page.subtitle), 30) || undefined,
       privacyPolicyUrl: page.privacyPolicyUrl || undefined,
     };
     const { data } = await this.call<{ data: Resource[] }>('GET', `/appInfos/${info.id}/appInfoLocalizations?limit=50`, undefined, 'Reading the app details');
@@ -254,11 +279,13 @@ export class AppStore {
   }
 
   /** The newest build Apple has finished processing for this version string. */
-  async latestBuild(appId: string, versionString?: string): Promise<{ id: string; version: string } | null> {
+  async latestBuild(appId: string, versionString?: string): Promise<{ id: string; version: string; state: string } | null> {
     const q = versionString ? `&filter[preReleaseVersion.version]=${encodeURIComponent(versionString)}` : '';
     const { data } = await this.call<{ data: Resource[] }>('GET', `/builds?filter[app]=${appId}&limit=10&sort=-uploadedDate${q}`, undefined, 'Looking for the uploaded build');
-    const ready = (data ?? []).find((b) => `${b.attributes?.processingState ?? ''}` === 'VALID') ?? data?.[0];
-    return ready ? { id: ready.id, version: `${ready.attributes?.version ?? ''}` } : null;
+    // The newest build by its number, whatever its state: an older build that
+    // is already processed must never be sent in place of the one just built.
+    const newest = [...(data ?? [])].sort((a, b) => Number(b.attributes?.version ?? 0) - Number(a.attributes?.version ?? 0))[0];
+    return newest ? { id: newest.id, version: `${newest.attributes?.version ?? ''}`, state: `${newest.attributes?.processingState ?? ''}` } : null;
   }
 
   /** Ties the uploaded build to the version being prepared. */
@@ -266,22 +293,51 @@ export class AppStore {
     await this.call('PATCH', `/appStoreVersions/${versionId}/relationships/build`, { data: { type: 'builds', id: buildId } }, 'Attaching the build');
   }
 
-  /** Sends the version to Apple's reviewers. */
-  async submitForReview(versionId: string): Promise<void> {
-    await this.call(
-      'POST',
-      '/appStoreVersionSubmissions',
-      { data: { type: 'appStoreVersionSubmissions', relationships: { appStoreVersion: { data: { type: 'appStoreVersions', id: versionId } } } } },
-      'Sending for review',
+  /**
+   * Sends the version to Apple's reviewers through a review submission (the old
+   * appStoreVersionSubmissions endpoint no longer accepts CREATE). An open
+   * submission left by an earlier try is reused instead of piling up new ones.
+   */
+  async submitForReview(versionId: string, appId: string): Promise<void> {
+    const { data: open } = await this.call<{ data: Resource[] }>(
+      'GET',
+      `/reviewSubmissions?filter[app]=${appId}&filter[platform]=IOS&filter[state]=READY_FOR_REVIEW&limit=5`,
+      undefined,
+      'Reading the review submissions',
     );
+    let subId = open?.[0]?.id;
+    if (!subId) {
+      const sub = await this.call<{ data: Resource }>(
+        'POST',
+        '/reviewSubmissions',
+        { data: { type: 'reviewSubmissions', attributes: { platform: 'IOS' }, relationships: { app: { data: { type: 'apps', id: appId } } } } },
+        'Opening the review submission',
+      );
+      subId = sub.data.id;
+    }
+    const { data: items } = await this.call<{ data: Resource[] }>('GET', `/reviewSubmissions/${subId}/items?limit=10`, undefined, 'Reading the review submission');
+    if (!items?.length) {
+      await this.call(
+        'POST',
+        '/reviewSubmissionItems',
+        { data: { type: 'reviewSubmissionItems', relationships: { reviewSubmission: { data: { type: 'reviewSubmissions', id: subId } }, appStoreVersion: { data: { type: 'appStoreVersions', id: versionId } } } } },
+        'Adding the version to the review',
+      );
+    }
+    await this.call('PATCH', `/reviewSubmissions/${subId}`, { data: { type: 'reviewSubmissions', id: subId, attributes: { submitted: true } } }, 'Sending for review');
   }
 
   /**
    * The age-rating questionnaire, the same one App Store Connect shows as a long
    * list of yes/no rows. Written from the app's facts; a plain app lands on 4+.
    */
-  async setAgeRating(versionId: string, decl: AgeRatingDeclaration): Promise<void> {
-    const { data } = await this.call<{ data: Resource }>('GET', `/appStoreVersions/${versionId}/ageRatingDeclaration`, undefined, 'Reading the age rating');
+  async setAgeRating(appId: string, decl: AgeRatingDeclaration): Promise<void> {
+    // The questionnaire now belongs to the app's details (appInfo), not to a version.
+    const { data: infos } = await this.call<{ data: Resource[] }>('GET', `/apps/${appId}/appInfos?limit=10`, undefined, 'Reading the app details');
+    const editable = new Set(['PREPARE_FOR_SUBMISSION', 'DEVELOPER_REJECTED', 'REJECTED', 'METADATA_REJECTED']);
+    const info = (infos ?? []).find((i) => editable.has(`${i.attributes?.appStoreState ?? ''}`)) ?? infos?.[0];
+    if (!info) return;
+    const { data } = await this.call<{ data: Resource }>('GET', `/appInfos/${info.id}/ageRatingDeclaration`, undefined, 'Reading the age rating');
     if (!data?.id) return;
     await this.call('PATCH', `/ageRatingDeclarations/${data.id}`, { data: { type: 'ageRatingDeclarations', id: data.id, attributes: decl } }, 'Writing the age rating');
   }
@@ -295,6 +351,27 @@ export class AppStore {
     const relationships: Record<string, unknown> = { primaryCategory: { data: { type: 'appCategories', id: primary } } };
     if (secondary) relationships.secondaryCategory = { data: { type: 'appCategories', id: secondary } };
     await this.call('PATCH', `/appInfos/${info.id}`, { data: { type: 'appInfos', id: info.id, relationships } }, 'Writing the category');
+  }
+
+  /**
+   * The two answers Apple asks before any review: the copyright line of the
+   * version, and whether the app ships content owned by others (music, images…).
+   */
+  async setRightsAndCopyright(appId: string, versionId: string, copyright: string, thirdPartyContent: boolean): Promise<void> {
+    await this.call('PATCH', `/appStoreVersions/${versionId}`, { data: { type: 'appStoreVersions', id: versionId, attributes: { copyright } } }, 'Writing the copyright');
+    await this.call(
+      'PATCH',
+      `/apps/${appId}`,
+      { data: { type: 'apps', id: appId, attributes: { contentRightsDeclaration: thirdPartyContent ? 'USES_THIRD_PARTY_CONTENT' : 'DOES_NOT_USE_THIRD_PARTY_CONTENT' } } },
+      'Writing the content rights',
+    );
+  }
+
+  /** The account holder's name and Apple ID, the default review contact. */
+  async accountHolder(): Promise<{ firstName: string; lastName: string; email: string } | null> {
+    const { data } = await this.call<{ data: Resource[] }>('GET', '/users?limit=50', undefined, 'Reading the team');
+    const u = (data ?? []).find((x) => ((x.attributes?.roles as string[] | undefined) ?? []).includes('ACCOUNT_HOLDER')) ?? data?.[0];
+    return u ? { firstName: `${u.attributes?.firstName ?? ''}`, lastName: `${u.attributes?.lastName ?? ''}`, email: `${u.attributes?.username ?? ''}` } : null;
   }
 
   /**
@@ -386,10 +463,8 @@ export class AppStore {
    */
   async setFreePrice(appId: string): Promise<void> {
     const { data: points } = await this.call<{ data: Resource[] }>('GET', `/apps/${appId}/appPricePoints?filter[territory]=USA&limit=200`, undefined, 'Reading the prices');
-    const free = (points ?? []).find((p) => {
-      const v = `${p.attributes?.customerPrice ?? ''}`;
-      return v === '0.00' || v === '0';
-    });
+    // Apple writes the free tier as "0.0" (it used to be "0.00").
+    const free = (points ?? []).find((p) => Number(`${p.attributes?.customerPrice ?? 'x'}`) === 0);
     if (!free) throw new AppStoreError('no_free_point', 'Apple non offre il livello gratuito per questa app.');
     await this.call(
       'POST',
@@ -517,11 +592,28 @@ export interface AgeRatingDeclaration {
   gambling?: boolean;
   unrestrictedWebAccess?: boolean;
   kidsAgeBand?: null | 'FIVE_AND_UNDER' | 'SIX_TO_EIGHT' | 'NINE_TO_ELEVEN';
+  // Questions Apple added to the questionnaire in 2025.
+  advertising?: boolean;
+  gunsOrOtherWeapons?: 'NONE' | 'INFREQUENT_OR_MILD' | 'FREQUENT_OR_INTENSE';
+  healthOrWellnessTopics?: boolean;
+  lootBox?: boolean;
+  messagingAndChat?: boolean;
+  parentalControls?: boolean;
+  ageAssurance?: boolean;
+  userGeneratedContent?: boolean;
 }
 
-/** A safe, "nothing to declare" questionnaire → 4+. */
-export function ageRating4Plus(): AgeRatingDeclaration {
+/** A safe, "nothing to declare" questionnaire → 4+ (ads are declared, as Apple asks). */
+export function ageRating4Plus(facts?: Pick<AppDataFacts, 'ads'>): AgeRatingDeclaration {
   return {
+    advertising: !!facts?.ads,
+    gunsOrOtherWeapons: 'NONE',
+    healthOrWellnessTopics: false,
+    lootBox: false,
+    messagingAndChat: false,
+    parentalControls: false,
+    ageAssurance: false,
+    userGeneratedContent: false,
     alcoholTobaccoOrDrugUseOrReferences: 'NONE',
     contests: 'NONE',
     gamblingSimulated: 'NONE',
@@ -584,6 +676,76 @@ export function appleLocale(language: string): string {
 }
 
 /**
+ * Apple refuses emoji in the store texts ("Description can't contain the
+ * following character(s): ✨, 💎"), which Google accepts. Drop them, and the
+ * space or line they leave behind; plain symbols like • and © stay.
+ */
+export function appleText(text: string | undefined): string {
+  if (!text) return '';
+  return text
+    .replace(/[\p{Extended_Pictographic}\p{Regional_Indicator}\u{1F3FB}-\u{1F3FF}\u200D\uFE0F\u20E3]/gu, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/^[ \t]+/gm, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+}
+
+/** Little words that make weak keywords and bad subtitle endings. */
+const STOP = new Set(
+  (
+    'with,your,into,from,that,this,them,they,have,need,more,just,also,only,what,will,than,then,when,every,make,made,' +
+    'con,per,come,nella,nelle,della,delle,alla,dalla,tutto,tutti,ogni,anche,sono,senza,' +
+    'para,como,todo,todos,sobre,sans,avec,pour,dans,tout,tous,votre,vous,mit,und,ohne,ihre,eure,' +
+    'e,a,o,y,et,di,de,da,the,and,for,of,to,in,on,our,le,la,les,el,los,il,lo,gli,der,die,das,com,sem,और,में,के,की,का,लिए,إلى'
+  ).split(','),
+);
+
+/** Other companies' names: Apple rejects them in keywords (guideline 2.3.7). */
+const BRANDS = /^(instagram|insta|tiktok|whatsapp|facebook|youtube|snapchat|capcut|inshot|google|apple|iphone|ipad|android|twitter|telegram|reels?)$/i;
+
+const words = (text: string) => text.toLowerCase().split(/[^\p{L}\p{M}\p{N}]+/u).filter(Boolean);
+
+/** Text cut to [max] characters without breaking a word or ending on "and", "con", … */
+export function cutAtWord(text: string, max: number): string {
+  const t = text.trim();
+  if ([...t].length <= max) return t;
+  const parts = t.split(/\s+/);
+  let out = '';
+  for (const w of parts) {
+    const next = out ? `${out} ${w}` : w;
+    if ([...next].length > max) break;
+    out = next;
+  }
+  if (!out) return [...t].slice(0, max).join('');
+  const kept = out.split(' ');
+  while (kept.length > 1 && (STOP.has(kept[kept.length - 1]!.toLowerCase()) || /^[&+,;:\-–—]+$/.test(kept[kept.length - 1]!))) kept.pop();
+  return kept.join(' ').replace(/[\s,;:&+\-–—]+$/, '');
+}
+
+/**
+ * Keywords are required by Apple. When the listing has none, the words of its
+ * own subtitle and description are used: at most 100 characters, comma
+ * separated, without the words Apple already indexes from the name, filler
+ * words, or other companies' names.
+ */
+export function keywordsFrom(page: { title?: string; subtitle?: string; description?: string }): string {
+  const inName = new Set(words(page.title ?? ''));
+  const pool = words(`${page.subtitle ?? ''} ${page.description ?? ''}`).filter(
+    (w) => [...w].length >= 3 && !inName.has(w) && !STOP.has(w) && !BRANDS.test(w) && !/^\d+$/.test(w),
+  );
+  const out: string[] = [];
+  let len = 0;
+  for (const w of pool) {
+    if (out.includes(w)) continue;
+    const add = (out.length ? 1 : 0) + [...w].length;
+    if (len + add > 100) continue;
+    out.push(w);
+    len += add;
+  }
+  return out.join(',');
+}
+
+/**
  * What the app collects, in Apple's own words. Deliberately the same source as
  * Google's Data safety, so the two stores can never be told different things.
  */
@@ -614,13 +776,16 @@ export function privacyCategories(facts: AppDataFacts): Array<{ category: string
 export async function findIpa(projectRoot: string): Promise<string | null> {
   const dir = path.join(projectRoot, 'build', 'ios', 'ipa');
   const files = await readdir(dir).catch(() => [] as string[]);
-  const ipa = files.filter((f) => f.toLowerCase().endsWith('.ipa')).sort();
-  return ipa.length > 0 ? path.join(dir, ipa[ipa.length - 1]!) : null;
+  // The newest file, not the last by name: the name changes with the app's name.
+  const ipa = files.filter((f) => f.toLowerCase().endsWith('.ipa')).map((f) => path.join(dir, f));
+  const dated = await Promise.all(ipa.map(async (f) => ({ f, t: (await stat(f).catch(() => null))?.mtimeMs ?? 0 })));
+  dated.sort((a, b) => b.t - a.t);
+  return dated[0]?.f ?? null;
 }
 
-function runTool(bin: string, args: string[], timeoutMs = 30 * 60_000): Promise<{ code: number; out: string }> {
+function runTool(bin: string, args: string[], env?: Record<string, string>, timeoutMs = 30 * 60_000): Promise<{ code: number; out: string }> {
   return new Promise((resolve) => {
-    const p = spawn(bin, args, { windowsHide: true });
+    const p = spawn(bin, args, { windowsHide: true, env: env ? { ...process.env, ...env } : process.env });
     let out = '';
     p.stdout?.on('data', (d) => (out += d));
     p.stderr?.on('data', (d) => (out += d));
@@ -637,15 +802,31 @@ function runTool(bin: string, args: string[], timeoutMs = 30 * 60_000): Promise<
 export async function uploadIpa(
   ipaPath: string,
   key: AppStoreKey,
-  run: (bin: string, args: string[]) => Promise<{ code: number; out: string }> = runTool,
+  run: (bin: string, args: string[], env?: Record<string, string>) => Promise<{ code: number; out: string }> = runTool,
   platform = process.platform,
 ): Promise<{ uploaded: boolean; output: string }> {
   if (platform !== 'darwin') {
     throw new AppStoreError('needs_mac', 'Only a Mac can send the app to Apple. Open Ember on your Mac, take the app back from GitHub and upload from there.');
   }
-  const res = await run('xcrun', ['altool', '--upload-app', '-f', ipaPath, '-t', 'ios', '--apiKey', key.keyId, '--apiIssuer', key.issuerId]);
-  if (res.code !== 0) throw new AppStoreError('upload_failed', `Apple refused the upload: ${res.out.slice(-500)}`);
-  return { uploaded: true, output: res.out.slice(-2000) };
+  // altool reads the key only from a file named AuthKey_<id>.p8 in a folder it
+  // searches (~/.appstoreconnect/private_keys, …) or in $API_PRIVATE_KEYS_DIR.
+  // Ember keeps its key elsewhere, so hand altool a private copy for this upload.
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'ember-asc-'));
+  try {
+    await chmod(dir, 0o700).catch(() => {});
+    await writeFile(path.join(dir, `AuthKey_${key.keyId}.p8`), key.privateKey.endsWith('\n') ? key.privateKey : `${key.privateKey}\n`, { mode: 0o600 });
+    const res = await run('xcrun', ['altool', '--upload-app', '-f', ipaPath, '-t', 'ios', '--apiKey', key.keyId, '--apiIssuer', key.issuerId], {
+      API_PRIVATE_KEYS_DIR: dir,
+    });
+    // Publishing again after a later step failed: Apple already has this build.
+    if (res.code !== 0 && /redundant binary upload|already been uploaded|bundle version must be higher|ENTITY_ERROR\.ATTRIBUTE\.INVALID\.DUPLICATE/i.test(res.out)) {
+      return { uploaded: true, output: res.out.slice(-2000) };
+    }
+    if (res.code !== 0) throw new AppStoreError('upload_failed', `Apple refused the upload: ${res.out.slice(-500)}`);
+    return { uploaded: true, output: res.out.slice(-2000) };
+  } finally {
+    await rm(dir, { recursive: true, force: true }).catch(() => {});
+  }
 }
 
 export interface AppStorePublishInput {
@@ -719,11 +900,29 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
   const version = await store.ensureVersion(app.id, input.versionString);
   const pages = [input.listing, ...(input.translations ?? [])].filter((p): p is AppStoreListing => !!p && !!p.language);
   for (const page of pages) {
-    await store.writeVersionPage(version.id, page);
+    // Apple will not send a version for review without a support page: the
+    // privacy page carries the contact address, so it stands in for one.
+    await store.writeVersionPage(version.id, { ...page, supportUrl: page.supportUrl || input.privacyPolicyUrl || undefined });
     await store.writeAppPage(app.id, { ...page, privacyPolicyUrl: input.privacyPolicyUrl });
   }
 
-  const privacy = input.facts ? await store.writePrivacy(app.id, input.facts) : null;
+  // Apple's public API has no App Privacy endpoint (appDataUsages is refused),
+  // so the privacy answers may have to be given once on the website: say what
+  // to answer instead of stopping the whole publish.
+  let privacy: { collects: boolean; categories: string[] } | null = null;
+  if (input.facts) {
+    try {
+      privacy = await store.writePrivacy(app.id, input.facts);
+    } catch (e) {
+      if (!(e instanceof AppStoreError)) throw e;
+      const cats = privacyCategories(input.facts);
+      notes.push(
+        cats.length === 0
+          ? 'Privacy dell’app: compilala una volta su App Store Connect → Privacy dell’app → "No, non raccogliamo dati".'
+          : `Privacy dell’app: compilala una volta su App Store Connect → Privacy dell’app. Dati raccolti: ${[...new Set(cats.map((c) => c.category))].join(', ')} (scopi: ${[...new Set(cats.map((c) => c.purpose))].join(', ')}).`,
+      );
+    }
+  }
 
   // ---- The chores that used to be filled by hand in App Store Connect ----
 
@@ -732,10 +931,17 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
 
   // Age-rating questionnaire (defaults to 4+).
   let ageRated = false;
-  await store.setAgeRating(version.id, input.ageRating ?? ageRating4Plus()).then(
+  await store.setAgeRating(app.id, input.ageRating ?? ageRating4Plus(input.facts)).then(
     () => (ageRated = true),
     (e: unknown) => notes.push(`Fascia d'età non impostata: ${(e as Error).message}`),
   );
+
+  // Copyright and content rights: without them Apple refuses the review.
+  const holder = await store.accountHolder().catch(() => null);
+  const owner = [holder?.firstName, holder?.lastName].filter(Boolean).join(' ') || app.name;
+  await store
+    .setRightsAndCopyright(app.id, version.id, `${new Date().getFullYear()} ${owner}`, await shipsThirdPartyMedia(input.projectRoot))
+    .catch((e: unknown) => notes.push(`Copyright / diritti sui contenuti non impostati: ${(e as Error).message}`));
 
   // Store category.
   let categorized = false;
@@ -748,8 +954,17 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
 
   // Reviewer contact / demo login.
   let reviewInfoSet = false;
-  if (input.review && (input.review.email || input.review.notes || input.review.demoUser)) {
-    await store.setReviewDetails(version.id, input.review).then(
+  if (input.review) {
+    // Apple wants a first and last name: the account holder's, unless given.
+    const review = { ...input.review };
+    if (!review.firstName || !review.lastName) {
+      const holder = await store.accountHolder().catch(() => null);
+      review.firstName ||= holder?.firstName;
+      review.lastName ||= holder?.lastName;
+      review.email ||= holder?.email;
+    }
+    if (!review.phone) notes.push('Info per la revisione: manca il numero di telefono del contatto (Dati per la revisione → Telefono, con prefisso, es. +39 333 1234567).');
+    await store.setReviewDetails(version.id, review).then(
       () => (reviewInfoSet = true),
       (e: unknown) => notes.push(`Info per la revisione non salvate: ${(e as Error).message}`),
     );
@@ -784,19 +999,31 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
   }
 
   let buildAttached = false;
+  const expected = await projectBuildNumber(input.projectRoot);
   const build = await store.latestBuild(app.id).catch(() => null);
-  if (build) {
+  if (build && Number(build.version) < expected) {
+    // Apple lists a new build only minutes after the upload. Never fall back on an older one.
+    notes.push(
+      input.uploadBuild
+        ? `La build ${expected} è appena arrivata ad Apple e la stanno elaborando (10-20 minuti): premi di nuovo Publish dopo, per collegarla e inviarla in revisione.`
+        : `Su Apple c'è solo la build ${build.version}, l'app è alla ${expected}: attiva "Send the iPhone file too" e premi di nuovo Publish.`,
+    );
+  } else if (build && build.state !== 'VALID') {
+    notes.push(`La build ${build.version} è ancora in elaborazione da Apple (${build.state}): premi di nuovo Publish tra qualche minuto.`);
+  } else if (build) {
     await store.attachBuild(version.id, build.id).then(
       () => (buildAttached = true),
-      () => notes.push('The build is still being processed by Apple: attach it when it turns green, or run this again.'),
+      (e: unknown) => notes.push(`Build non collegata: ${(e as Error).message}`),
     );
-  } else if (!input.uploadBuild) {
+  } else if (input.uploadBuild) {
+    notes.push(`La build ${expected} è appena arrivata ad Apple e la stanno elaborando (10-20 minuti): premi di nuovo Publish dopo, per collegarla e inviarla in revisione.`);
+  } else {
     notes.push('No build on Apple yet for this app.');
   }
 
   let submitted = false;
   if (input.submit && buildAttached) {
-    await store.submitForReview(version.id).then(
+    await store.submitForReview(version.id, app.id).then(
       () => (submitted = true),
       (e: unknown) => notes.push(`Not sent for review: ${(e as Error).message}`),
     );
@@ -826,6 +1053,29 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
 }
 
 /** The version string ("1.0.0") from the project's pubspec. */
+/**
+ * True when the app bundles media it did not make itself (music, sounds,
+ * videos, stock images): Apple asks to declare it before the review.
+ */
+export async function shipsThirdPartyMedia(projectRoot: string): Promise<boolean> {
+  const pubspec = await readFile(path.join(projectRoot, 'pubspec.yaml'), 'utf8').catch(() => '');
+  if (/audioplayers|just_audio|royalty/i.test(pubspec)) return true;
+  const walk = async (dir: string): Promise<boolean> => {
+    for (const e of await readdir(dir, { withFileTypes: true }).catch(() => [])) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory() ? await walk(p) : /\.(mp3|m4a|aac|wav|ogg|mp4|mov)$/i.test(e.name)) return true;
+    }
+    return false;
+  };
+  return walk(path.join(projectRoot, 'assets'));
+}
+
+/** The build number after "+" in pubspec (1.0.0+11 → 11), 0 when missing. */
+export async function projectBuildNumber(projectRoot: string): Promise<number> {
+  const pubspec = await readFile(path.join(projectRoot, 'pubspec.yaml'), 'utf8').catch(() => '');
+  return Number(/^version:\s*[0-9.]+\+([0-9]+)/m.exec(pubspec)?.[1] ?? 0);
+}
+
 export async function projectVersion(projectRoot: string): Promise<string> {
   const pubspec = await readFile(path.join(projectRoot, 'pubspec.yaml'), 'utf8').catch(() => '');
   return /^version:\s*([0-9]+\.[0-9]+\.[0-9]+)/m.exec(pubspec)?.[1] ?? '1.0.0';

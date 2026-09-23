@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { nanoid } from 'nanoid';
@@ -6,7 +7,9 @@ import { FsError, ProjectFs } from './fs.js';
 import type { Job, JobKind, JobManager } from './jobs.js';
 import { validateProjectName } from './paths.js';
 import { claimBundleId, claimPackageName } from './publish_prep.js';
-import { bumpBuildNumber, lastPublishedBuildNumber, lastPublishedVersionCode, prepareSignedBuild } from './signing.js';
+import { readAppleCreds, readAppleKey, rememberTeamId } from './apple_creds.js';
+import { ensureDevelopmentTeam } from './ios_signing.js';
+import { bumpBuildNumber, lastAppStoreBuildNumber, lastPublishedBuildNumber, lastPublishedVersionCode, prepareSignedBuild } from './signing.js';
 import { pinProjectSdk, tuneGradle } from './sdk_pins.js';
 import type { ProjectRow, Store, WorkspaceRow } from './store.js';
 import type { WorkspaceDriver } from './workspaces/driver.js';
@@ -219,7 +222,22 @@ export class Services {
       const gradle = await readFile(path.join(root, 'android', 'app', 'build.gradle.kts'), 'utf8').catch(() => '');
       const applicationId = /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
       if (applicationId && !applicationId.startsWith('dev.fluttercursor.app.')) {
-        await claimBundleId(root, applicationId, (await lastPublishedBuildNumber(root)) > 0).catch(() => null);
+        // Only Apple fixes the Bundle ID for good: a version already on Google
+        // Play must not keep the placeholder on the iPhone.
+        await claimBundleId(root, applicationId, (await lastAppStoreBuildNumber(root)) > 0).catch(() => null);
+      }
+      // Xcode will not archive without a Team: write the account's one in.
+      const creds = await readAppleCreds().catch(() => null);
+      const team = await ensureDevelopmentTeam(root, {
+        savedTeamId: creds?.teamId,
+        key: await readAppleKey().catch(() => null),
+      }).catch(() => null);
+      if (team && team.source !== 'saved') await rememberTeamId(team.teamId).catch(() => {});
+      if (!team && existsSync(path.join(root, 'ios', 'Runner.xcodeproj', 'project.pbxproj'))) {
+        throw new FsError(
+          'no_team',
+          'Non trovo il Team Apple per firmare l’app iPhone. Scrivi il Team ID (10 caratteri, lo vedi su developer.apple.com → Membership) nella scheda "Send to the App Store", oppure salva lì la chiave App Store Connect: Ember lo legge da Apple.',
+        );
       }
       const pubspecPath = path.join(root, 'pubspec.yaml');
       const pubspec = await readFile(pubspecPath, 'utf8').catch(() => '');

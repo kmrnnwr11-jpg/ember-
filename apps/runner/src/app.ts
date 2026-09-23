@@ -2,7 +2,8 @@
 import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
 import { AppStore, AppStoreError, parseAppStoreKey, projectVersion, publishToAppStore, type AppStoreListing } from './appstore.js';
-import { deleteAppleCreds, readAppleCredsPublic, readAppleKey, saveAppleCreds } from './apple_creds.js';
+import { deleteAppleCreds, readAppleCreds, readAppleCredsPublic, readAppleKey, readReviewPhone, rememberReviewPhone, rememberTeamId, saveAppleCreds } from './apple_creds.js';
+import { teamFromAppStore } from './ios_signing.js';
 import { backupKey } from './drive.js';
 import { installAndRun, lanAddress, listDevices } from './devices.js';
 import { fix as fixFinding, inspectCloud, inspectProject, inspectRunning } from './doctor.js';
@@ -426,6 +427,12 @@ export async function buildApp(
             .optional(),
         })
         .parse(req.body);
+      // The main listing is the English one (as on Play). Older IDEs labelled it
+      // Italian, so the Italian translation then overwrote it and English, the
+      // app's primary language on Apple, stayed empty.
+      if (body.listing && (!body.listing.language || (body.translations ?? []).some((t) => t.language === body.listing!.language))) {
+        body.listing.language = 'en-US';
+      }
       const gradle = await readFileAsync(path.join(root, 'android', 'app', 'build.gradle.kts'), 'utf8').catch(() => '');
       const bundleId = /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
       if (!bundleId) return reply.status(422).send({ code: 'no_bundle_id', message: 'Build the app once before publishing: its name is set at the first build.' });
@@ -443,7 +450,10 @@ export async function buildApp(
           }
         }
         // Default the reviewer contact to the signed-in email so the form is never empty.
-        const review = body.review ?? (req.user.email ? { email: req.user.email } : undefined);
+        // The phone is remembered for the account: typed once, reused by every app.
+        const review = { ...(req.user.email ? { email: req.user.email } : {}), ...(body.review ?? {}) };
+        if (review.phone) await rememberReviewPhone(review.phone).catch(() => {});
+        else review.phone = (await readReviewPhone().catch(() => '')) || undefined;
         const result = await publishToAppStore({
           key,
           bundleId,
@@ -485,7 +495,7 @@ export async function buildApp(
     // Save or update the key. Send privateKey only when the .p8 itself changes.
     r.put('/v1/appstore/credentials', async (req, reply) => {
       const body = z
-        .object({ keyId: z.string().max(40), issuerId: z.string().max(60), privateKey: z.string().max(8000).optional() })
+        .object({ keyId: z.string().max(40), issuerId: z.string().max(60), privateKey: z.string().max(8000).optional(), teamId: z.string().max(20).optional() })
         .parse(req.body);
       try {
         return await saveAppleCreds(body);
@@ -508,7 +518,13 @@ export async function buildApp(
       try {
         const store = await AppStore.open(key);
         const { data } = await store.call<{ data: unknown[] }>('GET', '/apps?limit=1', undefined, 'Verifica connessione');
-        return { ok: true, apps: Array.isArray(data) ? data.length : 0 };
+        // The same key tells which Team signs the iPhone builds.
+        let teamId = (await readAppleCreds())?.teamId || '';
+        if (!teamId) {
+          teamId = (await teamFromAppStore(key, '').catch(() => null)) ?? '';
+          if (teamId) await rememberTeamId(teamId).catch(() => {});
+        }
+        return { ok: true, apps: Array.isArray(data) ? data.length : 0, teamId };
       } catch (e) {
         if (e instanceof AppStoreError) return reply.status(422).send({ code: e.code, message: e.message });
         throw e;

@@ -167,14 +167,19 @@ class RunnerApi {
   );
 
   /// The Apple App Store Connect key, saved once for the whole account. Returns
-  /// `{hasKey, keyId, issuerId, p8File}` — never the .p8 contents.
+  /// `{hasKey, keyId, issuerId, p8File, teamId}` — never the .p8 contents.
   Future<Map<String, dynamic>> appStoreCredentials() =>
       _call(() => _dio.get('/v1/appstore/credentials'), (d) => d as Map<String, dynamic>);
 
   /// Saves or updates the account's Apple key. Pass [privateKey] only when the
   /// .p8 itself changes; omit it to update just the Key ID / Issuer ID.
-  Future<Map<String, dynamic>> saveAppStoreCredentials({required String keyId, required String issuerId, String? privateKey}) => _call(
-    () => _dio.put('/v1/appstore/credentials', data: {'keyId': keyId, 'issuerId': issuerId, if (privateKey != null && privateKey.isNotEmpty) 'privateKey': privateKey}),
+  Future<Map<String, dynamic>> saveAppStoreCredentials({required String keyId, required String issuerId, String? privateKey, String? teamId}) => _call(
+    () => _dio.put('/v1/appstore/credentials', data: {
+      'keyId': keyId,
+      'issuerId': issuerId,
+      if (privateKey != null && privateKey.isNotEmpty) 'privateKey': privateKey,
+      'teamId': ?teamId,
+    }),
     (d) => d as Map<String, dynamic>,
   );
 

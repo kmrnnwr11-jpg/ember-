@@ -137,4 +137,46 @@ describe('publishing to the App Store', () => {
     expect(sent.output).toContain('altool --upload-app');
     expect(sent.output).toContain(key.keyId);
   });
+
+  it('hands altool the saved key through API_PRIVATE_KEYS_DIR, then removes it', async () => {
+    const { existsSync, readFileSync } = await import('node:fs');
+    const key = parseAppStoreKey(await realKey());
+    let dir = '';
+    await uploadIpa(
+      '/tmp/app.ipa',
+      key,
+      async (_bin, _args, env) => {
+        dir = env?.API_PRIVATE_KEYS_DIR ?? '';
+        expect(readFileSync(`${dir}/AuthKey_${key.keyId}.p8`, 'utf8')).toContain('BEGIN PRIVATE KEY');
+        return { code: 0, out: '' };
+      },
+      'darwin',
+    );
+    expect(dir).not.toBe('');
+    expect(existsSync(dir)).toBe(false);
+  });
+});
+
+describe('Apple store text', () => {
+  it('cuts the subtitle at a word and never on a filler word', async () => {
+    const { cutAtWord } = await import('./appstore.js');
+    expect(cutAtWord('Create stunning Reels & Stories with templates', 30)).toBe('Create stunning Reels');
+    expect(cutAtWord('Crea Reel e Storie con modelli, musica', 30)).toBe('Crea Reel e Storie');
+    expect(cutAtWord('Short one', 30)).toBe('Short one');
+  });
+
+  it('makes keywords without the name, filler words or other brands', async () => {
+    const { keywordsFrom } = await import('./appstore.js');
+    const kw = keywordsFrom({ title: 'Reel Maker: Video Editor', subtitle: 'Create Reels for Instagram and TikTok with music', description: 'Filters and effects' });
+    expect(kw).toBe('create,music,filters,effects');
+    expect(kw.length).toBeLessThanOrEqual(100);
+  });
+});
+
+describe('Apple text rules', () => {
+  it('drops the emoji Apple refuses and keeps the rest', async () => {
+    const { appleText } = await import('./appstore.js');
+    expect(appleText('✨ FEATURES\n• Templates 👍🏽\n💎 PREMIUM\n🇮🇹 Italia ❤️ ok')).toBe('FEATURES\n• Templates\nPREMIUM\nItalia ok');
+    expect(appleText('🎉 First release!')).toBe('First release!');
+  });
 });

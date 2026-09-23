@@ -182,15 +182,42 @@ export async function buildApp(
    */
   let helperApp: Record<string, unknown> | null = null;
 
-  /** The same for App Store Connect: the app to create and its App Privacy answers. */
-  let helperApple: Record<string, unknown> | null = null;
+  /**
+   * The same for App Store Connect: the app to create and its App Privacy
+   * answers, one per Bundle ID, kept in ~/.ember/helper_apple.json so a
+   * Runner restart forgets nothing. The extension asks for the app open in its
+   * tab (?bundleId=), or for the last one prepared.
+   */
+  const helperAppleFile = () => path.join(os.homedir(), '.ember', 'helper_apple.json');
+  type AppleHelpers = { last?: string; byBundle: Record<string, Record<string, unknown>> };
+  const readAppleHelpers = async (): Promise<AppleHelpers> =>
+    JSON.parse(await readFileAsync(helperAppleFile(), 'utf8').catch(() => '{"byBundle":{}}')) as AppleHelpers;
+  const saveAppleHelper = async (plan: Record<string, unknown>) => {
+    const all = await readAppleHelpers();
+    const bundle = `${plan.bundleId ?? ''}`;
+    if (!bundle) return;
+    all.byBundle[bundle] = plan;
+    all.last = bundle;
+    await mkdirAsync(path.dirname(helperAppleFile()), { recursive: true }).catch(() => {});
+    await writeFileAsync(helperAppleFile(), JSON.stringify(all, null, 1), { mode: 0o600 });
+  };
 
   app.get('/helper/apple', async (req, reply) => {
     const origin = req.headers.origin ?? '';
     if (origin.startsWith('chrome-extension://')) reply.header('access-control-allow-origin', origin);
     reply.header('cache-control', 'no-store');
-    if (!helperApple) return reply.status(404).send({ code: 'no_app', message: 'Apri l’app in Ember, scheda App Store: da lì Ember prepara i dati per l’estensione.' });
-    return helperApple;
+    const { bundleId } = (req.query ?? {}) as { bundleId?: string };
+    const all = await readAppleHelpers();
+    const plan = (bundleId && all.byBundle[bundleId]) || (!bundleId && all.last ? all.byBundle[all.last] : undefined);
+    if (!plan) {
+      return reply.status(404).send({
+        code: 'no_app',
+        message: bundleId
+          ? `Ember non conosce ancora ${bundleId}: apri quell’app in Ember, scheda iPhone, e riprova.`
+          : 'Apri l’app in Ember, scheda iPhone: da lì Ember prepara i dati per l’estensione.',
+      });
+    }
+    return plan;
   });
 
   app.get('/helper/app', async (req, reply) => {
@@ -652,7 +679,7 @@ export async function buildApp(
       if (key && bundleId && !bundleId.startsWith('dev.fluttercursor.app.')) {
         plan.bundleRegistered = await (await AppStore.open(key)).ensureBundleId(bundleId, name).then(() => true, () => false);
       }
-      helperApple = plan;
+      await saveAppleHelper(plan).catch(() => {});
       return plan;
     };
 

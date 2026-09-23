@@ -5,7 +5,8 @@
  */
 chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
   if (msg?.type !== 'ember:apple-plan') return false;
-  fetch('http://127.0.0.1:8787/helper/apple', { cache: 'no-store' })
+  const query = msg.bundleId ? `?bundleId=${encodeURIComponent(msg.bundleId)}` : '';
+  fetch(`http://127.0.0.1:8787/helper/apple${query}`, { cache: 'no-store' })
     .then(async (res) => {
       const body = await res.json().catch(() => ({}));
       reply(res.ok ? { plan: body } : { error: body.message || `Ember ha risposto ${res.status}` });

@@ -36,11 +36,20 @@
     return json;
   }
 
-  const askEmber = () =>
+  const askEmber = (bundleId) =>
     new Promise((resolve) => {
       if (!chrome?.runtime?.id) return resolve({ error: STALE });
-      chrome.runtime.sendMessage({ type: 'ember:apple-plan' }, (r) => resolve(r ?? { error: STALE }));
+      chrome.runtime.sendMessage({ type: 'ember:apple-plan', bundleId }, (r) => resolve(r ?? { error: STALE }));
     });
+
+  /** The Bundle ID of the app open in this tab, when the page is an app's. */
+  async function bundleOfOpenApp() {
+    const { appIdFromUrl } = await load();
+    const id = appIdFromUrl(location.href);
+    if (!id) return null;
+    const json = await iris('GET', `apps/${id}?fields[apps]=bundleId`).catch(() => null);
+    return json?.data?.attributes?.bundleId ?? null;
+  }
 
   // ---------------------------------------------------------------- panel
   const el = (tag, attrs = {}, ...kids) => {
@@ -138,7 +147,8 @@
   async function open() {
     panel.replaceChildren(el('p', {}, 'Chiedo a Ember quale app…'));
     panel.hidden = false;
-    const { plan: p, error } = await askEmber();
+    // The app open in this tab decides which app Ember talks about.
+    const { plan: p, error } = await askEmber(await bundleOfOpenApp());
     if (error) return panel.replaceChildren(el('p', { className: 'ember-error' }, error));
     plan = p;
     const { appIdFromUrl, privacySummary } = await load();

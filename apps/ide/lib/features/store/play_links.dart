@@ -1,4 +1,4 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/settings_store.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Remembers which Play Console account (Google profile index + developer id) the
@@ -28,7 +28,7 @@ class PlayConsoleLink {
 
   static Future<PlayConsoleLink> load() async {
     try {
-      final raw = (await SharedPreferences.getInstance()).getString(_key);
+      final raw = await Settings.instance.read(_key);
       if (raw == null) return const PlayConsoleLink();
       final parts = raw.split(':');
       String? at(int i) => parts.length > i && parts[i].isNotEmpty ? parts[i] : null;
@@ -44,7 +44,7 @@ class PlayConsoleLink {
 
   Future<void> save() async {
     try {
-      await (await SharedPreferences.getInstance()).setString(_key, '$userIndex:${developerId ?? ''}:${appId ?? ''}');
+      await Settings.instance.write(_key, '$userIndex:${developerId ?? ''}:${appId ?? ''}');
     } catch (_) {}
   }
 

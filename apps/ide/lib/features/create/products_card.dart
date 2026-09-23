@@ -5,6 +5,7 @@ import 'package:ide_core/ide_core.dart' show RunnerException;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/session.dart';
+import '../../core/settings_store.dart';
 import '../../l10n/app_localizations.dart';
 import '../store/play_links.dart';
 import 'app_builder.dart';
@@ -36,7 +37,7 @@ class _ProductsCardState extends ConsumerState<ProductsCard> {
 
   Future<void> _activate() async {
     final l = AppLocalizations.of(context);
-    final sa = await ref.read(keyValueStoreProvider).read(_saKey);
+    final sa = await ref.read(settingsStoreProvider).read(_saKey);
     if (!mounted) return;
     if (sa == null || sa.trim().isEmpty) {
       setState(() => _error = l.productsNeedKey);

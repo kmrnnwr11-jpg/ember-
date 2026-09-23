@@ -27,8 +27,36 @@ class RunnerApi {
     }
   }
 
+  /// Everything the user saved once (tokens, keys, chats, choices), kept on the Runner.
+  Future<Map<String, String>> settings() => _call(
+    () => _dio.get('/v1/settings'),
+    (d) => ((d as Map<String, dynamic>)['values'] as Map).map((k, v) => MapEntry('$k', '$v')),
+  );
+
+  /// Saves (value) or removes (null) settings on the Runner.
+  Future<void> patchSettings(Map<String, String?> values) async {
+    await _call<void>(() => _dio.patch('/v1/settings', data: {'values': values}), (_) {});
+  }
+
   Future<Map<String, dynamic>> health() =>
       _call(() => _dio.get('/v1/health'), (d) => d as Map<String, dynamic>);
+
+  /// Local dev only: who signed in last on this Mac, or null.
+  Future<String?> devLastEmail() async {
+    try {
+      final res = await _dio.get('/v1/auth/dev-last');
+      return (res.data as Map)['email'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Signing out on purpose: this Mac stops signing in by itself.
+  Future<void> forgetDevLast() async {
+    try {
+      await _dio.delete('/v1/auth/dev-last');
+    } catch (_) {}
+  }
 
   /// Returns `(token, userId)`.
   Future<(String, String)> devLogin(String email) => _call(
@@ -163,6 +191,60 @@ class RunnerApi {
   /// privacy answers and (when asked) submits the version for review.
   Future<Map<String, dynamic>> publishToAppStore(String projectId, Map<String, dynamic> body) => _call(
     () => _dio.post('/v1/projects/$projectId/appstore/publish', data: body, options: Options(receiveTimeout: const Duration(minutes: 40))),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Publish as one press, in the background on the Runner: builds the iPhone
+  /// app when needed, uploads it, writes the store page, waits for Apple to
+  /// process the build and sends it for review. Returns the first status.
+  Future<Map<String, dynamic>> autoPublishToAppStore(String projectId, Map<String, dynamic> body) => _call(
+    () => _dio.post('/v1/projects/$projectId/appstore/autopublish', data: body),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// What Apple would reject, checked on the project: `{findings: [{id, severity, title, detail, fixable, ask?}]}`.
+  Future<Map<String, dynamic>> appStorePreflight(String projectId) => _call(
+    () => _dio.get('/v1/projects/$projectId/appstore/preflight', options: Options(receiveTimeout: const Duration(seconds: 30))),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Applies the preflight findings Ember can fix alone; returns `{done, findings}`.
+  Future<Map<String, dynamic>> fixAppStorePreflight(String projectId, List<String> ids) => _call(
+    () => _dio.post('/v1/projects/$projectId/appstore/preflight/fix', data: {'ids': ids}),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Where the one-press publish is: `{phase, message, steps, notes, result, error}`.
+  Future<Map<String, dynamic>> autoPublishStatus(String projectId) => _call(
+    () => _dio.get('/v1/projects/$projectId/appstore/autopublish'),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// The Apple App Store Connect key, saved once for the whole account. Returns
+  /// `{hasKey, keyId, issuerId, p8File, teamId}` — never the .p8 contents.
+  Future<Map<String, dynamic>> appStoreCredentials() =>
+      _call(() => _dio.get('/v1/appstore/credentials'), (d) => d as Map<String, dynamic>);
+
+  /// Saves or updates the account's Apple key. Pass [privateKey] only when the
+  /// .p8 itself changes; omit it to update just the Key ID / Issuer ID.
+  Future<Map<String, dynamic>> saveAppStoreCredentials({required String keyId, required String issuerId, String? privateKey, String? teamId}) => _call(
+    () => _dio.put('/v1/appstore/credentials', data: {
+      'keyId': keyId,
+      'issuerId': issuerId,
+      if (privateKey != null && privateKey.isNotEmpty) 'privateKey': privateKey,
+      'teamId': ?teamId,
+    }),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Forgets the saved Apple key.
+  Future<void> deleteAppStoreCredentials() async {
+    await _call<void>(() => _dio.delete('/v1/appstore/credentials'), (_) {});
+  }
+
+  /// Checks the saved key against App Store Connect (GET /v1/apps).
+  Future<Map<String, dynamic>> verifyAppStoreConnection() => _call(
+    () => _dio.post('/v1/appstore/credentials/verify', data: const <String, dynamic>{}, options: Options(receiveTimeout: const Duration(seconds: 30))),
     (d) => d as Map<String, dynamic>,
   );
 

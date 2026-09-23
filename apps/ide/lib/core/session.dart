@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'env.dart';
 import 'runner_api.dart';
 import 'runner_socket.dart';
+import 'settings_store.dart';
 
 class Session {
   const Session({required this.runnerUrl, required this.email, this.devToken});
@@ -63,8 +64,20 @@ class SessionController extends AsyncNotifier<Session?> {
       return Session(runnerUrl: runner, email: s.user.email ?? email ?? '');
     }
     final token = await _store.read(_kDevToken);
-    if (token == null || email == null) return null;
-    return Session(runnerUrl: runner, email: email, devToken: token);
+    if (token != null && email != null) return Session(runnerUrl: runner, email: email, devToken: token);
+    // The browser opened by `flutter run` starts empty every time: sign in again
+    // as whoever signed in last on this Mac, instead of asking each restart.
+    final api = RunnerApi(runner);
+    final last = await api.devLastEmail();
+    if (last == null) return null;
+    try {
+      final (fresh, _) = await api.devLogin(last);
+      await _store.write(_kEmail, last);
+      await _store.write(_kDevToken, fresh);
+      return Session(runnerUrl: runner, email: last, devToken: fresh);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<String> savedRunnerUrl() async => await _store.read(_kRunner) ?? Env.runnerUrl;
@@ -101,6 +114,7 @@ class SessionController extends AsyncNotifier<Session?> {
   Future<void> signOut() async {
     if (Env.supabaseEnabled) await Supabase.instance.client.auth.signOut();
     await _store.delete(_kDevToken);
+    if (!Env.supabaseEnabled) await RunnerApi(await savedRunnerUrl()).forgetDevLast();
     state = const AsyncData(null);
   }
 }
@@ -111,7 +125,9 @@ final sessionProvider = AsyncNotifierProvider<SessionController, Session?>(Sessi
 final runnerApiProvider = FutureProvider<RunnerApi>((ref) async {
   final session = ref.watch(sessionProvider).value;
   if (session == null) throw StateError('not signed in');
-  return RunnerApi(session.runnerUrl, token: await session.token());
+  final api = RunnerApi(session.runnerUrl, token: await session.token());
+  Settings.instance.attach(api); // what the user saves now lives on this Runner
+  return api;
 });
 
 /// Runner capabilities (`GET /v1/health`), e.g. whether Claude Code is usable.

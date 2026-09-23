@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,15 +8,45 @@ import { type AppDataFacts, detectDataFacts, factsSummary, fillCsv, findExported
 const CSV = 'Question ID,Response,Response value,Answer requirement,Human-friendly question label\nPSL_DATA_TYPES_PERSONAL,PSL_NAME,,MULTIPLE_CHOICE,Personal info - Name\nPSL_DATA_TYPES_PERSONAL,PSL_EMAIL,,MULTIPLE_CHOICE,Personal info - Email';
 
 describe('data safety', () => {
-  it('detects what the app uses from its dependencies', async () => {
+  const app = async (deps: string, code = 'void main() {}') => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'fc-ds-'));
-    await writeFile(path.join(root, 'pubspec.yaml'), 'dependencies:\n  firebase_auth: ^6.0.0\n  image_picker: ^1.0.0\n  http: ^1.0.0\n');
+    await writeFile(path.join(root, 'pubspec.yaml'), `name: x\ndependencies:\n${deps.split(',').map((d) => `  ${d.trim()}: any`).join('\n')}\n\ndev_dependencies:\n  flutter_test:\n    sdk: flutter\n`);
+    await mkdir(path.join(root, 'lib'), { recursive: true });
+    await writeFile(path.join(root, 'lib', 'main.dart'), code);
     const f = await detectDataFacts(root);
-    expect(f.account).toBe(true);
-    expect(f.photos).toBe(true);
-    expect(f.location).toBe(false);
-    expect(factsSummary(f)).toContain('account');
     await rm(root, { recursive: true, force: true });
+    return f;
+  };
+  const on = (f: AppDataFacts) => (Object.keys(f) as Array<keyof AppDataFacts>).filter((k) => f[k]).sort();
+
+  it('a video editor with ads: only what AdMob sends, not the photos and music that stay on the phone', async () => {
+    const f = await app('image_picker, audioplayers, video_player, path_provider, share_plus, in_app_purchase, google_mobile_ads');
+    expect(on(f)).toEqual(['ads', 'approxLocation', 'crashLogs', 'deviceId', 'payments', 'performance', 'productInteraction']);
+    expect(factsSummary(f)).not.toMatch(/Foto|audio|acquisti/i);
+  });
+
+  it('photos count only when the app uploads them', async () => {
+    expect((await app('image_picker, http')).photos).toBe(false);
+    expect((await app('image_picker, http', 'final r = http.MultipartRequest("POST", u);')).photos).toBe(true);
+    expect((await app('image_picker, firebase_storage')).photos).toBe(true);
+  });
+
+  it('sign-in is collected and linked; firebase_core alone is nothing', async () => {
+    const f = await app('firebase_core, firebase_auth');
+    expect(f.account).toBe(true);
+    expect(f.analytics).toBe(false);
+    expect(on(await app('firebase_core'))).toEqual([]);
+    expect(factsSummary(await app('firebase_core'))).toBe('the app collects no personal data');
+  });
+
+  it('store-only purchases are Apple’s and Google’s; RevenueCat keeps a history', async () => {
+    expect(await app('in_app_purchase')).toMatchObject({ purchases: false, payments: true });
+    expect(await app('purchases_flutter')).toMatchObject({ purchases: true, payments: true });
+  });
+
+  it('location is precise only when the app sends it', async () => {
+    expect((await app('geolocator')).location).toBe(false);
+    expect((await app('geolocator, cloud_firestore')).location).toBe(true);
   });
 
   it('accepts a filled CSV with the same questions and rejects tampering', () => {
@@ -51,6 +81,11 @@ const facts = (over: Partial<AppDataFacts> = {}): AppDataFacts => ({
   ads: false,
   purchases: false,
   cloudStorage: false,
+  approxLocation: false,
+  performance: false,
+  productInteraction: false,
+  deviceId: false,
+  payments: false,
   ...over,
 });
 
@@ -101,12 +136,17 @@ describe('fillCsv', () => {
 
   it('adds the advertising purpose to the device id only when the app shows ads', async () => {
     const csv = await readFile(FIXTURE, 'utf8');
-    const withAds = fillCsv(csv, facts({ ads: true }));
+    const withAds = fillCsv(csv, facts({ ads: true, deviceId: true, approxLocation: true, productInteraction: true }));
     expect(valueOf(withAds, 'PSL_ACCOUNT_DELETION_URL')).toBe('');
     expect(valueOf(withAds, 'PSL_DATA_TYPES_IDENTIFIERS', 'PSL_DEVICE_ID')).toBe('TRUE');
     expect(valueOf(withAds, 'PSL_DATA_USAGE_RESPONSES:PSL_DEVICE_ID:DATA_USAGE_COLLECTION_PURPOSE', 'PSL_ADVERTISING')).toBe('TRUE');
-    const noAds = fillCsv(csv, facts({ analytics: true }));
+    // Ad data is for ads and analytics, not for the app's own functions.
+    expect(valueOf(withAds, 'PSL_DATA_USAGE_RESPONSES:PSL_DEVICE_ID:DATA_USAGE_COLLECTION_PURPOSE', 'PSL_APP_FUNCTIONALITY')).toBe('');
+    expect(valueOf(withAds, 'PSL_DATA_TYPES_LOCATION', 'PSL_APPROX_LOCATION')).toBe('TRUE');
+    expect(valueOf(withAds, 'PSL_DATA_TYPES_LOCATION', 'PSL_PRECISE_LOCATION')).toBe('');
+    const noAds = fillCsv(csv, facts({ analytics: true, deviceId: true }));
     expect(valueOf(noAds, 'PSL_DATA_USAGE_RESPONSES:PSL_DEVICE_ID:DATA_USAGE_COLLECTION_PURPOSE', 'PSL_ADVERTISING')).toBe('');
+    expect(valueOf(noAds, 'PSL_DATA_USAGE_RESPONSES:PSL_DEVICE_ID:DATA_USAGE_COLLECTION_PURPOSE', 'PSL_ANALYTICS')).toBe('TRUE');
   });
 
   it('asks for the privacy link instead of sending a form Google would refuse', async () => {

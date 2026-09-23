@@ -8,7 +8,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ide_core/ide_core.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/settings_store.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/locale.dart';
@@ -31,19 +31,19 @@ import 'ads_card.dart';
 import 'app_builder.dart';
 import 'forge_view.dart';
 
-/// The chat and settings of each built app, saved on this device.
+/// The chat and settings of each built app, kept on the Runner.
 class AppSessionStore {
   static String _key(String projectId) => 'ember_session_$projectId';
 
   static Future<void> save(String projectId, Map<String, dynamic> session) async {
     try {
-      await (await SharedPreferences.getInstance()).setString(_key(projectId), jsonEncode(session));
+      await Settings.instance.write(_key(projectId), jsonEncode(session));
     } catch (_) {}
   }
 
   static Future<Map<String, dynamic>?> load(String projectId) async {
     try {
-      final raw = (await SharedPreferences.getInstance()).getString(_key(projectId));
+      final raw = await Settings.instance.read(_key(projectId));
       return raw == null ? null : jsonDecode(raw) as Map<String, dynamic>;
     } catch (_) {
       return null;
@@ -500,7 +500,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                       const SizedBox(height: 12),
                       if (b.phase == BuildPhase.ready) PlatformTabs(ios: _ios, onChanged: (v) => setState(() => _ios = v)),
                       if (b.phase == BuildPhase.ready && _ios) IosCard(builder: b),
-                      if (b.phase == BuildPhase.ready && _ios) AppStoreCard(projectId: project.id),
+                      if (b.phase == BuildPhase.ready && _ios) AppStoreCard(projectId: project.id, builder: b),
                       if (b.phase == BuildPhase.ready && !_ios)
                         CheckupCard(
                           projectId: project.id,

@@ -4,7 +4,7 @@ import 'package:ai_connect/ai_connect.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/settings_store.dart';
 
 import '../../core/session.dart';
 
@@ -52,11 +52,12 @@ class AiSettings {
 class AiSettingsController extends AsyncNotifier<AiSettings> {
   static String _keyName(AiProviderId p) => 'ai_key_${p.name}';
 
-  KeyValueStore get _secure => ref.read(keyValueStoreProvider);
+  // Saved on the Runner: a restarted or different browser keeps the keys.
+  KeyValueStore get _secure => ref.read(settingsStoreProvider);
 
   @override
   Future<AiSettings> build() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = Settings.instance;
     final keys = <AiProviderId, String>{};
     for (final p in AiProviderId.values) {
       final k = await _secure.read(_keyName(p));
@@ -64,10 +65,10 @@ class AiSettingsController extends AsyncNotifier<AiSettings> {
     }
     return AiSettings(
       keys: keys,
-      compatibleBaseUrl: prefs.getString('ai_compat_base') ?? '',
-      useProxy: prefs.getBool('ai_use_proxy') ?? true,
-      defaultModel: prefs.getString('ai_default_model') ?? 'anthropic:claude-opus-5',
-      customModels: prefs.getStringList('ai_custom_models') ?? const [],
+      compatibleBaseUrl: await prefs.read('ai_compat_base') ?? '',
+      useProxy: (await prefs.read('ai_use_proxy')) != 'false',
+      defaultModel: await prefs.read('ai_default_model') ?? 'anthropic:claude-opus-5',
+      customModels: ((await prefs.read('ai_custom_models')) ?? '').split('\n').where((m) => m.isNotEmpty).toList(),
     );
   }
 
@@ -85,11 +86,11 @@ class AiSettingsController extends AsyncNotifier<AiSettings> {
   }
 
   Future<void> updateSettings({String? compatibleBaseUrl, bool? useProxy, String? defaultModel, List<String>? customModels}) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (compatibleBaseUrl != null) await prefs.setString('ai_compat_base', compatibleBaseUrl.trim());
-    if (useProxy != null) await prefs.setBool('ai_use_proxy', useProxy);
-    if (defaultModel != null) await prefs.setString('ai_default_model', defaultModel);
-    if (customModels != null) await prefs.setStringList('ai_custom_models', customModels);
+    final prefs = Settings.instance;
+    if (compatibleBaseUrl != null) await prefs.write('ai_compat_base', compatibleBaseUrl.trim());
+    if (useProxy != null) await prefs.write('ai_use_proxy', '$useProxy');
+    if (defaultModel != null) await prefs.write('ai_default_model', defaultModel);
+    if (customModels != null) await prefs.write('ai_custom_models', customModels.join('\n'));
     final s = await future;
     state = AsyncData(s.copyWith(
       compatibleBaseUrl: compatibleBaseUrl?.trim(),
@@ -177,18 +178,16 @@ final aiProviderFactory = Provider<Future<AiProvider> Function(AiModel model)>((
   };
 });
 
-/// Last model used per project (§1.2), persisted locally.
+/// Last model used per project (§1.2), kept on the Runner.
 class ProjectModelStore {
-  static Future<String?> get(String projectId) async =>
-      (await SharedPreferences.getInstance()).getString('ai_model_$projectId');
-  static Future<void> set(String projectId, String modelKey) async =>
-      (await SharedPreferences.getInstance()).setString('ai_model_$projectId', modelKey);
+  static Future<String?> get(String projectId) => Settings.instance.read('ai_model_$projectId');
+  static Future<void> set(String projectId, String modelKey) => Settings.instance.write('ai_model_$projectId', modelKey);
 }
 
-/// Chat history per project, persisted locally (last 200 messages).
+/// Chat history per project, kept on the Runner (last 200 messages).
 class ChatHistoryStore {
   static Future<List<Map<String, dynamic>>> load(String projectId) async {
-    final raw = (await SharedPreferences.getInstance()).getString('ai_chat_$projectId');
+    final raw = await Settings.instance.read('ai_chat_$projectId');
     if (raw == null) return const [];
     try {
       return (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
@@ -199,6 +198,6 @@ class ChatHistoryStore {
 
   static Future<void> save(String projectId, List<Map<String, dynamic>> entries) async {
     final trimmed = entries.length > 200 ? entries.sublist(entries.length - 200) : entries;
-    await (await SharedPreferences.getInstance()).setString('ai_chat_$projectId', jsonEncode(trimmed));
+    await Settings.instance.write('ai_chat_$projectId', jsonEncode(trimmed));
   }
 }

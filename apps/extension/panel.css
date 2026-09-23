@@ -95,3 +95,22 @@
   font: 600 14px/1 system-ui, sans-serif;
   cursor: pointer;
 }
+
+/* App Store Connect helper */
+#ember-panel .ember-small { font-size: 12px; opacity: 0.8; margin: 4px 0; }
+#ember-panel .ember-list { margin: 6px 0 10px; padding-left: 18px; font-size: 12px; }
+#ember-panel .ember-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 6px; }
+#ember-panel button.ember-action {
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: #e5131b;
+  color: #fff;
+  font: 600 13px/1 system-ui, sans-serif;
+  cursor: pointer;
+}
+#ember-panel button.ember-action:disabled { opacity: 0.5; cursor: wait; }
+#ember-panel .ember-log p { margin: 4px 0; font-size: 12px; }
+#ember-panel .ember-ok { color: #7ee2a8; }
+#ember-panel .ember-warn { color: #ffd479; }
+#ember-panel .ember-error { color: #ff8a8a; white-space: pre-wrap; }

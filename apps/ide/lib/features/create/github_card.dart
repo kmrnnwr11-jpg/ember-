@@ -5,6 +5,7 @@ import 'package:ide_core/ide_core.dart' show RunnerException;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/session.dart';
+import '../../core/settings_store.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Keeps the app's source on GitHub: one repository per app, the user's own.
@@ -29,7 +30,7 @@ class _GitHubCardState extends ConsumerState<GitHubCard> {
   @override
   void initState() {
     super.initState();
-    ref.read(keyValueStoreProvider).read(_tokenKey).then((t) {
+    ref.read(settingsStoreProvider).read(_tokenKey).then((t) {
       if (mounted && t != null && t.isNotEmpty) setState(() => _hasToken = true);
     });
     // Show right away whether this app is already saved on GitHub, and where.
@@ -51,7 +52,7 @@ class _GitHubCardState extends ConsumerState<GitHubCard> {
 
   Future<void> _save() async {
     final l = AppLocalizations.of(context);
-    final store = ref.read(keyValueStoreProvider);
+    final store = ref.read(settingsStoreProvider);
     final typed = _token.text.trim();
     if (typed.isNotEmpty) {
       await store.write(_tokenKey, typed);
@@ -172,7 +173,7 @@ class _GitHubCardState extends ConsumerState<GitHubCard> {
                 if (_hasToken)
                   TextButton(
                     onPressed: () async {
-                      await ref.read(keyValueStoreProvider).delete(_tokenKey);
+                      await ref.read(settingsStoreProvider).delete(_tokenKey);
                       if (mounted) setState(() => _hasToken = false);
                     },
                     child: Text(l.ghForgetToken),

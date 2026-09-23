@@ -1,7 +1,14 @@
 ﻿import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
-import { AppStoreError, parseAppStoreKey, projectVersion, publishToAppStore, type AppStoreListing } from './appstore.js';
+import { AppStore, AppStoreError, appleText, applePrivacyPlan, cutAtWord, finishWhenBuildReady, parseAppStoreKey, projectBuildNumber, projectVersion, publishToAppStore, type AppStoreListing, type AppStorePublishInput, type AppStorePublishResult } from './appstore.js';
+import { AutoTracker, isRunning, needsFreshIpa, type AutoStatus } from './appstore_auto.js';
+import { MAX_VALUE, readSettings, SETTING_KEY, writeSettings } from './settings_store.js';
+import { appleProductsFrom, type AppleProduct, type DeclaredProduct } from './appstore_products.js';
+import { appleFacts, readAppleSettings } from './apple_settings.js';
+import { blocking, fixPreflight, preflightIos } from './ios_preflight.js';
+import { deleteAppleCreds, readAppleCreds, readAppleCredsPublic, readAppleKey, readMarketingUrl, readReviewPhone, rememberMarketingUrl, rememberReviewPhone, rememberTeamId, saveAppleCreds } from './apple_creds.js';
+import { teamFromAppStore } from './ios_signing.js';
 import { backupKey } from './drive.js';
 import { installAndRun, lanAddress, listDevices } from './devices.js';
 import { fix as fixFinding, inspectCloud, inspectProject, inspectRunning } from './doctor.js';
@@ -12,6 +19,8 @@ import { detectDataFacts, fillCsv, findExportedCsv, uploadDataSafety, validateFi
 import { createServiceAccountKey, gcloudStatus, invitePlayUser, storeImages } from './play_setup.js';
 import { cliLogins, cliModels } from './subscription_clis.js';
 import { mkdir, stat } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import os from 'node:os';
 import path from 'node:path';
 import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
@@ -33,9 +42,9 @@ import { JobManager, jobPublic } from './jobs.js';
 import { ARTIFACTS, Services, TEMPLATES, type SignedBuildPreparer } from './services.js';
 import { androidAppInfo, ensureUploadKey, rememberAppStoreBuildNumber, rememberPublishedVersionCode } from './signing.js';
 import { parseServiceAccount, PlayError, privacyHtml, publishToPlay } from './play.js';
-import { readFile as readFileAsync, writeFile as writeFileAsync, mkdir as mkdirAsync } from 'node:fs/promises';
+import { readFile as readFileAsync, writeFile as writeFileAsync, mkdir as mkdirAsync, unlink as unlinkAsync } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
-import { JsonStore, SupabaseStore, type Store } from './store.js';
+import { JsonStore, SupabaseStore, type ProjectRow, type Store } from './store.js';
 import { DockerDriver } from './workspaces/docker.js';
 import type { WorkspaceDriver } from './workspaces/driver.js';
 import { LocalDriver } from './workspaces/local.js';
@@ -100,7 +109,7 @@ export async function buildApp(
     logger: {
       level: cfg.LOG_LEVEL,
       // Never log credentials (Ãƒâ€šÃ‚Â§4).
-      redact: ['req.headers.authorization', 'req.query.token', 'req.headers["x-provider-key"]', 'req.headers["x-provider-base-url"]', 'req.body.serviceAccount'],
+      redact: ['req.headers.authorization', 'req.query.token', 'req.headers["x-provider-key"]', 'req.headers["x-provider-base-url"]', 'req.body.serviceAccount', 'req.body.privateKey'],
     },
     bodyLimit: cfg.MAX_WS_FILE_BYTES + 1024 * 64,
     // preview.<domain>/<ws>/<project>/ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ is served by the /preview route.
@@ -123,6 +132,9 @@ export async function buildApp(
 
   await app.register(cors, {
     origin: cfg.CORS_ORIGINS === '*' ? true : cfg.CORS_ORIGINS.split(',').map((s) => s.trim()),
+    // @fastify/cors allows only GET, HEAD and POST unless told: the IDE also saves
+    // with PUT/PATCH and removes with DELETE (settings, Apple key, projects).
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
   await app.register(websocket, { options: { maxPayload: cfg.MAX_WS_FILE_BYTES + 1024 * 64 } });
   await mkdir(path.resolve(cfg.WORKSPACES_ROOT), { recursive: true });
@@ -171,6 +183,76 @@ export async function buildApp(
    * extension: a web page cannot read this response.
    */
   let helperApp: Record<string, unknown> | null = null;
+
+  /**
+   * The same for App Store Connect: the app to create and its App Privacy
+   * answers, one per Bundle ID, kept in ~/.ember/helper_apple.json so a
+   * Runner restart forgets nothing. The extension asks for the app open in its
+   * tab (?bundleId=), or for the last one prepared.
+   */
+  const helperAppleFile = () => path.join(os.homedir(), '.ember', 'helper_apple.json');
+  type AppleHelpers = { last?: string; byBundle: Record<string, Record<string, unknown>> };
+  const readAppleHelpers = async (): Promise<AppleHelpers> =>
+    JSON.parse(await readFileAsync(helperAppleFile(), 'utf8').catch(() => '{"byBundle":{}}')) as AppleHelpers;
+  const saveAppleHelper = async (plan: Record<string, unknown>) => {
+    const all = await readAppleHelpers();
+    const bundle = `${plan.bundleId ?? ''}`;
+    if (!bundle) return;
+    all.byBundle[bundle] = plan;
+    all.last = bundle;
+    await mkdirAsync(path.dirname(helperAppleFile()), { recursive: true }).catch(() => {});
+    await writeFileAsync(helperAppleFile(), JSON.stringify(all, null, 1), { mode: 0o600 });
+  };
+
+  app.get('/helper/apple', async (req, reply) => {
+    const origin = req.headers.origin ?? '';
+    if (origin.startsWith('chrome-extension://')) reply.header('access-control-allow-origin', origin);
+    reply.header('cache-control', 'no-store');
+    const { bundleId } = (req.query ?? {}) as { bundleId?: string };
+    const all = await readAppleHelpers();
+    const plan = (bundleId && all.byBundle[bundleId]) || (!bundleId && all.last ? all.byBundle[all.last] : undefined);
+    if (!plan) {
+      return reply.status(404).send({
+        code: 'no_app',
+        message: bundleId
+          ? `Ember non conosce ancora ${bundleId}: apri quell’app in Ember, scheda iPhone, e riprova.`
+          : 'Apri l’app in Ember, scheda iPhone: da lì Ember prepara i dati per l’estensione.',
+      });
+    }
+    return plan;
+  });
+
+  // What the extension must put in the review with the version, read live from
+  // Apple's public API (the website's own lists proved unreliable to read).
+  app.get('/helper/apple/review', async (req, reply) => {
+    const origin = req.headers.origin ?? '';
+    if (origin.startsWith('chrome-extension://')) reply.header('access-control-allow-origin', origin);
+    reply.header('cache-control', 'no-store');
+    const { bundleId } = (req.query ?? {}) as { bundleId?: string };
+    const key = await readAppleKey().catch(() => null);
+    if (!bundleId || !key) return reply.status(404).send({ code: 'no_key', message: 'Ember non ha la chiave Apple o il Bundle ID.' });
+    try {
+      const store = await AppStore.open(key);
+      const found = await store.call<{ data: Array<{ id: string }> }>('GET', `/apps?filter[bundleId]=${encodeURIComponent(bundleId)}&limit=1`);
+      const appId = found.data?.[0]?.id;
+      if (!appId) return reply.status(404).send({ code: 'no_app', message: 'L’app non c’è su App Store Connect.' });
+      type R = { id: string; attributes?: Record<string, unknown> };
+      const groups = (await store.call<{ data: R[] }>('GET', `/apps/${appId}/subscriptionGroups?limit=50`)).data ?? [];
+      const groupIds: string[] = [];
+      const subscriptionIds: string[] = [];
+      const names: string[] = [];
+      for (const g of groups) {
+        const subs = ((await store.call<{ data: R[] }>('GET', `/subscriptionGroups/${g.id}/subscriptions?limit=50`)).data ?? []).filter((x) => x.attributes?.state === 'READY_TO_SUBMIT');
+        if (subs.length) groupIds.push(g.id);
+        for (const x of subs) (subscriptionIds.push(x.id), names.push(`${x.attributes?.productId}`));
+      }
+      const iaps = ((await store.call<{ data: R[] }>('GET', `/apps/${appId}/inAppPurchasesV2?limit=200`)).data ?? []).filter((x) => x.attributes?.state === 'READY_TO_SUBMIT');
+      for (const x of iaps) names.push(`${x.attributes?.productId}`);
+      return { appId, groupIds, subscriptionIds, purchaseIds: iaps.map((x) => x.id), names };
+    } catch (e) {
+      return reply.status(502).send({ code: 'apple_error', message: (e as Error).message });
+    }
+  });
 
   app.get('/helper/app', async (req, reply) => {
     const origin = req.headers.origin ?? '';
@@ -269,7 +351,28 @@ export async function buildApp(
   app.post('/v1/auth/dev-login', async (req, reply) => {
     if (!cfg.DEV_AUTH) return reply.status(404).send({ code: 'not_found', message: 'dev auth disabled' });
     const { email } = z.object({ email: z.string().email() }).parse(req.body);
-    return auth.issueDevToken(email);
+    const issued = await auth.issueDevToken(email);
+    await mkdirAsync(path.dirname(devLastFile()), { recursive: true }).catch(() => {});
+    await writeFileAsync(devLastFile(), JSON.stringify({ email }), { mode: 0o600 }).catch(() => {});
+    return issued;
+  });
+
+  // Local dev only: the IDE opened by `flutter run` starts with an empty browser,
+  // so it asks this Mac who was signed in last and signs in again by itself.
+  const devLastFile = () => path.join(os.homedir(), '.ember', 'dev_last.json');
+  const fromThisMac = (ip: string) => ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+
+  app.get('/v1/auth/dev-last', async (req, reply) => {
+    if (!cfg.DEV_AUTH || !fromThisMac(req.ip)) return reply.status(404).send({ code: 'not_found', message: 'not available' });
+    const saved = JSON.parse(await readFileAsync(devLastFile(), 'utf8').catch(() => '{}')) as { email?: string };
+    if (!saved.email) return reply.status(404).send({ code: 'not_found', message: 'nobody signed in yet' });
+    return { email: saved.email };
+  });
+
+  app.delete('/v1/auth/dev-last', async (req, reply) => {
+    if (!cfg.DEV_AUTH || !fromThisMac(req.ip)) return reply.status(404).send({ code: 'not_found', message: 'not available' });
+    await unlinkAsync(devLastFile()).catch(() => {});
+    return reply.status(204).send();
   });
 
   // ---------------- authenticated REST ----------------
@@ -391,48 +494,377 @@ export async function buildApp(
 
     // Apple's side of publishing: build upload, store page in every language,
     // privacy answers, and (when asked) sending the version for review.
+    const publishSchema = z.object({
+      // The key is optional here: it is normally the account key saved once
+      // under ~/.ember/apple. The fields stay accepted as a fallback.
+      keyId: z.string().max(40).optional(),
+      issuerId: z.string().max(60).optional(),
+      privateKey: z.string().max(8000).optional(),
+      listing: z.record(z.string(), z.unknown()).optional(),
+      translations: z.array(z.record(z.string(), z.unknown())).max(20).optional(),
+      privacyPolicyUrl: z.string().max(500).optional(),
+      uploadBuild: z.boolean().default(false),
+      submit: z.boolean().default(false),
+      // iOS submission chores Ember now fills automatically.
+      category: z.string().max(40).optional(),
+      secondaryCategory: z.string().max(40).optional(),
+      free: z.boolean().default(false),
+      screenshots: z.boolean().default(false),
+      /** Send even when the preflight finds something Apple would reject. */
+      skipChecks: z.boolean().default(false),
+      /** Developer website (Marketing URL); remembered for the account. */
+      marketingUrl: z.string().url().max(300).optional(),
+      review: z
+        .object({
+          firstName: z.string().max(60).optional(),
+          lastName: z.string().max(60).optional(),
+          email: z.string().max(120).optional(),
+          phone: z.string().max(40).optional(),
+          demoUser: z.string().max(120).optional(),
+          demoPassword: z.string().max(120).optional(),
+          notes: z.string().max(4000).optional(),
+        })
+        .optional(),
+    });
+    type PublishBody = z.infer<typeof publishSchema>;
+
+    /** Everything publishToAppStore needs, from the request and the project. */
+    /**
+     * The app's purchases for Apple: store/apple_products.json when the project
+     * has one (exact Apple ids), else what the engine declared for Google Play.
+     */
+    const appleProductsOf = async (project: ProjectRow, ownerId: string): Promise<{ products: AppleProduct[]; screenshot?: Buffer }> => {
+      const root = services.projectRoot(project);
+      const own = JSON.parse(await readFileAsync(path.join(root, 'store', 'apple_products.json'), 'utf8').catch(() => 'null')) as AppleProduct[] | null;
+      let products = Array.isArray(own) ? own : [];
+      if (!products.length) {
+        const session = JSON.parse((await readSettings(ownerId).catch(() => ({}) as Record<string, string>))[`ember_session_${project.id}`] ?? '{}') as { products?: DeclaredProduct[] };
+        const name = /^name:\s*([a-z0-9_]+)/m.exec(await readFileAsync(path.join(root, 'pubspec.yaml'), 'utf8').catch(() => ''))?.[1] ?? project.name;
+        products = appleProductsFrom(session.products ?? [], name);
+      }
+      if (!products.length) return { products };
+      // The reviewer wants to see the purchase screen: the screenshot of the paywall when there is one.
+      const labels = await readFileAsync(path.join(root, 'lib', 'config', 'screenshot_screens.dart'), 'utf8').catch(() => '');
+      const order = /order\s*=\s*<\w+>\[([\s\S]*?)\]/.exec(labels)?.[1]?.split(',').map((x) => x.trim()).filter(Boolean) ?? [];
+      const paywall = order.findIndex((x) => /premium|paywall|subscri|pro\b|upgrade|unlock|shop|store/i.test(x));
+      const chosen = (await readAppleSettings(root)).reviewScreenshot;
+      const file = path.join(root, 'store', 'screenshots', chosen || `phone_${paywall >= 0 ? paywall + 1 : 1}.png`);
+      const screenshot = await readFileAsync(file).catch(() => undefined);
+      return { products, screenshot };
+    };
+
+    const preparePublish = async (project: ProjectRow, body: PublishBody, email?: string, ownerId?: string): Promise<AppStorePublishInput> => {
+      const root = services.projectRoot(project);
+      // The main listing is the English one (as on Play). Older IDEs labelled it
+      // Italian, so the Italian translation then overwrote it and English, the
+      // app's primary language on Apple, stayed empty.
+      if (body.listing && (!body.listing.language || (body.translations ?? []).some((t) => t.language === body.listing!.language))) {
+        body.listing.language = 'en-US';
+      }
+      // Hand-picked App Store keywords per language (store/apple_keywords.json,
+      // keyed by the listing's language) win over the ones made from the text.
+      const keywords = JSON.parse(await readFileAsync(path.join(root, 'store', 'apple_keywords.json'), 'utf8').catch(() => '{}')) as Record<string, string>;
+      for (const page of [body.listing, ...(body.translations ?? [])]) {
+        const k = page && keywords[`${page.language ?? ''}`];
+        if (page && k) page.keywords = k;
+      }
+      const gradle = await readFileAsync(path.join(root, 'android', 'app', 'build.gradle.kts'), 'utf8').catch(() => '');
+      const bundleId = /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
+      if (!bundleId) throw new AppStoreError('no_bundle_id', 'Build the app once before publishing: its name is set at the first build.');
+      // Always prefer the saved account key; fall back to any key sent in the body.
+      const key = (await readAppleKey()) ?? parseAppStoreKey(body);
+      const settings = await readAppleSettings(root);
+      // Screenshots need the local web preview and a browser; only wire them up
+      // when the app has a screenshot mode and the preview is ready.
+      let screenshots: { previewUrl: string; browser: string } | undefined;
+      if (body.screenshots) {
+        const browser = findBrowser();
+        const info = await preview.info(project);
+        if (browser && info.built && !info.building && (await hasScreenshotMode(root))) {
+          screenshots = { previewUrl: `http://127.0.0.1:${cfg.PORT}${info.path}`, browser };
+        }
+      }
+      // Default the reviewer contact to the signed-in email so the form is never empty.
+      // The phone is remembered for the account: typed once, reused by every app.
+      const review = { ...(email ? { email } : {}), ...(body.review ?? {}) };
+      if (review.phone) await rememberReviewPhone(review.phone).catch(() => {});
+      else review.phone = (await readReviewPhone().catch(() => '')) || undefined;
+      if (body.marketingUrl) await rememberMarketingUrl(body.marketingUrl).catch(() => {});
+      const marketingUrl = body.marketingUrl || (await readMarketingUrl().catch(() => '')) || undefined;
+      return {
+        key,
+        bundleId,
+        versionString: await projectVersion(root),
+        projectRoot: root,
+        listing: body.listing as AppStoreListing | undefined,
+        translations: body.translations as AppStoreListing[] | undefined,
+        privacyPolicyUrl: body.privacyPolicyUrl,
+        facts: appleFacts(await detectDataFacts(root), settings),
+        kidsAgeBand: settings.kids ? (settings.kidsAgeBand ?? 'FIVE_AND_UNDER') : undefined,
+        uploadBuild: body.uploadBuild,
+        submit: body.submit,
+        category: body.category,
+        secondaryCategory: body.secondaryCategory,
+        review,
+        free: body.free,
+        screenshots,
+        marketingUrl,
+        ...(ownerId ? await appleProductsOf(project, ownerId).then(({ products, screenshot }) => ({ products, productScreenshot: screenshot })) : {}),
+      };
+    };
+
+    /** Remember what Apple now has, so the next build of either store starts above it. */
+    const rememberUploaded = async (root: string, result: AppStorePublishResult) => {
+      if (!result.buildUploaded) return;
+      const build = await projectBuildNumber(root);
+      if (build > 0) await rememberAppStoreBuildNumber(root, build).catch(() => {});
+    };
+
     r.post('/v1/projects/:projectId/appstore/publish', async (req, reply) => {
       const { projectId } = req.params as { projectId: string };
       const { project } = await services.ownedProject(req.user.id, projectId);
+      const body = publishSchema.parse(req.body);
+      try {
+        const input = await preparePublish(project, body, req.user.email, req.user.id);
+        const result = await publishToAppStore(input);
+        await rememberUploaded(input.projectRoot, result);
+        return { ...result, bundleId: input.bundleId };
+      } catch (e) {
+        if (e instanceof AppStoreError) return reply.status(422).send({ code: e.code, message: e.message });
+        throw e;
+      }
+    });
+
+    // ---- Publish as one press: build → upload → store page → wait → review ----
+    const autoRuns = new Map<string, Promise<void>>(); // project root → the run in progress
+
+    /** Waits for Apple to process the build, then attaches it and sends it for review. */
+    const finishAuto = async (tracker: AutoTracker, wait: NonNullable<AutoStatus['wait']>) => {
+      const key = await readAppleKey();
+      if (!key) return tracker.fail('La chiave Apple non è più salvata: caricala di nuovo e premi Publish.');
+      const done = await finishWhenBuildReady({ key, ...wait, onProgress: (m) => void tracker.progress(m) });
+      await tracker.phase(done.submitted ? 'submitted' : 'done', done.submitted ? 'Inviata in revisione ad Apple ✓' : `Build ${wait.buildNumber} collegata alla versione ✓`, { wait: undefined });
+    };
+
+    const runAuto = async (tracker: AutoTracker, project: ProjectRow, ownerId: string, body: PublishBody, email?: string) => {
       const root = services.projectRoot(project);
-      const body = z
-        .object({
-          keyId: z.string().max(40),
-          issuerId: z.string().max(60),
-          privateKey: z.string().max(8000),
-          listing: z.record(z.string(), z.unknown()).optional(),
-          translations: z.array(z.record(z.string(), z.unknown())).max(20).optional(),
-          privacyPolicyUrl: z.string().max(500).optional(),
-          uploadBuild: z.boolean().default(false),
-          submit: z.boolean().default(false),
-        })
-        .parse(req.body);
+      try {
+        if (!body.skipChecks && body.submit) {
+          // What Apple would reject costs days: fix what Ember can, stop on the rest.
+          const ctx = await preflightContext(root, body);
+          let found = blocking(await preflightIos(ctx));
+          const fixed: string[] = [];
+          for (const f of found.filter((x) => x.fixable)) fixed.push(await fixPreflight(f.id, ctx).catch((e: unknown) => `${f.title}: ${(e as Error).message}`));
+          if (fixed.length) {
+            await tracker.progress(`Controllo prima dell’invio: ${fixed.join(', ')}`);
+            found = blocking(await preflightIos(ctx));
+          }
+          if (found.length) {
+            return tracker.fail(`Apple rifiuterebbe l’app, quindi non la invio:\n${found.map((f) => `• ${f.title} — ${f.detail}`).join('\n')}`);
+          }
+        }
+        if (body.uploadBuild) {
+          const fresh = await needsFreshIpa(root);
+          if (fresh.build) {
+            await tracker.phase('building', `Creo il file iPhone (${fresh.reason})`);
+            let job = await jobs.wait((await services.startJob(ownerId, project.id, 'build_ipa')).id);
+            // A new plugin can be newer than this Mac's list of CocoaPods: refresh it once and build again.
+            if (job.status !== 'succeeded' && /specs repository is too out-of-date|pod repo update/.test(job.log.join(''))) {
+              await tracker.progress('Aggiorno l’elenco delle librerie iPhone (CocoaPods) e riprovo');
+              await new Promise<void>((resolve) => {
+                const p = spawn('pod', ['install', '--repo-update'], { cwd: path.join(root, 'ios') });
+                p.on('close', () => resolve());
+                p.on('error', () => resolve());
+              });
+              job = await jobs.wait((await services.startJob(ownerId, project.id, 'build_ipa')).id);
+            }
+            if (job.status !== 'succeeded') {
+              const tail = job.log.join('').split('\n').filter((l) => l.trim()).slice(-12).join('\n');
+              return tracker.fail(`La build iPhone non è riuscita:\n${tail}`);
+            }
+          } else {
+            await tracker.progress(`File iPhone già pronto: ${fresh.reason}`);
+          }
+        }
+        await tracker.phase('publishing', body.uploadBuild ? 'Carico su Apple, scrivo la scheda e gli screenshot' : 'Scrivo la scheda e gli screenshot');
+        const input = await preparePublish(project, body, email, ownerId);
+        const result = await publishToAppStore(input);
+        await rememberUploaded(root, result);
+        const extra = { result: { ...result, bundleId: input.bundleId } as Record<string, unknown>, notes: result.notes };
+        if (body.submit && !result.submitted && result.waitingForBuild) {
+          const wait = { appId: result.appId, versionId: result.versionId, buildNumber: result.waitingForBuild, submit: true };
+          await tracker.phase('waiting', `Apple sta elaborando la build ${wait.buildNumber}`, { ...extra, wait });
+          await finishAuto(tracker, wait);
+        } else {
+          await tracker.phase(result.submitted ? 'submitted' : 'done', result.submitted ? 'Inviata in revisione ad Apple ✓' : 'Scheda aggiornata su Apple ✓', extra);
+        }
+      } catch (e) {
+        await tracker.fail(e instanceof Error ? e.message : String(e));
+      }
+    };
+
+    /** The listing the checks read: what the IDE sent, else what the project saved. */
+    const preflightContext = async (root: string, body?: Partial<PublishBody>) => {
+      const saved = JSON.parse(await readFileAsync(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '{}')) as { title?: string; privacyUrl?: string };
+      const review = body?.review?.phone || (await readReviewPhone().catch(() => ''));
+      return {
+        root,
+        listing: { title: `${body?.listing?.title ?? saved.title ?? ''}`, privacyUrl: body?.privacyPolicyUrl || saved.privacyUrl || '' },
+        reviewPhone: review || undefined,
+        marketingUrl: body?.marketingUrl || (await readMarketingUrl().catch(() => '')) || undefined,
+      };
+    };
+
+    /**
+     * What the browser extension needs on App Store Connect for this app: the
+     * names to create it with, and the App Privacy answers from the same table
+     * as Google's Data safety. The Bundle ID is registered on the way.
+     */
+    const prepareAppleHelper = async (project: ProjectRow): Promise<Record<string, unknown>> => {
+      const root = services.projectRoot(project);
       const gradle = await readFileAsync(path.join(root, 'android', 'app', 'build.gradle.kts'), 'utf8').catch(() => '');
       const bundleId = /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
-      if (!bundleId) return reply.status(422).send({ code: 'no_bundle_id', message: 'Build the app once before publishing: its name is set at the first build.' });
-      try {
-        const key = parseAppStoreKey(body);
-        const result = await publishToAppStore({
-          key,
-          bundleId,
-          versionString: await projectVersion(root),
-          projectRoot: root,
-          listing: body.listing as AppStoreListing | undefined,
-          translations: body.translations as AppStoreListing[] | undefined,
-          privacyPolicyUrl: body.privacyPolicyUrl,
-          facts: await detectDataFacts(root),
-          uploadBuild: body.uploadBuild,
-          submit: body.submit,
-        });
-        if (result.buildUploaded) {
-          // Remember what Apple now has, so the next build of either store starts above it.
-          const pubspec = await readFileAsync(path.join(root, 'pubspec.yaml'), 'utf8').catch(() => '');
-          const build = Number(/^version:\s*[0-9]+\.[0-9]+\.[0-9]+\+([0-9]+)/m.exec(pubspec)?.[1] ?? 0);
-          if (build > 0) await rememberAppStoreBuildNumber(root, build).catch(() => {});
+      const { title } = await storeTitle(root);
+      const name = cutAtWord(appleText(title || project.name), 30);
+      const plan = {
+        name,
+        bundleId,
+        sku: bundleId.split('.').pop()?.replace(/[^a-z0-9]/gi, '').slice(0, 30) || project.id,
+        primaryLocale: 'en-US',
+        privacy: applePrivacyPlan(appleFacts(await detectDataFacts(root), await readAppleSettings(root))),
+        bundleRegistered: false,
+        at: new Date().toISOString(),
+      };
+      const key = await readAppleKey().catch(() => null);
+      if (key && bundleId && !bundleId.startsWith('dev.fluttercursor.app.')) {
+        plan.bundleRegistered = await (await AppStore.open(key)).ensureBundleId(bundleId, name).then(() => true, () => false);
+      }
+      await saveAppleHelper(plan).catch(() => {});
+      return plan;
+    };
+
+    r.post('/v1/projects/:projectId/helper/apple', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      return prepareAppleHelper(project);
+    });
+
+    // What Apple would reject, checked before sending: blocks, warnings, and who fixes each.
+    // Opening the App Store card also readies the browser extension for this app.
+    r.get('/v1/projects/:projectId/appstore/preflight', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      await prepareAppleHelper(project).catch(() => null);
+      return { findings: await preflightIos(await preflightContext(services.projectRoot(project))) };
+    });
+
+    r.post('/v1/projects/:projectId/appstore/preflight/fix', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const { ids } = z.object({ ids: z.array(z.string().max(80)).min(1).max(20) }).parse(req.body);
+      const ctx = await preflightContext(services.projectRoot(project));
+      const done: Array<{ id: string; ok: boolean; message: string }> = [];
+      for (const id of ids) {
+        try {
+          done.push({ id, ok: true, message: await fixPreflight(id, ctx) });
+        } catch (e) {
+          done.push({ id, ok: false, message: (e as Error).message });
         }
-        return { ...result, bundleId };
+      }
+      return { done, findings: await preflightIos(ctx) };
+    });
+
+    r.post('/v1/projects/:projectId/appstore/autopublish', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const root = services.projectRoot(project);
+      const body = publishSchema.parse(req.body);
+      if (autoRuns.has(root)) return reply.status(409).send({ code: 'already_running', message: 'Una pubblicazione è già in corso per questa app.' });
+      if (!(await readAppleKey()) && !body.privateKey) return reply.status(422).send({ code: 'no_key', message: 'Salva prima la chiave Apple (Key ID, Issuer ID e file .p8).' });
+      const tracker = await AutoTracker.open(root);
+      await tracker.start(body.uploadBuild ? 'building' : 'publishing', 'Parto');
+      const run = runAuto(tracker, project, req.user.id, body, req.user.email).finally(() => autoRuns.delete(root));
+      autoRuns.set(root, run);
+      return tracker.status;
+    });
+
+    // Where the one-press publish is. A wait cut short by a Runner restart resumes here.
+    r.get('/v1/projects/:projectId/appstore/autopublish', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const root = services.projectRoot(project);
+      const tracker = await AutoTracker.open(root);
+      const s = tracker.status;
+      if (s && isRunning(s) && !autoRuns.has(root)) {
+        if (s.phase === 'waiting' && s.wait) {
+          const wait = s.wait;
+          const run = finishAuto(tracker, wait)
+            .catch((e: unknown) => tracker.fail(e instanceof Error ? e.message : String(e)))
+            .finally(() => autoRuns.delete(root));
+          autoRuns.set(root, run);
+        } else {
+          await tracker.fail('Il Runner si è riavviato durante la pubblicazione: premi di nuovo Publish.');
+        }
+      }
+      return tracker.status ?? { phase: null };
+    });
+
+    // ---- Apple App Store Connect key, saved once for the whole account ----
+    // Kept in ~/.ember/apple (0600), outside the repo and never in the browser,
+    // so the Key ID / Issuer ID / .p8 come back filled for every project and
+    // survive a reload, a closed browser, a Runner restart or a reboot.
+
+    // What the user typed once in the IDE (tokens, keys, chats, choices): kept
+    // here, per user, so a restarted or different browser still has it.
+    r.get('/v1/settings', async (req) => ({ values: await readSettings(req.user.id) }));
+
+    r.patch('/v1/settings', async (req, reply) => {
+      const { values } = z
+        .object({ values: z.record(z.string().regex(SETTING_KEY), z.string().max(MAX_VALUE).nullable()) })
+        .parse(req.body);
+      if (Object.keys(values).length > 200) return reply.status(400).send({ code: 'bad_request', message: 'too many settings at once' });
+      await writeSettings(req.user.id, values);
+      return { ok: true };
+    });
+
+    // The saved key, without ever revealing the .p8 contents.
+    r.get('/v1/appstore/credentials', async () => readAppleCredsPublic());
+
+    // Save or update the key. Send privateKey only when the .p8 itself changes.
+    r.put('/v1/appstore/credentials', async (req, reply) => {
+      const body = z
+        .object({ keyId: z.string().max(40), issuerId: z.string().max(60), privateKey: z.string().max(8000).optional(), teamId: z.string().max(20).optional() })
+        .parse(req.body);
+      try {
+        return await saveAppleCreds(body);
       } catch (e) {
-        if (e instanceof AppStoreError) return reply.status(e.status === 401 || e.status === 403 ? 422 : 422).send({ code: e.code, message: e.message });
+        if (e instanceof AppStoreError) return reply.status(422).send({ code: e.code, message: e.message });
+        throw e;
+      }
+    });
+
+    // Forget the saved key.
+    r.delete('/v1/appstore/credentials', async (_req, reply) => {
+      await deleteAppleCreds();
+      return reply.status(204).send();
+    });
+
+    // Check the saved key against App Store Connect (GET /v1/apps).
+    r.post('/v1/appstore/credentials/verify', async (_req, reply) => {
+      const key = await readAppleKey();
+      if (!key) return reply.status(422).send({ code: 'no_key', message: 'Nessuna chiave Apple salvata: caricala prima di verificare.' });
+      try {
+        const store = await AppStore.open(key);
+        const { data } = await store.call<{ data: unknown[] }>('GET', '/apps?limit=1', undefined, 'Verifica connessione');
+        // The same key tells which Team signs the iPhone builds.
+        let teamId = (await readAppleCreds())?.teamId || '';
+        if (!teamId) {
+          teamId = (await teamFromAppStore(key, '').catch(() => null)) ?? '';
+          if (teamId) await rememberTeamId(teamId).catch(() => {});
+        }
+        return { ok: true, apps: Array.isArray(data) ? data.length : 0, teamId };
+      } catch (e) {
+        if (e instanceof AppStoreError) return reply.status(422).send({ code: e.code, message: e.message });
         throw e;
       }
     });

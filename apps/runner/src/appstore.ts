@@ -866,6 +866,8 @@ export interface AppStorePublishResult {
   privacy: { collects: boolean; categories: string[] } | null;
   buildUploaded: boolean;
   buildAttached: boolean;
+  /** Build number Apple is still processing, when the review has to wait for it. */
+  waitingForBuild: number | null;
   submitted: boolean;
   /** The extra iOS chores Ember now fills so you do not have to. */
   ageRated: boolean;
@@ -999,16 +1001,19 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
   }
 
   let buildAttached = false;
+  let waitingForBuild: number | null = null;
   const expected = await projectBuildNumber(input.projectRoot);
   const build = await store.latestBuild(app.id).catch(() => null);
   if (build && Number(build.version) < expected) {
     // Apple lists a new build only minutes after the upload. Never fall back on an older one.
+    if (input.uploadBuild) waitingForBuild = expected;
     notes.push(
       input.uploadBuild
         ? `La build ${expected} è appena arrivata ad Apple e la stanno elaborando (10-20 minuti): premi di nuovo Publish dopo, per collegarla e inviarla in revisione.`
         : `Su Apple c'è solo la build ${build.version}, l'app è alla ${expected}: attiva "Send the iPhone file too" e premi di nuovo Publish.`,
     );
   } else if (build && build.state !== 'VALID') {
+    waitingForBuild = Number(build.version) || expected;
     notes.push(`La build ${build.version} è ancora in elaborazione da Apple (${build.state}): premi di nuovo Publish tra qualche minuto.`);
   } else if (build) {
     await store.attachBuild(version.id, build.id).then(
@@ -1016,6 +1021,7 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
       (e: unknown) => notes.push(`Build non collegata: ${(e as Error).message}`),
     );
   } else if (input.uploadBuild) {
+    waitingForBuild = expected;
     notes.push(`La build ${expected} è appena arrivata ad Apple e la stanno elaborando (10-20 minuti): premi di nuovo Publish dopo, per collegarla e inviarla in revisione.`);
   } else {
     notes.push('No build on Apple yet for this app.');
@@ -1041,6 +1047,7 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
     privacy,
     buildUploaded,
     buildAttached,
+    waitingForBuild,
     submitted,
     ageRated,
     categorized,
@@ -1053,6 +1060,63 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
 }
 
 /** The version string ("1.0.0") from the project's pubspec. */
+export interface FinishInput {
+  key: AppStoreKey;
+  appId: string;
+  versionId: string;
+  /** The build to wait for: an older, already processed one is never used. */
+  buildNumber: number;
+  submit: boolean;
+  /** Told what is happening, e.g. to show it in the IDE. */
+  onProgress?: (message: string) => void;
+  signal?: AbortSignal;
+  pollMs?: number;
+  timeoutMs?: number;
+}
+
+/**
+ * Waits until Apple has processed [buildNumber] (usually 5-20 minutes after
+ * the upload), then attaches it to the version and sends it for review.
+ * This is the step that used to need a second press of Publish.
+ */
+export async function finishWhenBuildReady(input: FinishInput, fetchImpl: Fetch = fetch): Promise<{ attached: boolean; submitted: boolean }> {
+  const pollMs = input.pollMs ?? 30_000;
+  const deadline = Date.now() + (input.timeoutMs ?? 90 * 60_000);
+  const started = Date.now();
+  const sleep = (ms: number) =>
+    new Promise<void>((resolve, reject) => {
+      const t = setTimeout(resolve, ms);
+      input.signal?.addEventListener('abort', () => (clearTimeout(t), reject(new Error('annullato'))), { once: true });
+    });
+  for (;;) {
+    if (input.signal?.aborted) throw new Error('annullato');
+    // A fresh token each round: the wait can outlast one (they live 20 minutes).
+    const store = await AppStore.open(input.key, fetchImpl);
+    const build = await store.latestBuild(input.appId).catch(() => null);
+    const minutes = Math.round((Date.now() - started) / 60_000);
+    if (build && Number(build.version) >= input.buildNumber) {
+      if (build.state === 'VALID') {
+        input.onProgress?.(`Build ${build.version} pronta: la collego alla versione`);
+        await store.attachBuild(input.versionId, build.id);
+        if (!input.submit) return { attached: true, submitted: false };
+        input.onProgress?.('Invio in revisione');
+        await store.submitForReview(input.versionId, input.appId);
+        return { attached: true, submitted: true };
+      }
+      if (build.state === 'INVALID' || build.state === 'FAILED') {
+        throw new AppStoreError('build_invalid', `Apple ha scartato la build ${build.version} (${build.state}): controlla l’email di Apple per il motivo.`);
+      }
+      input.onProgress?.(`Apple sta elaborando la build ${build.version} (${minutes} min)`);
+    } else {
+      input.onProgress?.(`Aspetto che la build ${input.buildNumber} compaia su Apple (${minutes} min)`);
+    }
+    if (Date.now() > deadline) {
+      throw new AppStoreError('build_timeout', `Dopo ${minutes} minuti Apple non ha ancora pronta la build ${input.buildNumber}: riprova più tardi con Publish.`);
+    }
+    await sleep(pollMs);
+  }
+}
+
 /**
  * True when the app bundles media it did not make itself (music, sounds,
  * videos, stock images): Apple asks to declare it before the review.

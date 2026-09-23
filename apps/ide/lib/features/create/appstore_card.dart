@@ -93,6 +93,8 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
   ];
 
   Timer? _debounce;
+  Timer? _poll; // follows the one-press publish running on the Runner
+  Map<String, dynamic>? _auto; // its last status
   String? _savedMsg; // "Salvato ✓"
   String? _message; // publish / verify result or error
   bool _error = false;
@@ -105,6 +107,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
   }
 
   Future<void> _load() async {
+    unawaited(_refreshAuto()); // a publish started earlier keeps showing its progress
     try {
       final api = await ref.read(runnerApiProvider.future);
       final creds = await api.appStoreCredentials();
@@ -127,6 +130,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
   @override
   void dispose() {
     _debounce?.cancel();
+    _poll?.cancel();
     _keyId.dispose();
     _issuer.dispose();
     _p8.dispose();
@@ -324,7 +328,6 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
   }
 
   Future<void> _publish() async {
-    final l = AppLocalizations.of(context);
     if (!_hasKey) {
       setState(() {
         _message = 'Salva prima la chiave Apple (Key ID, Issuer ID e file .p8).';
@@ -347,8 +350,9 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
         if (_demoUser.text.trim().isNotEmpty) 'demoUser': _demoUser.text.trim(),
         if (_demoPass.text.trim().isNotEmpty) 'demoPassword': _demoPass.text.trim(),
       };
-      // The Runner uses the saved account key; no secret leaves the browser.
-      final res = await (await ref.read(runnerApiProvider.future)).publishToAppStore(widget.projectId, {
+      // The Runner uses the saved account key; no secret leaves the browser. It
+      // runs the whole publish in the background; this card follows it.
+      final status = await (await ref.read(runnerApiProvider.future)).autoPublishToAppStore(widget.projectId, {
         'listing': ?listing,
         if (translations.isNotEmpty) 'translations': translations,
         'privacyPolicyUrl': ?(privacyUrl?.isNotEmpty ?? false ? privacyUrl : null),
@@ -359,11 +363,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
         'screenshots': _screenshots,
         if (review.isNotEmpty) 'review': review,
       });
-      setState(() {
-        _message = l.ascDone('${res['versionString']}', ((res['languages'] as List?) ?? const []).join(', '));
-        _notes = [..._doneSummary(res), ...((res['notes'] as List?) ?? const []).map((n) => '$n')];
-        _error = false;
-      });
+      _applyAuto(status);
     } on RunnerException catch (e) {
       setState(() {
         _message = e.message;
@@ -374,8 +374,78 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
         }
       });
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted && !_autoRunning) setState(() => _busy = false);
     }
+  }
+
+  static const _runningPhases = {'building', 'publishing', 'waiting'};
+  bool get _autoRunning => _runningPhases.contains(_auto?['phase']);
+
+  Future<void> _refreshAuto() async {
+    try {
+      final status = await (await ref.read(runnerApiProvider.future)).autoPublishStatus(widget.projectId);
+      if (mounted && status['phase'] != null) _applyAuto(status);
+    } catch (_) {
+      // Runner unreachable for a moment: the next tick tries again.
+    }
+  }
+
+  /// Shows a status from the Runner and keeps polling while it runs.
+  void _applyAuto(Map<String, dynamic> status) {
+    final l = AppLocalizations.of(context);
+    final phase = '${status['phase']}';
+    final result = status['result'] is Map ? (status['result'] as Map).cast<String, dynamic>() : null;
+    final notes = ((status['notes'] as List?) ?? const []).map((n) => '$n').toList();
+    setState(() {
+      _auto = status;
+      _busy = _autoRunning;
+      if (phase == 'failed') {
+        _message = '${status['error'] ?? status['message']}';
+        _error = true;
+        _notes = notes;
+      } else if (phase == 'submitted' || phase == 'done') {
+        _message = result != null
+            ? '${status['message']}\n${l.ascDone('${result['versionString']}', ((result['languages'] as List?) ?? const []).join(', '))}'
+            : '${status['message']}';
+        _error = false;
+        // Notes written while waiting (e.g. "press again") no longer apply once it went through.
+        _notes = [if (result != null) ..._doneSummary(result), if (phase == 'done') ...notes];
+      } else {
+        _message = null;
+        _error = false;
+        _notes = const [];
+      }
+    });
+    _poll?.cancel();
+    if (_autoRunning) _poll = Timer(Duration(seconds: phase == 'waiting' ? 15 : 4), _refreshAuto);
+  }
+
+  /// The live steps of the one-press publish.
+  Widget _autoProgress(ThemeData theme) {
+    final a = _auto!;
+    final steps = ((a['steps'] as List?) ?? const []).map((s) => '$s').where((s) => s != 'Parto').toList();
+    final started = DateTime.tryParse('${a['startedAt']}');
+    final minutes = started == null ? 0 : DateTime.now().difference(started).inMinutes;
+    Widget row(Widget icon, String text, {TextStyle? style}) => Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [SizedBox(width: 20, child: icon), const SizedBox(width: 8), Expanded(child: Text(text, style: style))]),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final s in steps) row(Icon(Icons.check_circle, size: 18, color: theme.colorScheme.primary), s, style: theme.textTheme.bodySmall),
+        row(const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)), '${a['message']}', style: theme.textTheme.bodyMedium),
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Text(
+            a['phase'] == 'waiting'
+                ? 'Puoi chiudere questa pagina: Ember continua da solo e invia in revisione appena Apple ha finito ($minutes min).'
+                : 'In corso da $minutes min.',
+            style: theme.textTheme.bodySmall,
+          ),
+        ),
+      ],
+    );
   }
 
   /// A short, human list of the chores Ember filled on Apple this run.
@@ -595,7 +665,10 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
               ],
             ),
             const Divider(height: 20),
-            if (_busy) ...[
+            if (_autoRunning) ...[
+              const SizedBox(height: 4),
+              _autoProgress(theme),
+            ] else if (_busy) ...[
               const SizedBox(height: 8),
               Row(children: [const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)), const SizedBox(width: 8), Expanded(child: Text(l.ascWorking))]),
             ],
@@ -604,8 +677,6 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
               SelectableText(_message!, style: TextStyle(color: _error ? theme.colorScheme.error : null)),
             ],
             for (final note in _notes) Padding(padding: const EdgeInsets.only(top: 4), child: Text('• $note', style: theme.textTheme.bodySmall)),
-            const SizedBox(height: 10),
-            Text(l.ascManual, style: theme.textTheme.bodySmall),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,

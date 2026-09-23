@@ -166,6 +166,20 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// Publish as one press, in the background on the Runner: builds the iPhone
+  /// app when needed, uploads it, writes the store page, waits for Apple to
+  /// process the build and sends it for review. Returns the first status.
+  Future<Map<String, dynamic>> autoPublishToAppStore(String projectId, Map<String, dynamic> body) => _call(
+    () => _dio.post('/v1/projects/$projectId/appstore/autopublish', data: body),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Where the one-press publish is: `{phase, message, steps, notes, result, error}`.
+  Future<Map<String, dynamic>> autoPublishStatus(String projectId) => _call(
+    () => _dio.get('/v1/projects/$projectId/appstore/autopublish'),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// The Apple App Store Connect key, saved once for the whole account. Returns
   /// `{hasKey, keyId, issuerId, p8File, teamId}` — never the .p8 contents.
   Future<Map<String, dynamic>> appStoreCredentials() =>

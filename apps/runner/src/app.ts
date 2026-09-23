@@ -1,7 +1,8 @@
 ﻿import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
-import { AppStore, AppStoreError, parseAppStoreKey, projectVersion, publishToAppStore, type AppStoreListing } from './appstore.js';
+import { AppStore, AppStoreError, finishWhenBuildReady, parseAppStoreKey, projectBuildNumber, projectVersion, publishToAppStore, type AppStoreListing, type AppStorePublishInput, type AppStorePublishResult } from './appstore.js';
+import { AutoTracker, isRunning, needsFreshIpa, type AutoStatus } from './appstore_auto.js';
 import { deleteAppleCreds, readAppleCreds, readAppleCredsPublic, readAppleKey, readReviewPhone, rememberReviewPhone, rememberTeamId, saveAppleCreds } from './apple_creds.js';
 import { teamFromAppStore } from './ios_signing.js';
 import { backupKey } from './drive.js';
@@ -37,7 +38,7 @@ import { androidAppInfo, ensureUploadKey, rememberAppStoreBuildNumber, rememberP
 import { parseServiceAccount, PlayError, privacyHtml, publishToPlay } from './play.js';
 import { readFile as readFileAsync, writeFile as writeFileAsync, mkdir as mkdirAsync } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
-import { JsonStore, SupabaseStore, type Store } from './store.js';
+import { JsonStore, SupabaseStore, type ProjectRow, type Store } from './store.js';
 import { DockerDriver } from './workspaces/docker.js';
 import type { WorkspaceDriver } from './workspaces/driver.js';
 import { LocalDriver } from './workspaces/local.js';
@@ -393,40 +394,39 @@ export async function buildApp(
 
     // Apple's side of publishing: build upload, store page in every language,
     // privacy answers, and (when asked) sending the version for review.
-    r.post('/v1/projects/:projectId/appstore/publish', async (req, reply) => {
-      const { projectId } = req.params as { projectId: string };
-      const { project } = await services.ownedProject(req.user.id, projectId);
-      const root = services.projectRoot(project);
-      const body = z
+    const publishSchema = z.object({
+      // The key is optional here: it is normally the account key saved once
+      // under ~/.ember/apple. The fields stay accepted as a fallback.
+      keyId: z.string().max(40).optional(),
+      issuerId: z.string().max(60).optional(),
+      privateKey: z.string().max(8000).optional(),
+      listing: z.record(z.string(), z.unknown()).optional(),
+      translations: z.array(z.record(z.string(), z.unknown())).max(20).optional(),
+      privacyPolicyUrl: z.string().max(500).optional(),
+      uploadBuild: z.boolean().default(false),
+      submit: z.boolean().default(false),
+      // iOS submission chores Ember now fills automatically.
+      category: z.string().max(40).optional(),
+      secondaryCategory: z.string().max(40).optional(),
+      free: z.boolean().default(false),
+      screenshots: z.boolean().default(false),
+      review: z
         .object({
-          // The key is optional here: it is normally the account key saved once
-          // under ~/.ember/apple. The fields stay accepted as a fallback.
-          keyId: z.string().max(40).optional(),
-          issuerId: z.string().max(60).optional(),
-          privateKey: z.string().max(8000).optional(),
-          listing: z.record(z.string(), z.unknown()).optional(),
-          translations: z.array(z.record(z.string(), z.unknown())).max(20).optional(),
-          privacyPolicyUrl: z.string().max(500).optional(),
-          uploadBuild: z.boolean().default(false),
-          submit: z.boolean().default(false),
-          // iOS submission chores Ember now fills automatically.
-          category: z.string().max(40).optional(),
-          secondaryCategory: z.string().max(40).optional(),
-          free: z.boolean().default(false),
-          screenshots: z.boolean().default(false),
-          review: z
-            .object({
-              firstName: z.string().max(60).optional(),
-              lastName: z.string().max(60).optional(),
-              email: z.string().max(120).optional(),
-              phone: z.string().max(40).optional(),
-              demoUser: z.string().max(120).optional(),
-              demoPassword: z.string().max(120).optional(),
-              notes: z.string().max(4000).optional(),
-            })
-            .optional(),
+          firstName: z.string().max(60).optional(),
+          lastName: z.string().max(60).optional(),
+          email: z.string().max(120).optional(),
+          phone: z.string().max(40).optional(),
+          demoUser: z.string().max(120).optional(),
+          demoPassword: z.string().max(120).optional(),
+          notes: z.string().max(4000).optional(),
         })
-        .parse(req.body);
+        .optional(),
+    });
+    type PublishBody = z.infer<typeof publishSchema>;
+
+    /** Everything publishToAppStore needs, from the request and the project. */
+    const preparePublish = async (project: ProjectRow, body: PublishBody, email?: string): Promise<AppStorePublishInput> => {
+      const root = services.projectRoot(project);
       // The main listing is the English one (as on Play). Older IDEs labelled it
       // Italian, so the Italian translation then overwrote it and English, the
       // app's primary language on Apple, stayed empty.
@@ -435,53 +435,142 @@ export async function buildApp(
       }
       const gradle = await readFileAsync(path.join(root, 'android', 'app', 'build.gradle.kts'), 'utf8').catch(() => '');
       const bundleId = /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
-      if (!bundleId) return reply.status(422).send({ code: 'no_bundle_id', message: 'Build the app once before publishing: its name is set at the first build.' });
+      if (!bundleId) throw new AppStoreError('no_bundle_id', 'Build the app once before publishing: its name is set at the first build.');
+      // Always prefer the saved account key; fall back to any key sent in the body.
+      const key = (await readAppleKey()) ?? parseAppStoreKey(body);
+      // Screenshots need the local web preview and a browser; only wire them up
+      // when the app has a screenshot mode and the preview is ready.
+      let screenshots: { previewUrl: string; browser: string } | undefined;
+      if (body.screenshots) {
+        const browser = findBrowser();
+        const info = await preview.info(project);
+        if (browser && info.built && !info.building && (await hasScreenshotMode(root))) {
+          screenshots = { previewUrl: `http://127.0.0.1:${cfg.PORT}${info.path}`, browser };
+        }
+      }
+      // Default the reviewer contact to the signed-in email so the form is never empty.
+      // The phone is remembered for the account: typed once, reused by every app.
+      const review = { ...(email ? { email } : {}), ...(body.review ?? {}) };
+      if (review.phone) await rememberReviewPhone(review.phone).catch(() => {});
+      else review.phone = (await readReviewPhone().catch(() => '')) || undefined;
+      return {
+        key,
+        bundleId,
+        versionString: await projectVersion(root),
+        projectRoot: root,
+        listing: body.listing as AppStoreListing | undefined,
+        translations: body.translations as AppStoreListing[] | undefined,
+        privacyPolicyUrl: body.privacyPolicyUrl,
+        facts: await detectDataFacts(root),
+        uploadBuild: body.uploadBuild,
+        submit: body.submit,
+        category: body.category,
+        secondaryCategory: body.secondaryCategory,
+        review,
+        free: body.free,
+        screenshots,
+      };
+    };
+
+    /** Remember what Apple now has, so the next build of either store starts above it. */
+    const rememberUploaded = async (root: string, result: AppStorePublishResult) => {
+      if (!result.buildUploaded) return;
+      const build = await projectBuildNumber(root);
+      if (build > 0) await rememberAppStoreBuildNumber(root, build).catch(() => {});
+    };
+
+    r.post('/v1/projects/:projectId/appstore/publish', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const body = publishSchema.parse(req.body);
       try {
-        // Always prefer the saved account key; fall back to any key sent in the body.
-        const key = (await readAppleKey()) ?? parseAppStoreKey(body);
-        // Screenshots need the local web preview and a browser; only wire them up
-        // when the app has a screenshot mode and the preview is ready.
-        let screenshots: { previewUrl: string; browser: string } | undefined;
-        if (body.screenshots) {
-          const browser = findBrowser();
-          const info = await preview.info(project);
-          if (browser && info.built && !info.building && (await hasScreenshotMode(root))) {
-            screenshots = { previewUrl: `http://127.0.0.1:${cfg.PORT}${info.path}`, browser };
-          }
-        }
-        // Default the reviewer contact to the signed-in email so the form is never empty.
-        // The phone is remembered for the account: typed once, reused by every app.
-        const review = { ...(req.user.email ? { email: req.user.email } : {}), ...(body.review ?? {}) };
-        if (review.phone) await rememberReviewPhone(review.phone).catch(() => {});
-        else review.phone = (await readReviewPhone().catch(() => '')) || undefined;
-        const result = await publishToAppStore({
-          key,
-          bundleId,
-          versionString: await projectVersion(root),
-          projectRoot: root,
-          listing: body.listing as AppStoreListing | undefined,
-          translations: body.translations as AppStoreListing[] | undefined,
-          privacyPolicyUrl: body.privacyPolicyUrl,
-          facts: await detectDataFacts(root),
-          uploadBuild: body.uploadBuild,
-          submit: body.submit,
-          category: body.category,
-          secondaryCategory: body.secondaryCategory,
-          review,
-          free: body.free,
-          screenshots,
-        });
-        if (result.buildUploaded) {
-          // Remember what Apple now has, so the next build of either store starts above it.
-          const pubspec = await readFileAsync(path.join(root, 'pubspec.yaml'), 'utf8').catch(() => '');
-          const build = Number(/^version:\s*[0-9]+\.[0-9]+\.[0-9]+\+([0-9]+)/m.exec(pubspec)?.[1] ?? 0);
-          if (build > 0) await rememberAppStoreBuildNumber(root, build).catch(() => {});
-        }
-        return { ...result, bundleId };
+        const input = await preparePublish(project, body, req.user.email);
+        const result = await publishToAppStore(input);
+        await rememberUploaded(input.projectRoot, result);
+        return { ...result, bundleId: input.bundleId };
       } catch (e) {
-        if (e instanceof AppStoreError) return reply.status(e.status === 401 || e.status === 403 ? 422 : 422).send({ code: e.code, message: e.message });
+        if (e instanceof AppStoreError) return reply.status(422).send({ code: e.code, message: e.message });
         throw e;
       }
+    });
+
+    // ---- Publish as one press: build → upload → store page → wait → review ----
+    const autoRuns = new Map<string, Promise<void>>(); // project root → the run in progress
+
+    /** Waits for Apple to process the build, then attaches it and sends it for review. */
+    const finishAuto = async (tracker: AutoTracker, wait: NonNullable<AutoStatus['wait']>) => {
+      const key = await readAppleKey();
+      if (!key) return tracker.fail('La chiave Apple non è più salvata: caricala di nuovo e premi Publish.');
+      const done = await finishWhenBuildReady({ key, ...wait, onProgress: (m) => void tracker.progress(m) });
+      await tracker.phase(done.submitted ? 'submitted' : 'done', done.submitted ? 'Inviata in revisione ad Apple ✓' : `Build ${wait.buildNumber} collegata alla versione ✓`, { wait: undefined });
+    };
+
+    const runAuto = async (tracker: AutoTracker, project: ProjectRow, ownerId: string, body: PublishBody, email?: string) => {
+      const root = services.projectRoot(project);
+      try {
+        if (body.uploadBuild) {
+          const fresh = await needsFreshIpa(root);
+          if (fresh.build) {
+            await tracker.phase('building', `Creo il file iPhone (${fresh.reason})`);
+            const job = await jobs.wait((await services.startJob(ownerId, project.id, 'build_ipa')).id);
+            if (job.status !== 'succeeded') {
+              const tail = job.log.join('').split('\n').filter((l) => l.trim()).slice(-12).join('\n');
+              return tracker.fail(`La build iPhone non è riuscita:\n${tail}`);
+            }
+          } else {
+            await tracker.progress(`File iPhone già pronto: ${fresh.reason}`);
+          }
+        }
+        await tracker.phase('publishing', body.uploadBuild ? 'Carico su Apple, scrivo la scheda e gli screenshot' : 'Scrivo la scheda e gli screenshot');
+        const input = await preparePublish(project, body, email);
+        const result = await publishToAppStore(input);
+        await rememberUploaded(root, result);
+        const extra = { result: { ...result, bundleId: input.bundleId } as Record<string, unknown>, notes: result.notes };
+        if (body.submit && !result.submitted && result.waitingForBuild) {
+          const wait = { appId: result.appId, versionId: result.versionId, buildNumber: result.waitingForBuild, submit: true };
+          await tracker.phase('waiting', `Apple sta elaborando la build ${wait.buildNumber}`, { ...extra, wait });
+          await finishAuto(tracker, wait);
+        } else {
+          await tracker.phase(result.submitted ? 'submitted' : 'done', result.submitted ? 'Inviata in revisione ad Apple ✓' : 'Scheda aggiornata su Apple ✓', extra);
+        }
+      } catch (e) {
+        await tracker.fail(e instanceof Error ? e.message : String(e));
+      }
+    };
+
+    r.post('/v1/projects/:projectId/appstore/autopublish', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const root = services.projectRoot(project);
+      const body = publishSchema.parse(req.body);
+      if (autoRuns.has(root)) return reply.status(409).send({ code: 'already_running', message: 'Una pubblicazione è già in corso per questa app.' });
+      if (!(await readAppleKey()) && !body.privateKey) return reply.status(422).send({ code: 'no_key', message: 'Salva prima la chiave Apple (Key ID, Issuer ID e file .p8).' });
+      const tracker = await AutoTracker.open(root);
+      await tracker.start(body.uploadBuild ? 'building' : 'publishing', 'Parto');
+      const run = runAuto(tracker, project, req.user.id, body, req.user.email).finally(() => autoRuns.delete(root));
+      autoRuns.set(root, run);
+      return tracker.status;
+    });
+
+    // Where the one-press publish is. A wait cut short by a Runner restart resumes here.
+    r.get('/v1/projects/:projectId/appstore/autopublish', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const root = services.projectRoot(project);
+      const tracker = await AutoTracker.open(root);
+      const s = tracker.status;
+      if (s && isRunning(s) && !autoRuns.has(root)) {
+        if (s.phase === 'waiting' && s.wait) {
+          const wait = s.wait;
+          const run = finishAuto(tracker, wait)
+            .catch((e: unknown) => tracker.fail(e instanceof Error ? e.message : String(e)))
+            .finally(() => autoRuns.delete(root));
+          autoRuns.set(root, run);
+        } else {
+          await tracker.fail('Il Runner si è riavviato durante la pubblicazione: premi di nuovo Publish.');
+        }
+      }
+      return tracker.status ?? { phase: null };
     });
 
     // ---- Apple App Store Connect key, saved once for the whole account ----

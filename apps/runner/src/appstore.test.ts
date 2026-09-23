@@ -1,6 +1,6 @@
 import { generateKeyPair, exportPKCS8 } from 'jose';
 import { describe, expect, it } from 'vitest';
-import { AppStoreError, appleLocale, appStoreToken, parseAppStoreKey, privacyCategories, publishToAppStore, uploadIpa } from './appstore.js';
+import { AppStoreError, appleLocale, appStoreToken, finishWhenBuildReady, parseAppStoreKey, privacyCategories, publishToAppStore, uploadIpa } from './appstore.js';
 import type { AppDataFacts } from './data_safety.js';
 
 const NO_FACTS: AppDataFacts = {
@@ -178,5 +178,49 @@ describe('Apple text rules', () => {
     const { appleText } = await import('./appstore.js');
     expect(appleText('✨ FEATURES\n• Templates 👍🏽\n💎 PREMIUM\n🇮🇹 Italia ❤️ ok')).toBe('FEATURES\n• Templates\nPREMIUM\nItalia ok');
     expect(appleText('🎉 First release!')).toBe('First release!');
+  });
+});
+
+describe('one-press publish: waiting for the build', () => {
+  const appleWith = (rounds: Array<Array<{ version: string; state: string }>>) => {
+    let i = 0;
+    const calls: string[] = [];
+    const impl = (async (url: string | URL, init: RequestInit = {}) => {
+      const u = String(url);
+      const method = init.method ?? 'GET';
+      calls.push(`${method} ${u.replace('https://api.appstoreconnect.apple.com/v1', '')}`);
+      const ok = (data: unknown) => new Response(JSON.stringify({ data }), { status: 200 });
+      if (u.includes('/builds?')) {
+        const r = rounds[Math.min(i++, rounds.length - 1)]!;
+        return ok(r.map((b, n) => ({ id: `B${b.version}-${n}`, attributes: { version: b.version, processingState: b.state } })));
+      }
+      if (u.includes('/reviewSubmissions?')) return ok([]);
+      if (u.includes('/items?')) return ok([]);
+      return ok({ id: 'SUB1' });
+    }) as unknown as typeof fetch;
+    return { impl, calls };
+  };
+
+  it('waits for the new build, never takes the older ready one, then attaches and submits', async () => {
+    const key = parseAppStoreKey(await realKey());
+    const apple = appleWith([
+      [{ version: '11', state: 'VALID' }], // the new build is not listed yet
+      [{ version: '12', state: 'PROCESSING' }, { version: '11', state: 'VALID' }],
+      [{ version: '12', state: 'VALID' }, { version: '11', state: 'VALID' }],
+    ]);
+    const seen: string[] = [];
+    const done = await finishWhenBuildReady({ key, appId: 'APP1', versionId: 'VER1', buildNumber: 12, submit: true, pollMs: 1, onProgress: (m) => seen.push(m) }, apple.impl);
+    expect(done).toEqual({ attached: true, submitted: true });
+    const attach = apple.calls.find((c) => c.includes('relationships/build'));
+    expect(attach).toContain('PATCH /appStoreVersions/VER1/relationships/build');
+    expect(apple.calls.filter((c) => c.startsWith('GET /builds')).length).toBe(3);
+    expect(apple.calls.some((c) => c.startsWith('PATCH /reviewSubmissions/SUB1'))).toBe(true);
+    expect(seen.join(' | ')).toMatch(/compaia su Apple.*elaborando la build 12.*pronta/);
+  });
+
+  it('stops with Apple’s verdict when the build is refused', async () => {
+    const key = parseAppStoreKey(await realKey());
+    const apple = appleWith([[{ version: '12', state: 'INVALID' }]]);
+    await expect(finishWhenBuildReady({ key, appId: 'APP1', versionId: 'VER1', buildNumber: 12, submit: true, pollMs: 1 }, apple.impl)).rejects.toThrow(/scartato la build 12/);
   });
 });

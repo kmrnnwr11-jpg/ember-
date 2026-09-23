@@ -59,6 +59,11 @@ test('creates the app with its name, language, Bundle ID and SKU', () => {
   const loc = body.included.find((i) => i.type === 'appInfoLocalizations');
   assert.deepEqual(loc.attributes, { locale: 'en-US', name: 'Reel Maker: Video Editor Story' });
   assert.equal(body.included.find((i) => i.type === 'appStoreVersions').attributes.platform, 'IOS');
+  // Apple answers 409 without the first version's page in the main language.
+  const version = body.included.find((i) => i.type === 'appStoreVersions');
+  const page = body.included.find((i) => i.type === 'appStoreVersionLocalizations');
+  assert.equal(version.relationships.appStoreVersionLocalizations.data[0].id, page.id);
+  assert.equal(page.attributes.locale, 'en-US');
 });
 
 test('small helpers', () => {

@@ -84,7 +84,14 @@ export function createAppBody(plan) {
       },
     },
     included: [
-      { type: 'appStoreVersions', id: '${store-version}', attributes: { platform: 'IOS', versionString: '1.0' } },
+      {
+        type: 'appStoreVersions',
+        id: '${store-version}',
+        attributes: { platform: 'IOS', versionString: '1.0' },
+        // Apple refuses the app without the first version's page in the main language (409).
+        relationships: { appStoreVersionLocalizations: { data: [{ type: 'appStoreVersionLocalizations', id: '${new-appStoreVersionLocalization-id}' }] } },
+      },
+      { type: 'appStoreVersionLocalizations', id: '${new-appStoreVersionLocalization-id}', attributes: { locale: plan.primaryLocale || 'en-US' } },
       {
         type: 'appInfos',
         id: '${new-appInfo-id}',

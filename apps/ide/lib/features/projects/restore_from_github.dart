@@ -5,6 +5,7 @@ import 'package:ide_core/ide_core.dart' show Project, RunnerException;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/session.dart';
+import '../../core/settings_store.dart';
 import '../../l10n/app_localizations.dart';
 
 /// The apps saved on GitHub, ready to come back onto this computer.
@@ -33,7 +34,7 @@ class _RestoreFromGitHubDialogState extends ConsumerState<RestoreFromGitHubDialo
   @override
   void initState() {
     super.initState();
-    ref.read(keyValueStoreProvider).read(_tokenKey).then((t) {
+    ref.read(settingsStoreProvider).read(_tokenKey).then((t) {
       if (mounted && t != null && t.isNotEmpty) _load(t);
     });
   }
@@ -51,7 +52,7 @@ class _RestoreFromGitHubDialogState extends ConsumerState<RestoreFromGitHubDialo
     });
     try {
       final apps = await (await ref.read(runnerApiProvider.future)).githubApps(token);
-      await ref.read(keyValueStoreProvider).write(_tokenKey, token);
+      await ref.read(settingsStoreProvider).write(_tokenKey, token);
       if (mounted) setState(() => _apps = apps);
     } on RunnerException catch (e) {
       if (mounted) setState(() => _error = e.message);
@@ -61,7 +62,7 @@ class _RestoreFromGitHubDialogState extends ConsumerState<RestoreFromGitHubDialo
   }
 
   Future<void> _restore(Map<String, dynamic> app) async {
-    final token = await ref.read(keyValueStoreProvider).read(_tokenKey) ?? '';
+    final token = await ref.read(settingsStoreProvider).read(_tokenKey) ?? '';
     setState(() {
       _working = app['repo'] as String?;
       _error = null;
@@ -160,7 +161,7 @@ class _RestoreFromGitHubDialogState extends ConsumerState<RestoreFromGitHubDialo
             onPressed: _busy || _working != null
                 ? null
                 : () async {
-                    final t = await ref.read(keyValueStoreProvider).read(_tokenKey) ?? '';
+                    final t = await ref.read(settingsStoreProvider).read(_tokenKey) ?? '';
                     await _load(t);
                   },
             child: Text(l.refresh),

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ide_core/ide_core.dart' show RunnerException;
 
 import '../../core/session.dart';
+import '../../core/settings_store.dart';
 import '../../l10n/app_localizations.dart';
 import '../store/play_publish_screen.dart' show uploadSummary;
 import 'app_builder.dart';
@@ -37,7 +38,7 @@ class _PlayUpdateCardState extends ConsumerState<PlayUpdateCard> {
   Future<void> _refresh() async {
     try {
       final s = await (await ref.read(runnerApiProvider.future)).storeState(widget.projectId);
-      final sa = await ref.read(keyValueStoreProvider).read(_saKey);
+      final sa = await ref.read(settingsStoreProvider).read(_saKey);
       if (mounted) {
         setState(() {
           _state = s;
@@ -49,7 +50,7 @@ class _PlayUpdateCardState extends ConsumerState<PlayUpdateCard> {
 
   Future<void> _newVersion() async {
     final l = AppLocalizations.of(context);
-    final sa = await ref.read(keyValueStoreProvider).read(_saKey);
+    final sa = await ref.read(settingsStoreProvider).read(_saKey);
     final listing = _state?['listing'] as Map<String, dynamic>?;
     if (!mounted) return;
     // Say exactly what is missing instead of a generic "connect first".
@@ -122,7 +123,7 @@ class _PlayUpdateCardState extends ConsumerState<PlayUpdateCard> {
 
   Future<void> _dataSafety() async {
     final l = AppLocalizations.of(context);
-    final sa = await ref.read(keyValueStoreProvider).read(_saKey);
+    final sa = await ref.read(settingsStoreProvider).read(_saKey);
     if (!mounted) return;
     if (sa == null || !sa.contains('private_key')) {
       setState(() {

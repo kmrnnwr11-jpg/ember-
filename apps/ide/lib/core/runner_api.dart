@@ -27,8 +27,36 @@ class RunnerApi {
     }
   }
 
+  /// Everything the user saved once (tokens, keys, chats, choices), kept on the Runner.
+  Future<Map<String, String>> settings() => _call(
+    () => _dio.get('/v1/settings'),
+    (d) => ((d as Map<String, dynamic>)['values'] as Map).map((k, v) => MapEntry('$k', '$v')),
+  );
+
+  /// Saves (value) or removes (null) settings on the Runner.
+  Future<void> patchSettings(Map<String, String?> values) async {
+    await _call<void>(() => _dio.patch('/v1/settings', data: {'values': values}), (_) {});
+  }
+
   Future<Map<String, dynamic>> health() =>
       _call(() => _dio.get('/v1/health'), (d) => d as Map<String, dynamic>);
+
+  /// Local dev only: who signed in last on this Mac, or null.
+  Future<String?> devLastEmail() async {
+    try {
+      final res = await _dio.get('/v1/auth/dev-last');
+      return (res.data as Map)['email'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Signing out on purpose: this Mac stops signing in by itself.
+  Future<void> forgetDevLast() async {
+    try {
+      await _dio.delete('/v1/auth/dev-last');
+    } catch (_) {}
+  }
 
   /// Returns `(token, userId)`.
   Future<(String, String)> devLogin(String email) => _call(

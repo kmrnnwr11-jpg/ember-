@@ -9,6 +9,7 @@ import 'package:ide_core/ide_core.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/session.dart';
+import '../../core/settings_store.dart';
 import '../../l10n/app_localizations.dart';
 import 'play_links.dart';
 import '../ai/ai_settings.dart';
@@ -114,7 +115,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     _console = await PlayConsoleLink.load();
     _consoleLink.text = _console.developerId == null ? '' : _console.appList();
     if (mounted) setState(() {});
-    final saved = await ref.read(keyValueStoreProvider).read(_saKey);
+    final saved = await ref.read(settingsStoreProvider).read(_saKey);
     if (saved != null) _sa.text = saved;
     try {
       final listing = (await (await ref.read(runnerApiProvider.future)).storeState(widget.projectId))['listing'] as Map<String, dynamic>?;
@@ -313,7 +314,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     await _translate();
     await _saveListing();
     try {
-      await ref.read(keyValueStoreProvider).write(_saKey, _sa.text.trim());
+      await ref.read(settingsStoreProvider).write(_saKey, _sa.text.trim());
       final api = await ref.read(runnerApiProvider.future);
       _result = await api.publishToPlay(widget.projectId, {
         'serviceAccount': _sa.text.trim(),

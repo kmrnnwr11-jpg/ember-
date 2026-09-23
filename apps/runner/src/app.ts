@@ -3,6 +3,7 @@ import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
 import { AppStore, AppStoreError, appleText, applePrivacyPlan, cutAtWord, finishWhenBuildReady, parseAppStoreKey, projectBuildNumber, projectVersion, publishToAppStore, type AppStoreListing, type AppStorePublishInput, type AppStorePublishResult } from './appstore.js';
 import { AutoTracker, isRunning, needsFreshIpa, type AutoStatus } from './appstore_auto.js';
+import { MAX_VALUE, readSettings, SETTING_KEY, writeSettings } from './settings_store.js';
 import { blocking, fixPreflight, preflightIos } from './ios_preflight.js';
 import { deleteAppleCreds, readAppleCreds, readAppleCredsPublic, readAppleKey, readReviewPhone, rememberReviewPhone, rememberTeamId, saveAppleCreds } from './apple_creds.js';
 import { teamFromAppStore } from './ios_signing.js';
@@ -16,6 +17,7 @@ import { detectDataFacts, fillCsv, findExportedCsv, uploadDataSafety, validateFi
 import { createServiceAccountKey, gcloudStatus, invitePlayUser, storeImages } from './play_setup.js';
 import { cliLogins, cliModels } from './subscription_clis.js';
 import { mkdir, stat } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
@@ -37,7 +39,7 @@ import { JobManager, jobPublic } from './jobs.js';
 import { ARTIFACTS, Services, TEMPLATES, type SignedBuildPreparer } from './services.js';
 import { androidAppInfo, ensureUploadKey, rememberAppStoreBuildNumber, rememberPublishedVersionCode } from './signing.js';
 import { parseServiceAccount, PlayError, privacyHtml, publishToPlay } from './play.js';
-import { readFile as readFileAsync, writeFile as writeFileAsync, mkdir as mkdirAsync } from 'node:fs/promises';
+import { readFile as readFileAsync, writeFile as writeFileAsync, mkdir as mkdirAsync, unlink as unlinkAsync } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
 import { JsonStore, SupabaseStore, type ProjectRow, type Store } from './store.js';
 import { DockerDriver } from './workspaces/docker.js';
@@ -284,7 +286,28 @@ export async function buildApp(
   app.post('/v1/auth/dev-login', async (req, reply) => {
     if (!cfg.DEV_AUTH) return reply.status(404).send({ code: 'not_found', message: 'dev auth disabled' });
     const { email } = z.object({ email: z.string().email() }).parse(req.body);
-    return auth.issueDevToken(email);
+    const issued = await auth.issueDevToken(email);
+    await mkdirAsync(path.dirname(devLastFile()), { recursive: true }).catch(() => {});
+    await writeFileAsync(devLastFile(), JSON.stringify({ email }), { mode: 0o600 }).catch(() => {});
+    return issued;
+  });
+
+  // Local dev only: the IDE opened by `flutter run` starts with an empty browser,
+  // so it asks this Mac who was signed in last and signs in again by itself.
+  const devLastFile = () => path.join(os.homedir(), '.ember', 'dev_last.json');
+  const fromThisMac = (ip: string) => ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+
+  app.get('/v1/auth/dev-last', async (req, reply) => {
+    if (!cfg.DEV_AUTH || !fromThisMac(req.ip)) return reply.status(404).send({ code: 'not_found', message: 'not available' });
+    const saved = JSON.parse(await readFileAsync(devLastFile(), 'utf8').catch(() => '{}')) as { email?: string };
+    if (!saved.email) return reply.status(404).send({ code: 'not_found', message: 'nobody signed in yet' });
+    return { email: saved.email };
+  });
+
+  app.delete('/v1/auth/dev-last', async (req, reply) => {
+    if (!cfg.DEV_AUTH || !fromThisMac(req.ip)) return reply.status(404).send({ code: 'not_found', message: 'not available' });
+    await unlinkAsync(devLastFile()).catch(() => {});
+    return reply.status(204).send();
   });
 
   // ---------------- authenticated REST ----------------
@@ -675,6 +698,19 @@ export async function buildApp(
     // Kept in ~/.ember/apple (0600), outside the repo and never in the browser,
     // so the Key ID / Issuer ID / .p8 come back filled for every project and
     // survive a reload, a closed browser, a Runner restart or a reboot.
+
+    // What the user typed once in the IDE (tokens, keys, chats, choices): kept
+    // here, per user, so a restarted or different browser still has it.
+    r.get('/v1/settings', async (req) => ({ values: await readSettings(req.user.id) }));
+
+    r.patch('/v1/settings', async (req, reply) => {
+      const { values } = z
+        .object({ values: z.record(z.string().regex(SETTING_KEY), z.string().max(MAX_VALUE).nullable()) })
+        .parse(req.body);
+      if (Object.keys(values).length > 200) return reply.status(400).send({ code: 'bad_request', message: 'too many settings at once' });
+      await writeSettings(req.user.id, values);
+      return { ok: true };
+    });
 
     // The saved key, without ever revealing the .p8 contents.
     r.get('/v1/appstore/credentials', async () => readAppleCredsPublic());

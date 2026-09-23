@@ -8,10 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ide_core/ide_core.dart' show RunnerException;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/session.dart';
+import '../../core/settings_store.dart';
 import '../../l10n/app_localizations.dart';
 import '../../widgets/ember_logo.dart';
 import '../ai/chat_controller.dart';
@@ -78,7 +78,7 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
 
   Future<void> _load() async {
     try {
-      final raw = (await SharedPreferences.getInstance()).getString(_stateKey);
+      final raw = await Settings.instance.read(_stateKey);
       if (raw != null) {
         final j = jsonDecode(raw) as Map<String, dynamic>;
         _step = _Step.values.byName(j['step'] as String);
@@ -86,7 +86,7 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
       }
     } catch (_) {}
     _console = await PlayConsoleLink.load();
-    final sa = await ref.read(keyValueStoreProvider).read(_saKey);
+    final sa = await ref.read(settingsStoreProvider).read(_saKey);
     if (sa != null) {
       try {
         _saEmail = (jsonDecode(sa) as Map<String, dynamic>)['client_email'] as String?;
@@ -106,7 +106,7 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
       _error = null;
     });
     try {
-      await (await SharedPreferences.getInstance()).setString(_stateKey, jsonEncode({'step': next.name, 'done': _done.map((s) => s.name).toList()}));
+      await Settings.instance.write(_stateKey, jsonEncode({'step': next.name, 'done': _done.map((s) => s.name).toList()}));
     } catch (_) {}
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
@@ -123,7 +123,7 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
     });
     try {
       final res = await (await ref.read(runnerApiProvider.future)).playCreateKey();
-      await ref.read(keyValueStoreProvider).write(_saKey, res['key'] as String);
+      await ref.read(settingsStoreProvider).write(_saKey, res['key'] as String);
       _saEmail = res['email'] as String?;
       await _go(_Step.invite);
     } on RunnerException catch (e) {

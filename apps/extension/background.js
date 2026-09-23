@@ -4,6 +4,15 @@
  * (host_permissions), so the Apple helper asks here.
  */
 chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
+  if (msg?.type === 'ember:apple-review') {
+    fetch(`http://127.0.0.1:8787/helper/apple/review?bundleId=${encodeURIComponent(msg.bundleId ?? '')}`, { cache: 'no-store' })
+      .then(async (res) => {
+        const body = await res.json().catch(() => ({}));
+        reply(res.ok ? { review: body } : { error: body.message || `Ember ha risposto ${res.status}` });
+      })
+      .catch(() => reply({ error: 'Ember non risponde: apri Ember sul Mac (il Runner deve essere acceso).' }));
+    return true;
+  }
   if (msg?.type !== 'ember:apple-plan') return false;
   const query = msg.bundleId ? `?bundleId=${encodeURIComponent(msg.bundleId)}` : '';
   fetch(`http://127.0.0.1:8787/helper/apple${query}`, { cache: 'no-store' })

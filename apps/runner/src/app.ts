@@ -222,6 +222,38 @@ export async function buildApp(
     return plan;
   });
 
+  // What the extension must put in the review with the version, read live from
+  // Apple's public API (the website's own lists proved unreliable to read).
+  app.get('/helper/apple/review', async (req, reply) => {
+    const origin = req.headers.origin ?? '';
+    if (origin.startsWith('chrome-extension://')) reply.header('access-control-allow-origin', origin);
+    reply.header('cache-control', 'no-store');
+    const { bundleId } = (req.query ?? {}) as { bundleId?: string };
+    const key = await readAppleKey().catch(() => null);
+    if (!bundleId || !key) return reply.status(404).send({ code: 'no_key', message: 'Ember non ha la chiave Apple o il Bundle ID.' });
+    try {
+      const store = await AppStore.open(key);
+      const found = await store.call<{ data: Array<{ id: string }> }>('GET', `/apps?filter[bundleId]=${encodeURIComponent(bundleId)}&limit=1`);
+      const appId = found.data?.[0]?.id;
+      if (!appId) return reply.status(404).send({ code: 'no_app', message: 'L’app non c’è su App Store Connect.' });
+      type R = { id: string; attributes?: Record<string, unknown> };
+      const groups = (await store.call<{ data: R[] }>('GET', `/apps/${appId}/subscriptionGroups?limit=50`)).data ?? [];
+      const groupIds: string[] = [];
+      const subscriptionIds: string[] = [];
+      const names: string[] = [];
+      for (const g of groups) {
+        const subs = ((await store.call<{ data: R[] }>('GET', `/subscriptionGroups/${g.id}/subscriptions?limit=50`)).data ?? []).filter((x) => x.attributes?.state === 'READY_TO_SUBMIT');
+        if (subs.length) groupIds.push(g.id);
+        for (const x of subs) (subscriptionIds.push(x.id), names.push(`${x.attributes?.productId}`));
+      }
+      const iaps = ((await store.call<{ data: R[] }>('GET', `/apps/${appId}/inAppPurchasesV2?limit=200`)).data ?? []).filter((x) => x.attributes?.state === 'READY_TO_SUBMIT');
+      for (const x of iaps) names.push(`${x.attributes?.productId}`);
+      return { appId, groupIds, subscriptionIds, purchaseIds: iaps.map((x) => x.id), names };
+    } catch (e) {
+      return reply.status(502).send({ code: 'apple_error', message: (e as Error).message });
+    }
+  });
+
   app.get('/helper/app', async (req, reply) => {
     const origin = req.headers.origin ?? '';
     if (origin.startsWith('chrome-extension://')) reply.header('access-control-allow-origin', origin);

@@ -163,19 +163,23 @@
     }
     const items = await iris('GET', `reviewSubmissions/${submissionId}/items?include=appStoreVersion&limit=20`);
     const hasVersion = (items.data ?? []).some((it) => it.relationships?.appStoreVersion?.data?.id === version.id);
-    const groups = (await iris('GET', `apps/${id}/subscriptionGroups?limit=50`)).data ?? [];
-    const groupIds = [];
-    const subscriptionIds = [];
-    for (const g of groups) {
-      const subs = ((await iris('GET', `subscriptionGroups/${g.id}/subscriptions?limit=50`)).data ?? []).filter((x) => x.attributes?.state === 'READY_TO_SUBMIT');
-      if (subs.length) groupIds.push(g.id);
-      subscriptionIds.push(...subs.map((x) => x.id));
-    }
-    const purchaseIds = ((await iris('GET', `apps/${id}/inAppPurchasesV2?limit=200`)).data ?? []).filter((x) => x.attributes?.state === 'READY_TO_SUBMIT').map((x) => x.id);
+    // Which subscriptions and purchases go with the version: asked to Ember, which
+    // reads them from Apple's public API (the website's lists are not reliable to read).
+    const ask = await new Promise((resolve) => chrome.runtime.sendMessage({ type: 'ember:apple-review', bundleId: plan.bundleId }, (r) => resolve(r ?? { error: STALE })));
+    if (ask.error) throw new Error(ask.error);
+    const { groupIds, subscriptionIds, purchaseIds, names } = ask.review;
+    if (names.length) say(`Da inviare con la versione: ${names.join(', ')}`);
     for (const [resource, body] of reviewBodies({ submissionId, versionId: hasVersion ? null : version.id, groupIds, subscriptionIds, purchaseIds })) {
       await iris('POST', resource, body).catch((e) => {
         if (!/already|duplicate/i.test(e.message)) throw e;
       });
+    }
+    // Never send the app without its purchases: the draft must hold the version
+    // plus every group, subscription and purchase (Read Master: 5 items).
+    const expected = 1 + groupIds.length + subscriptionIds.length + purchaseIds.length;
+    const inDraft = ((await iris('GET', `reviewSubmissions/${submissionId}/items?limit=50`)).data ?? []).length;
+    if (inDraft < expected) {
+      throw new Error(`Nella bozza ci sono ${inDraft} elementi invece di ${expected}: la versione NON è stata inviata. Su App Store Connect apri ${names.join(', ')} e premi "Add for Review", poi "Submit for Review" dal pannello Draft Submission.`);
     }
     say(`Nella revisione: versione ${version.attributes?.versionString}, ${subscriptionIds.length} abbonamenti, ${purchaseIds.length} acquisti`);
     await iris('PATCH', `reviewSubmissions/${submissionId}`, { data: { type: 'reviewSubmissions', id: submissionId, attributes: { submitted: true } } });

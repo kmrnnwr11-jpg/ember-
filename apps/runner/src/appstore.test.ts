@@ -238,3 +238,33 @@ describe('one-press publish: waiting for the build', () => {
     await expect(finishWhenBuildReady({ key, appId: 'APP1', versionId: 'VER1', buildNumber: 12, submit: true, pollMs: 1 }, apple.impl)).rejects.toThrow(/scartato la build 12/);
   });
 });
+
+describe('App Store purchases from the app', () => {
+  it('turns the declared products into Apple ones, with ids unique to the app', async () => {
+    const { appleProductsFrom } = await import('./appstore_products.js');
+    const out = appleProductsFrom(
+      [
+        { id: 'premium_monthly', type: 'subscription', title: 'Premium', description: 'All features', price: '4.99', period: 'P1M' },
+        { id: 'premium_yearly', type: 'subscription', title: 'Premium Year', price: 24.99, period: 'P1Y', freeTrialDays: 7 },
+        { id: 'coins_100', type: 'inapp', title: '100 coins', price: '0.99' },
+        { id: 'lifetime', type: 'inapp', price: '29.99', iosId: 'readmaster_lifetime' },
+        { id: 'free', type: 'inapp', price: '0' },
+      ],
+      'read_master',
+    );
+    expect(out.map((p) => [p.productId, p.kind, p.period ?? null, p.freeTrial ?? null])).toEqual([
+      ['read_master_premium_monthly', 'subscription', 'ONE_MONTH', null],
+      ['read_master_premium_yearly', 'subscription', 'ONE_YEAR', 'ONE_WEEK'],
+      ['read_master_coins_100', 'consumable', null, null],
+      ['readmaster_lifetime', 'non_consumable', null, null],
+    ]);
+  });
+
+  it('fits the purchase screen into the exact iPhone size Apple accepts', async () => {
+    const sharp = (await import('sharp')).default;
+    const { reviewScreenshotFor } = await import('./appstore_products.js');
+    const png = await sharp({ create: { width: 1080, height: 1920, channels: 4, background: { r: 250, g: 250, b: 255, alpha: 1 } } }).png().toBuffer();
+    const meta = await sharp(await reviewScreenshotFor(png)).metadata();
+    expect([meta.width, meta.height, meta.hasAlpha]).toEqual([1242, 2688, false]);
+  });
+});

@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { importPKCS8, SignJWT } from 'jose';
 import { declarations, type AppDataFacts, type DataDeclaration, type Purpose } from './data_safety.js';
+import { ensureAppleProducts, submitProductsWithVersion, type AppleProduct } from './appstore_products.js';
 import { SCREEN_PARAM } from './screenshots.js';
 
 /**
@@ -453,6 +454,31 @@ export class AppStore {
       done++;
     }
     return done;
+  }
+
+  /**
+   * Apple's three-step upload for any image resource (review screenshots of
+   * in-app purchases and subscriptions, …): reserve, send the parts, commit.
+   */
+  async uploadAsset(resource: string, relationships: Record<string, unknown>, fileName: string, bytes: Buffer, what = 'Uploading an image'): Promise<string> {
+    const reserve = await this.call<{ data: { id: string; attributes?: { uploadOperations?: UploadOperation[] } } }>(
+      'POST',
+      `/${resource}`,
+      { data: { type: resource, attributes: { fileName, fileSize: bytes.length }, relationships } },
+      what,
+    );
+    const id = reserve.data.id;
+    for (const op of reserve.data.attributes?.uploadOperations ?? []) {
+      const headers: Record<string, string> = {};
+      for (const h of op.requestHeaders ?? []) headers[h.name] = h.value;
+      const start = op.offset ?? 0;
+      const chunk = bytes.subarray(start, start + (op.length ?? bytes.length));
+      const res = await this.fetchImpl(op.url, { method: op.method ?? 'PUT', headers, body: new Uint8Array(chunk) });
+      if (!res.ok) throw new AppStoreError('upload_failed', `Apple ha rifiutato un pezzo del file: ${res.status}`);
+    }
+    const checksum = createHash('md5').update(bytes).digest('hex');
+    await this.call('PATCH', `/${resource}/${id}`, { data: { type: resource, id, attributes: { uploaded: true, sourceFileChecksum: checksum } } }, what);
+    return id;
   }
 
   private async uploadOneScreenshot(setId: string, fileName: string, bytes: Buffer): Promise<void> {
@@ -912,6 +938,10 @@ export interface AppStorePublishInput {
   free?: boolean;
   /** Generate iPhone/iPad screenshots from the web preview and upload them. */
   screenshots?: { previewUrl: string; browser: string; count?: number };
+  /** In-app purchases and subscriptions to create (or complete) on Apple. */
+  products?: AppleProduct[];
+  /** The purchase screen, for the reviewer of those products. */
+  productScreenshot?: Buffer;
 }
 
 export interface AppStorePublishResult {
@@ -935,6 +965,8 @@ export interface AppStorePublishResult {
   pricedFree: boolean;
   /** Screenshots uploaded per device size, e.g. { APP_IPHONE_67: 8 }. */
   screenshots: Record<string, number>;
+  /** Apple product ids created or completed this run. */
+  products: string[];
   notes: string[];
 }
 
@@ -983,6 +1015,15 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
       if (!(e instanceof AppStoreError)) throw e;
       notes.push(`Privacy dell’app: compilala una volta su App Store Connect → Privacy dell’app → Inizia. Risposte: ${applePrivacyGuide(input.facts).join(' | ')}`);
     }
+  }
+
+  // ---- In-app purchases and subscriptions, same prices as on Google Play ----
+  let products: string[] = [];
+  if (input.products?.length) {
+    products = await ensureAppleProducts(store, { appId: app.id, products: input.products, reviewScreenshot: input.productScreenshot }).catch((e: unknown) => {
+      notes.push(`Abbonamenti/acquisti non creati su Apple: ${(e as Error).message}`);
+      return [];
+    });
   }
 
   // ---- The chores that used to be filled by hand in App Store Connect ----
@@ -1088,6 +1129,11 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
 
   let submitted = false;
   if (input.submit && buildAttached) {
+    // An app's first purchases are reviewed with the version: hand them in first.
+    await submitProductsWithVersion(store, app.id).then(
+      (sent) => sent.length && notes.push(`Inviati in revisione con la versione: ${sent.join(', ')}`),
+      (e: unknown) => notes.push(`Acquisti non inviati con la versione (selezionali nella pagina della versione): ${(e as Error).message}`),
+    );
     await store.submitForReview(version.id, app.id).then(
       () => (submitted = true),
       (e: unknown) => notes.push(`Not sent for review: ${(e as Error).message}`),
@@ -1107,6 +1153,7 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
     buildUploaded,
     buildAttached,
     waitingForBuild,
+    products,
     submitted,
     ageRated,
     categorized,
@@ -1158,6 +1205,10 @@ export async function finishWhenBuildReady(input: FinishInput, fetchImpl: Fetch 
         input.onProgress?.(`Build ${build.version} pronta: la collego alla versione`);
         await store.attachBuild(input.versionId, build.id);
         if (!input.submit) return { attached: true, submitted: false };
+        await submitProductsWithVersion(store, input.appId).then(
+          (sent) => sent.length && input.onProgress?.(`Acquisti inviati con la versione: ${sent.join(', ')}`),
+          () => input.onProgress?.('Acquisti da selezionare nella pagina della versione'),
+        );
         input.onProgress?.('Invio in revisione');
         await store.submitForReview(input.versionId, input.appId);
         return { attached: true, submitted: true };

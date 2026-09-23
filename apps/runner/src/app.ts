@@ -4,6 +4,7 @@ import { appContentAnswers } from './app_content.js';
 import { AppStore, AppStoreError, appleText, applePrivacyPlan, cutAtWord, finishWhenBuildReady, parseAppStoreKey, projectBuildNumber, projectVersion, publishToAppStore, type AppStoreListing, type AppStorePublishInput, type AppStorePublishResult } from './appstore.js';
 import { AutoTracker, isRunning, needsFreshIpa, type AutoStatus } from './appstore_auto.js';
 import { MAX_VALUE, readSettings, SETTING_KEY, writeSettings } from './settings_store.js';
+import { appleProductsFrom, type AppleProduct, type DeclaredProduct } from './appstore_products.js';
 import { blocking, fixPreflight, preflightIos } from './ios_preflight.js';
 import { deleteAppleCreds, readAppleCreds, readAppleCredsPublic, readAppleKey, readReviewPhone, rememberReviewPhone, rememberTeamId, saveAppleCreds } from './apple_creds.js';
 import { teamFromAppStore } from './ios_signing.js';
@@ -465,7 +466,30 @@ export async function buildApp(
     type PublishBody = z.infer<typeof publishSchema>;
 
     /** Everything publishToAppStore needs, from the request and the project. */
-    const preparePublish = async (project: ProjectRow, body: PublishBody, email?: string): Promise<AppStorePublishInput> => {
+    /**
+     * The app's purchases for Apple: store/apple_products.json when the project
+     * has one (exact Apple ids), else what the engine declared for Google Play.
+     */
+    const appleProductsOf = async (project: ProjectRow, ownerId: string): Promise<{ products: AppleProduct[]; screenshot?: Buffer }> => {
+      const root = services.projectRoot(project);
+      const own = JSON.parse(await readFileAsync(path.join(root, 'store', 'apple_products.json'), 'utf8').catch(() => 'null')) as AppleProduct[] | null;
+      let products = Array.isArray(own) ? own : [];
+      if (!products.length) {
+        const session = JSON.parse((await readSettings(ownerId).catch(() => ({}) as Record<string, string>))[`ember_session_${project.id}`] ?? '{}') as { products?: DeclaredProduct[] };
+        const name = /^name:\s*([a-z0-9_]+)/m.exec(await readFileAsync(path.join(root, 'pubspec.yaml'), 'utf8').catch(() => ''))?.[1] ?? project.name;
+        products = appleProductsFrom(session.products ?? [], name);
+      }
+      if (!products.length) return { products };
+      // The reviewer wants to see the purchase screen: the screenshot of the paywall when there is one.
+      const labels = await readFileAsync(path.join(root, 'lib', 'config', 'screenshot_screens.dart'), 'utf8').catch(() => '');
+      const order = /order\s*=\s*<\w+>\[([\s\S]*?)\]/.exec(labels)?.[1]?.split(',').map((x) => x.trim()).filter(Boolean) ?? [];
+      const paywall = order.findIndex((x) => /premium|paywall|subscri|pro\b|upgrade/i.test(x));
+      const file = path.join(root, 'store', 'screenshots', `phone_${paywall >= 0 ? paywall + 1 : 1}.png`);
+      const screenshot = await readFileAsync(file).catch(() => undefined);
+      return { products, screenshot };
+    };
+
+    const preparePublish = async (project: ProjectRow, body: PublishBody, email?: string, ownerId?: string): Promise<AppStorePublishInput> => {
       const root = services.projectRoot(project);
       // The main listing is the English one (as on Play). Older IDEs labelled it
       // Italian, so the Italian translation then overwrote it and English, the
@@ -509,6 +533,7 @@ export async function buildApp(
         review,
         free: body.free,
         screenshots,
+        ...(ownerId ? await appleProductsOf(project, ownerId).then(({ products, screenshot }) => ({ products, productScreenshot: screenshot })) : {}),
       };
     };
 
@@ -524,7 +549,7 @@ export async function buildApp(
       const { project } = await services.ownedProject(req.user.id, projectId);
       const body = publishSchema.parse(req.body);
       try {
-        const input = await preparePublish(project, body, req.user.email);
+        const input = await preparePublish(project, body, req.user.email, req.user.id);
         const result = await publishToAppStore(input);
         await rememberUploaded(input.projectRoot, result);
         return { ...result, bundleId: input.bundleId };
@@ -576,7 +601,7 @@ export async function buildApp(
           }
         }
         await tracker.phase('publishing', body.uploadBuild ? 'Carico su Apple, scrivo la scheda e gli screenshot' : 'Scrivo la scheda e gli screenshot');
-        const input = await preparePublish(project, body, email);
+        const input = await preparePublish(project, body, email, ownerId);
         const result = await publishToAppStore(input);
         await rememberUploaded(root, result);
         const extra = { result: { ...result, bundleId: input.bundleId } as Record<string, unknown>, notes: result.notes };

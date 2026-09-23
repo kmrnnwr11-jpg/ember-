@@ -18,6 +18,7 @@ import { detectDataFacts, fillCsv, findExportedCsv, uploadDataSafety, validateFi
 import { createServiceAccountKey, gcloudStatus, invitePlayUser, storeImages } from './play_setup.js';
 import { cliLogins, cliModels } from './subscription_clis.js';
 import { mkdir, stat } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import cors from '@fastify/cors';
@@ -524,6 +525,13 @@ export async function buildApp(
       if (body.listing && (!body.listing.language || (body.translations ?? []).some((t) => t.language === body.listing!.language))) {
         body.listing.language = 'en-US';
       }
+      // Hand-picked App Store keywords per language (store/apple_keywords.json,
+      // keyed by the listing's language) win over the ones made from the text.
+      const keywords = JSON.parse(await readFileAsync(path.join(root, 'store', 'apple_keywords.json'), 'utf8').catch(() => '{}')) as Record<string, string>;
+      for (const page of [body.listing, ...(body.translations ?? [])]) {
+        const k = page && keywords[`${page.language ?? ''}`];
+        if (page && k) page.keywords = k;
+      }
       const gradle = await readFileAsync(path.join(root, 'android', 'app', 'build.gradle.kts'), 'utf8').catch(() => '');
       const bundleId = /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
       if (!bundleId) throw new AppStoreError('no_bundle_id', 'Build the app once before publishing: its name is set at the first build.');
@@ -618,7 +626,17 @@ export async function buildApp(
           const fresh = await needsFreshIpa(root);
           if (fresh.build) {
             await tracker.phase('building', `Creo il file iPhone (${fresh.reason})`);
-            const job = await jobs.wait((await services.startJob(ownerId, project.id, 'build_ipa')).id);
+            let job = await jobs.wait((await services.startJob(ownerId, project.id, 'build_ipa')).id);
+            // A new plugin can be newer than this Mac's list of CocoaPods: refresh it once and build again.
+            if (job.status !== 'succeeded' && /specs repository is too out-of-date|pod repo update/.test(job.log.join(''))) {
+              await tracker.progress('Aggiorno l’elenco delle librerie iPhone (CocoaPods) e riprovo');
+              await new Promise<void>((resolve) => {
+                const p = spawn('pod', ['install', '--repo-update'], { cwd: path.join(root, 'ios') });
+                p.on('close', () => resolve());
+                p.on('error', () => resolve());
+              });
+              job = await jobs.wait((await services.startJob(ownerId, project.id, 'build_ipa')).id);
+            }
             if (job.status !== 'succeeded') {
               const tail = job.log.join('').split('\n').filter((l) => l.trim()).slice(-12).join('\n');
               return tracker.fail(`La build iPhone non è riuscita:\n${tail}`);

@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import 'app_builder.dart';
 
 /// Apple's side of publishing, with the same listing Google gets: title,
 /// description, what's new, privacy address and the privacy answers, in every
@@ -20,9 +21,12 @@ import '../../l10n/app_localizations.dart';
 /// every project and survives a reload, a closed browser, a Runner restart or a
 /// reboot. The .p8 never touches the browser's storage and never reaches git.
 class AppStoreCard extends ConsumerStatefulWidget {
-  const AppStoreCard({super.key, required this.projectId});
+  const AppStoreCard({super.key, required this.projectId, this.builder});
 
   final String projectId;
+
+  /// The engine that wrote the app: it fixes the preflight findings made of code.
+  final AppBuilder? builder;
 
   @override
   ConsumerState<AppStoreCard> createState() => _AppStoreCardState();
@@ -95,6 +99,8 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
   Timer? _debounce;
   Timer? _poll; // follows the one-press publish running on the Runner
   Map<String, dynamic>? _auto; // its last status
+  List<Map<String, dynamic>> _checks = const []; // what Apple would reject, before sending
+  bool _checking = false;
   String? _savedMsg; // "Salvato ✓"
   String? _message; // publish / verify result or error
   bool _error = false;
@@ -108,6 +114,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
 
   Future<void> _load() async {
     unawaited(_refreshAuto()); // a publish started earlier keeps showing its progress
+    unawaited(_preflight());
     try {
       final api = await ref.read(runnerApiProvider.future);
       final creds = await api.appStoreCredentials();
@@ -378,6 +385,102 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
     }
   }
 
+  Future<void> _preflight() async {
+    setState(() => _checking = true);
+    try {
+      final res = await (await ref.read(runnerApiProvider.future)).appStorePreflight(widget.projectId);
+      if (mounted) setState(() => _checks = ((res['findings'] as List?) ?? const []).cast<Map<String, dynamic>>());
+    } catch (_) {
+      // The check is advice: never block the card on it.
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
+  }
+
+  Future<void> _fixChecks() async {
+    final ids = _checks.where((f) => f['fixable'] == true).map((f) => '${f['id']}').toList();
+    if (ids.isEmpty) return;
+    setState(() => _checking = true);
+    try {
+      final res = await (await ref.read(runnerApiProvider.future)).fixAppStorePreflight(widget.projectId, ids);
+      if (!mounted) return;
+      final done = ((res['done'] as List?) ?? const []).cast<Map<String, dynamic>>();
+      setState(() {
+        _checks = ((res['findings'] as List?) ?? const []).cast<Map<String, dynamic>>();
+        _message = done.map((d) => '${d['ok'] == true ? '✓' : '✗'} ${d['message']}').join('\n');
+        _error = done.any((d) => d['ok'] != true);
+        _notes = const [];
+      });
+    } on RunnerException catch (e) {
+      if (mounted) setState(() => (_message = e.message, _error = true));
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
+  }
+
+  /// "Before sending": what Apple would reject (red) or is worth fixing (amber).
+  Widget _checksView(ThemeData theme) {
+    final blocks = _checks.where((f) => f['severity'] == 'block').length;
+    final fixable = _checks.where((f) => f['fixable'] == true).length;
+    final b = widget.builder;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(children: [
+          Icon(blocks > 0 ? Icons.gpp_bad_outlined : Icons.gpp_good_outlined, size: 20, color: blocks > 0 ? theme.colorScheme.error : theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _checks.isEmpty
+                  ? 'Controllo prima dell’invio: nessun problema per Apple'
+                  : blocks > 0
+                      ? 'Controllo prima dell’invio: $blocks ${blocks == 1 ? 'problema blocca' : 'problemi bloccano'} l’invio'
+                      : 'Controllo prima dell’invio: solo avvisi, si può inviare',
+              style: theme.textTheme.titleSmall,
+            ),
+          ),
+          IconButton(tooltip: 'Controlla di nuovo', onPressed: _checking ? null : _preflight, icon: _checking ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.refresh, size: 18)),
+        ]),
+        for (final f in _checks)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(f['severity'] == 'block' ? Icons.error_outline : Icons.warning_amber_rounded, size: 18, color: f['severity'] == 'block' ? theme.colorScheme.error : Colors.amber.shade700),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${f['title']}', style: theme.textTheme.bodyMedium),
+                      Text('${f['detail']}', style: theme.textTheme.bodySmall),
+                      if ('${f['ask'] ?? ''}'.isNotEmpty && b != null)
+                        TextButton.icon(
+                          style: TextButton.styleFrom(padding: EdgeInsets.zero, visualDensity: VisualDensity.compact),
+                          onPressed: b.running ? null : () => b.improve('${f['ask']}', display: '${f['title']}').then((_) => _preflight()),
+                          icon: const Icon(Icons.auto_fix_high, size: 16),
+                          label: const Text('Fai correggere a Ember'),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (fixable > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: OutlinedButton.icon(
+              onPressed: _checking || _busy ? null : _fixChecks,
+              icon: const Icon(Icons.build_circle_outlined),
+              label: Text('Correggi ora ($fixable)'),
+            ),
+          ),
+      ],
+    );
+  }
+
   static const _runningPhases = {'building', 'publishing', 'waiting'};
   bool get _autoRunning => _runningPhases.contains(_auto?['phase']);
 
@@ -396,10 +499,12 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
     final phase = '${status['phase']}';
     final result = status['result'] is Map ? (status['result'] as Map).cast<String, dynamic>() : null;
     final notes = ((status['notes'] as List?) ?? const []).map((n) => '$n').toList();
+    final wasFailed = _auto?['phase'] == 'failed';
     setState(() {
       _auto = status;
       _busy = _autoRunning;
       if (phase == 'failed') {
+        if (!wasFailed) unawaited(_preflight()); // the stop may have listed problems
         _message = '${status['error'] ?? status['message']}';
         _error = true;
         _notes = notes;
@@ -664,6 +769,8 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
                 ),
               ],
             ),
+            const Divider(height: 20),
+            _checksView(theme),
             const Divider(height: 20),
             if (_autoRunning) ...[
               const SizedBox(height: 4),

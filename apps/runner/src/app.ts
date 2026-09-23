@@ -3,6 +3,7 @@ import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
 import { AppStore, AppStoreError, finishWhenBuildReady, parseAppStoreKey, projectBuildNumber, projectVersion, publishToAppStore, type AppStoreListing, type AppStorePublishInput, type AppStorePublishResult } from './appstore.js';
 import { AutoTracker, isRunning, needsFreshIpa, type AutoStatus } from './appstore_auto.js';
+import { blocking, fixPreflight, preflightIos } from './ios_preflight.js';
 import { deleteAppleCreds, readAppleCreds, readAppleCredsPublic, readAppleKey, readReviewPhone, rememberReviewPhone, rememberTeamId, saveAppleCreds } from './apple_creds.js';
 import { teamFromAppStore } from './ios_signing.js';
 import { backupKey } from './drive.js';
@@ -410,6 +411,8 @@ export async function buildApp(
       secondaryCategory: z.string().max(40).optional(),
       free: z.boolean().default(false),
       screenshots: z.boolean().default(false),
+      /** Send even when the preflight finds something Apple would reject. */
+      skipChecks: z.boolean().default(false),
       review: z
         .object({
           firstName: z.string().max(60).optional(),
@@ -508,6 +511,20 @@ export async function buildApp(
     const runAuto = async (tracker: AutoTracker, project: ProjectRow, ownerId: string, body: PublishBody, email?: string) => {
       const root = services.projectRoot(project);
       try {
+        if (!body.skipChecks && body.submit) {
+          // What Apple would reject costs days: fix what Ember can, stop on the rest.
+          const ctx = await preflightContext(root, body);
+          let found = blocking(await preflightIos(ctx));
+          const fixed: string[] = [];
+          for (const f of found.filter((x) => x.fixable)) fixed.push(await fixPreflight(f.id, ctx).catch((e: unknown) => `${f.title}: ${(e as Error).message}`));
+          if (fixed.length) {
+            await tracker.progress(`Controllo prima dell’invio: ${fixed.join(', ')}`);
+            found = blocking(await preflightIos(ctx));
+          }
+          if (found.length) {
+            return tracker.fail(`Apple rifiuterebbe l’app, quindi non la invio:\n${found.map((f) => `• ${f.title} — ${f.detail}`).join('\n')}`);
+          }
+        }
         if (body.uploadBuild) {
           const fresh = await needsFreshIpa(root);
           if (fresh.build) {
@@ -537,6 +554,40 @@ export async function buildApp(
         await tracker.fail(e instanceof Error ? e.message : String(e));
       }
     };
+
+    /** The listing the checks read: what the IDE sent, else what the project saved. */
+    const preflightContext = async (root: string, body?: Partial<PublishBody>) => {
+      const saved = JSON.parse(await readFileAsync(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '{}')) as { title?: string; privacyUrl?: string };
+      const review = body?.review?.phone || (await readReviewPhone().catch(() => ''));
+      return {
+        root,
+        listing: { title: `${body?.listing?.title ?? saved.title ?? ''}`, privacyUrl: body?.privacyPolicyUrl || saved.privacyUrl || '' },
+        reviewPhone: review || undefined,
+      };
+    };
+
+    // What Apple would reject, checked before sending: blocks, warnings, and who fixes each.
+    r.get('/v1/projects/:projectId/appstore/preflight', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      return { findings: await preflightIos(await preflightContext(services.projectRoot(project))) };
+    });
+
+    r.post('/v1/projects/:projectId/appstore/preflight/fix', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const { ids } = z.object({ ids: z.array(z.string().max(80)).min(1).max(20) }).parse(req.body);
+      const ctx = await preflightContext(services.projectRoot(project));
+      const done: Array<{ id: string; ok: boolean; message: string }> = [];
+      for (const id of ids) {
+        try {
+          done.push({ id, ok: true, message: await fixPreflight(id, ctx) });
+        } catch (e) {
+          done.push({ id, ok: false, message: (e as Error).message });
+        }
+      }
+      return { done, findings: await preflightIos(ctx) };
+    });
 
     r.post('/v1/projects/:projectId/appstore/autopublish', async (req, reply) => {
       const { projectId } = req.params as { projectId: string };

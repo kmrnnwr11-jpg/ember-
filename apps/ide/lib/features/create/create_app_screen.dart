@@ -500,7 +500,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                       const SizedBox(height: 12),
                       if (b.phase == BuildPhase.ready) PlatformTabs(ios: _ios, onChanged: (v) => setState(() => _ios = v)),
                       if (b.phase == BuildPhase.ready && _ios) IosCard(builder: b),
-                      if (b.phase == BuildPhase.ready && _ios) AppStoreCard(projectId: project.id),
+                      if (b.phase == BuildPhase.ready && _ios) AppStoreCard(projectId: project.id, builder: b),
                       if (b.phase == BuildPhase.ready && !_ios)
                         CheckupCard(
                           projectId: project.id,

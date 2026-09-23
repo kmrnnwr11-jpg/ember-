@@ -174,6 +174,18 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// What Apple would reject, checked on the project: `{findings: [{id, severity, title, detail, fixable, ask?}]}`.
+  Future<Map<String, dynamic>> appStorePreflight(String projectId) => _call(
+    () => _dio.get('/v1/projects/$projectId/appstore/preflight', options: Options(receiveTimeout: const Duration(seconds: 30))),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Applies the preflight findings Ember can fix alone; returns `{done, findings}`.
+  Future<Map<String, dynamic>> fixAppStorePreflight(String projectId, List<String> ids) => _call(
+    () => _dio.post('/v1/projects/$projectId/appstore/preflight/fix', data: {'ids': ids}),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// Where the one-press publish is: `{phase, message, steps, notes, result, error}`.
   Future<Map<String, dynamic>> autoPublishStatus(String projectId) => _call(
     () => _dio.get('/v1/projects/$projectId/appstore/autopublish'),

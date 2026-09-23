@@ -168,9 +168,9 @@ export class AppStore {
     const locale = appleLocale(page.language);
     const attributes = {
       locale,
-      description: appleText(page.description).slice(0, 4000) || undefined,
+      description: withoutOtherPlatforms(appleText(page.description)).slice(0, 4000) || undefined,
       keywords: appleText(page.keywords || keywordsFrom(page)).slice(0, 100) || undefined,
-      whatsNew: appleText(page.releaseNotes).slice(0, 4000) || undefined,
+      whatsNew: withoutOtherPlatforms(appleText(page.releaseNotes)).slice(0, 4000) || undefined,
       supportUrl: page.supportUrl || undefined,
       marketingUrl: page.marketingUrl || undefined,
       promotionalText: appleText(page.promotionalText).slice(0, 170) || undefined,
@@ -687,6 +687,20 @@ export function appleText(text: string | undefined): string {
     .replace(/[ \t]+\n/g, '\n')
     .replace(/^[ \t]+/gm, '')
     .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+}
+
+/**
+ * Apple rejects store text that names other platforms (2.3.10), and the text
+ * comes from the Google Play listing: drop the sentences that mention them.
+ */
+export function withoutOtherPlatforms(text: string): string {
+  const other = /\b(android|google play|play store|play console|apk)\b/i;
+  return text
+    .split('\n')
+    .map((line) => (other.test(line) ? line.split(/(?<=[.!?])\s+/).filter((s) => !other.test(s)).join(' ') : line))
+    .filter((line, i, all) => line.trim() || (i > 0 && all[i - 1]!.trim()))
+    .join('\n')
     .trim();
 }
 

@@ -186,6 +186,17 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
       ask: 'Add a visible "Restore purchases" button on the paywall/premium screen (and in settings) that calls the store restore (InAppPurchase.instance.restorePurchases() or Purchases.restorePurchases()) and unlocks what the user already bought, with a short message when nothing is found.',
     });
   }
+  const sellsSubscriptions = has('purchases_flutter', 'adapty_flutter', 'qonversion_flutter') || (d.has('in_app_purchase') && /subscri|monthly|yearly|annual|weekly/i.test(code));
+  if (sellsSubscriptions && !(/stdeula|terms[\s_-]?of[\s_-]?(use|service)|\beula\b/i.test(code) && /privacy/i.test(code) && /launchUrl|url_launcher|openUrl/.test(code))) {
+    add({
+      id: 'subscription_links',
+      severity: 'block',
+      title: 'Nella schermata Premium mancano i link a Termini d’uso e Privacy',
+      detail: 'Con gli abbonamenti Apple vuole link cliccabili a Termini d’uso (EULA) e Privacy dove si compra (3.1.2).',
+      fixable: false,
+      ask: "On the paywall/premium screen, under the plans, add two tappable links opened with url_launcher (LaunchMode.externalApplication): 'Terms of Use (EULA)' → https://www.apple.com/legal/internet-services/itunes/dev/stdeula/ and 'Privacy Policy' → the app's privacy policy URL.",
+    });
+  }
   if (has('google_sign_in', 'flutter_facebook_auth') && !d.has('sign_in_with_apple')) {
     add({
       id: 'sign_in_with_apple',

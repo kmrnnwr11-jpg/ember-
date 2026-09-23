@@ -286,3 +286,13 @@ describe('what Ember always writes for Apple', () => {
     expect(notes).toMatch(/App Tracking Transparency/);
   });
 });
+
+describe('subscriptions need the Terms of Use on the store page', () => {
+  it('adds the EULA and privacy links to the description once', async () => {
+    const { withLegalLinks } = await import('./appstore.js');
+    const once = withLegalLinks('Great app.', 'https://example.com/privacy');
+    expect(once).toMatch(/Terms of Use \(EULA\): https:\/\/www\.apple\.com\/legal\/internet-services\/itunes\/dev\/stdeula\//);
+    expect(once).toMatch(/Privacy Policy: https:\/\/example\.com\/privacy$/);
+    expect(withLegalLinks(once, 'https://example.com/privacy')).toBe(once);
+  });
+});

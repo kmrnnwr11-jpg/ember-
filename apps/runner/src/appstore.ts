@@ -767,6 +767,15 @@ export function appleText(text: string | undefined): string {
     .trim();
 }
 
+export const APPLE_EULA = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
+
+/** The description with the Terms of Use (EULA) and privacy links at the end, once. */
+export function withLegalLinks(description: string, privacyUrl?: string): string {
+  if (description.includes('stdeula')) return description;
+  const links = `\n\nTerms of Use (EULA): ${APPLE_EULA}${privacyUrl ? `\nPrivacy Policy: ${privacyUrl}` : ''}`;
+  return `${description.slice(0, 4000 - links.length)}${links}`;
+}
+
 /** The promotional text (170 characters): the listing's short pitch, whole sentences. */
 export function promotionalFrom(page: { subtitle?: string; description?: string }): string {
   const short = appleText(page.subtitle);
@@ -1067,7 +1076,12 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
   }
 
   const version = await store.ensureVersion(app.id, input.versionString);
-  const pages = [input.listing, ...(input.translations ?? [])].filter((p): p is AppStoreListing => !!p && !!p.language);
+  let pages = [input.listing, ...(input.translations ?? [])].filter((p): p is AppStoreListing => !!p && !!p.language);
+  // Auto-renewable subscriptions: Apple wants the Terms of Use (EULA) linked in the
+  // description itself (3.1.2), with the privacy policy.
+  if (input.products?.some((p) => p.kind === 'subscription')) {
+    pages = pages.map((p) => ({ ...p, description: withLegalLinks(p.description ?? '', input.privacyPolicyUrl) }));
+  }
   for (const page of pages) {
     // Apple will not send a version for review without a support page: the
     // privacy page carries the contact address, so it stands in for one.

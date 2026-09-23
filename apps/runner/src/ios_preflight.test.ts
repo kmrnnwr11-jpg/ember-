@@ -151,3 +151,13 @@ describe('apps for children', () => {
     expect(off).toEqual([]);
   });
 });
+
+describe('subscriptions', () => {
+  it('asks for tappable Terms and Privacy links on the paywall', async () => {
+    const root = await reelMakerBefore({ code: "requestTrackingAuthorization restore ember_screen; const id = 'premium_monthly';" });
+    const found = await preflightIos({ root, listing, reviewPhone: '1', fetchImpl: okFetch, marketingUrl: 'https://dev.example' });
+    expect(blocking(found).map((f) => f.id)).toEqual(['subscription_links']);
+    const ok = await reelMakerBefore({ code: "requestTrackingAuthorization restore ember_screen premium_monthly launchUrl('stdeula') privacy" });
+    expect(blocking(await preflightIos({ root: ok, listing, reviewPhone: '1', fetchImpl: okFetch, marketingUrl: 'https://dev.example' }))).toEqual([]);
+  });
+});

@@ -6,7 +6,7 @@ import { AutoTracker, isRunning, needsFreshIpa, type AutoStatus } from './appsto
 import { MAX_VALUE, readSettings, SETTING_KEY, writeSettings } from './settings_store.js';
 import { appleProductsFrom, type AppleProduct, type DeclaredProduct } from './appstore_products.js';
 import { blocking, fixPreflight, preflightIos } from './ios_preflight.js';
-import { deleteAppleCreds, readAppleCreds, readAppleCredsPublic, readAppleKey, readReviewPhone, rememberReviewPhone, rememberTeamId, saveAppleCreds } from './apple_creds.js';
+import { deleteAppleCreds, readAppleCreds, readAppleCredsPublic, readAppleKey, readMarketingUrl, readReviewPhone, rememberMarketingUrl, rememberReviewPhone, rememberTeamId, saveAppleCreds } from './apple_creds.js';
 import { teamFromAppStore } from './ios_signing.js';
 import { backupKey } from './drive.js';
 import { installAndRun, lanAddress, listDevices } from './devices.js';
@@ -479,6 +479,8 @@ export async function buildApp(
       screenshots: z.boolean().default(false),
       /** Send even when the preflight finds something Apple would reject. */
       skipChecks: z.boolean().default(false),
+      /** Developer website (Marketing URL); remembered for the account. */
+      marketingUrl: z.string().url().max(300).optional(),
       review: z
         .object({
           firstName: z.string().max(60).optional(),
@@ -552,6 +554,8 @@ export async function buildApp(
       const review = { ...(email ? { email } : {}), ...(body.review ?? {}) };
       if (review.phone) await rememberReviewPhone(review.phone).catch(() => {});
       else review.phone = (await readReviewPhone().catch(() => '')) || undefined;
+      if (body.marketingUrl) await rememberMarketingUrl(body.marketingUrl).catch(() => {});
+      const marketingUrl = body.marketingUrl || (await readMarketingUrl().catch(() => '')) || undefined;
       return {
         key,
         bundleId,
@@ -568,6 +572,7 @@ export async function buildApp(
         review,
         free: body.free,
         screenshots,
+        marketingUrl,
         ...(ownerId ? await appleProductsOf(project, ownerId).then(({ products, screenshot }) => ({ products, productScreenshot: screenshot })) : {}),
       };
     };
@@ -670,6 +675,7 @@ export async function buildApp(
         root,
         listing: { title: `${body?.listing?.title ?? saved.title ?? ''}`, privacyUrl: body?.privacyPolicyUrl || saved.privacyUrl || '' },
         reviewPhone: review || undefined,
+        marketingUrl: body?.marketingUrl || (await readMarketingUrl().catch(() => '')) || undefined,
       };
     };
 

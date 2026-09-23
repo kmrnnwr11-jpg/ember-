@@ -310,6 +310,29 @@ export class AppStore {
   /** Ties the uploaded build to the version being prepared. */
   async attachBuild(versionId: string, buildId: string): Promise<void> {
     await this.call('PATCH', `/appStoreVersions/${versionId}/relationships/build`, { data: { type: 'builds', id: buildId } }, 'Attaching the build');
+    // A build made before Info.plist said "no special encryption" asks the question again.
+    const { data } = await this.call<{ data: Resource }>('GET', `/builds/${buildId}`, undefined, 'Reading the build');
+    if (data?.attributes?.usesNonExemptEncryption == null) {
+      await this.call('PATCH', `/builds/${buildId}`, { data: { type: 'builds', id: buildId, attributes: { usesNonExemptEncryption: false } } }, 'Answering the encryption question');
+    }
+  }
+
+  /** Waits (up to [maxMs]) until Apple has processed every screenshot of the version. */
+  async waitForScreenshots(versionId: string, maxMs = 10 * 60_000): Promise<number> {
+    const until = Date.now() + maxMs;
+    for (;;) {
+      const { data: locs } = await this.call<{ data: Resource[] }>('GET', `/appStoreVersions/${versionId}/appStoreVersionLocalizations?limit=50`, undefined, 'Reading the store pages');
+      let pending = 0;
+      for (const l of locs ?? []) {
+        const sets = await this.call<{ included?: Resource[] }>('GET', `/appStoreVersionLocalizations/${l.id}/appScreenshotSets?include=appScreenshots&limit=50`, undefined, 'Reading the screenshots');
+        for (const sh of (sets.included ?? []).filter((x) => (x as { type?: string }).type === 'appScreenshots')) {
+          const st = (sh.attributes?.assetDeliveryState as { state?: string } | undefined)?.state;
+          if (st !== 'COMPLETE' && st !== 'FAILED') pending++;
+        }
+      }
+      if (pending === 0 || Date.now() > until) return pending;
+      await new Promise((r) => setTimeout(r, 15_000));
+    }
   }
 
   /**
@@ -317,7 +340,7 @@ export class AppStore {
    * appStoreVersionSubmissions endpoint no longer accepts CREATE). An open
    * submission left by an earlier try is reused instead of piling up new ones.
    */
-  async submitForReview(versionId: string, appId: string): Promise<void> {
+  async submitForReview(versionId: string, appId: string, withVersion?: () => Promise<unknown>): Promise<void> {
     const { data: open } = await this.call<{ data: Resource[] }>(
       'GET',
       `/reviewSubmissions?filter[app]=${appId}&filter[platform]=IOS&filter[state]=READY_FOR_REVIEW&limit=5`,
@@ -343,6 +366,8 @@ export class AppStore {
         'Adding the version to the review',
       );
     }
+    // What must travel with the version (an app's first purchases) goes in now, while it is open.
+    await withVersion?.();
     await this.call('PATCH', `/reviewSubmissions/${subId}`, { data: { type: 'reviewSubmissions', id: subId, attributes: { submitted: true } } }, 'Sending for review');
   }
 
@@ -734,6 +759,33 @@ export function appleText(text: string | undefined): string {
     .trim();
 }
 
+/** The promotional text (170 characters): the listing's short pitch, whole sentences. */
+export function promotionalFrom(page: { subtitle?: string; description?: string }): string {
+  const short = appleText(page.subtitle);
+  if (short.length >= 40) return cutAtWord(short, 170);
+  const first = appleText(page.description).split(/\n+/).find((l) => l.trim().length > 30) ?? '';
+  return cutAtWord(first, 170);
+}
+
+/**
+ * What the reviewer should know, in English: how to get in, what is paid and
+ * how to restore it, why the tracking prompt appears. Written from the app itself.
+ */
+export function reviewNotesFor(input: { facts?: AppDataFacts; products?: AppleProduct[] }): string {
+  const f = input.facts;
+  const lines: string[] = [];
+  lines.push(f?.account ? 'Sign-in is required for some features: use the demo account below.' : 'No account or login is needed: every screen is reachable from the first launch.');
+  const subs = (input.products ?? []).filter((p) => p.kind === 'subscription');
+  const once = (input.products ?? []).filter((p) => p.kind !== 'subscription');
+  if (subs.length || once.length) {
+    const list = [...subs, ...once].map((p) => `${p.name} (${p.productId}${p.freeTrial ? ', free trial' : ''})`).join('; ');
+    lines.push(`Premium is sold through In-App Purchase: ${list}. Open the Premium screen to buy; "Restore" on the same screen restores previous purchases.`);
+  }
+  if (f?.ads) lines.push('The app shows Google AdMob ads (none for Premium users). The App Tracking Transparency prompt appears before ads load; refusing it keeps every feature.');
+  lines.push('All documents are processed on the device; nothing is uploaded to our servers.');
+  return lines.join('\n');
+}
+
 /**
  * Apple rejects store text that names other platforms (2.3.10), and the text
  * comes from the Google Play listing: drop the sentences that mention them.
@@ -940,6 +992,8 @@ export interface AppStorePublishInput {
   screenshots?: { previewUrl: string; browser: string; count?: number };
   /** In-app purchases and subscriptions to create (or complete) on Apple. */
   products?: AppleProduct[];
+  /** Developer website on every store page (Marketing URL): AdMob reads app-ads.txt there. */
+  marketingUrl?: string;
   /** The purchase screen, for the reviewer of those products. */
   productScreenshot?: Buffer;
 }
@@ -1000,7 +1054,14 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
   for (const page of pages) {
     // Apple will not send a version for review without a support page: the
     // privacy page carries the contact address, so it stands in for one.
-    await store.writeVersionPage(version.id, { ...page, supportUrl: page.supportUrl || input.privacyPolicyUrl || undefined });
+    await store.writeVersionPage(version.id, {
+      ...page,
+      supportUrl: page.supportUrl || input.privacyPolicyUrl || undefined,
+      // AdMob checks app-ads.txt on the developer website of the store listing.
+      marketingUrl: page.marketingUrl || input.marketingUrl || undefined,
+      // The line at the top of the page, changeable without a review: the short pitch.
+      promotionalText: page.promotionalText || promotionalFrom(page),
+    });
     await store.writeAppPage(app.id, { ...page, privacyPolicyUrl: input.privacyPolicyUrl });
   }
 
@@ -1065,6 +1126,7 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
       review.lastName ||= holder?.lastName;
       review.email ||= holder?.email;
     }
+    review.notes ||= reviewNotesFor({ facts: input.facts, products: input.products });
     if (!review.phone) notes.push('Info per la revisione: manca il numero di telefono del contatto (Dati per la revisione → Telefono, con prefisso, es. +39 333 1234567).');
     await store.setReviewDetails(version.id, review).then(
       () => (reviewInfoSet = true),
@@ -1129,12 +1191,14 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
 
   let submitted = false;
   if (input.submit && buildAttached) {
-    // An app's first purchases are reviewed with the version: hand them in first.
-    await submitProductsWithVersion(store, app.id).then(
-      (sent) => sent.length && notes.push(`Inviati in revisione con la versione: ${sent.join(', ')}`),
-      (e: unknown) => notes.push(`Acquisti non inviati con la versione (selezionali nella pagina della versione): ${(e as Error).message}`),
-    );
-    await store.submitForReview(version.id, app.id).then(
+    await store.waitForScreenshots(version.id).catch(() => 0);
+    // An app's first purchases are reviewed with the version: added while it is in the submission.
+    const withProducts = () =>
+      submitProductsWithVersion(store, app.id).then(
+        (sent) => sent.length && notes.push(`Inviati in revisione con la versione: ${sent.join(', ')}`),
+        (e: unknown) => notes.push(`Acquisti non inviati con la versione (selezionali nella pagina della versione): ${(e as Error).message}`),
+      );
+    await store.submitForReview(version.id, app.id, withProducts).then(
       () => (submitted = true),
       (e: unknown) => notes.push(`Not sent for review: ${(e as Error).message}`),
     );
@@ -1205,12 +1269,15 @@ export async function finishWhenBuildReady(input: FinishInput, fetchImpl: Fetch 
         input.onProgress?.(`Build ${build.version} pronta: la collego alla versione`);
         await store.attachBuild(input.versionId, build.id);
         if (!input.submit) return { attached: true, submitted: false };
-        await submitProductsWithVersion(store, input.appId).then(
-          (sent) => sent.length && input.onProgress?.(`Acquisti inviati con la versione: ${sent.join(', ')}`),
-          () => input.onProgress?.('Acquisti da selezionare nella pagina della versione'),
-        );
+        input.onProgress?.('Aspetto che Apple finisca gli screenshot');
+        await store.waitForScreenshots(input.versionId).catch(() => 0);
         input.onProgress?.('Invio in revisione');
-        await store.submitForReview(input.versionId, input.appId);
+        await store.submitForReview(input.versionId, input.appId, () =>
+          submitProductsWithVersion(store, input.appId).then(
+            (sent) => sent.length && input.onProgress?.(`Acquisti inviati con la versione: ${sent.join(', ')}`),
+            () => input.onProgress?.('Acquisti da selezionare nella pagina della versione'),
+          ),
+        );
         return { attached: true, submitted: true };
       }
       if (build.state === 'INVALID' || build.state === 'FAILED') {

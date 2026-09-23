@@ -93,6 +93,8 @@ export interface PreflightContext {
   reviewPhone?: string;
   /** Checks the privacy page answers (injected in tests). */
   fetchImpl?: typeof fetch;
+  /** Developer website saved for the account (Marketing URL). */
+  marketingUrl?: string;
 }
 
 export async function preflightIos(ctx: PreflightContext): Promise<PreflightFinding[]> {
@@ -215,6 +217,33 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
         detail: 'Un gist o un documento condiviso funziona, ma a volte il recensore lo contesta: meglio una pagina web vera (GitHub Pages).',
         fixable: false,
       });
+    }
+  }
+  // AdMob only fully serves an iPhone app whose store listing names a developer
+  // website with an app-ads.txt that lists the account's publisher id.
+  if (ads) {
+    const pub = /ca-app-pub-(\d+)~/.exec(plistString(plist, 'GADApplicationIdentifier') ?? '')?.[1];
+    if (!ctx.marketingUrl) {
+      add({
+        id: 'marketing_url',
+        severity: 'block',
+        title: 'Manca il sito sviluppatore (Marketing URL)',
+        detail: 'AdMob cerca app-ads.txt sul sito indicato nella scheda: senza, gli annunci iPhone vengono limitati. Scrivilo una volta in "Dati per la revisione → Sito sviluppatore".',
+        fixable: false,
+      });
+    } else if (pub && pub !== '3940256099942544') {
+      const txt = await (ctx.fetchImpl ?? fetch)(new URL('/app-ads.txt', ctx.marketingUrl).toString(), { signal: AbortSignal.timeout(10_000) })
+        .then(async (r) => (r.ok ? r.text() : ''))
+        .catch(() => '');
+      if (!txt.includes(`pub-${pub}`)) {
+        add({
+          id: 'app_ads_txt',
+          severity: 'warn',
+          title: 'app-ads.txt non contiene il tuo codice editore',
+          detail: `Su ${new URL('/app-ads.txt', ctx.marketingUrl)} deve esserci la riga "google.com, pub-${pub}, DIRECT, f08c47fec0942fa0", altrimenti AdMob limita gli annunci.`,
+          fixable: false,
+        });
+      }
     }
   }
   if (!ctx.reviewPhone) {

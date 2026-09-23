@@ -6,7 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { blocking, fixPreflight, namesMatch, plistString, pngHasAlpha, preflightIos, shortStoreName } from './ios_preflight.js';
 import { withoutOtherPlatforms } from './appstore.js';
 
-const okFetch = (async () => new Response('ok', { status: 200 })) as unknown as typeof fetch;
+const okFetch = (async (url: string) =>
+  new Response(String(url).endsWith('/app-ads.txt') ? 'google.com, pub-1111, DIRECT, f08c47fec0942fa0' : 'ok', { status: 200 })) as unknown as typeof fetch;
 const deadFetch = (async () => new Response('no', { status: 404 })) as unknown as typeof fetch;
 
 const PLIST = (extra = '') => `<?xml version="1.0" encoding="UTF-8"?>
@@ -45,7 +46,7 @@ const ids = (f: Array<{ id: string }>) => f.map((x) => x.id).sort();
 describe('iOS preflight', () => {
   it('finds what sent Reel Maker back: no tracking prompt, a different name under the icon', async () => {
     const root = await reelMakerBefore();
-    const found = await preflightIos({ root, listing, reviewPhone: '+39 333', fetchImpl: okFetch });
+    const found = await preflightIos({ root, listing, reviewPhone: '+39 333', fetchImpl: okFetch, marketingUrl: 'https://dev.example' });
     expect(ids(blocking(found))).toEqual(['att_request']);
     expect(ids(found)).toEqual(['att_request', 'display_name', 'ios_target']);
     expect(found.find((f) => f.id === 'att_request')!.ask).toMatch(/requestTrackingAuthorization/);
@@ -55,7 +56,7 @@ describe('iOS preflight', () => {
     const root = await reelMakerBefore({ code: "void main() { AppTrackingTransparency.requestTrackingAuthorization(); } // restorePurchases ember_screen" });
     await fixPreflight('display_name', { root, listing });
     await fixPreflight('ios_target', { root, listing });
-    expect(await preflightIos({ root, listing, reviewPhone: '+39 333', fetchImpl: okFetch })).toEqual([]);
+    expect(await preflightIos({ root, listing, reviewPhone: '+39 333', fetchImpl: okFetch, marketingUrl: 'https://dev.example' })).toEqual([]);
     const plist = await readFile(path.join(root, 'ios', 'Runner', 'Info.plist'), 'utf8');
     expect(plistString(plist, 'CFBundleDisplayName')).toBe('Reel Maker');
     expect(await readFile(path.join(root, 'ios', 'Podfile'), 'utf8')).toMatch(/^platform :ios, '15.0'/m);
@@ -65,7 +66,7 @@ describe('iOS preflight', () => {
     const root = await reelMakerBefore({ plist: PLIST(), code: 'void main() {}' });
     const found = await preflightIos({ root, listing: { title: 'Story Saver' }, fetchImpl: okFetch });
     expect(ids(blocking(found))).toEqual(
-      ['admob_app_id', 'att_request', 'att_text', 'privacy_url', 'restore_purchases', 'review_phone', 'usage:NSCameraUsageDescription', 'usage:NSPhotoLibraryUsageDescription'].sort(),
+      ['admob_app_id', 'att_request', 'att_text', 'marketing_url', 'privacy_url', 'restore_purchases', 'review_phone', 'usage:NSCameraUsageDescription', 'usage:NSPhotoLibraryUsageDescription'].sort(),
     );
     for (const id of ['att_text', 'usage:NSCameraUsageDescription', 'usage:NSPhotoLibraryUsageDescription']) await fixPreflight(id, { root, listing });
     const plist = await readFile(path.join(root, 'ios', 'Runner', 'Info.plist'), 'utf8');
@@ -75,12 +76,12 @@ describe('iOS preflight', () => {
 
   it('asks for Sign in with Apple and account deletion when the app has Google sign-in', async () => {
     const root = await reelMakerBefore({ deps: 'google_sign_in, firebase_auth', plist: PLIST(), code: 'void main() {} // ember_screen' });
-    expect(ids(blocking(await preflightIos({ root, listing, reviewPhone: '1', fetchImpl: okFetch })))).toEqual(['account_deletion', 'sign_in_with_apple']);
+    expect(ids(blocking(await preflightIos({ root, listing, reviewPhone: '1', fetchImpl: okFetch, marketingUrl: 'https://dev.example' })))).toEqual(['account_deletion', 'sign_in_with_apple']);
   });
 
   it('says when the privacy page does not open', async () => {
     const root = await reelMakerBefore({ code: 'requestTrackingAuthorization restore ember_screen' });
-    const found = await preflightIos({ root, listing, reviewPhone: '1', fetchImpl: deadFetch });
+    const found = await preflightIos({ root, listing, reviewPhone: '1', fetchImpl: deadFetch, marketingUrl: 'https://dev.example' });
     expect(found.find((f) => f.id === 'privacy_url')?.title).toMatch(/non si apre/);
   });
 
@@ -91,7 +92,7 @@ describe('iOS preflight', () => {
     const icon = await sharp({ create: { width: 64, height: 64, channels: 4, background: { r: 200, g: 20, b: 60, alpha: 0.5 } } }).png().toBuffer();
     expect(pngHasAlpha(icon)).toBe(true);
     await writeFile(path.join(dir, 'Icon-App-1024x1024@1x.png'), icon);
-    expect(ids(await preflightIos({ root, listing, reviewPhone: '1', fetchImpl: okFetch }))).toContain('icon_alpha');
+    expect(ids(await preflightIos({ root, listing, reviewPhone: '1', fetchImpl: okFetch, marketingUrl: 'https://dev.example' }))).toContain('icon_alpha');
     await fixPreflight('icon_alpha', { root, listing });
     expect(pngHasAlpha(await readFile(path.join(dir, 'Icon-App-1024x1024@1x.png')))).toBe(false);
   });
@@ -108,5 +109,20 @@ describe('store names and text', () => {
   it('drops the sentences that name Android or Google Play from Apple text', () => {
     expect(withoutOtherPlatforms('Great editor. Also on Android and Google Play!\nExport in HD.')).toBe('Great editor.\nExport in HD.');
     expect(withoutOtherPlatforms('Share to Instagram.')).toBe('Share to Instagram.');
+  });
+});
+
+describe('AdMob needs the developer website', () => {
+  it('blocks an app with ads and no Marketing URL, and checks app-ads.txt', async () => {
+    const root = await reelMakerBefore({ code: 'requestTrackingAuthorization restore ember_screen' });
+    const noSite = await preflightIos({ root, listing, reviewPhone: '1', fetchImpl: okFetch });
+    expect(blocking(noSite).map((f) => f.id)).toEqual(['marketing_url']);
+    const ads = (async (url: string) => new Response(String(url).endsWith('/app-ads.txt') ? 'google.com, pub-9999, DIRECT, f08c47fec0942fa0' : 'ok')) as unknown as typeof fetch;
+    const plist = path.join(root, 'ios', 'Runner', 'Info.plist');
+    await writeFile(plist, (await readFile(plist, 'utf8')).replace('ca-app-pub-1111~2222', 'ca-app-pub-1111~2222'));
+    const wrong = await preflightIos({ root, listing, reviewPhone: '1', fetchImpl: ads, marketingUrl: 'https://dev.example' });
+    expect(wrong.map((f) => f.id)).toContain('app_ads_txt');
+    const good = (async (url: string) => new Response(String(url).endsWith('/app-ads.txt') ? 'google.com, pub-1111, DIRECT, f08c47fec0942fa0' : 'ok')) as unknown as typeof fetch;
+    expect((await preflightIos({ root, listing, reviewPhone: '1', fetchImpl: good, marketingUrl: 'https://dev.example' })).map((f) => f.id)).not.toContain('app_ads_txt');
   });
 });

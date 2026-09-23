@@ -23,6 +23,9 @@ export interface AppleCredsPublic {
   p8File: string;
   /** The Apple Developer Team ID used to sign iPhone builds, e.g. "UBZ3HA24HT". */
   teamId: string;
+  /** Saved once for every app: review phone and developer website. */
+  reviewPhone?: string;
+  marketingUrl?: string;
   updatedAt?: string;
 }
 
@@ -33,6 +36,8 @@ interface Stored {
   teamId?: string;
   /** Phone Apple's reviewers may call, shared by every app of the account. */
   reviewPhone?: string;
+  /** The developer's website (Marketing URL), where app-ads.txt lives for AdMob. */
+  marketingUrl?: string;
   updatedAt: string;
 }
 
@@ -74,7 +79,7 @@ export async function readAppleCredsPublic(): Promise<AppleCredsPublic> {
     () => true,
     () => false,
   );
-  return { hasKey: present, keyId: m.keyId, issuerId: m.issuerId, p8File: m.p8File, teamId: m.teamId ?? '', updatedAt: m.updatedAt };
+  return { hasKey: present, keyId: m.keyId, issuerId: m.issuerId, p8File: m.p8File, teamId: m.teamId ?? '', reviewPhone: m.reviewPhone ?? '', marketingUrl: m.marketingUrl ?? '', updatedAt: m.updatedAt };
 }
 
 /** The saved IDs (no key contents), for the Runner's own use. */
@@ -94,6 +99,19 @@ export async function rememberReviewPhone(phone: string): Promise<void> {
   const clean = phone.trim();
   if (!m || !/^\+?[\d\s().-]{6,24}$/.test(clean) || m.reviewPhone === clean) return;
   await writeSecret(metaFile(), JSON.stringify({ ...m, reviewPhone: clean }, null, 2));
+}
+
+/** The developer website saved for the account (Marketing URL), if any. */
+export async function readMarketingUrl(): Promise<string> {
+  return (await readMeta())?.marketingUrl ?? '';
+}
+
+/** Remembers the developer website for every next app. */
+export async function rememberMarketingUrl(url: string): Promise<void> {
+  const m = await readMeta();
+  const clean = url.trim();
+  if (!m || !/^https:\/\/[^\s]+$/.test(clean) || m.marketingUrl === clean) return;
+  await writeSecret(metaFile(), JSON.stringify({ ...m, marketingUrl: clean }, null, 2));
 }
 
 /** Remembers the Team ID found on Apple, so the card can show it. */

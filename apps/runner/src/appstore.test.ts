@@ -209,6 +209,7 @@ describe('one-press publish: waiting for the build', () => {
         return ok(r.map((b, n) => ({ id: `B${b.version}-${n}`, attributes: { version: b.version, processingState: b.state } })));
       }
       if (u.includes('/reviewSubmissions?')) return ok([]);
+      if (u.includes('appStoreVersionLocalizations?')) return ok([]);
       if (u.includes('/items?')) return ok([]);
       return ok({ id: 'SUB1' });
     }) as unknown as typeof fetch;
@@ -227,7 +228,9 @@ describe('one-press publish: waiting for the build', () => {
     expect(done).toEqual({ attached: true, submitted: true });
     const attach = apple.calls.find((c) => c.includes('relationships/build'));
     expect(attach).toContain('PATCH /appStoreVersions/VER1/relationships/build');
-    expect(apple.calls.filter((c) => c.startsWith('GET /builds')).length).toBe(3);
+    expect(apple.calls.filter((c) => c.startsWith('GET /builds?')).length).toBe(3);
+    // A build made before the Info.plist answer gets it on Apple.
+    expect(apple.calls.some((c) => c.startsWith('PATCH /builds/'))).toBe(true);
     expect(apple.calls.some((c) => c.startsWith('PATCH /reviewSubmissions/SUB1'))).toBe(true);
     expect(seen.join(' | ')).toMatch(/compaia su Apple.*elaborando la build 12.*pronta/);
   });
@@ -266,5 +269,20 @@ describe('App Store purchases from the app', () => {
     const png = await sharp({ create: { width: 1080, height: 1920, channels: 4, background: { r: 250, g: 250, b: 255, alpha: 1 } } }).png().toBuffer();
     const meta = await sharp(await reviewScreenshotFor(png)).metadata();
     expect([meta.width, meta.height, meta.hasAlpha]).toEqual([1242, 2688, false]);
+  });
+});
+
+describe('what Ember always writes for Apple', () => {
+  it('promotional text from the short pitch, review notes from the app', async () => {
+    const { promotionalFrom, reviewNotesFor } = await import('./appstore.js');
+    expect(promotionalFrom({ subtitle: 'Open PDF, Word, Excel, images and P7M signed files — all in one reader!' })).toBe('Open PDF, Word, Excel, images and P7M signed files — all in one reader!');
+    const notes = reviewNotesFor({
+      facts: { ...NO_FACTS, ads: true },
+      products: [{ productId: 'x_premium_yearly', kind: 'subscription', name: 'Premium Yearly', description: 'd', price: 24.99, period: 'ONE_YEAR', freeTrial: 'ONE_WEEK' }],
+    });
+    expect(notes).toMatch(/No account or login/);
+    expect(notes).toMatch(/Premium Yearly \(x_premium_yearly, free trial\)/);
+    expect(notes).toMatch(/Restore/);
+    expect(notes).toMatch(/App Tracking Transparency/);
   });
 });

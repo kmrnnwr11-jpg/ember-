@@ -65,6 +65,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
   bool _screenshots = false;
   final _reviewEmail = TextEditingController();
   final _reviewPhone = TextEditingController();
+  final _marketingUrl = TextEditingController(); // developer website, where app-ads.txt lives
   final _reviewNotes = TextEditingController();
   final _demoUser = TextEditingController();
   final _demoPass = TextEditingController();
@@ -126,6 +127,9 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
         _keyId.text = '${creds['keyId'] ?? ''}';
         _issuer.text = '${creds['issuerId'] ?? ''}';
         _team.text = '${creds['teamId'] ?? ''}';
+        // Saved once for the account: shown filled for every app.
+        if (_reviewPhone.text.isEmpty) _reviewPhone.text = '${creds['reviewPhone'] ?? ''}';
+        if (_marketingUrl.text.isEmpty) _marketingUrl.text = '${creds['marketingUrl'] ?? ''}';
         _editingKey = !hasKey; // need the .p8 the first time
         _loading = false;
       });
@@ -144,6 +148,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
     _team.dispose();
     _reviewEmail.dispose();
     _reviewPhone.dispose();
+    _marketingUrl.dispose();
     _reviewNotes.dispose();
     _demoUser.dispose();
     _demoPass.dispose();
@@ -368,6 +373,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
         'category': ?_category,
         'free': _free,
         'screenshots': _screenshots,
+        if (_marketingUrl.text.trim().startsWith('https://')) 'marketingUrl': _marketingUrl.text.trim(),
         if (review.isNotEmpty) 'review': review,
       });
       _applyAuto(status);
@@ -741,6 +747,16 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
                 TextField(
                   controller: _reviewEmail,
                   decoration: const InputDecoration(labelText: 'Email di contatto (vuoto = il tuo account)', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _marketingUrl,
+                  keyboardType: TextInputType.url,
+                  decoration: const InputDecoration(
+                    labelText: 'Sito sviluppatore (Marketing URL)',
+                    helperText: 'AdMob cerca app-ads.txt qui. Salvato per tutte le app.',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(

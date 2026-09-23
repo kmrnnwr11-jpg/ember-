@@ -5,6 +5,7 @@ import { AppStore, AppStoreError, appleText, applePrivacyPlan, cutAtWord, finish
 import { AutoTracker, isRunning, needsFreshIpa, type AutoStatus } from './appstore_auto.js';
 import { MAX_VALUE, readSettings, SETTING_KEY, writeSettings } from './settings_store.js';
 import { appleProductsFrom, type AppleProduct, type DeclaredProduct } from './appstore_products.js';
+import { appleFacts, readAppleSettings } from './apple_settings.js';
 import { blocking, fixPreflight, preflightIos } from './ios_preflight.js';
 import { deleteAppleCreds, readAppleCreds, readAppleCredsPublic, readAppleKey, readMarketingUrl, readReviewPhone, rememberMarketingUrl, rememberReviewPhone, rememberTeamId, saveAppleCreds } from './apple_creds.js';
 import { teamFromAppStore } from './ios_signing.js';
@@ -513,8 +514,9 @@ export async function buildApp(
       // The reviewer wants to see the purchase screen: the screenshot of the paywall when there is one.
       const labels = await readFileAsync(path.join(root, 'lib', 'config', 'screenshot_screens.dart'), 'utf8').catch(() => '');
       const order = /order\s*=\s*<\w+>\[([\s\S]*?)\]/.exec(labels)?.[1]?.split(',').map((x) => x.trim()).filter(Boolean) ?? [];
-      const paywall = order.findIndex((x) => /premium|paywall|subscri|pro\b|upgrade/i.test(x));
-      const file = path.join(root, 'store', 'screenshots', `phone_${paywall >= 0 ? paywall + 1 : 1}.png`);
+      const paywall = order.findIndex((x) => /premium|paywall|subscri|pro\b|upgrade|unlock|shop|store/i.test(x));
+      const chosen = (await readAppleSettings(root)).reviewScreenshot;
+      const file = path.join(root, 'store', 'screenshots', chosen || `phone_${paywall >= 0 ? paywall + 1 : 1}.png`);
       const screenshot = await readFileAsync(file).catch(() => undefined);
       return { products, screenshot };
     };
@@ -539,6 +541,7 @@ export async function buildApp(
       if (!bundleId) throw new AppStoreError('no_bundle_id', 'Build the app once before publishing: its name is set at the first build.');
       // Always prefer the saved account key; fall back to any key sent in the body.
       const key = (await readAppleKey()) ?? parseAppStoreKey(body);
+      const settings = await readAppleSettings(root);
       // Screenshots need the local web preview and a browser; only wire them up
       // when the app has a screenshot mode and the preview is ready.
       let screenshots: { previewUrl: string; browser: string } | undefined;
@@ -564,7 +567,8 @@ export async function buildApp(
         listing: body.listing as AppStoreListing | undefined,
         translations: body.translations as AppStoreListing[] | undefined,
         privacyPolicyUrl: body.privacyPolicyUrl,
-        facts: await detectDataFacts(root),
+        facts: appleFacts(await detectDataFacts(root), settings),
+        kidsAgeBand: settings.kids ? (settings.kidsAgeBand ?? 'FIVE_AND_UNDER') : undefined,
         uploadBuild: body.uploadBuild,
         submit: body.submit,
         category: body.category,
@@ -695,7 +699,7 @@ export async function buildApp(
         bundleId,
         sku: bundleId.split('.').pop()?.replace(/[^a-z0-9]/gi, '').slice(0, 30) || project.id,
         primaryLocale: 'en-US',
-        privacy: applePrivacyPlan(await detectDataFacts(root)),
+        privacy: applePrivacyPlan(appleFacts(await detectDataFacts(root), await readAppleSettings(root))),
         bundleRegistered: false,
         at: new Date().toISOString(),
       };

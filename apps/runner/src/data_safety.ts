@@ -48,6 +48,8 @@ export interface AppDataFacts {
   payments: boolean;
   /** Other user content stored in the cloud. */
   cloudStorage: boolean;
+  /** App for children (Apple Kids category): nothing is used to track. */
+  kids?: boolean;
 }
 
 const has = (deps: Set<string>, ...names: string[]) => names.some((n) => deps.has(n));
@@ -147,11 +149,12 @@ export function declarations(f: AppDataFacts): DataDeclaration[] {
   add(f.cloudStorage && !f.photos && !f.files, { play: 'PSL_USER_GENERATED_CONTENT', apple: 'OTHER_USER_CONTENT', label: 'Altri contenuti dell’utente', purposes: own(), linked: f.account, tracking: false });
   add(f.contacts, { play: 'PSL_CONTACTS', apple: 'CONTACTS', label: 'Contatti', purposes: own(), linked: f.account, tracking: false });
   add(f.location, { play: 'PSL_PRECISE_LOCATION', apple: 'PRECISE_LOCATION', label: 'Posizione precisa', purposes: own(), linked: f.account, tracking: false });
-  add(f.approxLocation, { play: 'PSL_APPROX_LOCATION', apple: 'COARSE_LOCATION', label: 'Posizione approssimativa', purposes: bySdk(), linked: false, tracking: f.ads });
+  const track = f.ads && !f.kids; // child-directed ads never track
+  add(f.approxLocation, { play: 'PSL_APPROX_LOCATION', apple: 'COARSE_LOCATION', label: 'Posizione approssimativa', purposes: bySdk(), linked: false, tracking: track });
   add(f.purchases, { play: 'PSL_PURCHASE_HISTORY', apple: 'PURCHASE_HISTORY', label: 'Cronologia acquisti', purposes: own(), linked: f.account, tracking: false });
-  add(f.deviceId, { play: 'PSL_DEVICE_ID', apple: 'DEVICE_ID', label: 'ID dispositivo', purposes: f.ads ? ['ads'] : ['analytics'], linked: false, tracking: f.ads });
+  add(f.deviceId, { play: 'PSL_DEVICE_ID', apple: 'DEVICE_ID', label: 'ID dispositivo', purposes: f.ads ? ['ads'] : ['analytics'], linked: false, tracking: track });
   add(f.productInteraction, { play: 'PSL_USER_INTERACTION', apple: 'PRODUCT_INTERACTION', label: 'Interazione con il prodotto', purposes: bySdk(), linked: false, tracking: false });
-  add(f.ads, { play: null, apple: 'ADVERTISING_DATA', label: 'Dati sulla pubblicità', purposes: ['ads'], linked: false, tracking: true });
+  add(f.ads, { play: null, apple: 'ADVERTISING_DATA', label: 'Dati sulla pubblicità', purposes: ['ads'], linked: false, tracking: track });
   add(f.crashLogs, { play: 'PSL_CRASH_LOGS', apple: 'CRASH_DATA', label: 'Dati sui crash', purposes: ['analytics'], linked: false, tracking: false });
   add(f.performance, { play: 'PSL_PERFORMANCE_DIAGNOSTICS', apple: 'PERFORMANCE_DATA', label: 'Dati sulle prestazioni', purposes: ['analytics'], linked: false, tracking: false });
   return out;

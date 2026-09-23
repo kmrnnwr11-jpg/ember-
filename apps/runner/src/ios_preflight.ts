@@ -2,6 +2,7 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 import type { Finding } from './doctor.js';
+import { readAppleSettings } from './apple_settings.js';
 
 /**
  * What Apple would reject, checked before the app is sent: each rejection
@@ -121,8 +122,21 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
       });
     }
   }
-  const ads = has(...ADS_SDKS);
-  if (d.has('google_mobile_ads') && !plistString(plist, 'GADApplicationIdentifier')) {
+  const settings = await readAppleSettings(root);
+  const kids = !!settings.kids;
+  // The iPhone build may show no ads at all (Kids category): then AdMob rules do not apply there.
+  const ads = has(...ADS_SDKS) && settings.iosAds !== false;
+  if (kids && ads) {
+    add({
+      id: 'kids_ads',
+      severity: 'block',
+      title: 'Annunci in un’app per bambini su iPhone',
+      detail: 'Apple non ammette pubblicità di terze parti nelle app per bambini (1.3, 5.1.4): su iPhone gli annunci vanno spenti e "iosAds": false in store/apple_settings.json.',
+      fixable: false,
+      ask: 'This is a Kids category app on iPhone: never initialize or show ads on iOS (keep them on Android, child-directed). Make the ads service report unsupported when defaultTargetPlatform == TargetPlatform.iOS.',
+    });
+  }
+  if (ads && d.has('google_mobile_ads') && !plistString(plist, 'GADApplicationIdentifier')) {
     add({
       id: 'admob_app_id',
       severity: 'block',
@@ -135,7 +149,7 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
   // ---- Tracking permission (5.1.2) ----
   const asksTracking = /requestTrackingAuthorization/.test(code);
   const trackingText = plistString(plist, 'NSUserTrackingUsageDescription');
-  if (ads && !asksTracking) {
+  if (ads && !kids && !asksTracking) {
     add({
       id: 'att_request',
       severity: 'block',
@@ -145,7 +159,7 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
       ask: 'On iOS, show the App Tracking Transparency prompt before ads load: add the app_tracking_transparency package and call AppTrackingTransparency.requestTrackingAuthorization() when trackingAuthorizationStatus is notDetermined, after the Google UMP consent form and before MobileAds.instance.initialize(). If the user refuses, ads stay non-personalised and the app works the same. Keep an English NSUserTrackingUsageDescription in ios/Runner/Info.plist.',
     });
   }
-  if ((ads || asksTracking) && !trackingText) {
+  if (((ads && !kids) || asksTracking) && !trackingText) {
     add({ id: 'att_text', severity: 'block', title: 'Manca la frase del permesso di tracciamento', detail: 'Il popup di tracciamento senza NSUserTrackingUsageDescription fa chiudere l’app (2.1). Ember la aggiunge.', fixable: true });
   } else if (trackingText && !asksTracking && !ads) {
     add({
@@ -155,6 +169,10 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
       detail: 'Apple rifiuta un’app che dichiara il tracciamento senza chiederlo (5.1.2). Ember toglie la frase inutile.',
       fixable: true,
     });
+  }
+
+  if (kids && asksTracking) {
+    add({ id: 'kids_att', severity: 'block', title: 'Un’app per bambini non può chiedere il tracciamento', detail: 'Nelle app Kids il tracciamento non è ammesso: togli il popup App Tracking Transparency.', fixable: false, ask: 'Remove the App Tracking Transparency request and NSUserTrackingUsageDescription: this is a Kids category app.' });
   }
 
   // ---- Payments and accounts ----

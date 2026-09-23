@@ -137,3 +137,17 @@ describe('the ad library that builds for iPhone', () => {
     expect(found.find((f) => f.id === 'gma_version')!.ask).toMatch(/5\.3\.1/);
   });
 });
+
+describe('apps for children', () => {
+  it('blocks ads on iPhone in a Kids app, and asks no tracking prompt once they are off', async () => {
+    const root = await reelMakerBefore({ code: 'void main() {} // restore ember_screen', plist: PLIST('\t<key>GADApplicationIdentifier</key>\n\t<string>ca-app-pub-1~2</string>\n\t<key>NSPhotoLibraryUsageDescription</key>\n\t<string>p</string>\n\t<key>NSCameraUsageDescription</key>\n\t<string>c</string>') });
+    await mkdir(path.join(root, 'store'), { recursive: true });
+    await writeFile(path.join(root, 'store', 'apple_settings.json'), JSON.stringify({ kids: true }));
+    const withAds = blocking(await preflightIos({ root, listing, reviewPhone: '1', fetchImpl: okFetch, marketingUrl: 'https://dev.example' })).map((f) => f.id);
+    expect(withAds).toContain('kids_ads');
+    expect(withAds).not.toContain('att_request');
+    await writeFile(path.join(root, 'store', 'apple_settings.json'), JSON.stringify({ kids: true, iosAds: false }));
+    const off = blocking(await preflightIos({ root, listing, reviewPhone: '1', fetchImpl: okFetch })).map((f) => f.id);
+    expect(off).toEqual([]);
+  });
+});

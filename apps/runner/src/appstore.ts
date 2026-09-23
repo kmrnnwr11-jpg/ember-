@@ -681,8 +681,9 @@ export interface AgeRatingDeclaration {
 }
 
 /** A safe, "nothing to declare" questionnaire → 4+ (ads are declared, as Apple asks). */
-export function ageRating4Plus(facts?: Pick<AppDataFacts, 'ads'>): AgeRatingDeclaration {
+export function ageRating4Plus(facts?: Pick<AppDataFacts, 'ads'>, kidsAgeBand?: AgeRatingDeclaration['kidsAgeBand']): AgeRatingDeclaration {
   return {
+    kidsAgeBand: kidsAgeBand ?? null,
     advertising: !!facts?.ads,
     gunsOrOtherWeapons: 'NONE',
     healthOrWellnessTopics: false,
@@ -705,7 +706,6 @@ export function ageRating4Plus(facts?: Pick<AppDataFacts, 'ads'>): AgeRatingDecl
     violenceRealisticProlongedGraphicOrSadistic: 'NONE',
     gambling: false,
     unrestrictedWebAccess: false,
-    kidsAgeBand: null,
   };
 }
 
@@ -987,6 +987,8 @@ export interface AppStorePublishInput {
   uploadBuild?: boolean;
   /** Hand the version to Apple's reviewers at the end. */
   submit?: boolean;
+  /** Kids category age band (Made for Kids), when the app is for children. */
+  kidsAgeBand?: AgeRatingDeclaration['kidsAgeBand'];
   /** Age-rating answers. Defaults to 4+ when omitted. */
   ageRating?: AgeRatingDeclaration;
   /** App Store category id, e.g. "UTILITIES", "PRODUCTIVITY". */
@@ -1102,7 +1104,7 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
 
   // Age-rating questionnaire (defaults to 4+).
   let ageRated = false;
-  await store.setAgeRating(app.id, input.ageRating ?? ageRating4Plus(input.facts)).then(
+  await store.setAgeRating(app.id, input.ageRating ?? ageRating4Plus(input.facts, input.kidsAgeBand)).then(
     () => (ageRated = true),
     (e: unknown) => notes.push(`Fascia d'età non impostata: ${(e as Error).message}`),
   );

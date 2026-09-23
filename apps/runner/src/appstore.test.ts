@@ -16,6 +16,11 @@ const NO_FACTS: AppDataFacts = {
   ads: false,
   purchases: false,
   cloudStorage: false,
+  approxLocation: false,
+  performance: false,
+  productInteraction: false,
+  deviceId: false,
+  payments: false,
 };
 
 async function realKey() {
@@ -66,10 +71,19 @@ describe('privacy answers', () => {
   });
 
   it('follows what the app really uses, ads and login included', () => {
-    const rows = privacyCategories({ ...NO_FACTS, account: true, ads: true, crashLogs: true });
+    const rows = privacyCategories({ ...NO_FACTS, account: true, ads: true, deviceId: true, approxLocation: true, crashLogs: true });
     expect(rows.map((r) => r.category)).toContain('EMAIL_ADDRESS');
-    expect(rows.find((r) => r.category === 'EMAIL_ADDRESS')!.linked).toBe(true);
-    expect(rows.find((r) => r.category === 'DEVICE_ID')).toMatchObject({ purpose: 'THIRD_PARTY_ADVERTISING', linked: false });
+    expect(rows.find((r) => r.category === 'EMAIL_ADDRESS')).toMatchObject({ linked: true, tracking: false });
+    expect(rows.find((r) => r.category === 'DEVICE_ID')).toMatchObject({ purpose: 'THIRD_PARTY_ADVERTISING', linked: false, tracking: true });
+    expect(rows.filter((r) => r.category === 'COARSE_LOCATION').map((r) => r.purpose).sort()).toEqual(['ANALYTICS', 'THIRD_PARTY_ADVERTISING']);
+    expect(rows.find((r) => r.category === 'ADVERTISING_DATA')).toMatchObject({ tracking: true });
+  });
+
+  it('writes the website answers in App Store Connect words', async () => {
+    const { applePrivacyGuide } = await import('./appstore.js');
+    expect(applePrivacyGuide(NO_FACTS)).toEqual(['"No, non raccogliamo dati da quest’app"']);
+    const guide = applePrivacyGuide({ ...NO_FACTS, ads: true, deviceId: true });
+    expect(guide).toContain('ID dispositivo: Pubblicità di terze parti · collegato all’identità: No · monitoraggio: Sì');
   });
 });
 

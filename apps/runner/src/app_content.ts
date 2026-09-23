@@ -39,7 +39,7 @@ export async function appContentAnswers(projectRoot: string): Promise<{ facts: A
   const listing = (await readJson<Listing>(path.join(store, 'listing.json'))) ?? {};
   const products = (await readJson<{ products?: unknown[] }>(path.join(store, 'products.json')))?.products ?? [];
   const ads = (await readJson<{ enabled?: boolean }>(path.join(store, 'ads.json')))?.enabled ?? facts.ads;
-  const sells = products.length > 0 || facts.purchases;
+  const sells = products.length > 0 || facts.payments;
   const email = listing.contactEmail?.includes('@') ? listing.contactEmail : '';
 
   const titles: Record<string, string> = {

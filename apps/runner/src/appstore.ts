@@ -4,7 +4,7 @@ import { chmod, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/
 import os from 'node:os';
 import path from 'node:path';
 import { importPKCS8, SignJWT } from 'jose';
-import type { AppDataFacts } from './data_safety.js';
+import { declarations, type AppDataFacts, type DataDeclaration, type Purpose } from './data_safety.js';
 import { SCREEN_PARAM } from './screenshots.js';
 
 /**
@@ -749,27 +749,36 @@ export function keywordsFrom(page: { title?: string; subtitle?: string; descript
  * What the app collects, in Apple's own words. Deliberately the same source as
  * Google's Data safety, so the two stores can never be told different things.
  */
-export function privacyCategories(facts: AppDataFacts): Array<{ category: string; purpose: string; linked: boolean }> {
-  const out: Array<{ category: string; purpose: string; linked: boolean }> = [];
-  const add = (category: string, purpose: string, linked: boolean) => out.push({ category, purpose, linked });
-  if (facts.account) {
-    add('EMAIL_ADDRESS', 'APP_FUNCTIONALITY', true);
-    add('NAME', 'APP_FUNCTIONALITY', true);
-    add('USER_ID', 'APP_FUNCTIONALITY', true);
-  }
-  if (facts.photos) add('PHOTOS_OR_VIDEOS', 'APP_FUNCTIONALITY', true);
-  if (facts.contacts) add('CONTACTS', 'APP_FUNCTIONALITY', true);
-  if (facts.location) add('COARSE_LOCATION', 'APP_FUNCTIONALITY', true);
-  if (facts.microphone) add('AUDIO_DATA', 'APP_FUNCTIONALITY', true);
-  if (facts.messages) add('OTHER_USER_CONTENT', 'APP_FUNCTIONALITY', true);
-  if (facts.purchases) add('PURCHASE_HISTORY', 'APP_FUNCTIONALITY', true);
-  if (facts.crashLogs) add('CRASH_DATA', 'ANALYTICS', false);
-  if (facts.analytics) add('PRODUCT_INTERACTION', 'ANALYTICS', false);
-  if (facts.ads) {
-    add('DEVICE_ID', 'THIRD_PARTY_ADVERTISING', false);
-    add('ADVERTISING_DATA', 'THIRD_PARTY_ADVERTISING', false);
+export function privacyCategories(facts: AppDataFacts): Array<{ category: string; purpose: string; linked: boolean; tracking: boolean }> {
+  const APPLE_PURPOSE: Record<Purpose, string> = { app: 'APP_FUNCTIONALITY', analytics: 'ANALYTICS', ads: 'THIRD_PARTY_ADVERTISING', account: 'APP_FUNCTIONALITY' };
+  const out: Array<{ category: string; purpose: string; linked: boolean; tracking: boolean }> = [];
+  const seen = new Set<string>();
+  for (const d of declarations(facts)) {
+    if (!d.apple) continue;
+    for (const p of d.purposes) {
+      const purpose = APPLE_PURPOSE[p];
+      const id = `${d.apple}:${purpose}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      out.push({ category: d.apple, purpose, linked: d.linked, tracking: d.tracking });
+    }
   }
   return out;
+}
+
+/**
+ * The App Privacy answers in App Store Connect's own Italian words, one line
+ * per data type: what to tick, the purposes, linked to the user, tracking.
+ * Shown when the answers have to be given on the website.
+ */
+export function applePrivacyGuide(facts: AppDataFacts): string[] {
+  const words: Record<Purpose, string> = { app: 'Funzionalità dell’app', analytics: 'Analisi', ads: 'Pubblicità di terze parti', account: 'Funzionalità dell’app' };
+  const byLabel = new Map<string, DataDeclaration>();
+  for (const d of declarations(facts)) if (d.apple && !byLabel.has(d.label)) byLabel.set(d.label, d);
+  if (byLabel.size === 0) return ['"No, non raccogliamo dati da quest’app"'];
+  return [...byLabel.values()].map(
+    (d) => `${d.label}: ${[...new Set(d.purposes.map((p) => words[p]))].join(' + ')} · collegato all’identità: ${d.linked ? 'Sì' : 'No'} · monitoraggio: ${d.tracking ? 'Sì' : 'No'}`,
+  );
 }
 
 /** The .ipa a finished iPhone build leaves behind. */
@@ -917,12 +926,7 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
       privacy = await store.writePrivacy(app.id, input.facts);
     } catch (e) {
       if (!(e instanceof AppStoreError)) throw e;
-      const cats = privacyCategories(input.facts);
-      notes.push(
-        cats.length === 0
-          ? 'Privacy dell’app: compilala una volta su App Store Connect → Privacy dell’app → "No, non raccogliamo dati".'
-          : `Privacy dell’app: compilala una volta su App Store Connect → Privacy dell’app. Dati raccolti: ${[...new Set(cats.map((c) => c.category))].join(', ')} (scopi: ${[...new Set(cats.map((c) => c.purpose))].join(', ')}).`,
-      );
+      notes.push(`Privacy dell’app: compilala una volta su App Store Connect → Privacy dell’app → Inizia. Risposte: ${applePrivacyGuide(input.facts).join(' | ')}`);
     }
   }
 

@@ -112,6 +112,24 @@ export class AppStore {
     return (text ? JSON.parse(text) : {}) as T;
   }
 
+  /**
+   * Registers the Bundle ID on the developer account when it is missing, so the
+   * app can be created on App Store Connect (the public API cannot create apps).
+   */
+  async ensureBundleId(identifier: string, name: string): Promise<{ id: string; created: boolean }> {
+    const { data } = await this.call<{ data: Resource[] }>('GET', `/bundleIds?filter[identifier]=${encodeURIComponent(identifier)}&limit=5`, undefined, 'Looking for the Bundle ID');
+    // The filter matches prefixes too: take the exact one.
+    const found = (data ?? []).find((b) => `${b.attributes?.identifier ?? ''}` === identifier);
+    if (found) return { id: found.id, created: false };
+    const created = await this.call<{ data: Resource }>(
+      'POST',
+      '/bundleIds',
+      { data: { type: 'bundleIds', attributes: { identifier, name: name.replace(/[^\p{L}\p{N} ]+/gu, ' ').trim().slice(0, 60) || identifier, platform: 'IOS' } } },
+      'Registering the Bundle ID',
+    );
+    return { id: created.data.id, created: true };
+  }
+
   /** The app with this Bundle ID, as Apple knows it. */
   async findApp(bundleId: string): Promise<{ id: string; name: string }> {
     const { data } = await this.call<{ data: Resource[] }>('GET', `/apps?filter[bundleId]=${encodeURIComponent(bundleId)}&limit=1`, undefined, 'Looking for the app');
@@ -119,7 +137,7 @@ export class AppStore {
     if (!app) {
       throw new AppStoreError(
         'app_not_found',
-        `App Store Connect has no app with Bundle ID ${bundleId}. Create it once in App Store Connect (My Apps → +), then Ember does the rest.`,
+        `App Store Connect non ha ancora un'app con Bundle ID ${bundleId}. Apri App Store Connect nel browser con l'estensione Ember e premi "Crea l'app": poi Ember fa il resto.`,
         404,
       );
     }
@@ -781,6 +799,23 @@ export function privacyCategories(facts: AppDataFacts): Array<{ category: string
 }
 
 /**
+ * The App Privacy answers for the browser extension, in App Store Connect's
+ * ids: one entry per data type with its purposes, linked and tracking. An
+ * empty list means "we do not collect data".
+ */
+export function applePrivacyPlan(facts: AppDataFacts): Array<{ category: string; label: string; purposes: string[]; linked: boolean; tracking: boolean }> {
+  const byCategory = new Map<string, { category: string; label: string; purposes: string[]; linked: boolean; tracking: boolean }>();
+  for (const row of privacyCategories(facts)) {
+    const e = byCategory.get(row.category) ?? { category: row.category, label: declarations(facts).find((d) => d.apple === row.category)?.label ?? row.category, purposes: [], linked: false, tracking: false };
+    if (!e.purposes.includes(row.purpose)) e.purposes.push(row.purpose);
+    e.linked ||= row.linked;
+    e.tracking ||= row.tracking;
+    byCategory.set(row.category, e);
+  }
+  return [...byCategory.values()];
+}
+
+/**
  * The App Privacy answers in App Store Connect's own Italian words, one line
  * per data type: what to tick, the purposes, linked to the user, tracking.
  * Shown when the answers have to be given on the website.
@@ -910,7 +945,13 @@ export interface AppStorePublishResult {
  */
 export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: Fetch = fetch): Promise<AppStorePublishResult> {
   const store = await AppStore.open(input.key, fetchImpl);
-  const app = await store.findApp(input.bundleId);
+  const app = await store.findApp(input.bundleId).catch(async (e: unknown) => {
+    // Half the way there by itself: the Bundle ID the app will need is registered now.
+    if (e instanceof AppStoreError && e.code === 'app_not_found') {
+      await store.ensureBundleId(input.bundleId, input.listing?.title ?? input.bundleId).catch(() => null);
+    }
+    throw e;
+  });
   const notes: string[] = [];
 
   let buildUploaded = false;

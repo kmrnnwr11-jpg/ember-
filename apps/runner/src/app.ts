@@ -1,7 +1,7 @@
 ﻿import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
-import { AppStore, AppStoreError, finishWhenBuildReady, parseAppStoreKey, projectBuildNumber, projectVersion, publishToAppStore, type AppStoreListing, type AppStorePublishInput, type AppStorePublishResult } from './appstore.js';
+import { AppStore, AppStoreError, appleText, applePrivacyPlan, cutAtWord, finishWhenBuildReady, parseAppStoreKey, projectBuildNumber, projectVersion, publishToAppStore, type AppStoreListing, type AppStorePublishInput, type AppStorePublishResult } from './appstore.js';
 import { AutoTracker, isRunning, needsFreshIpa, type AutoStatus } from './appstore_auto.js';
 import { blocking, fixPreflight, preflightIos } from './ios_preflight.js';
 import { deleteAppleCreds, readAppleCreds, readAppleCredsPublic, readAppleKey, readReviewPhone, rememberReviewPhone, rememberTeamId, saveAppleCreds } from './apple_creds.js';
@@ -175,6 +175,17 @@ export async function buildApp(
    * extension: a web page cannot read this response.
    */
   let helperApp: Record<string, unknown> | null = null;
+
+  /** The same for App Store Connect: the app to create and its App Privacy answers. */
+  let helperApple: Record<string, unknown> | null = null;
+
+  app.get('/helper/apple', async (req, reply) => {
+    const origin = req.headers.origin ?? '';
+    if (origin.startsWith('chrome-extension://')) reply.header('access-control-allow-origin', origin);
+    reply.header('cache-control', 'no-store');
+    if (!helperApple) return reply.status(404).send({ code: 'no_app', message: 'Apri l’app in Ember, scheda App Store: da lì Ember prepara i dati per l’estensione.' });
+    return helperApple;
+  });
 
   app.get('/helper/app', async (req, reply) => {
     const origin = req.headers.origin ?? '';
@@ -566,10 +577,46 @@ export async function buildApp(
       };
     };
 
+    /**
+     * What the browser extension needs on App Store Connect for this app: the
+     * names to create it with, and the App Privacy answers from the same table
+     * as Google's Data safety. The Bundle ID is registered on the way.
+     */
+    const prepareAppleHelper = async (project: ProjectRow): Promise<Record<string, unknown>> => {
+      const root = services.projectRoot(project);
+      const gradle = await readFileAsync(path.join(root, 'android', 'app', 'build.gradle.kts'), 'utf8').catch(() => '');
+      const bundleId = /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
+      const { title } = await storeTitle(root);
+      const name = cutAtWord(appleText(title || project.name), 30);
+      const plan = {
+        name,
+        bundleId,
+        sku: bundleId.split('.').pop()?.replace(/[^a-z0-9]/gi, '').slice(0, 30) || project.id,
+        primaryLocale: 'en-US',
+        privacy: applePrivacyPlan(await detectDataFacts(root)),
+        bundleRegistered: false,
+        at: new Date().toISOString(),
+      };
+      const key = await readAppleKey().catch(() => null);
+      if (key && bundleId && !bundleId.startsWith('dev.fluttercursor.app.')) {
+        plan.bundleRegistered = await (await AppStore.open(key)).ensureBundleId(bundleId, name).then(() => true, () => false);
+      }
+      helperApple = plan;
+      return plan;
+    };
+
+    r.post('/v1/projects/:projectId/helper/apple', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      return prepareAppleHelper(project);
+    });
+
     // What Apple would reject, checked before sending: blocks, warnings, and who fixes each.
+    // Opening the App Store card also readies the browser extension for this app.
     r.get('/v1/projects/:projectId/appstore/preflight', async (req) => {
       const { projectId } = req.params as { projectId: string };
       const { project } = await services.ownedProject(req.user.id, projectId);
+      await prepareAppleHelper(project).catch(() => null);
       return { findings: await preflightIos(await preflightContext(services.projectRoot(project))) };
     });
 

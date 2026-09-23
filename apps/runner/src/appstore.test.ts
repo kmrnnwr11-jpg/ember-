@@ -141,7 +141,7 @@ describe('publishing to the App Store', () => {
     const apple = fakeApple({ appExists: false });
     await expect(
       publishToAppStore({ key: parseAppStoreKey(await realKey()), bundleId: 'com.x.y', versionString: '1.0.0', projectRoot: 'nowhere' }, apple.impl),
-    ).rejects.toThrow(/App Store Connect has no app/);
+    ).rejects.toThrow(/non ha ancora un'app.*Crea l'app/);
   });
 
   it('refuses the upload away from a Mac, and says what to do', async () => {

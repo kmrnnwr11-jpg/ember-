@@ -1,26 +1,67 @@
 {
   "manifest_version": 3,
-  "name": "Ember – Play Console helper",
-  "version": "0.1.0",
-  "description": "Fills the Play Console App content answers for an app built with Ember. Nothing is saved until you press Save yourself.",
-  "permissions": ["storage", "activeTab", "clipboardRead"],
-  "host_permissions": ["https://play.google.com/console/*", "http://127.0.0.1:8787/*"],
+  "name": "Ember – Play Console e App Store Connect",
+  "version": "0.2.0",
+  "description": "Compila per te la Play Console (Contenuti dell’app) e App Store Connect (crea l’app, Privacy dell’app) per un’app fatta con Ember. Non scrive nulla finché non premi un pulsante.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "clipboardRead"
+  ],
+  "host_permissions": [
+    "https://play.google.com/console/*",
+    "http://127.0.0.1:8787/*",
+    "https://appstoreconnect.apple.com/*"
+  ],
   "action": {
     "default_title": "Ember",
     "default_popup": "popup.html"
   },
   "web_accessible_resources": [
     {
-      "resources": ["rules.js"],
-      "matches": ["https://play.google.com/*"]
+      "resources": [
+        "rules.js"
+      ],
+      "matches": [
+        "https://play.google.com/*"
+      ]
+    },
+    {
+      "resources": [
+        "apple_rules.js"
+      ],
+      "matches": [
+        "https://appstoreconnect.apple.com/*"
+      ]
     }
   ],
   "content_scripts": [
     {
-      "matches": ["https://play.google.com/console/*"],
-      "js": ["content.js"],
-      "css": ["panel.css"],
+      "matches": [
+        "https://play.google.com/console/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "panel.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://appstoreconnect.apple.com/*"
+      ],
+      "js": [
+        "apple.js"
+      ],
+      "css": [
+        "panel.css"
+      ],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
 }

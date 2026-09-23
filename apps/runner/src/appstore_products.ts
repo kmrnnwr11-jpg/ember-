@@ -356,11 +356,22 @@ export function appleProductsFrom(declared: DeclaredProduct[], project: string):
  */
 export async function submitProductsWithVersion(store: AppStore, appId: string): Promise<string[]> {
   const sent: string[] = [];
-  const groups = await all(store, `/apps/${appId}/subscriptionGroups?include=subscriptions&limit=50`, 'Reading the subscriptions').catch(() => [] as Res[]);
-  const subs = await Promise.all(groups.map((g) => all(store, `/subscriptionGroups/${g.id}/subscriptions?limit=50`, 'Reading the subscriptions')));
-  for (const sub of subs.flat().filter((x) => x.attributes?.state === 'READY_TO_SUBMIT')) {
-    await store.call('POST', '/subscriptionSubmissions', { data: { type: 'subscriptionSubmissions', relationships: { subscription: { data: { type: 'subscriptions', id: sub.id } } } } }, `Sending ${sub.attributes?.productId}`);
-    sent.push(`${sub.attributes?.productId}`);
+  // Same order as the website's draft: the group, its subscriptions, then one-time purchases.
+  // (A new group alone is refused: "must be submitted with an auto-renewable subscription".)
+  const groups = await all(store, `/apps/${appId}/subscriptionGroups?limit=50`, 'Reading the subscription groups').catch(() => [] as Res[]);
+  for (const g of groups) {
+    const subs = (await all(store, `/subscriptionGroups/${g.id}/subscriptions?limit=50`, 'Reading the subscriptions')).filter((x) => x.attributes?.state === 'READY_TO_SUBMIT');
+    if (!subs.length) continue;
+    await store
+      .call('POST', '/subscriptionGroupSubmissions', { data: { type: 'subscriptionGroupSubmissions', relationships: { subscriptionGroup: { data: { type: 'subscriptionGroups', id: g.id } } } } }, `Sending the group ${g.attributes?.referenceName ?? ''}`)
+      .catch((e: unknown) => {
+        // Already in the submission, or not needed for a group Apple knows: the subscriptions decide.
+        if (!/already|duplicate|not.*allowed/i.test((e as Error).message)) throw e;
+      });
+    for (const sub of subs) {
+      await store.call('POST', '/subscriptionSubmissions', { data: { type: 'subscriptionSubmissions', relationships: { subscription: { data: { type: 'subscriptions', id: sub.id } } } } }, `Sending ${sub.attributes?.productId}`);
+      sent.push(`${sub.attributes?.productId}`);
+    }
   }
   const iaps = await all(store, `/apps/${appId}/inAppPurchasesV2?limit=200`, 'Reading the in-app purchases').catch(() => [] as Res[]);
   for (const iap of iaps.filter((x) => x.attributes?.state === 'READY_TO_SUBMIT')) {

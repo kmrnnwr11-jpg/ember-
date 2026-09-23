@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { appIdFromUrl, appleError, createAppBody, NOT_COLLECTED, privacyDiff, privacyRows, privacySummary, rowsFromApple, usageBody } from './apple_rules.js';
+import { appIdFromUrl, appleError, createAppBody, NOT_COLLECTED, privacyDiff, privacyRows, privacySummary, reviewBodies, rowsFromApple, usageBody } from './apple_rules.js';
 
 /** Reel Maker's answers, as the Runner hands them over. */
 const reelMaker = [
@@ -72,4 +72,12 @@ test('small helpers', () => {
   assert.match(appleError(403, {}), /ricarica App Store Connect/);
   assert.match(appleError(409, { errors: [{ detail: 'The app name you entered is already being used.' }] }), /nome è già usato/);
   assert.match(privacySummary(reelMaker)[1], /^ID dispositivo: Pubblicità di terze parti · collegato: No · tracciamento: Sì$/);
+});
+
+test('the review holds the version, then the group, its subscriptions and one-time purchases', () => {
+  const steps = reviewBodies({ submissionId: 'S', versionId: 'V', groupIds: ['G'], subscriptionIds: ['A', 'B'], purchaseIds: ['L'] });
+  assert.deepEqual(steps.map(([r]) => r), ['reviewSubmissionItems', 'subscriptionGroupSubmissions', 'subscriptionSubmissions', 'subscriptionSubmissions', 'inAppPurchaseSubmissions']);
+  assert.equal(steps[0][1].data.relationships.appStoreVersion.data.id, 'V');
+  assert.equal(steps[4][1].data.relationships.inAppPurchaseV2.data.type, 'inAppPurchases');
+  assert.equal(reviewBodies({ submissionId: 'S', versionId: null }).length, 0);
 });

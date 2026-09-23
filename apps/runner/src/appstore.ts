@@ -367,7 +367,15 @@ export class AppStore {
       );
     }
     // What must travel with the version (an app's first purchases) goes in now, while it is open.
-    await withVersion?.();
+    // If Apple refuses it, the version leaves the draft again: a version stuck in a draft hides
+    // the page's purchase section and blocks the next try.
+    try {
+      await withVersion?.();
+    } catch (e) {
+      const { data: items } = await this.call<{ data: Resource[] }>('GET', `/reviewSubmissions/${subId}/items?limit=20`, undefined, 'Reading the review submission').catch(() => ({ data: [] as Resource[] }));
+      for (const it of items ?? []) await this.call('DELETE', `/reviewSubmissionItems/${it.id}`, undefined, 'Taking the version out of the draft').catch(() => {});
+      throw e;
+    }
     await this.call('PATCH', `/reviewSubmissions/${subId}`, { data: { type: 'reviewSubmissions', id: subId, attributes: { submitted: true } } }, 'Sending for review');
   }
 
@@ -1196,7 +1204,11 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
     const withProducts = () =>
       submitProductsWithVersion(store, app.id).then(
         (sent) => sent.length && notes.push(`Inviati in revisione con la versione: ${sent.join(', ')}`),
-        (e: unknown) => notes.push(`Acquisti non inviati con la versione (selezionali nella pagina della versione): ${(e as Error).message}`),
+        (e: unknown) => {
+          // Never send the app without its purchases: the reviewer would find an empty paywall.
+          notes.push(`Abbonamenti non accettati da Apple via API: su App Store Connect premi EMBER → "Invia in revisione". (${(e as Error).message})`);
+          throw e;
+        },
       );
     await store.submitForReview(version.id, app.id, withProducts).then(
       () => (submitted = true),
@@ -1275,7 +1287,9 @@ export async function finishWhenBuildReady(input: FinishInput, fetchImpl: Fetch 
         await store.submitForReview(input.versionId, input.appId, () =>
           submitProductsWithVersion(store, input.appId).then(
             (sent) => sent.length && input.onProgress?.(`Acquisti inviati con la versione: ${sent.join(', ')}`),
-            () => input.onProgress?.('Acquisti da selezionare nella pagina della versione'),
+            (e: unknown) => {
+              throw new AppStoreError('products_refused', `Abbonamenti non accettati da Apple via API: su App Store Connect premi EMBER → "Invia in revisione". (${(e as Error).message})`);
+            },
           ),
         );
         return { attached: true, submitted: true };

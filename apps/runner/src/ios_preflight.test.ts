@@ -24,7 +24,7 @@ ${extra}
 async function reelMakerBefore(opts: { code?: string; plist?: string; deps?: string } = {}) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'ember-pre-'));
   const deps = opts.deps ?? 'image_picker, audioplayers, in_app_purchase, google_mobile_ads';
-  await writeFile(path.join(root, 'pubspec.yaml'), `name: x\ndependencies:\n${deps.split(',').map((d) => `  ${d.trim()}: any`).join('\n')}\n\ndev_dependencies:\n  flutter_test: any\n`);
+  await writeFile(path.join(root, 'pubspec.yaml'), `name: x\ndependencies:\n${deps.split(',').map((d) => `  ${d.trim()}: ${d.trim() === 'google_mobile_ads' ? '5.3.1' : 'any'}`).join('\n')}\n\ndev_dependencies:\n  flutter_test: any\n`);
   await mkdir(path.join(root, 'lib'), { recursive: true });
   await writeFile(path.join(root, 'lib', 'main.dart'), opts.code ?? "void main() {} // restorePurchases, Uri.base.queryParameters['ember_screen']");
   await mkdir(path.join(root, 'ios', 'Runner.xcodeproj'), { recursive: true });
@@ -124,5 +124,16 @@ describe('AdMob needs the developer website', () => {
     expect(wrong.map((f) => f.id)).toContain('app_ads_txt');
     const good = (async (url: string) => new Response(String(url).endsWith('/app-ads.txt') ? 'google.com, pub-1111, DIRECT, f08c47fec0942fa0' : 'ok')) as unknown as typeof fetch;
     expect((await preflightIos({ root, listing, reviewPhone: '1', fetchImpl: good, marketingUrl: 'https://dev.example' })).map((f) => f.id)).not.toContain('app_ads_txt');
+  });
+});
+
+describe('the ad library that builds for iPhone', () => {
+  it('blocks google_mobile_ads left on "any" (9.x fails with Xcode 26)', async () => {
+    const root = await reelMakerBefore({ code: 'requestTrackingAuthorization restore ember_screen' });
+    const pub = path.join(root, 'pubspec.yaml');
+    await writeFile(pub, (await readFile(pub, 'utf8')).replace('google_mobile_ads: 5.3.1', 'google_mobile_ads: any'));
+    const found = await preflightIos({ root, listing, reviewPhone: '1', fetchImpl: okFetch, marketingUrl: 'https://dev.example' });
+    expect(blocking(found).map((f) => f.id)).toEqual(['gma_version']);
+    expect(found.find((f) => f.id === 'gma_version')!.ask).toMatch(/5\.3\.1/);
   });
 });

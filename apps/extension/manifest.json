@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Ember – Play Console e App Store Connect",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Compila per te la Play Console (Contenuti dell’app) e App Store Connect (crea l’app, Privacy dell’app) per un’app fatta con Ember. Non scrive nulla finché non premi un pulsante.",
   "permissions": [
     "storage",

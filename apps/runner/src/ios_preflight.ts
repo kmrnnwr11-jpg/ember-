@@ -271,14 +271,28 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
       fixable: true,
     });
   }
-  const adsConfig = `${plist}\n${await read(root, 'lib', 'config', 'ads_config.dart')}`;
-  if (ads && adsConfig.includes(TEST_ADMOB)) {
+  // The iPhone ids only: an ads config keeps Google's test ids for debug builds too.
+  const iosIds = `${plistString(plist, 'GADApplicationIdentifier') ?? ''}\n${[...(await read(root, 'lib', 'config', 'ads_config.dart')).matchAll(/ios\w*Id\s*=\s*\n?\s*'([^']+)'/gi)].map((m) => m[1]).join('\n')}`;
+  if (ads && iosIds.includes(TEST_ADMOB)) {
     add({
       id: 'admob_test_ids',
       severity: 'warn',
       title: 'Annunci di prova (ID di test di Google)',
       detail: 'Apple accetta l’app, ma gli annunci non ti fanno guadagnare nulla. Inserisci gli ID veri di AdMob per iPhone nella scheda Annunci.',
       fixable: false,
+    });
+  }
+  // google_mobile_ads 9.x fails the iPhone archive with Xcode 26 ("non-modular header"): 5.3.1 builds.
+  const gma = /^\s{2}google_mobile_ads:\s*(\S+)/m.exec(pubspec)?.[1] ?? '';
+  const lockGma = /google_mobile_ads:[\s\S]*?version:\s*"(\d+)\./.exec(await read(root, 'pubspec.lock'))?.[1];
+  if (d.has('google_mobile_ads') && (gma === 'any' || Number(lockGma ?? 0) >= 6)) {
+    add({
+      id: 'gma_version',
+      severity: 'block',
+      title: 'La libreria degli annunci (google_mobile_ads) è troppo nuova per iPhone',
+      detail: 'Dalla 6 in su non compila con Xcode 26. Ember la fissa alla 5.3.1, che funziona.',
+      fixable: false,
+      ask: 'Pin google_mobile_ads to exactly 5.3.1 in pubspec.yaml, run flutter pub get, and adapt any API the app uses that 5.3.1 lacks (e.g. use AdSize.getAnchoredAdaptiveBannerAdSize instead of getLargeAnchoredAdaptiveBannerAdSizeWithOrientation).',
     });
   }
   const icon = await readFile(iconFile(root)).catch(() => null);

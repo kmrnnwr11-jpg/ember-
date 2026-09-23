@@ -144,6 +144,44 @@
     if (/\/privacy/.test(location.pathname)) setTimeout(() => location.reload(), 1500);
   }
 
+  /**
+   * Sends the version for review together with the app's first purchases,
+   * the way the website's "Draft Submission" does it.
+   */
+  async function submitAll() {
+    const { reviewBodies } = await load();
+    const id = appId ?? (await findApp());
+    if (!id) return say('L’app non c’è ancora su App Store Connect.', 'ember-warn');
+    const versions = await iris('GET', `apps/${id}/appStoreVersions?filter[platform]=IOS&limit=5`);
+    const version = (versions.data ?? []).find((v) => ['PREPARE_FOR_SUBMISSION', 'READY_FOR_REVIEW', 'DEVELOPER_REJECTED', 'REJECTED', 'METADATA_REJECTED'].includes(v.attributes?.appStoreState));
+    if (!version) return say('Nessuna versione da inviare: premi prima Publish in Ember.', 'ember-warn');
+    const open = await iris('GET', `reviewSubmissions?filter[app]=${id}&filter[platform]=IOS&filter[state]=READY_FOR_REVIEW&limit=5`);
+    let submissionId = open.data?.[0]?.id;
+    if (!submissionId) {
+      const created = await iris('POST', 'reviewSubmissions', { data: { type: 'reviewSubmissions', attributes: { platform: 'IOS' }, relationships: { app: { data: { type: 'apps', id } } } } });
+      submissionId = created.data.id;
+    }
+    const items = await iris('GET', `reviewSubmissions/${submissionId}/items?include=appStoreVersion&limit=20`);
+    const hasVersion = (items.data ?? []).some((it) => it.relationships?.appStoreVersion?.data?.id === version.id);
+    const groups = (await iris('GET', `apps/${id}/subscriptionGroups?limit=50`)).data ?? [];
+    const groupIds = [];
+    const subscriptionIds = [];
+    for (const g of groups) {
+      const subs = ((await iris('GET', `subscriptionGroups/${g.id}/subscriptions?limit=50`)).data ?? []).filter((x) => x.attributes?.state === 'READY_TO_SUBMIT');
+      if (subs.length) groupIds.push(g.id);
+      subscriptionIds.push(...subs.map((x) => x.id));
+    }
+    const purchaseIds = ((await iris('GET', `apps/${id}/inAppPurchasesV2?limit=200`)).data ?? []).filter((x) => x.attributes?.state === 'READY_TO_SUBMIT').map((x) => x.id);
+    for (const [resource, body] of reviewBodies({ submissionId, versionId: hasVersion ? null : version.id, groupIds, subscriptionIds, purchaseIds })) {
+      await iris('POST', resource, body).catch((e) => {
+        if (!/already|duplicate/i.test(e.message)) throw e;
+      });
+    }
+    say(`Nella revisione: versione ${version.attributes?.versionString}, ${subscriptionIds.length} abbonamenti, ${purchaseIds.length} acquisti`);
+    await iris('PATCH', `reviewSubmissions/${submissionId}`, { data: { type: 'reviewSubmissions', id: submissionId, attributes: { submitted: true } } });
+    say('Inviata in revisione ad Apple ✓', 'ember-ok');
+  }
+
   async function open() {
     panel.replaceChildren(el('p', {}, 'Chiedo a Ember quale app…'));
     panel.hidden = false;
@@ -166,6 +204,7 @@
         actionButton('Crea l’app', createApp),
         actionButton('Controlla Privacy', checkPrivacy),
         actionButton('Compila Privacy', fillPrivacy),
+        actionButton('Invia in revisione', submitAll),
       ),
       log,
     );

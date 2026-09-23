@@ -136,3 +136,21 @@ export function privacySummary(privacy) {
     (d) => `${d.label}: ${d.purposes.map((p) => PURPOSE_IT[p] ?? p).join(' + ')} · collegato: ${d.linked ? 'Sì' : 'No'} · tracciamento: ${d.tracking ? 'Sì' : 'No'}`,
   );
 }
+
+/**
+ * What goes into the review with the version, in the website's own order:
+ * the version, each subscription group, its subscriptions, one-time purchases.
+ * Apple refuses a new group alone ("must be submitted with an auto-renewable
+ * subscription") and a first subscription without the version.
+ */
+export function reviewBodies({ submissionId, versionId, groupIds = [], subscriptionIds = [], purchaseIds = [] }) {
+  const rel = (type, id) => ({ data: { type, id } });
+  return [
+    ...(versionId
+      ? [['reviewSubmissionItems', { data: { type: 'reviewSubmissionItems', relationships: { reviewSubmission: rel('reviewSubmissions', submissionId), appStoreVersion: rel('appStoreVersions', versionId) } } }]]
+      : []),
+    ...groupIds.map((id) => ['subscriptionGroupSubmissions', { data: { type: 'subscriptionGroupSubmissions', relationships: { subscriptionGroup: rel('subscriptionGroups', id) } } }]),
+    ...subscriptionIds.map((id) => ['subscriptionSubmissions', { data: { type: 'subscriptionSubmissions', relationships: { subscription: rel('subscriptions', id) } } }]),
+    ...purchaseIds.map((id) => ['inAppPurchaseSubmissions', { data: { type: 'inAppPurchaseSubmissions', relationships: { inAppPurchaseV2: rel('inAppPurchases', id) } } }]),
+  ];
+}

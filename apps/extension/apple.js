@@ -102,6 +102,9 @@
     const diff = privacyDiff(await currentPrivacy(id), privacyRows(plan.privacy));
     if (diff.same) return say('La Privacy su Apple è già giusta ✓', 'ember-ok');
     say(`Da sistemare: ${diff.missing.length} risposte mancanti, ${diff.extra.length} in più.`, 'ember-warn');
+    const { rowText } = await load();
+    diff.missing.forEach((r) => say(`+ manca: ${rowText(r)}`, 'ember-small'));
+    diff.extra.forEach((r) => say(`− in più: ${rowText(r)}`, 'ember-small'));
     return diff;
   }
 

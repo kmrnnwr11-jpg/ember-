@@ -9,10 +9,14 @@ const reelMaker = [
   { category: 'CRASH_DATA', label: 'Dati sui crash', purposes: ['ANALYTICS'], linked: false, tracking: false },
 ];
 
-test('one row per data type, purpose and answer; tracking is its own row', () => {
+test('one row per data type and purpose; tracking once per data type, without purpose', () => {
   const rows = privacyRows(reelMaker);
-  assert.equal(rows.length, 2 * 2 + 2 + 1);
-  assert.deepEqual(rows.filter((r) => r.category === 'DEVICE_ID').map((r) => r.protection), ['DATA_NOT_LINKED_TO_YOU', 'DATA_USED_TO_TRACK_YOU']);
+  // Location: 2 purposes + tracking; device id: 1 + tracking; crash: 1.
+  assert.equal(rows.length, 3 + 2 + 1);
+  assert.deepEqual(rows.filter((r) => r.protection === 'DATA_USED_TO_TRACK_YOU').map((r) => [r.category, r.purpose]), [
+    ['COARSE_LOCATION', null],
+    ['DEVICE_ID', null],
+  ]);
   assert.deepEqual(privacyRows([]), [{ category: null, purpose: null, protection: NOT_COLLECTED }]);
 });
 

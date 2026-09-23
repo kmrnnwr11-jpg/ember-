@@ -17,19 +17,24 @@ export const TRACKING = 'DATA_USED_TO_TRACK_YOU';
 export const NOT_COLLECTED = 'DATA_NOT_COLLECTED';
 
 /**
- * One row per (data type, purpose, answer), the way App Store Connect keeps
- * them. An app that collects nothing is a single "not collected" row.
+ * The rows the way App Store Connect keeps them: one per (data type, purpose)
+ * with linked / not linked, plus ONE "used to track you" row per data type,
+ * without a purpose (checked against an app answered by hand on the website).
+ * An app that collects nothing is a single "not collected" row.
  */
 export function privacyRows(privacy) {
   if (!privacy?.length) return [{ category: null, purpose: null, protection: NOT_COLLECTED }];
   const rows = [];
   for (const d of privacy) {
-    for (const purpose of d.purposes) {
-      rows.push({ category: d.category, purpose, protection: d.linked ? LINKED : NOT_LINKED });
-      if (d.tracking) rows.push({ category: d.category, purpose, protection: TRACKING });
-    }
+    for (const purpose of d.purposes) rows.push({ category: d.category, purpose, protection: d.linked ? LINKED : NOT_LINKED });
+    if (d.tracking) rows.push({ category: d.category, purpose: null, protection: TRACKING });
   }
   return rows;
+}
+
+/** One row in words, for the panel. */
+export function rowText(r) {
+  return [r.category ?? 'nessun dato', r.purpose, r.protection?.replace(/^DATA_/, '').toLowerCase()].filter(Boolean).join(' · ');
 }
 
 const key = (r) => `${r.category ?? '-'}|${r.purpose ?? '-'}|${r.protection}`;

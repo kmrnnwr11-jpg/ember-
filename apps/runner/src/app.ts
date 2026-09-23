@@ -129,6 +129,9 @@ export async function buildApp(
 
   await app.register(cors, {
     origin: cfg.CORS_ORIGINS === '*' ? true : cfg.CORS_ORIGINS.split(',').map((s) => s.trim()),
+    // @fastify/cors allows only GET, HEAD and POST unless told: the IDE also saves
+    // with PUT/PATCH and removes with DELETE (settings, Apple key, projects).
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
   await app.register(websocket, { options: { maxPayload: cfg.MAX_WS_FILE_BYTES + 1024 * 64 } });
   await mkdir(path.resolve(cfg.WORKSPACES_ROOT), { recursive: true });

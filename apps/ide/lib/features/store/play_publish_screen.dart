@@ -275,10 +275,13 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       final j = jsonDecode(text.substring(start, end + 1)) as Map<String, dynamic>;
       for (final entry in j.entries) {
         final v = (entry.value as Map).cast<String, dynamic>();
+        final tt = '${v['title'] ?? ''}'.trim();
+        // The default (en-US) listing must keep the installed app's exact name,
+        // so Google's name-match check on the default listing always passes.
+        // Every other language gets a localised name (better discovery).
+        final isDefault = entry.key == 'en-US';
         _translations[entry.key] = {
-          // The app name is a brand: it stays identical in every language, so
-          // the installed app and every store page always match.
-          'title': _title.text.trim(),
+          'title': (isDefault || tt.isEmpty) ? _title.text.trim() : tt,
           'shortDescription': '${v['shortDescription'] ?? ''}',
           'fullDescription': '${v['fullDescription'] ?? ''}',
         };

@@ -9,6 +9,7 @@ import { validateProjectName } from './paths.js';
 import { claimBundleId, claimPackageName } from './publish_prep.js';
 import { readAppleCreds, readAppleKey, rememberTeamId } from './apple_creds.js';
 import { ensureDevelopmentTeam } from './ios_signing.js';
+import { fixPreflight } from './ios_preflight.js';
 import { bumpBuildNumber, lastAppStoreBuildNumber, lastPublishedBuildNumber, lastPublishedVersionCode, prepareSignedBuild } from './signing.js';
 import { pinProjectSdk, tuneGradle } from './sdk_pins.js';
 import type { ProjectRow, Store, WorkspaceRow } from './store.js';
@@ -264,6 +265,9 @@ export class Services {
         // Play must not keep the placeholder on the iPhone.
         await claimBundleId(root, applicationId, (await lastAppStoreBuildNumber(root)) > 0).catch(() => null);
       }
+      // Firebase, AdMob and most current plugins need iOS 15: raise the minimum before
+      // CocoaPods refuses ("requires a higher minimum iOS deployment version").
+      await fixPreflight('ios_target', { root, listing: {} }).catch(() => null);
       // Xcode will not archive without a Team: write the account's one in.
       const creds = await readAppleCreds().catch(() => null);
       const team = await ensureDevelopmentTeam(root, {

@@ -361,7 +361,10 @@ export async function fixPreflight(id: string, ctx: { root: string; listing: Lis
       await writeFile(pbxPath, pbx.replace(/IPHONEOS_DEPLOYMENT_TARGET = [\d.]+;/g, (m) => (Number(/[\d.]+/.exec(m)![0]) < 15 ? 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;' : m)));
       const podPath = path.join(ctx.root, 'ios', 'Podfile');
       const pod = await readFile(podPath, 'utf8').catch(() => null);
-      if (pod !== null) await writeFile(podPath, /^#?\s*platform :ios.*$/m.test(pod) ? pod.replace(/^#?\s*platform :ios.*$/m, "platform :ios, '15.0'") : `platform :ios, '15.0'\n${pod}`);
+      if (pod !== null) {
+        const next = /^#?\s*platform :ios.*$/m.test(pod) ? pod.replace(/^#?\s*platform :ios.*$/m, "platform :ios, '15.0'") : `platform :ios, '15.0'\n${pod}`;
+        if (next !== pod) await writeFile(podPath, next);
+      }
       const appInfo = path.join(ctx.root, 'ios', 'Flutter', 'AppFrameworkInfo.plist');
       const fw = await readFile(appInfo, 'utf8').catch(() => null);
       if (fw !== null) await writeFile(appInfo, setPlistString(fw, 'MinimumOSVersion', '15.0'));

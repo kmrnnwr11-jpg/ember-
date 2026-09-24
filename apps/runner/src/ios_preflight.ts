@@ -197,7 +197,8 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
       ask: "On the paywall/premium screen, under the plans, add two tappable links opened with url_launcher (LaunchMode.externalApplication): 'Terms of Use (EULA)' → https://www.apple.com/legal/internet-services/itunes/dev/stdeula/ and 'Privacy Policy' → the app's privacy policy URL.",
     });
   }
-  if (has('google_sign_in', 'flutter_facebook_auth') && !d.has('sign_in_with_apple')) {
+  const noAccountOnIphone = settings.iosAccount === false;
+  if (!noAccountOnIphone && has('google_sign_in', 'flutter_facebook_auth') && !d.has('sign_in_with_apple')) {
     add({
       id: 'sign_in_with_apple',
       severity: 'block',
@@ -208,7 +209,7 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
     });
   }
   const account = has('firebase_auth', 'google_sign_in', 'sign_in_with_apple', 'flutter_facebook_auth') || (d.has('supabase_flutter') && /\.auth\.sign(In|Up)/.test(code));
-  if (account && !/delete\w*account|deleteUser|user\??\.delete\(|account.?deletion/i.test(code)) {
+  if (!noAccountOnIphone && account && !/delete\w*account|deleteUser|user\??\.delete\(|account.?deletion/i.test(code)) {
     add({
       id: 'account_deletion',
       severity: 'block',

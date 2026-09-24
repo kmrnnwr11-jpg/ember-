@@ -46,6 +46,41 @@ export const ARTIFACTS: Record<string, { rel: string; contentType: string }> = {
 
 export type SignedBuildPreparer = typeof prepareSignedBuild;
 
+/// Keeps AdMob working for every app: the real App ID set once in
+/// lib/config/ads_config.dart is copied into the Android manifest and the iOS
+/// Info.plist at build time, so they can never drift out of sync (a mismatch or
+/// a leftover test id is the usual cause of ads not serving or being refused).
+export async function syncAdmobAppId(root: string): Promise<void> {
+  const cfg = await readFile(path.join(root, 'lib', 'config', 'ads_config.dart'), 'utf8').catch(() => '');
+  if (!cfg) return;
+  const androidId = /androidAppId\s*=\s*'([^']+)'/.exec(cfg)?.[1] ?? '';
+  const iosId = /iosAppId\s*=\s*'([^']+)'/.exec(cfg)?.[1] ?? '';
+  const isReal = (id: string) => /^ca-app-pub-\d+~\d+$/.test(id) && !id.startsWith('ca-app-pub-3940256099942544');
+
+  if (isReal(androidId)) {
+    const p = path.join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml');
+    const m = await readFile(p, 'utf8').catch(() => '');
+    if (m) {
+      const next = m.replace(
+        /(com\.google\.android\.gms\.ads\.APPLICATION_ID"[\s\S]*?android:value=")[^"]*(")/,
+        `$1${androidId}$2`,
+      );
+      if (next !== m) await writeFile(p, next);
+    }
+  }
+  if (isReal(iosId)) {
+    const p = path.join(root, 'ios', 'Runner', 'Info.plist');
+    const pl = await readFile(p, 'utf8').catch(() => '');
+    if (pl) {
+      const next = pl.replace(
+        /(<key>GADApplicationIdentifier<\/key>\s*<string>)[^<]*(<\/string>)/,
+        `$1${iosId}$2`,
+      );
+      if (next !== pl) await writeFile(p, next);
+    }
+  }
+}
+
 export class Services {
   constructor(
     readonly cfg: Config,
@@ -203,6 +238,8 @@ export class Services {
       const listing = JSON.parse(await readFile(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '{}')) as { title?: string };
       const manifest = await readFile(path.join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml'), 'utf8').catch(() => '');
       const appName = listing.title || /android:label\s*=\s*"([^"@]+)"/.exec(manifest)?.[1] || '';
+      // Every app: real AdMob App ID flows from ads_config.dart into the manifest.
+      await syncAdmobAppId(root).catch(() => null);
       await claimPackageName(root, {
         appName,
         prefix: this.cfg.PACKAGE_PREFIX,
@@ -219,6 +256,7 @@ export class Services {
       // The iPhone app carries the same name as the Android one, and its build
       // number must rise on every upload, exactly like Google's version code.
       const root = this.projectRoot(project);
+      await syncAdmobAppId(root).catch(() => null);
       const gradle = await readFile(path.join(root, 'android', 'app', 'build.gradle.kts'), 'utf8').catch(() => '');
       const applicationId = /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
       if (applicationId && !applicationId.startsWith('dev.fluttercursor.app.')) {

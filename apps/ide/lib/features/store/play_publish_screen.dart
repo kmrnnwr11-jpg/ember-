@@ -276,7 +276,9 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       for (final entry in j.entries) {
         final v = (entry.value as Map).cast<String, dynamic>();
         _translations[entry.key] = {
-          'title': '${v['title'] ?? ''}',
+          // The app name is a brand: it stays identical in every language, so
+          // the installed app and every store page always match.
+          'title': _title.text.trim(),
           'shortDescription': '${v['shortDescription'] ?? ''}',
           'fullDescription': '${v['fullDescription'] ?? ''}',
         };

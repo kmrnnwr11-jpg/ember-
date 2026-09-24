@@ -767,6 +767,15 @@ export function appleText(text: string | undefined): string {
     .trim();
 }
 
+export const APPLE_EULA = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
+
+/** The description with the Terms of Use (EULA) and privacy links at the end, once. */
+export function withLegalLinks(description: string, privacyUrl?: string): string {
+  if (description.includes('stdeula')) return description;
+  const links = `\n\nTerms of Use (EULA): ${APPLE_EULA}${privacyUrl ? `\nPrivacy Policy: ${privacyUrl}` : ''}`;
+  return `${description.slice(0, 4000 - links.length)}${links}`;
+}
+
 /** The promotional text (170 characters): the listing's short pitch, whole sentences. */
 export function promotionalFrom(page: { subtitle?: string; description?: string }): string {
   const short = appleText(page.subtitle);
@@ -789,8 +798,15 @@ export function reviewNotesFor(input: { facts?: AppDataFacts; products?: ApplePr
     const list = [...subs, ...once].map((p) => `${p.name} (${p.productId}${p.freeTrial ? ', free trial' : ''})`).join('; ');
     lines.push(`Premium is sold through In-App Purchase: ${list}. Open the Premium screen to buy; "Restore" on the same screen restores previous purchases.`);
   }
-  if (f?.ads) lines.push('The app shows Google AdMob ads (none for Premium users). The App Tracking Transparency prompt appears before ads load; refusing it keeps every feature.');
-  lines.push('All documents are processed on the device; nothing is uploaded to our servers.');
+  if (f?.ads && !f?.kids) lines.push('The app shows Google AdMob ads (none for Premium users). The App Tracking Transparency prompt appears before ads load; refusing it keeps every feature.');
+  if (f?.kids) {
+    // Apple asks every Kids category app these four questions (guideline 1.3): answer them up front.
+    lines.push(
+      'Kids Category (guideline 1.3): no third-party analytics; no third-party advertising on iOS (if an ads SDK is in the binary it is only for the shared Android code and is never initialized on iOS); no personal or device data is collected or shared with third parties, everything stays on the device; purchases and adult actions are behind a parental gate.',
+    );
+  } else {
+    lines.push('All documents are processed on the device; nothing is uploaded to our servers.');
+  }
   return lines.join('\n');
 }
 
@@ -1060,7 +1076,12 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
   }
 
   const version = await store.ensureVersion(app.id, input.versionString);
-  const pages = [input.listing, ...(input.translations ?? [])].filter((p): p is AppStoreListing => !!p && !!p.language);
+  let pages = [input.listing, ...(input.translations ?? [])].filter((p): p is AppStoreListing => !!p && !!p.language);
+  // Auto-renewable subscriptions: Apple wants the Terms of Use (EULA) linked in the
+  // description itself (3.1.2), with the privacy policy.
+  if (input.products?.some((p) => p.kind === 'subscription')) {
+    pages = pages.map((p) => ({ ...p, description: withLegalLinks(p.description ?? '', input.privacyPolicyUrl) }));
+  }
   for (const page of pages) {
     // Apple will not send a version for review without a support page: the
     // privacy page carries the contact address, so it stands in for one.

@@ -122,10 +122,18 @@ async function askOne(r: ReviewerSpec, code: string, listing: string, fetchImpl:
   try {
     const res = await fetchImpl(`${base}/chat/completions`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${r.apiKey}` },
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${r.apiKey}`,
+        // Groq refuses requests without one; the others do not mind.
+        'user-agent': 'Ember/1.0',
+      },
       body: JSON.stringify({
         model: r.model,
         temperature: 0.2,
+        // Reasoning models spend tokens thinking before they answer: too small
+        // a budget and the findings come back empty.
+        max_tokens: 4000,
         messages: [
           { role: 'system', content: SYSTEM },
           { role: 'user', content: `${instruction(listing)}\n\nTHE APP:\n${code}` },

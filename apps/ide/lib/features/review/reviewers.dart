@@ -38,8 +38,7 @@ class Reviewer {
 /// are already right, the user only pastes the key.
 const reviewerPresets = <Reviewer>[
   Reviewer(id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com', model: 'deepseek-chat'),
-  Reviewer(id: 'groq', label: 'Groq', baseUrl: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile'),
-  Reviewer(id: 'github', label: 'GitHub Models', baseUrl: 'https://models.github.ai/inference', model: 'gpt-4o'),
+  Reviewer(id: 'groq', label: 'Groq', baseUrl: 'https://api.groq.com/openai/v1', model: 'openai/gpt-oss-120b'),
 ];
 
 /// The reviewers the user configured, with their keys.

@@ -18,7 +18,7 @@ class ReviewerKeyRow extends ConsumerStatefulWidget {
   static const signup = {
     'deepseek': 'https://platform.deepseek.com',
     'groq': 'https://console.groq.com/keys',
-    'github': 'https://github.com/marketplace/models',
+    'github': 'https://github.com/settings/personal-access-tokens/new',
     'openrouter': 'https://openrouter.ai/keys',
   };
 

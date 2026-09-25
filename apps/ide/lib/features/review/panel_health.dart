@@ -19,9 +19,11 @@ typedef PanelCheck = ({bool proceed, Set<String> working, List<PanelMember> memb
 /// with the names, while there is still a choice.
 Future<PanelCheck> checkPanel(BuildContext context, WidgetRef ref) async {
   final settings = await ref.read(reviewerSettingsProvider.future);
-  // Gemini needs no key from the user: it runs on the Runner's own.
+  // Two members need no key from the user: Gemini runs on the Runner's own,
+  // Claude on the machine's login. Both are free to the user and always there.
   final gemini = await runnerGeminiMember(ref);
-  final all = [...designPanel(settings), ?gemini];
+  final claude = await runnerClaudeMember(ref);
+  final all = [?claude, ...designPanel(settings), ?gemini];
   if (all.length < 2) return (proceed: true, working: <String>{}, members: all);
 
   final pings = await pingMembers(all);

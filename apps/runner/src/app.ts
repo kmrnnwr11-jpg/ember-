@@ -1049,9 +1049,11 @@ export async function buildApp(
         throw last instanceof Error ? last : new Error('no AI available for logos');
       };
       const appName = body.appName ?? project.name.replace(/_\d+$/, '').replace(/_/g, ' ');
-      // Gemini joins the table on the Runner's own key, so the user never has
-      // to fetch one for it; the app cannot send it, having no key to send.
+      // Claude and Gemini join the table on what this machine already has — a
+      // login and a key — so the user never fetches anything for them; the app
+      // cannot send them, having no key to send.
       const members = [
+        ...(claudeOk ? [{ id: 'claude_code', label: 'Claude', complete: viaClaude }] : []),
         ...body.panel.map((m) => ({ id: m.id, label: m.label, complete: (s: string, p: string) => openAiComplete(m, s, p, deps.reviewFetch ?? fetch) })),
         ...(cfg.GEMINI_API_KEY ? [{ id: 'gemini_runner', label: 'Gemini', complete: viaGemini }] : []),
       ];

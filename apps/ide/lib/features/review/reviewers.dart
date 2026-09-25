@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/session.dart';
 import '../../core/settings_store.dart';
 import '../ai/ai_settings.dart';
-import '../mockups/mockup_controller.dart' show PanelMember;
+import '../mockups/mockup_controller.dart' show PanelMember, claudeCodeCompleter;
 
 /// One extra model that reviews a finished app. They are all OpenAI-compatible
 /// services (DeepSeek, Groq, GitHub Models, OpenRouter, a local Ollama...), so
@@ -186,6 +186,27 @@ Future<List<PanelPing>> pingMembers(List<PanelMember> members) async {
         onTimeout: () => (id: m.id, label: m.label, ok: false, error: 'non risponde (25s)'),
       ),
   ]);
+}
+
+/// Claude drawing and reviewing through the machine's own Claude login.
+///
+/// It is the engine that writes the apps, so it is at the table on the
+/// subscription that is already paid for, with no key and no extra cost. Its
+/// verdict on its own drawing is discarded like everyone else's, so being both
+/// author and critic changes nothing.
+///
+/// Returns null when this machine has no Claude login; the panel then simply
+/// has one member fewer.
+Future<PanelMember?> runnerClaudeMember(WidgetRef ref) async {
+  try {
+    final health = await ref.read(runnerHealthProvider.future);
+    if ((health['engines'] as Map?)?['claudeCode'] != true) return null;
+    final socket = ref.read(runnerSocketProvider);
+    final complete = claudeCodeCompleter((t, p) => socket.request(t, p, timeout: const Duration(minutes: 6)));
+    return (id: 'claude_code', label: 'Claude', complete: complete);
+  } catch (_) {
+    return null;
+  }
 }
 
 /// Gemini drawing and reviewing on the Runner's own key.

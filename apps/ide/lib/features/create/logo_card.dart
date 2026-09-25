@@ -7,6 +7,7 @@ import 'package:ide_core/ide_core.dart';
 
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import '../review/panel_health.dart';
 import '../review/reviewers.dart';
 import 'app_builder.dart';
 
@@ -63,8 +64,11 @@ class _LogoCardState extends ConsumerState<LogoCard> {
       final api = await ref.read(runnerApiProvider.future);
       // The configured reviewers draw the icons together and then review each
       // other's drawings; with fewer than two the Runner's own engine draws.
+      if (!mounted) return;
+      final health = await checkPanel(context, ref);
+      if (!health.proceed) return quitEmber();
       final settings = await ref.read(reviewerSettingsProvider.future);
-      final reviewers = settings.usable;
+      final reviewers = settings.usable.where((r) => health.working.contains(r.id)).toList();
       final res = await api.generateLogos(widget.projectId, {
         'about': widget.builder.prompt,
         if (_hint.text.trim().isNotEmpty) 'hint': _hint.text.trim(),

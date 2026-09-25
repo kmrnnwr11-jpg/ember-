@@ -15,6 +15,7 @@ import '../ai/ai_settings.dart';
 import '../create/app_builder.dart';
 import '../create/create_app_screen.dart';
 import '../projects/projects_screen.dart';
+import '../review/panel_health.dart';
 import '../review/reviewers.dart';
 import 'mockup_controller.dart';
 import 'name_picker.dart';
@@ -69,8 +70,12 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
       complete = apiCompleter(ref.read(aiProviderFactory), model);
     }
     // The configured reviewers draw the set together and then review each
-    // other; with fewer than two of them the design engine works alone.
-    final panel = designPanel(await ref.read(reviewerSettingsProvider.future));
+    // other; with fewer than two of them the design engine works alone. Any
+    // that are down are named to the user before a single mockup is drawn.
+    if (!mounted) return;
+    final health = await checkPanel(context, ref);
+    if (!health.proceed) return quitEmber();
+    final panel = designPanel(await ref.read(reviewerSettingsProvider.future), only: health.working);
     final c = MockupController(
       description: '${a.prompt}${a.reference ?? ''}',
       engine: a.engine,

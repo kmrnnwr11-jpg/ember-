@@ -139,10 +139,58 @@ final reviewerSettingsProvider =
 AiProvider providerFor(Reviewer r, String key) =>
     createProvider(AiProviderId.openaiCompatible, AiEndpoint.direct(apiKey: key, baseUrl: r.baseUrl));
 
+/// One model that answered, or the reason it did not.
+typedef PanelPing = ({String id, String label, bool ok, String error});
+
+/// Asks every configured model for one word before any real work starts. A
+/// model that is down, out of quota or misconfigured answers nothing for
+/// minutes and then silently drops out of the set; asked this way it costs a
+/// couple of seconds and the user learns its name while there is still a
+/// choice to make.
+Future<List<PanelPing>> pingPanel(ReviewerSettings s) async {
+  Future<PanelPing> ping(Reviewer r) async {
+    try {
+      final provider = providerFor(r, s.keys[r.id]!);
+      final buf = StringBuffer();
+      await for (final e in provider.chat(
+        model: r.model,
+        maxTokens: 16,
+        messages: const [AiMessage.user('Reply with OK')],
+      )) {
+        switch (e) {
+          case AiTextDelta(:final text):
+            buf.write(text);
+          case AiError(:final message, :final statusCode):
+            throw AiException(message, statusCode: statusCode);
+          default:
+        }
+      }
+      // A model that answers with nothing at all is down, whatever it says.
+      return buf.toString().trim().isEmpty
+          ? (id: r.id, label: r.label, ok: false, error: 'nessuna risposta')
+          : (id: r.id, label: r.label, ok: true, error: '');
+    } on AiException catch (e) {
+      return (id: r.id, label: r.label, ok: false, error: e.message);
+    } catch (e) {
+      return (id: r.id, label: r.label, ok: false, error: '$e');
+    }
+  }
+
+  return Future.wait([
+    for (final r in s.usable)
+      ping(r).timeout(
+        const Duration(seconds: 25),
+        onTimeout: () => (id: r.id, label: r.label, ok: false, error: 'non risponde (25s)'),
+      ),
+  ]);
+}
+
 /// The same models, used the other way round: not judging a finished app but
 /// drawing part of the design themselves and then reviewing each other.
-List<PanelMember> designPanel(ReviewerSettings s) => [
-      for (final r in s.usable)
+/// [only] keeps just the models that answered the ping, so a model known to be
+/// down is never handed a share of the drawing.
+List<PanelMember> designPanel(ReviewerSettings s, {Set<String>? only}) => [
+      for (final r in s.usable.where((r) => only == null || only.contains(r.id)))
         (
           id: r.id,
           label: r.label,

@@ -1,10 +1,12 @@
 import 'package:ai_connect/ai_connect.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../review/reviewers.dart';
 import 'ai_settings.dart';
 
 const _keyPages = {
@@ -34,6 +36,10 @@ class AiSettingsScreen extends ConsumerWidget {
             for (final p in [AiProviderId.gemini, AiProviderId.anthropic, AiProviderId.openai, AiProviderId.xai])
               _KeyTile(provider: p, settings: s),
             _CompatibleTile(settings: s),
+            const Divider(height: 32),
+            // Set once, used by every app: the models that check a finished app
+            // on their own once it is built.
+            const _ReviewerKeys(),
             const Divider(height: 32),
             SwitchListTile(
               title: Text(l.useRunnerProxy),
@@ -252,6 +258,93 @@ class _CompatibleTileState extends ConsumerState<_CompatibleTile> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The models that read a finished app on their own and report what is fake,
+/// missing or broken. Set once here; every app uses them automatically.
+class _ReviewerKeys extends ConsumerWidget {
+  const _ReviewerKeys();
+
+  static const _signup = {
+    'deepseek': 'https://platform.deepseek.com',
+    'groq': 'https://console.groq.com/keys',
+    'github': 'https://github.com/marketplace/models',
+    'openrouter': 'https://openrouter.ai/keys',
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final async = ref.watch(reviewerSettingsProvider);
+    return async.when(
+      loading: () => const SizedBox.shrink(),
+      error: (e, _) => Text('$e', style: theme.textTheme.bodySmall),
+      data: (s) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            const Icon(Icons.fact_check_outlined, size: 20),
+            const SizedBox(width: 8),
+            Text('Revisori dell\'app', style: theme.textTheme.titleMedium),
+          ]),
+          const SizedBox(height: 4),
+          Text(
+            'Quando un\'app e\' finita, questi modelli la leggono per conto loro e dicono cosa e\' finto, '
+            'cosa manca e cosa non funziona; le correzioni tornano da sole a chi ha scritto l\'app. '
+            'Si mettono una volta e valgono per tutte le app.',
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 12),
+          for (final r in s.reviewers)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                children: [
+                  Icon(s.hasKey(r.id) ? Icons.check_circle : Icons.radio_button_unchecked,
+                      size: 18, color: s.hasKey(r.id) ? Colors.green : Colors.grey),
+                  const SizedBox(width: 8),
+                  SizedBox(width: 120, child: Text(r.label, style: const TextStyle(fontWeight: FontWeight.w600))),
+                  Expanded(
+                    child: TextField(
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        border: const OutlineInputBorder(),
+                        hintText: s.hasKey(r.id) ? '•••••• (chiave salvata)' : 'incolla qui la chiave',
+                        suffixIcon: IconButton(
+                          tooltip: 'Incolla',
+                          icon: const Icon(Icons.content_paste, size: 18),
+                          onPressed: () async {
+                            final data = await Clipboard.getData(Clipboard.kTextPlain);
+                            final t = data?.text?.trim() ?? '';
+                            if (t.isNotEmpty) {
+                              await ref.read(reviewerSettingsProvider.notifier).setKey(r.id, t);
+                            }
+                          },
+                        ),
+                      ),
+                      onSubmitted: (v) => ref.read(reviewerSettingsProvider.notifier).setKey(r.id, v),
+                    ),
+                  ),
+                  if (_signup[r.id] != null)
+                    IconButton(
+                      tooltip: 'Prendi la chiave',
+                      icon: const Icon(Icons.open_in_new, size: 18),
+                      onPressed: () => launchUrl(Uri.parse(_signup[r.id]!), mode: LaunchMode.externalApplication),
+                    ),
+                  if (s.hasKey(r.id))
+                    IconButton(
+                      tooltip: 'Togli la chiave',
+                      icon: const Icon(Icons.delete_outline, size: 18),
+                      onPressed: () => ref.read(reviewerSettingsProvider.notifier).setKey(r.id, ''),
+                    ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }

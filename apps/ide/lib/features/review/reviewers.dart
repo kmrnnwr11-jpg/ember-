@@ -39,6 +39,22 @@ class Reviewer {
 const reviewerPresets = <Reviewer>[
   Reviewer(id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com', model: 'deepseek-chat'),
   Reviewer(id: 'groq', label: 'Groq', baseUrl: 'https://api.groq.com/openai/v1', model: 'openai/gpt-oss-120b'),
+  // Google speaks the OpenAI format too, so the key already in Ember for
+  // writing apps also serves to review them — pasted again here, because a
+  // reviewer must stay a choice of its own.
+  Reviewer(
+    id: 'gemini',
+    label: 'Gemini (Google)',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    model: 'gemini-2.5-flash',
+  ),
+  // One key, many models: the ones ending in :free cost nothing.
+  Reviewer(
+    id: 'openrouter',
+    label: 'OpenRouter',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: 'deepseek/deepseek-chat-v3.1:free',
+  ),
 ];
 
 /// The reviewers the user configured, with their keys.

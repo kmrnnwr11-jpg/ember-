@@ -28,6 +28,7 @@ import 'play_update_card.dart';
 import 'products_card.dart';
 import 'screenshots_card.dart';
 import 'ads_card.dart';
+import '../review/design_council.dart';
 import '../review/panel_health.dart';
 import '../review/review_card.dart';
 import '../review/reviewers.dart';
@@ -426,12 +427,21 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
     if (!mounted) return;
     final health = await checkPanel(context, ref);
     if (!health.proceed) return quitEmber();
+    // The panel says how the app should be designed before a line of it is
+    // written. Reviewing at the end only ever caught what a rebuild could
+    // fix; agreeing first is what stops it being built wrong.
+    final agreed = await designCouncil(
+      health.members,
+      request: args.prompt,
+      reference: args.reference ?? '',
+      onProgress: (s) => b.note(s),
+    );
     b.build(
       prompt: args.prompt,
       engine: args.engine,
       model: model,
       quality: args.quality,
-      design: args.design,
+      design: '${args.design ?? ''}$agreed',
       designName: args.designName,
       referenceId: args.referenceId,
       referenceTopics: args.referenceTopics,

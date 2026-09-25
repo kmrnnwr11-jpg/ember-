@@ -337,6 +337,10 @@ Never fake your way around a missing sign-in or key, and never report as working
 
   bool get running => const {BuildPhase.generating, BuildPhase.dependencies, BuildPhase.checking, BuildPhase.fixing, BuildPhase.building}.contains(phase);
 
+  /// A line for the user to read while something outside the build is
+  /// happening — the panel agreeing on the design, for one.
+  void note(String text) => _log(text);
+
   void _log(String text, {String kind = 'info'}) {
     log.add(BuildLogLine(text, kind: kind));
     if (log.length > 2000) log.removeRange(0, log.length - 2000);

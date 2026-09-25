@@ -12,6 +12,7 @@ import { teamFromAppStore } from './ios_signing.js';
 import { backupKey } from './drive.js';
 import { installAndRun, lanAddress, listDevices } from './devices.js';
 import { fix as fixFinding, inspectCloud, inspectProject, inspectRunning } from './doctor.js';
+import { reviewApp } from './ai_review.js';
 import { GitHubError, listEmberApps, restoreFromGitHub, saveToGitHub } from './github.js';
 import { fillAppContent } from './play_console.js';
 import { fillPolicy, publishPolicy } from './publish_prep.js';
@@ -96,6 +97,8 @@ export interface AppDeps {
   ensureKey?: typeof ensureUploadKey;
   androidInfo?: typeof androidAppInfo;
   playFetch?: typeof fetch;
+  /** Lets the tests answer for the AI reviewers. */
+  reviewFetch?: typeof fetch;
   backupKey?: typeof backupKey;
   saveToGitHub?: typeof saveToGitHub;
   fillAppContent?: typeof fillAppContent;
@@ -1132,6 +1135,31 @@ export async function buildApp(
       const checked = await inspectProject(root);
       const [cloud, running] = await Promise.all([inspectCloud(checked.firebaseProject), inspectRunning(previewUrl ?? null)]);
       return { ...checked, findings: [...checked.findings, ...cloud, ...running] };
+    });
+
+    // Several models read the finished app, each on its own, and say what is
+    // fake, missing or broken. Slow (seconds per model), so it has its own route
+    // instead of weighing down the quick check above.
+    r.post('/v1/projects/:projectId/review', async (req) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const { reviewers } = z
+        .object({
+          reviewers: z
+            .array(
+              z.object({
+                id: z.string().min(1).max(40),
+                label: z.string().min(1).max(40),
+                baseUrl: z.string().url().max(300),
+                apiKey: z.string().min(1).max(400),
+                model: z.string().min(1).max(120),
+              }),
+            )
+            .min(1)
+            .max(6),
+        })
+        .parse(req.body);
+      return reviewApp(services.projectRoot(project), reviewers, deps.reviewFetch ?? fetch);
     });
 
     r.post('/v1/projects/:projectId/check/fix', async (req, reply) => {

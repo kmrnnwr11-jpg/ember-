@@ -27,6 +27,7 @@ String sse(List<Object> events, {bool named = false}) => events.map((e) {
 }).join();
 
 void main() {
+  compatibleEndpointTests();
   test('SSE parser handles CRLF, multi-line data and comments', () async {
     final raw = ': ping\r\nevent: a\r\ndata: 1\r\ndata: 2\r\n\r\ndata: x\n\n';
     final events = await parseSse(Stream.value(utf8.encode(raw))).toList();
@@ -227,5 +228,38 @@ void main() {
     );
     expect(await p.complete(model: 'claude-haiku-4-5', prefix: 'void main() {', suffix: '}'), 'print(1);');
     expect((cap.body!['messages'] as List).single['content'][0]['text'], 'void main() {<CURSOR>}');
+  });
+}
+
+
+/// Where Ember sends an OpenAI-compatible call, and who it says it is. Both
+/// cost a real outage when wrong: a 404 on every call, or a 403 on every call.
+void compatibleEndpointTests() {
+  Future<http.BaseRequest> sent(String baseUrl) async {
+    final cap = Capture();
+    final p = OpenAiProvider(
+      AiEndpoint.direct(apiKey: 'k', baseUrl: baseUrl),
+      compatible: true,
+      client: cap.client('data: [DONE]\n\n'),
+    );
+    await collect(p.chat(model: 'm', messages: const [AiMessage.user('hi')]));
+    return cap.request!;
+  }
+
+  test('a bare host gets /v1; a URL with its own path is taken as written', () async {
+    expect((await sent('https://api.deepseek.com')).url.toString(), 'https://api.deepseek.com/v1/chat/completions');
+    expect((await sent('https://api.groq.com/openai/v1')).url.toString(), 'https://api.groq.com/openai/v1/chat/completions');
+    // Google's OpenAI endpoint: appending /v1 to this is a 404 on every call.
+    expect(
+      (await sent('https://generativelanguage.googleapis.com/v1beta/openai')).url.toString(),
+      'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    );
+    expect((await sent('https://openrouter.ai/api/v1')).url.toString(), 'https://openrouter.ai/api/v1/chat/completions');
+  });
+
+  test('the request names itself, because Groq answers 403 to an unnamed one', () async {
+    final req = await sent('https://api.groq.com/openai/v1');
+    expect(req.headers['user-agent'], 'Ember/1.0');
+    expect(req.headers['authorization'], 'Bearer k');
   });
 }

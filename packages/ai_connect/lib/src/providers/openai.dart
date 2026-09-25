@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../http_client_stub.dart' if (dart.library.js_interop) '../http_client_web.dart' as platform;
 import '../transport.dart';
 import '../types.dart';
 import 'anthropic.dart' show completionSystemPrompt, completionUserPrompt, stripFences;
@@ -25,13 +26,25 @@ class OpenAiProvider implements AiProvider {
   @override
   AiProviderId get id => _id;
 
-  Map<String, String> get _headers =>
-      endpoint.headers({if (endpoint.apiKey.isNotEmpty) 'authorization': 'Bearer ${endpoint.apiKey}'});
+  Map<String, String> get _headers => endpoint.headers({
+    if (endpoint.apiKey.isNotEmpty) 'authorization': 'Bearer ${endpoint.apiKey}',
+    // Groq sits behind a filter that answers 403 "code: 1010" to a request whose
+    // User-Agent looks like a script — which is exactly what Dart sends by
+    // default. Naming ourselves costs nothing and the other services ignore it.
+    // A browser forbids a page from setting this header at all.
+    if (platform.canSetUserAgent) 'user-agent': 'Ember/1.0',
+  });
 
   String get _v1 {
     final base = endpoint.baseFor(id);
-    // Compatible base URLs are often given with /v1 already (e.g. http://localhost:11434/v1).
-    return !endpoint.proxied && _id == AiProviderId.openaiCompatible && base.endsWith('/v1') ? base : '$base/v1';
+    if (endpoint.proxied || _id != AiProviderId.openaiCompatible) return '$base/v1';
+    // A compatible base URL is usually given complete, and not always ending in
+    // /v1: Ollama is host:11434/v1, but Google's OpenAI endpoint is
+    // .../v1beta/openai and appending /v1 to it gives a 404. So the rule is the
+    // path, not the spelling: a bare host gets /v1, anything with a path of its
+    // own is taken as the user wrote it.
+    final path = Uri.tryParse(base)?.path.replaceAll(RegExp(r'/+$'), '') ?? '';
+    return path.isEmpty ? '$base/v1' : base;
   }
 
   static List<Map<String, dynamic>> encodeMessages(List<AiMessage> messages, String? system) => [

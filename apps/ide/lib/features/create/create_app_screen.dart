@@ -30,6 +30,7 @@ import 'screenshots_card.dart';
 import 'ads_card.dart';
 import '../review/review_card.dart';
 import '../review/reviewers.dart';
+import 'needs_you_card.dart';
 import 'app_builder.dart';
 import 'forge_view.dart';
 
@@ -508,6 +509,9 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                       const SizedBox(height: 120),
                       const Center(child: EmberMark(size: 96)),
                     ] else ...[
+                      // Right at the top: what only the owner can do blocks the
+                      // rest, so it must not be scrolled to.
+                      NeedsYouCard(builder: b),
                       _PromptCard(prompt: b.prompt, engine: b.engine, model: b.model, designName: b.designName, quality: b.quality),
                       const SizedBox(height: 12),
                       _Steps(builder: b),

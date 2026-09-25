@@ -268,13 +268,55 @@ class AppBuilder extends ChangeNotifier {
             'the title on the home screen and anywhere the app introduces itself. Never invent another name.';
   }
 
+  /// Sent with every build. Some things no engine can do for itself — a sign-in,
+  /// a key, an account, a file only the owner has. Saying so out loud beats
+  /// building a broken app around the gap, and the owner sees it as a
+  /// notification and can settle it in a minute.
+  static const _needsYouBlock = '''
+
+
+WHEN YOU CANNOT DO SOMETHING YOURSELF:
+Some steps need the owner: signing in to Firebase or Google, pasting a key, creating an account, giving a file you do not have.
+When you hit one, write a line that starts exactly with `NEEDS YOU:` and then, in the owner's language, the one thing they must do — short and concrete, e.g.
+NEEDS YOU: sign in to Firebase and create the project, then tell me
+Write one such line per thing, in your reply, and carry on with everything else that does not depend on it.
+Never fake your way around a missing sign-in or key, and never report as working something that needs one.''';
+
   Future<String> _androidBlock() async {
     try {
       final info = await androidInfo?.call();
-      return info == null ? '' : '\n\n$info';
+      return '$_needsYouBlock${info == null ? '' : '\n\n$info'}';
     } catch (_) {
-      return '';
+      return _needsYouBlock;
     }
+  }
+
+  /// What the engine said only the owner can do. Shown as notifications; each
+  /// one the owner settles sends the engine straight back to work.
+  final List<String> needsYou = [];
+
+  void _collectNeeds(String? reply) {
+    if (reply == null) return;
+    final re = RegExp(r'^\s*NEEDS YOU:\s*(.+)$', caseSensitive: false, multiLine: true);
+    for (final m in re.allMatches(reply)) {
+      final text = (m.group(1) ?? '').trim();
+      if (text.isNotEmpty && !needsYou.contains(text)) needsYou.add(text);
+    }
+  }
+
+  /// The owner did what was asked: the engine picks up where it stopped.
+  Future<void> resolveNeed(String need) async {
+    needsYou.remove(need);
+    notifyListeners();
+    await improve(
+      'I have now done this myself: $need\nCarry on from where you stopped and finish what depended on it.',
+      display: need,
+    );
+  }
+
+  void dismissNeed(String need) {
+    needsYou.remove(need);
+    notifyListeners();
   }
 
   bool _cancelled = false;
@@ -461,6 +503,7 @@ class AppBuilder extends ChangeNotifier {
       await _buildUntilItWorks();
       if (_cancelled) return;
       conversation.add((role: 'assistant', text: _replyText?.trim().isNotEmpty == true ? _replyText!.trim() : strings.bAppUpdated));
+      _collectNeeds(_replyText);
       _status = 'done';
       _setPhase(BuildPhase.ready);
       _saveSession();

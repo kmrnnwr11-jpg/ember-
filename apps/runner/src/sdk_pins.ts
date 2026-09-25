@@ -1,4 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 
 /**
@@ -59,8 +60,30 @@ const GRADLE_SPEED: Array<[string, string]> = [
   ['kotlin.incremental', 'true'],
 ];
 
-export function tuneGradleText(properties: string): string {
+/**
+ * How much heap to give Gradle on THIS machine.
+ *
+ * Flutter's template ships `-Xmx8G -XX:MaxMetaspaceSize=4G`, which asks for up
+ * to 12 GB. On a 16 GB laptop with a browser and an IDE already open there is
+ * nowhere near that much free, and the JVM does not fail politely: the daemon
+ * dies mid-compile with "Gradle build daemon disappeared unexpectedly", which
+ * reads like a Gradle bug and is really the machine running out of memory.
+ *
+ * A quarter of the machine, capped at 3 GB, is what Android Studio itself
+ * defaults to and builds these apps comfortably.
+ */
+export function gradleJvmArgs(totalRamBytes: number): string {
+  const totalGb = totalRamBytes / 1024 ** 3;
+  const heapGb = Math.max(1, Math.min(3, Math.floor(totalGb / 4)));
+  // No heap dump: it writes a file the size of the heap, and a machine short of
+  // memory is usually short of disk too.
+  return `-Xmx${heapGb}G -XX:MaxMetaspaceSize=512m -XX:ReservedCodeCacheSize=256m`;
+}
+
+export function tuneGradleText(properties: string, totalRamBytes = os.totalmem()): string {
   let out = properties.replace(/\s*$/, '');
+  const jvmargs = `org.gradle.jvmargs=${gradleJvmArgs(totalRamBytes)}`;
+  out = /^org\.gradle\.jvmargs\s*=/m.test(out) ? out.replace(/^org\.gradle\.jvmargs\s*=.*$/m, jvmargs) : `${out}\n${jvmargs}`;
   for (const [key, value] of GRADLE_SPEED) {
     if (new RegExp(`^${key.replace(/\./g, '\\.')}\\s*=`, 'm').test(out)) continue;
     out += `\n${key}=${value}`;
@@ -68,7 +91,7 @@ export function tuneGradleText(properties: string): string {
   return `${out}\n`;
 }
 
-/** Applies the speed settings to a project on disk, once. */
+/** Applies the speed and memory settings to a project on disk. */
 export async function tuneGradle(projectRoot: string): Promise<void> {
   const file = path.join(projectRoot, 'android', 'gradle.properties');
   const text = await readFile(file, 'utf8').catch(() => null);

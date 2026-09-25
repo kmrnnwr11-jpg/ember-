@@ -1,5 +1,5 @@
 ﻿import { describe, expect, it } from 'vitest';
-import { applySdkPins, relaxFirebaseVersions, tuneGradleText } from './sdk_pins.js';
+import { applySdkPins, gradleJvmArgs, relaxFirebaseVersions, tuneGradleText } from './sdk_pins.js';
 
 describe('SDK pins', () => {
   it('pins firebase_core_web for Firebase apps, once', () => {
@@ -31,15 +31,43 @@ describe('SDK pins', () => {
     expect(relaxFirebaseVersions('dependencies:\n  http: ^1.0.0\n')).toBe('dependencies:\n  http: ^1.0.0\n');
   });
 
+  const GB = 1024 ** 3;
+
   it('turns on the Gradle settings that make the next build fast', () => {
-    const tuned = tuneGradleText('org.gradle.jvmargs=-Xmx8G\nandroid.useAndroidX=true\n');
+    const tuned = tuneGradleText('org.gradle.jvmargs=-Xmx8G\nandroid.useAndroidX=true\n', 16 * GB);
     expect(tuned).toContain('org.gradle.caching=true');
     expect(tuned).toContain('org.gradle.parallel=true');
-    expect(tuned).toContain('org.gradle.jvmargs=-Xmx8G');
     // Applying it twice must not stack the same keys again.
-    expect(tuneGradleText(tuned)).toBe(tuned);
+    expect(tuneGradleText(tuned, 16 * GB)).toBe(tuned);
     // A value the project already chose is left alone.
-    expect(tuneGradleText('org.gradle.parallel=false\n')).toContain('org.gradle.parallel=false');
+    expect(tuneGradleText('org.gradle.parallel=false\n', 16 * GB)).toContain('org.gradle.parallel=false');
+  });
+
+  it("sizes Gradle's heap to the machine instead of the template's 8G", () => {
+    // The template asks for 8G heap + 4G metaspace: on this laptop that killed
+    // the daemon mid-compile with "build daemon disappeared unexpectedly".
+    const tuned = tuneGradleText('org.gradle.jvmargs=-Xmx8G -XX:MaxMetaspaceSize=4G -XX:+HeapDumpOnOutOfMemoryError\n', 16 * GB);
+    expect(tuned).toContain('org.gradle.jvmargs=-Xmx3G -XX:MaxMetaspaceSize=512m -XX:ReservedCodeCacheSize=256m');
+    expect(tuned).not.toContain('-Xmx8G');
+    expect(tuned).not.toContain('MaxMetaspaceSize=4G');
+    // A heap dump is the size of the heap, and a machine short of memory is
+    // usually short of disk too.
+    expect(tuned).not.toContain('HeapDumpOnOutOfMemoryError');
+    // Only one jvmargs line, whatever the file had before.
+    expect(tuned.match(/^org\.gradle\.jvmargs=/gm)).toHaveLength(1);
+  });
+
+  it('gives a small machine less and a large one no more than 3G', () => {
+    expect(gradleJvmArgs(4 * GB)).toContain('-Xmx1G');
+    expect(gradleJvmArgs(8 * GB)).toContain('-Xmx2G');
+    expect(gradleJvmArgs(16 * GB)).toContain('-Xmx3G');
+    expect(gradleJvmArgs(64 * GB)).toContain('-Xmx3G');
+    // Never zero, however little the machine reports.
+    expect(gradleJvmArgs(1 * GB)).toContain('-Xmx1G');
+  });
+
+  it('adds the memory setting to a file that never had one', () => {
+    expect(tuneGradleText('android.useAndroidX=true\n', 16 * GB)).toContain('org.gradle.jvmargs=-Xmx3G');
   });
 
   it('respects a pin the project already has', () => {

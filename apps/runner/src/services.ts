@@ -9,6 +9,7 @@ import { validateProjectName } from './paths.js';
 import { claimBundleId, claimPackageName } from './publish_prep.js';
 import { readAppleCreds, readAppleKey, rememberTeamId } from './apple_creds.js';
 import { ensureDevelopmentTeam } from './ios_signing.js';
+import { fixPreflight } from './ios_preflight.js';
 import { bumpBuildNumber, lastAppStoreBuildNumber, lastPublishedBuildNumber, lastPublishedVersionCode, prepareSignedBuild } from './signing.js';
 import { pinProjectSdk, tuneGradle } from './sdk_pins.js';
 import type { ProjectRow, Store, WorkspaceRow } from './store.js';
@@ -264,6 +265,12 @@ export class Services {
         // Play must not keep the placeholder on the iPhone.
         await claimBundleId(root, applicationId, (await lastAppStoreBuildNumber(root)) > 0).catch(() => null);
       }
+      // Xcode's build cache (DerivedData) grows by GBs per app and once filled the
+      // disk, stopping the Runner mid-publish: under 15 GB free it is cleared first.
+      await freeDiskIfLow().catch(() => {});
+      // Firebase, AdMob and most current plugins need iOS 15: raise the minimum before
+      // CocoaPods refuses ("requires a higher minimum iOS deployment version").
+      await fixPreflight('ios_target', { root, listing: {} }).catch(() => null);
       // Xcode will not archive without a Team: write the account's one in.
       const creds = await readAppleCreds().catch(() => null);
       const team = await ensureDevelopmentTeam(root, {
@@ -306,5 +313,19 @@ export class Services {
     if (job.kind !== 'create' || !job.projectId) return;
     if (job.status === 'succeeded') await this.store.updateProject(job.projectId, { status: 'ready' });
     else if (job.status === 'failed' || job.status === 'cancelled') await this.store.updateProject(job.projectId, { status: 'error' });
+  }
+}
+
+/** Clears Xcode's DerivedData when the disk has less than 15 GB free (it rebuilds itself). */
+async function freeDiskIfLow(minFreeGb = 15): Promise<void> {
+  if (process.platform !== 'darwin') return;
+  const { statfs, rm, readdir } = await import('node:fs/promises');
+  const os = await import('node:os');
+  const s = await statfs('/');
+  const freeGb = (s.bavail * s.bsize) / 1024 ** 3;
+  if (freeGb >= minFreeGb) return;
+  const dir = path.join(os.homedir(), 'Library', 'Developer', 'Xcode', 'DerivedData');
+  for (const e of await readdir(dir).catch(() => [] as string[])) {
+    await rm(path.join(dir, e), { recursive: true, force: true }).catch(() => {});
   }
 }

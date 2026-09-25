@@ -15,6 +15,8 @@ export interface AppleSettings {
   iosAds?: boolean;
   /** File in store/screenshots/ showing the purchase, for the reviewer. */
   reviewScreenshot?: string;
+  /** false when the iPhone build hides sign-in (and so any cloud upload). */
+  iosAccount?: boolean;
 }
 
 export async function readAppleSettings(root: string): Promise<AppleSettings> {
@@ -40,6 +42,16 @@ export function appleFacts(facts: AppDataFacts, s: AppleSettings): AppDataFacts 
     // crash/performance reports came from the ad SDK unless a crash reporter is there too
     out.crashLogs = facts.crashLogs && viaAnalytics;
     out.performance = facts.performance && viaAnalytics;
+  }
+  if (s.iosAccount === false) {
+    // No account on iPhone: nothing linked to a person, nothing uploaded.
+    out.account = false;
+    out.photos = false;
+    out.files = false;
+    out.microphone = false;
+    out.messages = false;
+    out.cloudStorage = false;
+    out.purchases = false;
   }
   return out;
 }

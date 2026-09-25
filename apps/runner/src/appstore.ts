@@ -100,14 +100,31 @@ export class AppStore {
   }
 
   async call<T = { data: Resource | Resource[] }>(method: string, url: string, body?: unknown, what = 'App Store Connect'): Promise<T> {
-    const res = await this.fetchImpl(url.startsWith('http') ? url : `${API}${url}`, {
-      method,
-      headers: {
-        authorization: `Bearer ${this.token}`,
-        ...(body !== undefined ? { 'content-type': 'application/json' } : {}),
-      },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
+    const send = () =>
+      this.fetchImpl(url.startsWith('http') ? url : `${API}${url}`, {
+        method,
+        headers: {
+          authorization: `Bearer ${this.token}`,
+          ...(body !== undefined ? { 'content-type': 'application/json' } : {}),
+        },
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+      });
+    // A dropped connection ("fetch failed", timeouts) or Apple's own 5xx/429 must not
+    // stop a 20-minute publish: try again a few times, waiting a little longer each time.
+    let res: Response | undefined;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        res = await send();
+        if ((res.status >= 500 || res.status === 429) && attempt < 4) throw new Error(`apple ${res.status}`);
+        break;
+      } catch (e) {
+        if (attempt >= 4) {
+          if (res) break;
+          throw new AppStoreError('network', `${what}: la connessione con Apple si è interrotta (${(e as Error).message}). Premi di nuovo Publish: riparte da dove era.`);
+        }
+        await new Promise((r) => setTimeout(r, attempt * 3000));
+      }
+    }
     if (!res.ok) throw await appleError(res, what);
     const text = await res.text();
     return (text ? JSON.parse(text) : {}) as T;

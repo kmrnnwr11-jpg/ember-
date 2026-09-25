@@ -197,7 +197,8 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
       ask: "On the paywall/premium screen, under the plans, add two tappable links opened with url_launcher (LaunchMode.externalApplication): 'Terms of Use (EULA)' → https://www.apple.com/legal/internet-services/itunes/dev/stdeula/ and 'Privacy Policy' → the app's privacy policy URL.",
     });
   }
-  if (has('google_sign_in', 'flutter_facebook_auth') && !d.has('sign_in_with_apple')) {
+  const noAccountOnIphone = settings.iosAccount === false;
+  if (!noAccountOnIphone && has('google_sign_in', 'flutter_facebook_auth') && !d.has('sign_in_with_apple')) {
     add({
       id: 'sign_in_with_apple',
       severity: 'block',
@@ -208,7 +209,7 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
     });
   }
   const account = has('firebase_auth', 'google_sign_in', 'sign_in_with_apple', 'flutter_facebook_auth') || (d.has('supabase_flutter') && /\.auth\.sign(In|Up)/.test(code));
-  if (account && !/delete\w*account|deleteUser|user\??\.delete\(|account.?deletion/i.test(code)) {
+  if (!noAccountOnIphone && account && !/delete\w*account|deleteUser|user\??\.delete\(|account.?deletion/i.test(code)) {
     add({
       id: 'account_deletion',
       severity: 'block',
@@ -291,12 +292,12 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
 
   // ---- Build ----
   const target = Math.min(...[...pbx.matchAll(/IPHONEOS_DEPLOYMENT_TARGET = ([\d.]+);/g)].map((m) => Number(m[1])));
-  if (Number.isFinite(target) && target < 15) {
+  if (Number.isFinite(target) && target < 16) {
     add({
       id: 'ios_target',
       severity: 'warn',
       title: `L’app parte da iOS ${target}`,
-      detail: 'Dalla primavera 2027 Apple accetterà solo app da iOS 15 in su. Ember alza il minimo a iOS 15.',
+      detail: 'Firebase, ML Kit e molte librerie recenti richiedono iOS 15.5+, e dalla primavera 2027 Apple accetterà solo app da iOS 15 in su. Ember alza il minimo a iOS 16.',
       fixable: true,
     });
   }
@@ -358,14 +359,17 @@ export async function fixPreflight(id: string, ctx: { root: string; listing: Lis
     case 'ios_target': {
       const pbxPath = path.join(ctx.root, 'ios', 'Runner.xcodeproj', 'project.pbxproj');
       const pbx = await readFile(pbxPath, 'utf8');
-      await writeFile(pbxPath, pbx.replace(/IPHONEOS_DEPLOYMENT_TARGET = [\d.]+;/g, (m) => (Number(/[\d.]+/.exec(m)![0]) < 15 ? 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;' : m)));
+      await writeFile(pbxPath, pbx.replace(/IPHONEOS_DEPLOYMENT_TARGET = [\d.]+;/g, (m) => (Number(/[\d.]+/.exec(m)![0]) < 16 ? 'IPHONEOS_DEPLOYMENT_TARGET = 16.0;' : m)));
       const podPath = path.join(ctx.root, 'ios', 'Podfile');
       const pod = await readFile(podPath, 'utf8').catch(() => null);
-      if (pod !== null) await writeFile(podPath, /^#?\s*platform :ios.*$/m.test(pod) ? pod.replace(/^#?\s*platform :ios.*$/m, "platform :ios, '15.0'") : `platform :ios, '15.0'\n${pod}`);
+      if (pod !== null) {
+        const next = /^#?\s*platform :ios.*$/m.test(pod) ? pod.replace(/^#?\s*platform :ios.*$/m, "platform :ios, '16.0'") : `platform :ios, '16.0'\n${pod}`;
+        if (next !== pod) await writeFile(podPath, next);
+      }
       const appInfo = path.join(ctx.root, 'ios', 'Flutter', 'AppFrameworkInfo.plist');
       const fw = await readFile(appInfo, 'utf8').catch(() => null);
-      if (fw !== null) await writeFile(appInfo, setPlistString(fw, 'MinimumOSVersion', '15.0'));
-      return 'iOS minimo portato a 15.0';
+      if (fw !== null) await writeFile(appInfo, setPlistString(fw, 'MinimumOSVersion', '16.0'));
+      return 'iOS minimo portato a 16.0';
     }
     case 'icon_alpha': {
       const file = iconFile(ctx.root);

@@ -59,7 +59,7 @@ describe('iOS preflight', () => {
     expect(await preflightIos({ root, listing, reviewPhone: '+39 333', fetchImpl: okFetch, marketingUrl: 'https://dev.example' })).toEqual([]);
     const plist = await readFile(path.join(root, 'ios', 'Runner', 'Info.plist'), 'utf8');
     expect(plistString(plist, 'CFBundleDisplayName')).toBe('Reel Maker');
-    expect(await readFile(path.join(root, 'ios', 'Podfile'), 'utf8')).toMatch(/^platform :ios, '15.0'/m);
+    expect(await readFile(path.join(root, 'ios', 'Podfile'), 'utf8')).toMatch(/^platform :ios, '16.0'/m);
   });
 
   it('blocks what makes the app crash or Apple refuse it, and fixes the texts itself', async () => {

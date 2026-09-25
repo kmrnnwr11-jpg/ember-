@@ -9,6 +9,7 @@ import 'package:ide_core/ide_core.dart' show RunnerException;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/session.dart';
+import '../../core/settings_store.dart';
 import '../../l10n/app_localizations.dart';
 import 'app_builder.dart';
 
@@ -113,7 +114,36 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
     _load();
   }
 
+  /// The publish choices of this app, kept on the Runner: a reload must not undo them.
+  String get _optsKey => 'appstore_opts_${widget.projectId}';
+
+  Future<void> _loadOptions() async {
+    final raw = await Settings.instance.read(_optsKey);
+    if (raw == null || !mounted) return;
+    try {
+      final o = jsonDecode(raw) as Map<String, dynamic>;
+      setState(() {
+        _uploadBuild = o['uploadBuild'] == true;
+        _submit = o['submit'] == true;
+        _category = o['category'] as String?;
+        _free = o['free'] == true;
+        _screenshots = o['screenshots'] == true;
+      });
+    } catch (_) {}
+  }
+
+  void _saveOptions() {
+    unawaited(Settings.instance.write(_optsKey, jsonEncode({
+      'uploadBuild': _uploadBuild,
+      'submit': _submit,
+      'category': _category,
+      'free': _free,
+      'screenshots': _screenshots,
+    })).catchError((Object _) {}));
+  }
+
   Future<void> _load() async {
+    unawaited(_loadOptions());
     unawaited(_refreshAuto()); // a publish started earlier keeps showing its progress
     unawaited(_preflight());
     try {
@@ -695,14 +725,20 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
               key: const Key('ascUploadBuild'),
               contentPadding: EdgeInsets.zero,
               value: _uploadBuild,
-              onChanged: _busy ? null : (v) => setState(() => _uploadBuild = v ?? false),
+              onChanged: _busy ? null : (v) {
+                setState(() => _uploadBuild = v ?? false);
+                _saveOptions();
+              },
               title: Text(l.ascUploadBuild),
             ),
             CheckboxListTile(
               key: const Key('ascSubmit'),
               contentPadding: EdgeInsets.zero,
               value: _submit,
-              onChanged: _busy ? null : (v) => setState(() => _submit = v ?? false),
+              onChanged: _busy ? null : (v) {
+                setState(() => _submit = v ?? false);
+                _saveOptions();
+              },
               title: Text(l.ascSubmit),
             ),
             // ---- iOS: le cose che prima compilavi a mano su App Store Connect ----
@@ -722,20 +758,29 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
                 const DropdownMenuItem<String>(value: null, child: Text('— non impostare —')),
                 for (final c in _categories) DropdownMenuItem<String>(value: c.$2, child: Text(c.$1)),
               ],
-              onChanged: _busy ? null : (v) => setState(() => _category = v),
+              onChanged: _busy ? null : (v) {
+                setState(() => _category = v);
+                _saveOptions();
+              },
             ),
             CheckboxListTile(
               key: const Key('ascFree'),
               contentPadding: EdgeInsets.zero,
               value: _free,
-              onChanged: _busy ? null : (v) => setState(() => _free = v ?? false),
+              onChanged: _busy ? null : (v) {
+                setState(() => _free = v ?? false);
+                _saveOptions();
+              },
               title: const Text('App gratis (in tutti i paesi)'),
             ),
             CheckboxListTile(
               key: const Key('ascScreenshots'),
               contentPadding: EdgeInsets.zero,
               value: _screenshots,
-              onChanged: _busy ? null : (v) => setState(() => _screenshots = v ?? false),
+              onChanged: _busy ? null : (v) {
+                setState(() => _screenshots = v ?? false);
+                _saveOptions();
+              },
               title: const Text('Genera e carica screenshot iPhone/iPad'),
               subtitle: const Text('Usa l\'anteprima web (richiede la "modalità screenshot" nell\'app)'),
             ),

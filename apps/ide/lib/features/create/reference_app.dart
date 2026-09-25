@@ -175,13 +175,44 @@ Play Store: $url
 Listing:
 $description$checklist$size
 
+STEP 1 — LOOK AT THE SCREENSHOTS BEFORE YOU WRITE ANY CODE (not optional):
+The reference app's real screenshots are saved in the project folder `reference/`.
+- OPEN EVERY SINGLE FILE in `reference/` and actually look at it. Reading the listing text is not a substitute: the text is marketing, the screenshots are the app.
+- For each screenshot write down, in one line: which screen it is, what sits at the top, what fills the middle, what sits at the bottom, how many items it holds, and which control moves you to the next screen.
+- From those lines build the SCREEN MAP: the list of screens, the navigation between them (tabs? bottom bar? cards that open?), and which screen the app opens on.
+- Then build exactly those screens, in that order, with that navigation. A screen that exists in the screenshots and not in your app is a missing screen.
+If `reference/` is empty or unreadable, say so in your first message and rebuild from the listing instead — never pretend you saw it.
+
+STEP 2 — THE APP MUST REALLY WORK, NOT LOOK LIKE IT WORKS:
+A beautiful screen with nothing behind it is a FAILED app. If the reference app's core job needs a real device capability, add the package and implement it for real:
+- sing / karaoke / record / voice / podcast -> real microphone recording AND real playback (record + just_audio or audioplayers). A record button that only animates is a failure.
+- music / player / radio -> real audio playback with play, pause, seek and volume.
+- camera / photo / selfie / beauty / scanner -> real camera (camera / image_picker) and real image processing.
+- video / reels / editor -> real video playback (video_player); real cutting only if you can honestly do it.
+- PDF / documents / reader -> real file picking and real rendering of the file the user chose.
+- maps / navigation -> real map and real position.
+- chat / social -> messages that are really stored and really come back after restarting the app.
+- games -> the game must be playable to the end, with real rules, score and defeat.
+Rule: every button the user can press must do the thing it names. If a capability is genuinely impossible, do not draw a fake version of it: leave it out and say so in your final message.
+
+STEP 3 — ORDER OF WORK (build in this order, do not jump ahead):
+1. Screens and navigation from the SCREEN MAP — the whole skeleton, reachable, nothing missing.
+2. Real content in every screen (the amount the listing advertises, not three examples).
+3. The real engine of STEP 2 — the capability that makes the app what it is.
+4. Polish: drawings, animations, sounds.
+If time or length runs short, cut polish, never cut a screen or the engine.
+
+STEP 4 — CHECK YOURSELF BEFORE YOU SAY IT IS DONE:
+Go back to the listing and to the subject list above and walk through it item by item. For each one answer: is it in the app, is it reachable from the home screen, does it really work when pressed?
+Fix everything that fails. Then, in your final message, list what you built and — honestly — anything the reference has that your app does not. Never report as done something you did not build.
+
 LOOK — an app people pay attention to is drawn, not typed:
 - Draw the pictures in code: CustomPainter / shapes / gradients, or inline SVG-like vector paths. Give every item its own drawing.
 - Emoji may season a label, never stand in for the artwork: a screen whose content is a row of emoji is a failed screen.
 - No downloaded images and no network pictures: everything ships inside the app.
 - Sound and speech where the reference has them (flutter_tts for speech), with a way to turn them off.
 - Movement where the reference has movement: if its screens are animated, animate yours — characters that react to a tap, things that slide, bounce, pop and celebrate a right answer. A still screen where the reference moves is not the same app.
-- The screenshots of the reference are saved in the project folder `reference/`: look at every one of them and rebuild what they show — the layout, the order of the screens, what sits where, how many items a screen holds.
+- Draw what the screenshots you studied in STEP 1 show: the same layout, the same order of screens, what sits where, how many items a screen holds.
 
 STAYING LEGAL — Google removes copies and can close the developer account:
 - Your own app name, your own icon, your own colours, your own wording. Never the reference's name, logo, characters, screenshots or description text, not even translated.

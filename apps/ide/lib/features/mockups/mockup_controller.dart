@@ -169,6 +169,121 @@ String mockupUserPrompt(String appDescription, MockupStyle style, {String? previ
   return b.toString();
 }
 
+
+/// The panel decides what the eight proposals should be, before drawing any.
+///
+/// The set used to come from a fixed list of fifteen looks — minimal, dark
+/// premium, glassmorphism, 80s retro — handed out in rotation. Every app got
+/// the same fifteen, whatever it was for, and a pasted Play Store link changed
+/// only the order in which they arrived. So the proposals were about the list,
+/// not about the app.
+///
+/// Now the models look at the app first and say which directions suit THIS
+/// one: with a reference app, every direction stays in its world and brings it
+/// up to date; without one, they are what a designer would actually try for
+/// this subject.
+const directionSystem = '''
+You are a design director choosing the visual directions for a mobile app's first mockups, and you answer with JSON only.
+You give eight directions a designer could draw from without asking you anything else. Each must be a different idea of what
+the app looks like, not the same idea in another colour: they differ in structure, in what dominates the screen, in how dense
+or airy it is, in how the icons are drawn, and in mood.
+Two rules above all:
+- The subject decides the colour. Build every direction around the colour people already associate with this kind of app
+  (documents red, water and travel blue, money green, food warm orange, night deep indigo, health teal); never swap it for an
+  unrelated one.
+- If you are shown an app to take as a model, every direction stays recognisably in that app's world — same purpose, same
+  kind of screens, same audience — brought up to 2026. You are not inventing a different product.''';
+
+String directionAsk(String about, String styleBrief) {
+  final who = styleBrief.trim().isEmpty
+      ? ''
+      : '\nWho it is for (this outranks taste):\n${styleBrief.trim()}\n';
+  return 'The app:\n$about\n$who'
+      '\nAnswer with a JSON array only, no prose around it, exactly 8 entries:\n'
+      '[{"name":"two or three words naming the direction","direction":"one or two sentences a designer can draw from: '
+      'layout, what dominates, typography, how the icons are drawn, the mood","dark":true}]\n'
+      'Set "dark" true for a direction built on a dark ground, false for a light one. Offer both, about half and half.';
+}
+
+/// One agreed direction: a style to draw, and whether it sits on a dark ground.
+typedef Direction = ({MockupStyle style, bool dark});
+
+/// Reads the directions out of a model's answer, however it wrapped them.
+List<Direction> parseDirections(String text) {
+  final start = text.indexOf('[');
+  final end = text.lastIndexOf(']');
+  if (start < 0 || end <= start) return const [];
+  try {
+    final raw = jsonDecode(text.substring(start, end + 1));
+    if (raw is! List) return const [];
+    final out = <Direction>[];
+    for (final e in raw) {
+      if (e is! Map) continue;
+      final name = '${e['name'] ?? ''}'.trim();
+      final direction = '${e['direction'] ?? ''}'.trim();
+      if (name.isEmpty || direction.length < 20) continue;
+      final id = name.toLowerCase().replaceAll(RegExp('[^a-z0-9]+'), '_');
+      out.add((style: MockupStyle(id, name, direction), dark: e['dark'] == true));
+    }
+    return out;
+  } catch (_) {
+    return const [];
+  }
+}
+
+/// The words that carry the meaning of a direction.
+Set<String> _directionWords(String s) => s
+    .toLowerCase()
+    .replaceAll(RegExp('[^a-z0-9àèéìòù ]'), ' ')
+    .split(RegExp(r'\s+'))
+    .where((w) => w.length > 4)
+    .toSet();
+
+/// Two models propose the same direction in their own words, so they count as
+/// one when most of their meaningful words overlap.
+bool sameDirection(String a, String b) {
+  final wa = _directionWords(a);
+  final wb = _directionWords(b);
+  if (wa.isEmpty || wb.isEmpty) return a.toLowerCase() == b.toLowerCase();
+  var shared = 0;
+  for (final w in wa) {
+    if (wb.contains(w)) shared++;
+  }
+  return shared / (wa.length < wb.length ? wa.length : wb.length) >= 0.5;
+}
+
+/// Merges the proposals into one set of [count], agreement first, keeping the
+/// light and dark halves balanced so the user always sees both.
+List<Direction> mergeDirections(
+  List<({String label, List<Direction> list})> answers, {
+  int count = 8,
+}) {
+  final merged = <({MockupStyle style, bool dark, List<String> by})>[];
+  for (final a in answers) {
+    for (final d in a.list) {
+      final hit = merged.indexWhere((m) =>
+          sameDirection(m.style.name, d.style.name) ||
+          sameDirection(m.style.direction, d.style.direction));
+      if (hit >= 0) {
+        if (!merged[hit].by.contains(a.label)) merged[hit].by.add(a.label);
+      } else {
+        merged.add((style: d.style, dark: d.dark, by: <String>[a.label]));
+      }
+    }
+  }
+  merged.sort((x, y) => y.by.length.compareTo(x.by.length));
+  final darks = merged.where((m) => m.dark).toList();
+  final lights = merged.where((m) => !m.dark).toList();
+  final out = <Direction>[];
+  // Alternate light and dark, best agreed first in each half; when one half
+  // runs out the other fills the rest rather than leaving a gap.
+  for (var i = 0; out.length < count && (i < darks.length || i < lights.length); i++) {
+    if (i < lights.length) out.add((style: lights[i].style, dark: false));
+    if (out.length < count && i < darks.length) out.add((style: darks[i].style, dark: true));
+  }
+  return out;
+}
+
 enum MockupStatus { loading, ready, failed }
 
 class Mockup {
@@ -330,22 +445,50 @@ class MockupController extends ChangeNotifier {
   static const setSize = 8;
   static const _atOnce = 4;
 
-  /// Generates a set of 8 proposals — 4 light, 4 dark — each built around the
-  /// app's subject colour, with its own style and layout.
+  /// Asks every model which directions suit this app and merges the answers.
+  /// Returns empty when nobody usable answered, and the caller then falls back
+  /// to the old fixed pool rather than showing nothing.
+  Future<List<Direction>> _agreeDirections() async {
+    panelStatus = 'I ${panel.length} AI stanno decidendo insieme le 8 direzioni…';
+    notifyListeners();
+    final answers = await Future.wait([
+      for (final m in panel)
+        m.complete(directionSystem, directionAsk(shortDescription(description), styleBrief)).then(
+              (r) {
+                costUsd += r.costUsd ?? 0;
+                return (label: m.label, list: parseDirections(r.text));
+              },
+              onError: (_) => (label: m.label, list: const <Direction>[]),
+            ),
+    ]);
+    final merged = mergeDirections([for (final a in answers) if (a.list.isNotEmpty) a], count: setSize);
+    panelStatus = '';
+    notifyListeners();
+    return merged;
+  }
+
+  /// The eight proposals for this app.
+  ///
+  /// With a panel, the models first agree on what the eight directions should
+  /// be — looking at the reference app when one was pasted — and only then
+  /// draw them, two each. Alone, a model still gets the old fixed pool: it is
+  /// not much, but it is better than a blank screen.
   Future<void> generateSet() async {
-    final pool = stylePoolFor(styleBrief);
-    final darkPool = pool.where((s) => _darkStyleIds.contains(s.id)).toList();
-    final lightPool = pool.where((s) => !_darkStyleIds.contains(s.id)).toList();
-    // Fall back to the whole pool if a subset came out empty, so we never crash.
-    final darks = darkPool.isEmpty ? pool : darkPool;
-    final lights = lightPool.isEmpty ? pool : lightPool;
+    final agreed = panel.length > 1 ? await _agreeDirections() : const <Direction>[];
+    final chosenDirections = agreed.length >= 2 ? agreed : _poolDirections();
+    if (agreed.isNotEmpty && agreed.length < setSize) {
+      // Fewer than eight agreed: repeat them rather than pad with the old pool,
+      // so every proposal still belongs to this app.
+      while (chosenDirections.length < setSize) {
+        chosenDirections.add(chosenDirections[chosenDirections.length % agreed.length]);
+      }
+    }
 
     final set = <Mockup>[];
     final prompts = <String>[];
     for (var i = 0; i < setSize; i++) {
-      final dark = i.isOdd; // alternate → 4 light (even i) + 4 dark (odd i)
-      final chosen = dark ? darks[(_poolOffset ~/ 2 + i ~/ 2) % darks.length] : lights[(_poolOffset ~/ 2 + i ~/ 2) % lights.length];
-      final m = Mockup(chosen);
+      final d = chosenDirections[i % chosenDirections.length];
+      final m = Mockup(d.style);
       // Round-robin, so every model draws both a light and a dark proposal and
       // the set cannot come out as one model's taste repeated eight times.
       if (panel.isNotEmpty) {
@@ -358,11 +501,9 @@ class MockupController extends ChangeNotifier {
       prompts.add(
         mockupUserPrompt(
           description,
-          chosen,
+          d.style,
           styleBrief: styleBrief,
-          mode: dark ? 'dark' : 'light',
-          accent: mockupAccents[(_poolOffset + i) % mockupAccents.length],
-          layout: mockupLayouts[(_poolOffset + i) % mockupLayouts.length],
+          mode: d.dark ? 'dark' : 'light',
         ),
       );
     }
@@ -374,6 +515,21 @@ class MockupController extends ChangeNotifier {
       await Future.wait([for (final (j, m) in set.skip(i).take(_atOnce).indexed) _generate(m, prompts[i + j])]);
     }
     if (panel.length > 1) await _panelRounds(set, prompts);
+  }
+
+  /// The old fixed pool, kept only for the case where no panel can answer.
+  List<Direction> _poolDirections() {
+    final pool = stylePoolFor(styleBrief);
+    final darks = pool.where((s) => _darkStyleIds.contains(s.id)).toList();
+    final lights = pool.where((s) => !_darkStyleIds.contains(s.id)).toList();
+    final d = darks.isEmpty ? pool : darks;
+    final l = lights.isEmpty ? pool : lights;
+    return <Direction>[
+      for (var i = 0; i < setSize; i++)
+        i.isOdd
+            ? (style: d[(_poolOffset ~/ 2 + i ~/ 2) % d.length], dark: true)
+            : (style: l[(_poolOffset ~/ 2 + i ~/ 2) % l.length], dark: false),
+    ];
   }
 
   /// What the panel is doing right now, for the screen to show. Empty when it

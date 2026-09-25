@@ -46,13 +46,19 @@ void main() {
     expect(maxInFlight, 4);
     final firstNames = c.current.map((m) => m.style.id).toSet();
     expect(firstNames.length, MockupController.setSize);
-    // Each proposal is a different build, not the same page recoloured.
-    expect(prompts.where((p) => p.contains('grid of square tiles')), hasLength(1));
-    expect(prompts.where((p) => p.contains('vertical list of wide rows')), hasLength(1));
+    // Each proposal carries its own direction: eight different styles, not one
+    // page recoloured eight times.
+    expect(c.current.map((m) => m.style.direction).toSet(), hasLength(MockupController.setSize));
 
     await c.generateSet();
     expect(c.sets.length, 2);
-    expect(c.current.map((m) => m.style.id).toSet().intersection(firstNames), isEmpty);
+    // A second set moves on through the pool. It cannot be entirely new: the
+    // pool holds five dark looks and a set wants four of them, so by the
+    // second set some must come round again. What must not happen is the same
+    // eight over again.
+    final secondNames = c.current.map((m) => m.style.id).toSet();
+    expect(secondNames, isNot(equals(firstNames)));
+    expect(secondNames.difference(firstNames), isNotEmpty);
     c.showSet(0);
     expect(c.current.first.style.id, 'minimal');
     // Two sets of MockupController.setSize proposals, at 0.01 each.
@@ -84,13 +90,102 @@ void main() {
     expect(mockupUserPrompt('app di ricette', mockupStylePool.first), contains('app di ricette'));
   });
 
-  test('each proposal commits to its own colour, and the subject leads', () {
-    final first = mockupUserPrompt('app PDF', mockupStylePool.first, accent: mockupAccents.first);
-    final second = mockupUserPrompt('app PDF', mockupStylePool[1], accent: mockupAccents[1]);
-    expect(first, contains('red / crimson'));
-    expect(second, contains('deep blue'));
-    expect(first, contains('the subject of the app calls for its own colour, which always wins'));
+  test('the subject still decides the colour, wherever the direction comes from', () {
     expect(mockupSystemPrompt, contains('PDF and documents red'));
+    expect(directionSystem, contains('The subject decides the colour'));
+    // With an app to copy, the directions must stay in its world.
+    expect(directionSystem, contains("stays recognisably in that app's world"));
+  });
+
+  test('directions are read out of an answer wrapped in prose', () {
+    final got = parseDirections('Sure!\n[{"name":"Quiet Ledger","direction":"A calm list of rows with the balance set large above them, thin line icons.","dark":false}]\nHope that helps.');
+    expect(got, hasLength(1));
+    expect(got.first.style.name, 'Quiet Ledger');
+    expect(got.first.style.id, 'quiet_ledger');
+    expect(got.first.dark, isFalse);
+    // Too short to draw from, so not a direction.
+    expect(parseDirections('[{"name":"X","direction":"nice"}]'), isEmpty);
+    expect(parseDirections('I cannot do that.'), isEmpty);
+  });
+
+  test('a direction two models proposed leads, and light and dark stay balanced', () {
+    Direction d(String name, String text, bool dark) =>
+        (style: MockupStyle(name.toLowerCase(), name, text), dark: dark);
+    // Groq and Gemini arrive at the same idea in different words.
+    final merged = mergeDirections([
+      (label: 'Groq', list: [
+        d('Bold Ledger', 'A large balance dominates the screen above a quiet list of rows', false),
+        d('Midnight', 'Near black ground with the accent glowing on the totals', true),
+      ]),
+      (label: 'Gemini', list: [
+        d('Big Balance', 'The balance dominates the screen, a quiet list of rows below it', false),
+        d('Paper', 'Cream ground, serif headings, generous margins like a printed statement', false),
+      ]),
+    ], count: 4);
+
+    // The agreed one is first.
+    expect(merged.first.style.name, 'Bold Ledger');
+    // Both grounds are offered, not four of one kind.
+    expect(merged.where((m) => m.dark), isNotEmpty);
+    expect(merged.where((m) => !m.dark), isNotEmpty);
+    // The two ways of saying the same thing counted once.
+    expect(merged.map((m) => m.style.name), isNot(contains('Big Balance')));
+  });
+
+  test('the panel decides the directions, and they reach the drawings', () async {
+    const answer = '[{"name":"Quiet Ledger","direction":"A calm list with the balance set large above it, thin line icons","dark":false},'
+        '{"name":"Midnight","direction":"Near black ground with the accent glowing on the totals only","dark":true}]';
+    final prompts = <String>[];
+    ({String id, String label, CompleteText complete}) m(String id) => (
+          id: id,
+          label: id.toUpperCase(),
+          complete: (system, prompt) async {
+            if (system == directionSystem) return (text: answer, costUsd: null);
+            prompts.add(prompt);
+            if (prompt.contains('Score every proposal')) return (text: '[]', costUsd: null);
+            final style = RegExp(r'Visual style: ([^—]+) —').firstMatch(prompt)!.group(1)!.trim();
+            return (text: reply(style), costUsd: null);
+          },
+        );
+    final a = m('a');
+    final b = m('b');
+    final c = MockupController(
+      description: 'App conti di casa',
+      engine: BuildEngine.gemini,
+      complete: (s, p) async => (text: 'unused', costUsd: null),
+      panel: [
+        (id: a.id, label: a.label, complete: a.complete),
+        (id: b.id, label: b.label, complete: b.complete),
+      ],
+    );
+
+    await c.generateSet();
+
+    // Every drawing carries a direction the panel agreed, not one from the
+    // old fixed list of fifteen looks.
+    expect(c.current.every((x) => x.style.name == 'Quiet Ledger' || x.style.name == 'Midnight'), isTrue);
+    expect(prompts.any((p) => p.contains('A calm list with the balance')), isTrue);
+    // Both grounds were asked for.
+    expect(prompts.any((p) => p.contains('MUST be dark')), isTrue);
+    expect(prompts.any((p) => p.contains('MUST be light')), isTrue);
+  });
+
+  test('nobody answers the direction round: the old pool still draws something', () async {
+    final c = MockupController(
+      description: 'App ricette',
+      engine: BuildEngine.gemini,
+      complete: (s, p) async => (text: 'unused', costUsd: null),
+      panel: [
+        (id: 'a', label: 'A', complete: (s, p) async => (text: 'no json here', costUsd: null)),
+        (id: 'b', label: 'B', complete: (s, p) async => throw Exception('down')),
+      ],
+    );
+
+    await c.generateSet();
+
+    expect(c.current, hasLength(MockupController.setSize));
+    // Fell back to the pool rather than showing an empty gallery.
+    expect(c.current.every((x) => mockupStylePool.any((s) => s.id == x.style.id)), isTrue);
   });
 }
 

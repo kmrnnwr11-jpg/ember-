@@ -118,6 +118,21 @@ describe('ProjectFs', () => {
 });
 
 describe('JobManager', () => {
+  it('gives a native build the hour it needs, and quick jobs the short timeout', () => {
+    const jm = new JobManager(new FakeDriver('.'), 900);
+    // Fifteen minutes is plenty for these.
+    expect(jm.timeoutFor('analyze')).toBe(900);
+    expect(jm.timeoutFor('pub_get')).toBe(900);
+    expect(jm.timeoutFor('build_web')).toBe(900);
+    // A first Android release build measured 31 minutes on this machine: at
+    // fifteen it was killed near the end and looked like a crash.
+    expect(jm.timeoutFor('build_apk')).toBe(3600);
+    expect(jm.timeoutFor('build_aab')).toBe(3600);
+    expect(jm.timeoutFor('build_ipa')).toBe(3600);
+    // A longer configured timeout was set deliberately and is kept.
+    expect(new JobManager(new FakeDriver('.'), 7200).timeoutFor('build_apk')).toBe(7200);
+  });
+
   it('runs serially per workspace and cancels', async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'fc-jobs-'));
     const jm = new JobManager(new FakeDriver(root), 60);

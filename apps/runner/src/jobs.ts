@@ -35,6 +35,18 @@ const MAX_LOG_CHUNKS = 4000;
 const MAX_CONCURRENT_PER_WORKSPACE = 1;
 
 /**
+ * Jobs that compile native code, and the hour they are given.
+ *
+ * The shared timeout is fifteen minutes, which is plenty for pub get, analyze
+ * or a web build. A first Android release build on a modest laptop compiles
+ * Kotlin, Dart and the NDK with nothing cached and honestly takes half an hour
+ * — one measured here took 31 minutes. Killed at fifteen it looks to the user
+ * exactly like a crash, right at the end, with nothing but a Retry button.
+ */
+const NATIVE_BUILDS = new Set<JobKind>(['build_apk', 'build_apk_fast', 'build_aab', 'build_ipa']);
+const NATIVE_BUILD_TIMEOUT_SECONDS = 3600;
+
+/**
  * In-process job queue: one running job per workspace, FIFO, timeout and
  * cancellation. Logs are kept in a ring buffer so late subscribers can replay.
  */
@@ -51,6 +63,12 @@ export class JobManager extends EventEmitter<JobEvents> {
     private readonly timeoutSeconds: number,
   ) {
     super();
+  }
+
+  /** How long this kind of job may run. A configured timeout longer than the
+   * native-build allowance is respected: it was set deliberately. */
+  timeoutFor(kind: JobKind): number {
+    return NATIVE_BUILDS.has(kind) ? Math.max(this.timeoutSeconds, NATIVE_BUILD_TIMEOUT_SECONDS) : this.timeoutSeconds;
   }
 
   enqueue(spec: JobSpec): Job {
@@ -129,10 +147,11 @@ export class JobManager extends EventEmitter<JobEvents> {
     const ctrl = new AbortController();
     this.controllers.set(job.id, ctrl);
     let timedOut = false;
+    const limit = this.timeoutFor(job.kind);
     const timer = setTimeout(() => {
       timedOut = true;
       ctrl.abort();
-    }, this.timeoutSeconds * 1000);
+    }, limit * 1000);
     job.status = 'running';
     this.emit('status', job);
     this.append(job, 'stdout', `$ ${job.cmd} ${job.args.join(' ')}\n`);
@@ -144,7 +163,7 @@ export class JobManager extends EventEmitter<JobEvents> {
         onStdout: (c) => this.append(job, 'stdout', c),
         onStderr: (c) => this.append(job, 'stderr', c),
       });
-      if (timedOut) this.append(job, 'stderr', `\n[runner] timeout after ${this.timeoutSeconds}s\n`);
+      if (timedOut) this.append(job, 'stderr', `\n[runner] timeout after ${limit}s\n`);
       const state: JobState = ctrl.signal.aborted ? (timedOut ? 'failed' : 'cancelled') : code === 0 ? 'succeeded' : 'failed';
       this.finish(job, state, code);
     } catch (e) {

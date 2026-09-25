@@ -29,6 +29,40 @@ export interface ReviewerReport {
   findings: Finding[];
 }
 
+/**
+ * One plain call to any OpenAI-compatible service. Shared with the logo design
+ * panel, which uses the same reviewers to draw and to judge drawings.
+ */
+export async function openAiComplete(
+  r: Pick<ReviewerSpec, 'baseUrl' | 'apiKey' | 'model'>,
+  system: string,
+  prompt: string,
+  fetchImpl: typeof fetch = fetch,
+  maxTokens = 4000,
+): Promise<string> {
+  const res = await fetchImpl(`${r.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${r.apiKey}`,
+      // Groq refuses requests without one; the others do not mind.
+      'user-agent': 'Ember/1.0',
+    },
+    body: JSON.stringify({
+      model: r.model,
+      temperature: 0.2,
+      max_tokens: maxTokens,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: prompt },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${(await res.text().catch(() => '')).slice(0, 200)}`);
+  const j = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+  return j.choices?.[0]?.message?.content ?? '';
+}
+
 /** Enough of the app for a model to judge it, small enough to send. */
 const MAX_CODE_CHARS = 280_000;
 const MAX_FILE_CHARS = 24_000;

@@ -24,7 +24,18 @@ export const LOGO_STYLES = [
   'duotone illustration of the app’s main object',
 ];
 
+/** What an icon on a 2026 home screen looks like, spelled out. */
+export const LOGO_2026 = `THIS MUST LOOK LIKE A 2026 APP ICON, NOT A 2015 ONE:
+- One simple, bold shape that reads at 48 px. If it needs a second look to be understood, it is too complicated.
+- Flat or a single smooth gradient between two neighbouring hues. No bevels, no glossy highlight, no drop shadow, no outer glow, no skeuomorphic depth.
+- Two or three colours at most, confident and saturated, on a solid or single-gradient ground.
+- Thick, even strokes and generous rounding where the shape has corners; nothing hair-thin, which disappears when small.
+- No text, no thin decorative rings, no busy background patterns, no photo-realism.`;
+
 export const LOGO_SYSTEM = `You are a senior brand designer who draws mobile app icons as clean SVG code.
+
+${LOGO_2026}
+
 Rules:
 - Output ONLY one SVG, starting with <svg and ending with </svg>. No markdown, no explanations.
 - viewBox="0 0 512 512", width="512" height="512". Full-bleed square background (the launcher masks corners): fill the whole canvas.
@@ -85,6 +96,162 @@ export interface LogoProposal {
   id: string;
   style: string;
   png: string;
+  /** Filled only when a panel drew them: who drew it and how it was judged. */
+  authorLabel?: string;
+  score?: number;
+  notes?: string[];
+}
+
+/** One model at the design table: it draws, then judges the others' drawings. */
+export interface LogoPanelMember {
+  id: string;
+  label: string;
+  complete: CompleteFn;
+}
+
+const CRITIQUE_SYSTEM = `You are a brand design director reviewing app icons drawn by other designers as SVG, and you answer with JSON only.
+You read SVG the way a designer reads a sketch: how many shapes, how big the subject is inside the 512 canvas, how many colours,
+whether it would still be readable at 48 px. You never praise; you name the one change that would most improve each icon.
+Reject, every time you see them: a small mark floating in empty space, more than three colours, bevels, glossy highlights,
+drop shadows, glows, hair-thin strokes, text, and anything too detailed to read at 48 px.`;
+
+const critiquePrompt = (appName: string, about: string, entries: string) => `The app: ${appName} — ${about.slice(0, 600)}
+
+These are the icons on the table, as SVG:
+
+${entries}
+
+Score every icon from 1 to 10 and give ONE concrete instruction that would most improve it — something a designer can act on
+("make the cup fill 90% of the canvas and drop the thin ring around it"), never vague advice ("make it more modern").
+Answer with a JSON array only, one entry per icon, no prose around it:
+[{"n": 1, "score": 7, "fix": "the one instruction"}]`;
+
+/** Reads the scores out of a critic's answer, however it wrapped them. */
+export function parseLogoCritique(text: string): Array<{ n: number; score: number; fix: string }> {
+  const start = text.indexOf('[');
+  const end = text.lastIndexOf(']');
+  if (start < 0 || end <= start) return [];
+  try {
+    const raw = JSON.parse(text.slice(start, end + 1)) as unknown;
+    if (!Array.isArray(raw)) return [];
+    const out: Array<{ n: number; score: number; fix: string }> = [];
+    for (const e of raw) {
+      if (!e || typeof e !== 'object') continue;
+      const o = e as Record<string, unknown>;
+      const n = Number(o.n);
+      const score = Number(o.score);
+      if (!Number.isFinite(n) || !Number.isFinite(score)) continue;
+      out.push({ n, score: Math.min(10, Math.max(1, score)), fix: `${o.fix ?? ''}`.trim().slice(0, 400) });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+/** Draws one icon, retrying once: models sometimes return a cut or invalid drawing. */
+async function drawSvg(complete: CompleteFn, prompt: string): Promise<string | null> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const svg = sanitizeSvg(await complete(LOGO_SYSTEM, prompt).catch(() => ''));
+    if (!svg) continue;
+    const ok = await renderPng(svg, 64).then(
+      () => true,
+      () => false,
+    );
+    if (ok) return svg;
+  }
+  return null;
+}
+
+async function saveLogo(dir: string, id: string, svg: string, meta: Record<string, unknown>): Promise<void> {
+  await writeFile(path.join(dir, `${id}.svg`), svg);
+  await writeFile(path.join(dir, `${id}.json`), JSON.stringify({ ...meta, createdAt: new Date().toISOString() }));
+}
+
+/**
+ * Several models draw the icons, then read each other's SVG, score it and say
+ * the one thing that would most improve it; every model then redraws its own
+ * icons with the notes the others wrote. A drawing nobody but its own author
+ * has looked at is how the dated, floating-mark icons got through.
+ */
+export async function generateLogosPanel(opts: {
+  projectRoot: string;
+  appName: string;
+  about: string;
+  hint?: string;
+  count: number;
+  members: LogoPanelMember[];
+}): Promise<LogoProposal[]> {
+  const dir = logosDir(opts.projectRoot);
+  await mkdir(dir, { recursive: true });
+  const previous = (await readdir(dir).catch(() => [] as string[])).filter((f) => f.endsWith('.json')).length;
+
+  // Round-robin, so the set is never one model's taste repeated six times.
+  const jobs = Array.from({ length: opts.count }, (_, i) => ({
+    style: LOGO_STYLES[(previous + i) % LOGO_STYLES.length]!,
+    member: opts.members[i % opts.members.length]!,
+    prompt: logoPrompt({ appName: opts.appName, about: opts.about, hint: opts.hint, style: LOGO_STYLES[(previous + i) % LOGO_STYLES.length]! }),
+  }));
+
+  const drawn = (
+    await Promise.all(
+      jobs.map(async (j) => {
+        const svg = await drawSvg(j.member.complete, j.prompt);
+        return svg ? { ...j, svg, id: nanoid(8) } : null;
+      }),
+    )
+  ).filter((d): d is NonNullable<typeof d> => d !== null);
+  if (drawn.length === 0) return [];
+
+  // The table: every member scores every icon, including its own.
+  const entries = drawn.map((d, i) => `ICON ${i + 1} — by ${d.member.label}, style "${d.style}"\n${d.svg.slice(0, 2200)}`).join('\n\n');
+  const votes = await Promise.all(
+    opts.members.map(async (m) => ({
+      by: m.id,
+      label: m.label,
+      list: parseLogoCritique(await m.complete(CRITIQUE_SYSTEM, critiquePrompt(opts.appName, opts.about, entries)).catch(() => '')),
+    })),
+  );
+
+  const judged = drawn.map((d, i) => {
+    const scores: number[] = [];
+    const notes: string[] = [];
+    for (const v of votes) {
+      const entry = v.list.find((e) => e.n === i + 1);
+      if (!entry) continue;
+      scores.push(entry.score);
+      // A designer's opinion of their own drawing is not a second opinion.
+      if (v.by !== d.member.id && entry.fix) notes.push(`${v.label}: ${entry.fix}`);
+    }
+    return { ...d, score: scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : undefined, notes };
+  });
+
+  // Each author redraws its own icons with what the others said.
+  const finished = await Promise.all(
+    judged.map(async (d) => {
+      let svg = d.svg;
+      if (d.notes.length > 0) {
+        const better = await drawSvg(
+          d.member.complete,
+          `${d.prompt}\n\nThis is the icon you drew:\n${d.svg.slice(0, 2200)}\n\n` +
+            `The design panel scored it ${d.score?.toFixed(1) ?? '?'}/10. Apply these notes from the other designers, ` +
+            `keep what already works, and draw the complete improved icon:\n${d.notes.map((n) => `- ${n}`).join('\n')}`,
+        );
+        if (better) svg = better;
+      }
+      try {
+        const png = await renderPng(svg, 512);
+        await saveLogo(dir, d.id, svg, { style: d.style, hint: opts.hint ?? '', author: d.member.label, score: d.score ?? null, notes: d.notes });
+        return { id: d.id, style: d.style, png: png.toString('base64'), authorLabel: d.member.label, score: d.score, notes: d.notes };
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  // Best first: what several models independently rated highly is the safest bet.
+  const kept: LogoProposal[] = finished.filter((p) => p !== null);
+  return kept.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 }
 
 export function logosDir(projectRoot: string) {

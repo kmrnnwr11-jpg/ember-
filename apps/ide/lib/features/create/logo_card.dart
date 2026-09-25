@@ -7,6 +7,7 @@ import 'package:ide_core/ide_core.dart';
 
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import '../review/reviewers.dart';
 import 'app_builder.dart';
 
 /// Logo studio: describe the logo (optional), get 6 proposals, "More logos" adds 5 more, pick one.
@@ -60,10 +61,19 @@ class _LogoCardState extends ConsumerState<LogoCard> {
     });
     try {
       final api = await ref.read(runnerApiProvider.future);
+      // The configured reviewers draw the icons together and then review each
+      // other's drawings; with fewer than two the Runner's own engine draws.
+      final settings = await ref.read(reviewerSettingsProvider.future);
+      final reviewers = settings.usable;
       final res = await api.generateLogos(widget.projectId, {
         'about': widget.builder.prompt,
         if (_hint.text.trim().isNotEmpty) 'hint': _hint.text.trim(),
         'count': _logos.isEmpty ? 6 : 5,
+        if (reviewers.length > 1)
+          'panel': [
+            for (final r in reviewers)
+              {'id': r.id, 'label': r.label, 'baseUrl': r.baseUrl, 'apiKey': settings.keys[r.id]!, 'model': r.model},
+          ],
         // Drawing is the graphics engine's job, not the coding engine's.
         'engine': widget.builder.designEngine == BuildEngine.claudeCode ? 'claude' : 'auto',
       });

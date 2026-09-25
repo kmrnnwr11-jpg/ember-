@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/session.dart';
 import '../../core/settings_store.dart';
+import '../mockups/mockup_controller.dart' show PanelMember;
 
 /// One extra model that reviews a finished app. They are all OpenAI-compatible
 /// services (DeepSeek, Groq, GitHub Models, OpenRouter, a local Ollama...), so
@@ -137,3 +138,33 @@ final reviewerSettingsProvider =
 /// Builds the adapter that talks to one reviewer.
 AiProvider providerFor(Reviewer r, String key) =>
     createProvider(AiProviderId.openaiCompatible, AiEndpoint.direct(apiKey: key, baseUrl: r.baseUrl));
+
+/// The same models, used the other way round: not judging a finished app but
+/// drawing part of the design themselves and then reviewing each other.
+List<PanelMember> designPanel(ReviewerSettings s) => [
+      for (final r in s.usable)
+        (
+          id: r.id,
+          label: r.label,
+          complete: (String system, String prompt) async {
+            final provider = providerFor(r, s.keys[r.id]!);
+            final buf = StringBuffer();
+            await for (final e in provider.chat(
+              model: r.model,
+              system: system,
+              maxTokens: 32000,
+              messages: [AiMessage.user(prompt)],
+            )) {
+              switch (e) {
+                case AiTextDelta(:final text):
+                  buf.write(text);
+                case AiError(:final message, :final statusCode):
+                  throw AiException(message, statusCode: statusCode);
+                default:
+              }
+            }
+            // These are free or near-free tiers, so no cost is attributed.
+            return (text: buf.toString(), costUsd: null);
+          },
+        ),
+    ];

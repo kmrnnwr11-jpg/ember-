@@ -12,7 +12,7 @@ import { teamFromAppStore } from './ios_signing.js';
 import { backupKey } from './drive.js';
 import { installAndRun, lanAddress, listDevices } from './devices.js';
 import { fix as fixFinding, inspectCloud, inspectProject, inspectRunning } from './doctor.js';
-import { reviewApp } from './ai_review.js';
+import { openAiComplete, reviewApp } from './ai_review.js';
 import { GitHubError, listEmberApps, restoreFromGitHub, saveToGitHub } from './github.js';
 import { fillAppContent } from './play_console.js';
 import { fillPolicy, publishPolicy } from './publish_prep.js';
@@ -29,7 +29,7 @@ import websocket from '@fastify/websocket';
 import { PathError, safeResolve } from './paths.js';
 import { PreviewService } from './preview.js';
 import { DEFAULT_UPSTREAMS, GEMINI_FALLBACKS, registerAiRoutes } from './ai.js';
-import { applyLogo, generateLogos, storeState } from './logos.js';
+import { applyLogo, generateLogos, generateLogosPanel, storeState } from './logos.js';
 import { captureScreenshots, findBrowser, hasScreenshotMode, SCREENSHOT_UPGRADE_REQUEST } from './screenshots.js';
 import { parseScreenshots, registerResearchRoutes, saveReferenceShots } from './research.js';
 import { readSite, saveSiteShots } from './web_reference.js';
@@ -1000,6 +1000,21 @@ export async function buildApp(
           hint: z.string().max(500).optional(),
           count: z.number().int().min(1).max(6).default(6),
           engine: z.enum(['auto', 'claude', 'gemini']).default('auto'),
+          // When the user has configured reviewers, they draw the icons
+          // together and then review each other instead of one model working
+          // alone and nobody checking it.
+          panel: z
+            .array(
+              z.object({
+                id: z.string().min(1).max(40),
+                label: z.string().min(1).max(40),
+                baseUrl: z.string().url().max(200),
+                apiKey: z.string().min(1).max(400),
+                model: z.string().min(1).max(80),
+              }),
+            )
+            .max(6)
+            .default([]),
         })
         .parse(req.body);
       const claudeOk = await claudeCode.isAvailable();
@@ -1033,14 +1048,29 @@ export async function buildApp(
         }
         throw last instanceof Error ? last : new Error('no AI available for logos');
       };
-      const logos = await generateLogos({
-        projectRoot: services.projectRoot(project),
-        appName: body.appName ?? project.name.replace(/_\d+$/, '').replace(/_/g, ' '),
-        about: body.about,
-        hint: body.hint,
-        count: body.count,
-        complete,
-      });
+      const appName = body.appName ?? project.name.replace(/_\d+$/, '').replace(/_/g, ' ');
+      const logos =
+        body.panel.length > 1
+          ? await generateLogosPanel({
+              projectRoot: services.projectRoot(project),
+              appName,
+              about: body.about,
+              hint: body.hint,
+              count: body.count,
+              members: body.panel.map((m) => ({
+                id: m.id,
+                label: m.label,
+                complete: (system: string, prompt: string) => openAiComplete(m, system, prompt, deps.reviewFetch ?? fetch),
+              })),
+            })
+          : await generateLogos({
+              projectRoot: services.projectRoot(project),
+              appName,
+              about: body.about,
+              hint: body.hint,
+              count: body.count,
+              complete,
+            });
       if (logos.length === 0) return reply.status(502).send({ code: 'logo_failed', message: 'The AI could not draw logos right now, try again' });
       return { logos };
     });

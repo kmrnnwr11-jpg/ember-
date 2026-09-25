@@ -35,12 +35,30 @@ const mockupStylePool = <MockupStyle>[
   MockupStyle('corporate', 'Professional', 'Professional corporate: navy and teal, data cards, clear hierarchy, trustworthy and precise (IBM Plex Sans).'),
 ];
 
+/// What "modern" means in 2026, spelled out — otherwise a model reaches for
+/// the look it saw most during training, which is the look of five years ago.
+const modern2026Brief = '''
+THIS MUST LOOK LIKE A 2026 APP, NOT A 2020 ONE. What that means concretely:
+- Large, confident type: the screen title is 28-34px and heavy; secondary text is quiet grey, never black.
+- Generous breathing room: 20-24px side margins, 16-20px between cards. Cramped padding is the clearest sign of an old design.
+- Soft, large radii (20-28px on cards, full pills on buttons) used consistently — not 4px corners, not a different radius on every element.
+- Depth comes from a barely-there tinted shadow and a hairline border, never from a hard grey drop shadow.
+- One accent colour, used sparingly on what matters; everything else is a neutral tinted slightly toward that accent.
+- Line icons on a 24px grid, 1.5-2px strokes. No emoji in the interface, no gloss, no bevels, no gradients on text.
+- A real hierarchy: one thing on each screen is obviously the most important and is the largest, most saturated element.
+Avoid: heavy drop shadows, thick coloured borders around everything, purple-to-blue gradient heroes, centred everything,
+a card around every single item, and the 2010s "bevel and shine" look.''';
+
 const mockupSystemPrompt = '''
 You are a senior mobile UI designer. You produce ONE high-fidelity mobile app mockup as a single self-contained HTML file.
+
+$modern2026Brief
+
 Rules:
-- Output EXACTLY two things and nothing else:
+- Output EXACTLY three things and nothing else:
   1) First line: STYLE: {"name": "...", "palette": ["#hex", "#hex", "#hex", "#hex"], "font": "...", "tagline": "one short sentence in the user's language explaining the style"}
-  2) A fenced block ```html mockup.html ... ``` with the complete HTML document.
+  2) Second line: DESIGN: one paragraph, max 60 words, saying how the screens are laid out, where the hierarchy sits, how the icons are drawn, and what makes this look current. Other designers read this line to judge your work, so describe decisions, not adjectives.
+  3) A fenced block ```html mockup.html ... ``` with the complete HTML document.
 - The HTML must work offline: inline <style>, no JavaScript frameworks, no external images (use CSS gradients, shapes and inline SVG as imagery). Google Fonts <link> is allowed with a system font fallback.
 - Icons: draw them as inline SVG in the current line style — a 24px grid, 1.5-2px strokes, round caps, no fill, inheriting the text colour. This is what a phone looks like today. Never use emoji as an interface icon: an emoji in a toolbar is the mark of a mockup, not of an app. Emoji are allowed only inside fake content, where a person would have typed one.
 - Designed for a 390px-wide phone viewport (<meta name="viewport" content="width=device-width, initial-scale=1">). No horizontal scrolling.
@@ -165,6 +183,27 @@ class Mockup {
   String tagline = '';
   String? error;
 
+  /// Which model drew it, when several share the work.
+  String authorId = '';
+  String authorLabel = '';
+
+  /// How the author described its own design, and what the other models said
+  /// about it: filled by the panel rounds, empty when one model works alone.
+  String design = '';
+  double? score;
+  List<String> notes = const [];
+  bool refined = false;
+
+  /// What the other designers are shown when they judge this proposal. The page
+  /// itself is far too long to pass around, and its opening is mostly markup:
+  /// the author's own description of what it did is the honest summary.
+  String critiqueSummary(int n) => [
+    'PROPOSAL $n — by $authorLabel',
+    'Style: $name (${style.id}) · font: $font · palette: ${palette.join(', ')}',
+    if (design.isNotEmpty) 'The designer describes it as: $design',
+    if (tagline.isNotEmpty) 'Tagline: $tagline',
+  ].join('\n');
+
   /// Parses the model output (STYLE line + html block). Returns false if unusable.
   bool apply(String text) {
     final styleLine = RegExp(r'^\s*STYLE:\s*(\{.*\})\s*$', multiLine: true).firstMatch(text);
@@ -181,6 +220,8 @@ class Mockup {
     } else {
       name = style.name;
     }
+    final designLine = RegExp(r'^\s*DESIGN:\s*(.+)$', multiLine: true).firstMatch(text);
+    if (designLine != null) design = designLine.group(1)!.trim();
     final code = CodeBlocks.parse(text).whereType<CodeSegment>().where((c) => c.complete && (c.language == 'html' || c.code.contains('<html'))).firstOrNull;
     final raw = code?.code ?? (text.contains('<html') ? text.substring(text.contains('<!DOCTYPE') ? text.indexOf('<!DOCTYPE') : text.indexOf('<html')) : null);
     if (raw == null || !raw.contains('</html>')) return false;
@@ -200,10 +241,67 @@ $html
 
 typedef CompleteText = Future<({String text, double? costUsd})> Function(String system, String prompt);
 
+/// One model sitting at the design table. Several of them draw the set, then
+/// read each other's work and say what is wrong with it.
+typedef PanelMember = ({String id, String label, CompleteText complete});
+
+const _critiqueSystem = '''
+You are a senior mobile design director reviewing proposals from other designers, and you answer with JSON only.
+You are hard to please but fair, and you never praise: your job is to name the one thing that would most improve each proposal.
+Judge only what a 2026 design director would judge: hierarchy (is one thing clearly the most important?), typography (is the
+title big and confident, is secondary text quiet?), spacing (is it generous or cramped?), colour discipline (one accent, tinted
+neutrals, and does the colour fit the subject?), and whether it looks current or dated.
+Never suggest adding emoji, heavy shadows, thick borders or gradient heroes. Never ask for a different subject colour.''';
+
+String _critiquePrompt(String appDescription, String summaries, String ownLabel) => '''
+The app: ${shortDescription(appDescription)}
+
+These are the proposals on the table:
+
+$summaries
+
+Score every proposal from 1 to 10 and give ONE concrete, specific instruction that would most improve it — something a
+designer can act on ("make the balance the largest element on the home screen and drop the card around it"), never vague
+advice ("improve the hierarchy"). You are $ownLabel; judge your own proposals by the same standard as the others.
+Answer with a JSON array only, one entry per proposal, no prose around it:
+[{"n": 1, "score": 7, "fix": "the one instruction"}]''';
+
+/// Reads the scores out of a critic's answer, however it wrapped them.
+List<({int n, double score, String fix})> parseCritique(String text) {
+  final start = text.indexOf('[');
+  final end = text.lastIndexOf(']');
+  if (start < 0 || end <= start) return const [];
+  try {
+    final raw = jsonDecode(text.substring(start, end + 1));
+    if (raw is! List) return const [];
+    final out = <({int n, double score, String fix})>[];
+    for (final e in raw) {
+      if (e is! Map) continue;
+      final n = int.tryParse('${e['n']}');
+      final score = double.tryParse('${e['score']}');
+      final fix = '${e['fix'] ?? ''}'.trim();
+      if (n != null && score != null) out.add((n: n, score: score.clamp(1, 10).toDouble(), fix: fix));
+    }
+    return out;
+  } catch (_) {
+    return const [];
+  }
+}
+
 /// Generates and manages mockup sets for one app description (§1B step 3).
 class MockupController extends ChangeNotifier {
-  MockupController({required this.description, required this.engine, required CompleteText complete, this.model, this.styleBrief = ''})
-    : _complete = complete;
+  MockupController({
+    required this.description,
+    required this.engine,
+    required CompleteText complete,
+    this.model,
+    this.styleBrief = '',
+    this.panel = const [],
+  }) : _complete = complete;
+
+  /// The models that share the drawing and then review each other. Empty or a
+  /// single member means the old behaviour: one model draws, nobody reviews.
+  final List<PanelMember> panel;
 
   final String description;
 
@@ -247,7 +345,16 @@ class MockupController extends ChangeNotifier {
     for (var i = 0; i < setSize; i++) {
       final dark = i.isOdd; // alternate → 4 light (even i) + 4 dark (odd i)
       final chosen = dark ? darks[(_poolOffset ~/ 2 + i ~/ 2) % darks.length] : lights[(_poolOffset ~/ 2 + i ~/ 2) % lights.length];
-      set.add(Mockup(chosen));
+      final m = Mockup(chosen);
+      // Round-robin, so every model draws both a light and a dark proposal and
+      // the set cannot come out as one model's taste repeated eight times.
+      if (panel.isNotEmpty) {
+        final author = panel[i % panel.length];
+        m
+          ..authorId = author.id
+          ..authorLabel = author.label;
+      }
+      set.add(m);
       prompts.add(
         mockupUserPrompt(
           description,
@@ -266,7 +373,84 @@ class MockupController extends ChangeNotifier {
     for (var i = 0; i < set.length; i += _atOnce) {
       await Future.wait([for (final (j, m) in set.skip(i).take(_atOnce).indexed) _generate(m, prompts[i + j])]);
     }
+    if (panel.length > 1) await _panelRounds(set, prompts);
   }
+
+  /// What the panel is doing right now, for the screen to show. Empty when it
+  /// is not sitting.
+  String panelStatus = '';
+
+  /// The designers read each other's proposals, score them and say the one
+  /// thing that would most improve each — then every one of them redraws its
+  /// own proposals with the notes the others wrote. Nobody marks their own
+  /// homework alone: a note only counts when it comes from a different model.
+  Future<void> _panelRounds(List<Mockup> set, List<String> prompts) async {
+    final ready = [for (final (i, m) in set.indexed) if (m.status == MockupStatus.ready && m.html != null) (i: i, m: m)];
+    if (ready.length < 2) return;
+
+    panelStatus = 'I ${panel.length} designer si confrontano sui ${ready.length} mockup…';
+    notifyListeners();
+
+    final summaries = [for (final (k, r) in ready.indexed) r.m.critiqueSummary(k + 1)].join('\n\n');
+    // Every member critiques the whole table at once; one that is down or
+    // answers nonsense simply does not vote.
+    final votes = await Future.wait([
+      for (final member in panel)
+        member.complete(_critiqueSystem, _critiquePrompt(description, summaries, member.label)).then(
+              (r) {
+                costUsd += r.costUsd ?? 0;
+                return (by: member.id, list: parseCritique(r.text));
+              },
+              onError: (_) => (by: member.id, list: const <({int n, double score, String fix})>[]),
+            ),
+    ]);
+
+    for (final (k, r) in ready.indexed) {
+      final scores = <double>[];
+      final notes = <String>[];
+      for (final v in votes) {
+        final entry = v.list.where((e) => e.n == k + 1).firstOrNull;
+        if (entry == null) continue;
+        scores.add(entry.score);
+        // A designer's opinion of their own work is not a second opinion.
+        if (v.by != r.m.authorId && entry.fix.isNotEmpty) notes.add('${_labelOf(v.by)}: ${entry.fix}');
+      }
+      if (scores.isNotEmpty) r.m.score = scores.reduce((a, b) => a + b) / scores.length;
+      r.m.notes = notes;
+    }
+    notifyListeners();
+
+    final toRedraw = [for (final r in ready) if (r.m.notes.isNotEmpty) r];
+    if (toRedraw.isEmpty) {
+      panelStatus = '';
+      notifyListeners();
+      return;
+    }
+    panelStatus = 'Ogni designer sta rifacendo il suo mockup con le note degli altri…';
+    notifyListeners();
+    for (var i = 0; i < toRedraw.length; i += _atOnce) {
+      await Future.wait([
+        for (final r in toRedraw.skip(i).take(_atOnce))
+          _generate(
+            r.m,
+            '${prompts[r.i]}\n\n'
+            'THE DESIGN PANEL HAS REVIEWED YOUR PROPOSAL. It scored ${r.m.score?.toStringAsFixed(1) ?? '?'}/10.\n'
+            'Apply these notes from the other designers, keep everything that already works, and output the complete updated mockup:\n'
+            '${r.m.notes.map((n) => '- $n').join('\n')}',
+            fallbackHtml: r.m.html,
+          ).then((_) => r.m.refined = true),
+      ]);
+    }
+    panelStatus = '';
+    notifyListeners();
+  }
+
+  String _labelOf(String id) => panel.where((p) => p.id == id).firstOrNull?.label ?? id;
+
+  /// The model that drew this mockup redraws it: a proposal keeps one author,
+  /// so an edit never turns into a second model's taste over the first's.
+  CompleteText _completerFor(Mockup m) =>
+      panel.where((p) => p.id == m.authorId).firstOrNull?.complete ?? _complete;
 
   /// Regenerates one mockup applying the user's change ("Modifica questo").
   Future<void> edit(Mockup m, String change) async {
@@ -286,7 +470,7 @@ class MockupController extends ChangeNotifier {
       ..error = null;
     notifyListeners();
     try {
-      final res = await _complete(mockupSystemPrompt, prompt);
+      final res = await _completerFor(m)(mockupSystemPrompt, prompt);
       costUsd += res.costUsd ?? 0;
       if (m.apply(res.text)) {
         m.status = MockupStatus.ready;

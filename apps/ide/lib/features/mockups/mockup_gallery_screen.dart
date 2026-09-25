@@ -15,6 +15,7 @@ import '../ai/ai_settings.dart';
 import '../create/app_builder.dart';
 import '../create/create_app_screen.dart';
 import '../projects/projects_screen.dart';
+import '../review/reviewers.dart';
 import 'mockup_controller.dart';
 import 'name_picker.dart';
 
@@ -67,7 +68,17 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
           catalog.firstWhere((m) => m.provider == engine.provider);
       complete = apiCompleter(ref.read(aiProviderFactory), model);
     }
-    final c = MockupController(description: '${a.prompt}${a.reference ?? ''}', engine: a.engine, model: model, complete: complete, styleBrief: a.styleBrief);
+    // The configured reviewers draw the set together and then review each
+    // other; with fewer than two of them the design engine works alone.
+    final panel = designPanel(await ref.read(reviewerSettingsProvider.future));
+    final c = MockupController(
+      description: '${a.prompt}${a.reference ?? ''}',
+      engine: a.engine,
+      model: model,
+      complete: complete,
+      styleBrief: a.styleBrief,
+      panel: panel.length > 1 ? panel : const [],
+    );
     c.addListener(() {
       if (mounted) setState(() {});
     });
@@ -319,6 +330,48 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
                           ),
                       ],
                     ),
+                    // Who drew it and what the other designers gave it: with
+                    // eight proposals on the table, the panel's verdict is the
+                    // fastest way to see which ones are worth opening.
+                    if (m != null && m.authorLabel.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            _Tag('✏️ ${m.authorLabel}'),
+                            if (m.score != null) _Tag('⭐ ${m.score!.toStringAsFixed(1)}/10'),
+                            if (m.refined) const _Tag('✓ rifatto con le note'),
+                          ],
+                        ),
+                      ),
+                    if (m != null && m.notes.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Note del tavolo: ${m.notes.join(' · ')}',
+                          style: const TextStyle(color: Colors.white54, fontSize: 11),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    if (c != null && c.panelStatus.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Row(children: [
+                          const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(c.panelStatus, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                          ),
+                        ]),
+                      ),
                     if (m != null && (m.tagline.isNotEmpty || m.font.isNotEmpty))
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
@@ -376,6 +429,19 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
     final n = int.tryParse(v.length == 6 ? 'FF$v' : v, radix: 16);
     return n == null ? Colors.grey : Color(n);
   }
+}
+
+/// A quiet label on the dark panel: it names a fact, it is not a button.
+class _Tag extends StatelessWidget {
+  const _Tag(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(999)),
+        child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+      );
 }
 
 class _MockupPage extends StatelessWidget {

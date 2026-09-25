@@ -125,6 +125,17 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// Several models read the finished app, each on its own, and report what is
+  /// fake, missing or broken; their reports come back merged.
+  Future<Map<String, dynamic>> reviewApp(String projectId, List<Map<String, String>> reviewers) => _call(
+    () => _dio.post(
+      '/v1/projects/$projectId/review',
+      data: {'reviewers': reviewers},
+      options: Options(receiveTimeout: const Duration(minutes: 5)),
+    ),
+    (d) => d as Map<String, dynamic>,
+  );
+
   /// Android package name + SHA-1 fingerprints (release upload key, debug key).
   Future<Map<String, dynamic>> androidInfo(String projectId) =>
       _call(() => _dio.get('/v1/projects/$projectId/android-info'), (d) => d as Map<String, dynamic>);

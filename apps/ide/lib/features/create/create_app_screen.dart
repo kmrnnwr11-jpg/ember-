@@ -28,6 +28,7 @@ import 'play_update_card.dart';
 import 'products_card.dart';
 import 'screenshots_card.dart';
 import 'ads_card.dart';
+import '../review/review_card.dart';
 import 'app_builder.dart';
 import 'forge_view.dart';
 
@@ -506,6 +507,13 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                           projectId: project.id,
                           builder: b,
                           previewUrl: b.preview?.resolve(ref.read(sessionProvider).value?.runnerUrl ?? ''),
+                        ),
+                      // Several models read the finished app and say what is
+                      // fake, missing or broken; one tap sends a fix back.
+                      if (b.phase == BuildPhase.ready && !_ios)
+                        ReviewCard(
+                          projectId: project.id,
+                          onFix: (ask) => b.improve(ask, display: 'Correzione dai revisori'),
                         ),
                       if (b.phase == BuildPhase.ready && !_ios) _ReadyCard(builder: b, projectId: project.id),
                       if (b.phase == BuildPhase.ready && !_ios) PhoneCard(projectId: project.id, builder: b),

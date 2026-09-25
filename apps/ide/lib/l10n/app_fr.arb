@@ -254,6 +254,16 @@
   "bAndroidReady": "{kind} prêt ✓",
   "bStopped": "Arrêté",
   "bAppReady": "Application prête ✓",
+  "bReviewStart": "D’autres IA vérifient l’application de leur côté…",
+  "bReviewClean": "Les relecteurs n’ont rien trouvé à corriger.",
+  "bReviewFound": "{count} problèmes trouvés par les relecteurs : je les corrige.",
+  "@bReviewFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "bAppUpdated": "Application mise à jour ✓",
   "actWrites": "Écriture de {file}",
   "actEdits": "Modification de {file}",

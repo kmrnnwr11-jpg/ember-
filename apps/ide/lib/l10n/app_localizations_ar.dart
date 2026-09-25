@@ -982,6 +982,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bAppReady => 'التطبيق جاهز ✓';
 
   @override
+  String get bReviewStart => 'ذكاءات اصطناعية أخرى تفحص التطبيق…';
+
+  @override
+  String get bReviewClean => 'لم يجد المراجعون شيئًا لإصلاحه.';
+
+  @override
+  String bReviewFound(int count) {
+    return '$count مشاكل وجدها المراجعون: جارٍ إصلاحها.';
+  }
+
+  @override
   String get bAppUpdated => 'تم تحديث التطبيق ✓';
 
   @override

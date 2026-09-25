@@ -993,6 +993,19 @@ class AppLocalizationsIt extends AppLocalizations {
   String get bAppReady => 'App pronta ✓';
 
   @override
+  String get bReviewStart =>
+      'Altre AI stanno controllando l’app per conto loro…';
+
+  @override
+  String get bReviewClean =>
+      'I revisori non hanno trovato niente da correggere.';
+
+  @override
+  String bReviewFound(int count) {
+    return '$count problemi trovati dai revisori: li sto correggendo.';
+  }
+
+  @override
   String get bAppUpdated => 'App aggiornata ✓';
 
   @override

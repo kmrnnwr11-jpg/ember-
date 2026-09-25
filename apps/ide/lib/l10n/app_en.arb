@@ -526,6 +526,16 @@
   },
   "bStopped": "Stopped",
   "bAppReady": "App ready ✓",
+  "bReviewStart": "Other AIs are now checking the app on their own…",
+  "bReviewClean": "The reviewers found nothing to fix.",
+  "bReviewFound": "{count} problems found by the reviewers: fixing them now.",
+  "@bReviewFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "bAppUpdated": "App updated ✓",
   "actWrites": "Writing {file}",
   "@actWrites": {

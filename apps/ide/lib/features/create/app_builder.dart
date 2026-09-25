@@ -142,6 +142,7 @@ class AppBuilder extends ChangeNotifier {
     this.androidInfo,
     this.saveReferenceShots,
     this.saveSiteShots,
+    this.runReview,
     this.onSession,
     AppLocalizations? strings,
     this.maxFixRounds = 3,
@@ -169,6 +170,11 @@ class AppBuilder extends ChangeNotifier {
 
   /// The same, for a website being turned into an app.
   final Future<int> Function(String url)? saveSiteShots;
+
+  /// Other models read the finished app on their own and return what is fake,
+  /// missing or broken. Returns an empty list when nobody is configured, so the
+  /// build simply carries on.
+  final Future<List<Map<String, dynamic>>> Function()? runReview;
   /// UI language for log lines and errors; updated when the user switches language.
   AppLocalizations strings;
   /// Called with [toSession] whenever the chat changes, so the app can be reopened later.
@@ -352,6 +358,46 @@ class AppBuilder extends ChangeNotifier {
   }
 
   /// Applies a follow-up change to an already built app.
+  bool _reviewed = false;
+
+  /// How many times the reviewers get to speak: one round to find the defects,
+  /// a second to confirm they are gone. More than that and a model that is
+  /// never satisfied would keep the build going forever.
+  static const _maxReviewRounds = 2;
+
+  /// Other models read the finished app, each on its own, and what they found
+  /// is handed straight to the engine that wrote it. Nothing here asks the user
+  /// anything: a reviewer that is not configured, is down, or answers nonsense
+  /// simply leaves the app as it is.
+  Future<void> _autoReview() async {
+    final run = runReview;
+    if (run == null) return;
+    for (var round = 1; round <= _maxReviewRounds && !_cancelled; round++) {
+      _log(strings.bReviewStart, kind: 'info');
+      final findings = await run().catchError((_) => const <Map<String, dynamic>>[]);
+      if (_cancelled) return;
+      final asks = [
+        for (final f in findings)
+          if ('${f['ask'] ?? ''}'.trim().isNotEmpty) f,
+      ].take(6).toList();
+      if (asks.isEmpty) {
+        _log(strings.bReviewClean, kind: 'info');
+        return;
+      }
+      _log(strings.bReviewFound(asks.length), kind: 'error');
+      final list = [
+        for (var i = 0; i < asks.length; i++) '${i + 1}. ${asks[i]['title']}\n   ${asks[i]['ask']}',
+      ].join('\n');
+      await improve(
+        'Other reviewers read this app and found the problems below. Fix them all, keeping everything that already works.\n'
+        'A screen that only looks like it works is the worst of these: where a real capability is missing, add the package and implement it for real.\n'
+        'If one of them genuinely cannot be fixed in code — it needs a key, an account or a sign-in only the owner can do — say so plainly in your reply instead of pretending.\n\n'
+        '$list',
+        display: strings.bReviewFound(asks.length),
+      );
+    }
+  }
+
   Future<void> improve(String change, {String? display}) {
     final e = engine;
     if (e == null) return Future.value();
@@ -433,6 +479,13 @@ class AppBuilder extends ChangeNotifier {
             display: strings.bMissingTopics(missing.join(', ')),
           );
         }
+      }
+      // Then other models read what was built, each on its own, and whatever
+      // they found comes straight back here to be put right — the user watches,
+      // never has to ask.
+      if (change == null && !_reviewed) {
+        _reviewed = true;
+        await _autoReview();
       }
     } on _Cancelled {
       _status = 'cancelled';

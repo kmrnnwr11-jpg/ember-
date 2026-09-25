@@ -995,6 +995,17 @@ class AppLocalizationsEs extends AppLocalizations {
   String get bAppReady => 'App lista ✓';
 
   @override
+  String get bReviewStart => 'Otras IA están revisando la app por su cuenta…';
+
+  @override
+  String get bReviewClean => 'Los revisores no encontraron nada que corregir.';
+
+  @override
+  String bReviewFound(int count) {
+    return '$count problemas encontrados por los revisores: los estoy corrigiendo.';
+  }
+
+  @override
   String get bAppUpdated => 'App actualizada ✓';
 
   @override

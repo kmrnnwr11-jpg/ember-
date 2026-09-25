@@ -29,6 +29,7 @@ import 'products_card.dart';
 import 'screenshots_card.dart';
 import 'ads_card.dart';
 import '../review/review_card.dart';
+import '../review/reviewers.dart';
 import 'app_builder.dart';
 import 'forge_view.dart';
 
@@ -122,6 +123,18 @@ final appBuilderProvider = ChangeNotifierProvider.family<AppBuilder, (String, St
     saveSiteShots: (url) async {
       final res = await (await ref.read(runnerApiProvider.future)).saveSiteShots(projectId, url);
       return (res['shotsSaved'] as num?)?.toInt() ?? 0;
+    },
+    // The reviewers the user configured, asked automatically once the app is
+    // built. None configured: an empty list, and the build just carries on.
+    runReview: () async {
+      final s = await ref.read(reviewerSettingsProvider.future);
+      final usable = s.usable;
+      if (usable.isEmpty) return const <Map<String, dynamic>>[];
+      final res = await (await ref.read(runnerApiProvider.future)).reviewApp(projectId, [
+        for (final r in usable)
+          {'id': r.id, 'label': r.label, 'baseUrl': r.baseUrl, 'apiKey': s.keys[r.id]!, 'model': r.model},
+      ]);
+      return [for (final f in (res['findings'] as List? ?? const [])) (f as Map).cast<String, dynamic>()];
     },
     androidInfo: () async {
       final info = await (await ref.read(runnerApiProvider.future)).androidInfo(projectId);

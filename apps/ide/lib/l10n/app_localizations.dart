@@ -1850,6 +1850,24 @@ abstract class AppLocalizations {
   /// **'App ready ✓'**
   String get bAppReady;
 
+  /// No description provided for @bReviewStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Other AIs are now checking the app on their own…'**
+  String get bReviewStart;
+
+  /// No description provided for @bReviewClean.
+  ///
+  /// In en, this message translates to:
+  /// **'The reviewers found nothing to fix.'**
+  String get bReviewClean;
+
+  /// No description provided for @bReviewFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} problems found by the reviewers: fixing them now.'**
+  String bReviewFound(int count);
+
   /// No description provided for @bAppUpdated.
   ///
   /// In en, this message translates to:

@@ -254,6 +254,16 @@
   "bAndroidReady": "{kind} جاهز ✓",
   "bStopped": "تم الإيقاف",
   "bAppReady": "التطبيق جاهز ✓",
+  "bReviewStart": "ذكاءات اصطناعية أخرى تفحص التطبيق…",
+  "bReviewClean": "لم يجد المراجعون شيئًا لإصلاحه.",
+  "bReviewFound": "{count} مشاكل وجدها المراجعون: جارٍ إصلاحها.",
+  "@bReviewFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "bAppUpdated": "تم تحديث التطبيق ✓",
   "actWrites": "كتابة {file}",
   "actEdits": "تعديل {file}",

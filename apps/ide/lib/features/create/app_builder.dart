@@ -257,6 +257,9 @@ class AppBuilder extends ChangeNotifier {
 
   String? _replyText;
 
+  /// The last thing the CLI complained about, so a run that fails can say why.
+  String? _lastAgentError;
+
   /// The name the user chose, stated so the app calls itself that everywhere:
   /// the home screen title, the launcher label, AppConfig, the About screen.
   String get _nameBlock {
@@ -895,7 +898,11 @@ Never fake your way around a missing sign-in or key, and never report as working
               _replyText = summary == null ? null : _takeProducts(summary!);
             }
           case 'error':
-            _log(ev['message'] as String, kind: 'error');
+            // Kept, not only logged: when the run then fails, this is the one
+            // line that says why, and it must reach the message the user
+            // reads instead of scrolling a log to look for it.
+            _lastAgentError = ev['message'] as String;
+            _log(_lastAgentError!, kind: 'error');
         }
       } else if (f.type == MsgType.agentStatus && f.payload['id'] == _agentRunId) {
         final status = f.payload['status'] as String;
@@ -941,7 +948,19 @@ Never fake your way around a missing sign-in or key, and never report as working
       } finally {
         poll.cancel();
       }
-      if (status != 'succeeded') throw AiException(strings.bClaudeFailed);
+      if (status != 'succeeded') {
+        final why = _lastAgentError?.trim();
+        final message = why == null || why.isEmpty ? strings.bClaudeFailed : '${strings.bClaudeFailed} $why';
+        // An engine that stops is not the same as an app that is lost. It
+        // stops near the end often enough — a limit reached, a dropped
+        // connection — with the whole app already on disk and a handful of
+        // small mistakes left, exactly the kind the error-fixing round that
+        // comes next exists to repair. Throwing here skipped that round and
+        // threw away an hour of work over a missing import.
+        if (writtenFiles.isEmpty) throw AiException(message);
+        _log(message, kind: 'error');
+        _log(strings.bClaudeStoppedCarryOn(writtenFiles.length), kind: 'info');
+      }
     } finally {
       await sub.cancel();
       _agentRunId = null;

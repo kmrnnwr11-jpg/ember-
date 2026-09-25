@@ -436,6 +436,8 @@
   "bClaudeApplying": "Claude Code is applying the change…",
   "bClaudeBuilding": "Claude Code is building the app on the PC…",
   "bClaudeFailed": "Claude Code did not finish the app: check the log.",
+  "bClaudeStoppedCarryOn": "It stopped with {count} files already written: carrying on and fixing what is left.",
+  "@bClaudeStoppedCarryOn": {"placeholders": {"count": {"type": "int"}}},
   "bWebBuilding": "Building the app for the web (about 30 seconds)…",
   "bWebFailed": "The web build failed:\n{log}",
   "@bWebFailed": {

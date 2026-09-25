@@ -824,6 +824,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bClaudeFailed => 'لم يُكمل Claude Code التطبيق: راجع السجل.';
 
   @override
+  String bClaudeStoppedCarryOn(int count) {
+    return 'It stopped with $count files already written: carrying on and fixing what is left.';
+  }
+
+  @override
   String get bWebBuilding => 'جارٍ بناء التطبيق للويب (حوالي 30 ثانية)…';
 
   @override

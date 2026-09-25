@@ -826,6 +826,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Claude Code did not finish the app: check the log.';
 
   @override
+  String bClaudeStoppedCarryOn(int count) {
+    return 'It stopped with $count files already written: carrying on and fixing what is left.';
+  }
+
+  @override
   String get bWebBuilding => 'Building the app for the web (about 30 seconds)…';
 
   @override

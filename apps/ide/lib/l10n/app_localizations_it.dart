@@ -835,6 +835,11 @@ class AppLocalizationsIt extends AppLocalizations {
       'Claude Code non ha completato l\'app: controlla il log.';
 
   @override
+  String bClaudeStoppedCarryOn(int count) {
+    return 'Si e\' fermato con $count file gia\' scritti: vado avanti e sistemo quello che manca.';
+  }
+
+  @override
   String get bWebBuilding => 'Compilo l\'app per il web (circa 30 secondi)…';
 
   @override

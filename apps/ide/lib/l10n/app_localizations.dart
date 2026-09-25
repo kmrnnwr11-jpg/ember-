@@ -1580,6 +1580,12 @@ abstract class AppLocalizations {
   /// **'Claude Code did not finish the app: check the log.'**
   String get bClaudeFailed;
 
+  /// No description provided for @bClaudeStoppedCarryOn.
+  ///
+  /// In en, this message translates to:
+  /// **'It stopped with {count} files already written: carrying on and fixing what is left.'**
+  String bClaudeStoppedCarryOn(int count);
+
   /// No description provided for @bWebBuilding.
   ///
   /// In en, this message translates to:

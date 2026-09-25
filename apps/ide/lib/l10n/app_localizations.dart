@@ -1580,6 +1580,18 @@ abstract class AppLocalizations {
   /// **'Claude Code did not finish the app: check the log.'**
   String get bClaudeFailed;
 
+  /// No description provided for @resumeFromHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Carry on from here ({count} files)'**
+  String resumeFromHere(int count);
+
+  /// No description provided for @startOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Start over'**
+  String get startOver;
+
   /// No description provided for @bClaudeStoppedCarryOn.
   ///
   /// In en, this message translates to:

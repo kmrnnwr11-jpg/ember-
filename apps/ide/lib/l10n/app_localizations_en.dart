@@ -826,6 +826,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Claude Code did not finish the app: check the log.';
 
   @override
+  String resumeFromHere(int count) {
+    return 'Carry on from here ($count files)';
+  }
+
+  @override
+  String get startOver => 'Start over';
+
+  @override
   String bClaudeStoppedCarryOn(int count) {
     return 'It stopped with $count files already written: carrying on and fixing what is left.';
   }

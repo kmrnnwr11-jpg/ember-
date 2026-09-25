@@ -974,10 +974,19 @@ class _FailedCard extends StatelessWidget {
             Wrap(
               spacing: 8,
               children: [
-                FilledButton.icon(
+                // With files already on disk the first button continues the
+                // work; starting over stays available, but as the second
+                // choice, because it costs another full build.
+                if (builder.canResume)
+                  FilledButton.icon(
+                    onPressed: builder.resumeFailed,
+                    icon: const Icon(Icons.play_arrow),
+                    label: Text(l.resumeFromHere(builder.writtenFiles.length)),
+                  ),
+                (builder.canResume ? OutlinedButton.icon : FilledButton.icon)(
                   onPressed: () => builder.build(prompt: builder.prompt, engine: builder.engine!, model: builder.model, quality: builder.quality, design: builder.design, designName: builder.designName),
                   icon: const Icon(Icons.refresh),
-                  label: Text(l.retry),
+                  label: Text(builder.canResume ? l.startOver : l.retry),
                 ),
                 OutlinedButton(onPressed: () => context.go('/projects/$projectId'), child: Text(l.openEditor)),
               ],

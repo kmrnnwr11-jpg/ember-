@@ -449,13 +449,48 @@ Never fake your way around a missing sign-in or key, and never report as working
     return _run(prompt: prompt, engine: e, model: model, change: change, display: display);
   }
 
+  /// True once something is on disk, so a failed build can be picked up
+  /// instead of started again.
+  bool get canResume => writtenFiles.isNotEmpty;
+
+  /// Carries a failed build on from where it stopped.
+  ///
+  /// Starting over was the only thing Retry could do, and after an hour of
+  /// writing that is an hour thrown away to redo work that is already on
+  /// disk — and, with an engine that stops because it ran out of room, the
+  /// same hour is likely to end the same way. Resuming looks at what exists,
+  /// finishes what is missing, and keeps what works.
+  Future<void> resumeFailed() {
+    final e = engine;
+    if (e == null) return Future.value();
+    final original = _pending ?? prompt;
+    return _run(
+      prompt: prompt,
+      engine: e,
+      model: model,
+      change: resumeRequest(original),
+      display: strings.bResumeChat,
+      pending: original,
+    );
+  }
+
   /// Request being worked on and whether it finished: lets a closed app resume where it stopped.
   String? _pending;
   String _status = 'idle';
 
-  Future<void> _run({required String prompt, required BuildEngine engine, AiModel? model, String? change, String? display}) async {
+  Future<void> _run({
+    required String prompt,
+    required BuildEngine engine,
+    AiModel? model,
+    String? change,
+    String? display,
+    /// What to remember as the request still owed, when [change] is not it —
+    /// a resume instruction is a way of asking, not the thing being asked for,
+    /// and storing it would nest inside the next resume.
+    String? pending,
+  }) async {
     if (running) return;
-    _pending = change ?? prompt;
+    _pending = pending ?? change ?? prompt;
     _status = 'building';
     this.prompt = prompt;
     this.engine = engine;

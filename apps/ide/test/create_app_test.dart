@@ -80,6 +80,7 @@ class FakeRunner {
 final gemini = builtInCatalog.firstWhere((m) => m.id == 'gemini-2.5-flash');
 
 void main() {
+  resumeTests();
   test('API engine: writes files, detects analyzer error, fixes it, builds preview', () async {
     final runner = FakeRunner();
     final provider = ScriptedProvider([
@@ -165,5 +166,58 @@ void main() {
     await hanging.cancel();
     await building.timeout(const Duration(seconds: 2));
     expect(hanging.phase, BuildPhase.cancelled);
+  });
+}
+
+/// What Retry does after a build that stopped part-way.
+///
+/// The engine writing an app can stop near the end — a limit reached, a
+/// dropped connection — with most of the app already on disk. Starting over
+/// then throws away an hour to redo work that exists, and is likely to end
+/// the same way.
+void resumeTests() {
+  test('a stopped build carries on from the files already written', () async {
+    final runner = FakeRunner();
+    final provider = ScriptedProvider([
+      // First attempt: writes one file, then the answer is cut off.
+      '```dart lib/main.dart\nvoid main() {}\n```',
+      // The resume: finishes the job.
+      '```dart lib/home.dart\nclass Home {}\n```',
+    ]);
+    final b = AppBuilder(
+      projectId: 'p1',
+      projectName: 'demo_app',
+      request: runner.call,
+      events: runner.events.stream,
+      fetchJobLog: (id) async => runner.jobLogs[id] ?? '',
+      resolveProvider: (_) async => provider,
+    );
+
+    await b.build(prompt: 'Crea un biglietto da visita', engine: BuildEngine.gemini, model: gemini);
+    expect(b.canResume, isTrue, reason: 'a file was written, so there is something to carry on from');
+    final writtenBefore = b.writtenFiles.length;
+
+    await b.resumeFailed();
+
+    // The second call was told to continue, not to start again.
+    expect(provider.prompts.length, 2);
+    expect(provider.prompts[1], contains('Continue exactly where it stopped'));
+    expect(provider.prompts[1], contains('Crea un biglietto da visita'), reason: 'it still knows what was asked for');
+    // And what was already written is still there.
+    expect(b.writtenFiles.length, greaterThanOrEqualTo(writtenBefore));
+    expect(runner.files['lib/main.dart'], isNotNull);
+  });
+
+  test('with nothing on disk there is nothing to carry on from', () async {
+    final runner = FakeRunner();
+    final b = AppBuilder(
+      projectId: 'p1',
+      projectName: 'demo_app',
+      request: runner.call,
+      events: runner.events.stream,
+      fetchJobLog: (id) async => runner.jobLogs[id] ?? '',
+      resolveProvider: (_) async => ScriptedProvider(['no code here']),
+    );
+    expect(b.canResume, isFalse);
   });
 }

@@ -1049,19 +1049,21 @@ export async function buildApp(
         throw last instanceof Error ? last : new Error('no AI available for logos');
       };
       const appName = body.appName ?? project.name.replace(/_\d+$/, '').replace(/_/g, ' ');
+      // Gemini joins the table on the Runner's own key, so the user never has
+      // to fetch one for it; the app cannot send it, having no key to send.
+      const members = [
+        ...body.panel.map((m) => ({ id: m.id, label: m.label, complete: (s: string, p: string) => openAiComplete(m, s, p, deps.reviewFetch ?? fetch) })),
+        ...(cfg.GEMINI_API_KEY ? [{ id: 'gemini_runner', label: 'Gemini', complete: viaGemini }] : []),
+      ];
       const logos =
-        body.panel.length > 1
+        members.length > 1
           ? await generateLogosPanel({
               projectRoot: services.projectRoot(project),
               appName,
               about: body.about,
               hint: body.hint,
               count: body.count,
-              members: body.panel.map((m) => ({
-                id: m.id,
-                label: m.label,
-                complete: (system: string, prompt: string) => openAiComplete(m, system, prompt, deps.reviewFetch ?? fetch),
-              })),
+              members,
             })
           : await generateLogos({
               projectRoot: services.projectRoot(project),

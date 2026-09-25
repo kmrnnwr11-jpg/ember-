@@ -16,7 +16,6 @@ import '../create/app_builder.dart';
 import '../create/create_app_screen.dart';
 import '../projects/projects_screen.dart';
 import '../review/panel_health.dart';
-import '../review/reviewers.dart';
 import 'mockup_controller.dart';
 import 'name_picker.dart';
 
@@ -75,7 +74,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
     if (!mounted) return;
     final health = await checkPanel(context, ref);
     if (!health.proceed) return quitEmber();
-    final panel = designPanel(await ref.read(reviewerSettingsProvider.future), only: health.working);
+    final panel = health.members;
     final c = MockupController(
       description: '${a.prompt}${a.reference ?? ''}',
       engine: a.engine,

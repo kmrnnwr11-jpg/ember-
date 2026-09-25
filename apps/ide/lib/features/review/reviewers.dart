@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/session.dart';
 import '../../core/settings_store.dart';
+import '../ai/ai_settings.dart';
 import '../mockups/mockup_controller.dart' show PanelMember;
 
 /// One extra model that reviews a finished app. They are all OpenAI-compatible
@@ -40,15 +41,11 @@ class Reviewer {
 const reviewerPresets = <Reviewer>[
   Reviewer(id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com', model: 'deepseek-chat'),
   Reviewer(id: 'groq', label: 'Groq', baseUrl: 'https://api.groq.com/openai/v1', model: 'openai/gpt-oss-120b'),
-  // Google speaks the OpenAI format too, so the key already in Ember for
-  // writing apps also serves to review them — pasted again here, because a
-  // reviewer must stay a choice of its own.
-  Reviewer(
-    id: 'gemini',
-    label: 'Gemini (Google)',
-    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
-    model: 'gemini-2.5-flash',
-  ),
+  // Gemini is deliberately absent: it joins the panel by itself on the
+  // Runner's own key (see runnerGeminiMember), so there is nothing here for
+  // the user to fetch and paste. A row asking for a key it does not need would
+  // only read as a second, broken Gemini.
+  //
   // One key, many models: the ones ending in :free cost nothing.
   Reviewer(
     id: 'openrouter',
@@ -142,47 +139,83 @@ AiProvider providerFor(Reviewer r, String key) =>
 /// One model that answered, or the reason it did not.
 typedef PanelPing = ({String id, String label, bool ok, String error});
 
-/// Asks every configured model for one word before any real work starts. A
+/// Reads one answer out of a provider's stream, as plain text.
+Future<String> _readAll(AiProvider provider, String model, String system, String prompt, int maxTokens) async {
+  final buf = StringBuffer();
+  await for (final e in provider.chat(
+    model: model,
+    system: system.isEmpty ? null : system,
+    maxTokens: maxTokens,
+    messages: [AiMessage.user(prompt)],
+  )) {
+    switch (e) {
+      case AiTextDelta(:final text):
+        buf.write(text);
+      case AiError(:final message, :final statusCode):
+        throw AiException(message, statusCode: statusCode);
+      default:
+    }
+  }
+  return buf.toString();
+}
+
+/// Asks every model at the table for one word before any real work starts. A
 /// model that is down, out of quota or misconfigured answers nothing for
 /// minutes and then silently drops out of the set; asked this way it costs a
 /// couple of seconds and the user learns its name while there is still a
 /// choice to make.
-Future<List<PanelPing>> pingPanel(ReviewerSettings s) async {
-  Future<PanelPing> ping(Reviewer r) async {
+Future<List<PanelPing>> pingMembers(List<PanelMember> members) async {
+  Future<PanelPing> ping(PanelMember m) async {
     try {
-      final provider = providerFor(r, s.keys[r.id]!);
-      final buf = StringBuffer();
-      await for (final e in provider.chat(
-        model: r.model,
-        maxTokens: 16,
-        messages: const [AiMessage.user('Reply with OK')],
-      )) {
-        switch (e) {
-          case AiTextDelta(:final text):
-            buf.write(text);
-          case AiError(:final message, :final statusCode):
-            throw AiException(message, statusCode: statusCode);
-          default:
-        }
-      }
+      final answer = await m.complete('', 'Reply with OK');
       // A model that answers with nothing at all is down, whatever it says.
-      return buf.toString().trim().isEmpty
-          ? (id: r.id, label: r.label, ok: false, error: 'nessuna risposta')
-          : (id: r.id, label: r.label, ok: true, error: '');
+      return answer.text.trim().isEmpty
+          ? (id: m.id, label: m.label, ok: false, error: 'nessuna risposta')
+          : (id: m.id, label: m.label, ok: true, error: '');
     } on AiException catch (e) {
-      return (id: r.id, label: r.label, ok: false, error: e.message);
+      return (id: m.id, label: m.label, ok: false, error: e.message);
     } catch (e) {
-      return (id: r.id, label: r.label, ok: false, error: '$e');
+      return (id: m.id, label: m.label, ok: false, error: '$e');
     }
   }
 
   return Future.wait([
-    for (final r in s.usable)
-      ping(r).timeout(
+    for (final m in members)
+      ping(m).timeout(
         const Duration(seconds: 25),
-        onTimeout: () => (id: r.id, label: r.label, ok: false, error: 'non risponde (25s)'),
+        onTimeout: () => (id: m.id, label: m.label, ok: false, error: 'non risponde (25s)'),
       ),
   ]);
+}
+
+/// Gemini drawing and reviewing on the Runner's own key.
+///
+/// Every other model at the table needs a key the user went and fetched.
+/// Gemini does not: the Runner already holds one for building apps, and
+/// [aiProviderFactory] hands out a proxied provider that uses it. So Gemini
+/// joins the panel with nothing for the user to do — at the cost of sharing
+/// that free quota with app building.
+///
+/// Returns null when the Runner has no Gemini to offer; the panel then simply
+/// has one member fewer.
+Future<PanelMember?> runnerGeminiMember(WidgetRef ref) async {
+  try {
+    final catalog = await ref.read(aiCatalogProvider.future);
+    final gemini = catalog.where((m) => m.provider == AiProviderId.gemini);
+    final model = gemini.where((m) => m.tags.contains('fast')).firstOrNull ?? gemini.firstOrNull;
+    if (model == null) return null;
+    final provider = await ref.read(aiProviderFactory)(model);
+    return (
+      id: 'gemini_runner',
+      label: 'Gemini',
+      complete: (String system, String prompt) async =>
+          (text: await _readAll(provider, model.id, system, prompt, 32000), costUsd: null),
+    );
+  } catch (_) {
+    // No key on the Runner, or it is unreachable: not an error, just one
+    // designer fewer at the table.
+    return null;
+  }
 }
 
 /// The same models, used the other way round: not judging a finished app but
@@ -194,25 +227,8 @@ List<PanelMember> designPanel(ReviewerSettings s, {Set<String>? only}) => [
         (
           id: r.id,
           label: r.label,
-          complete: (String system, String prompt) async {
-            final provider = providerFor(r, s.keys[r.id]!);
-            final buf = StringBuffer();
-            await for (final e in provider.chat(
-              model: r.model,
-              system: system,
-              maxTokens: 32000,
-              messages: [AiMessage.user(prompt)],
-            )) {
-              switch (e) {
-                case AiTextDelta(:final text):
-                  buf.write(text);
-                case AiError(:final message, :final statusCode):
-                  throw AiException(message, statusCode: statusCode);
-                default:
-              }
-            }
-            // These are free or near-free tiers, so no cost is attributed.
-            return (text: buf.toString(), costUsd: null);
-          },
+          // These are free or near-free tiers, so no cost is attributed.
+          complete: (String system, String prompt) async =>
+              (text: await _readAll(providerFor(r, s.keys[r.id]!), r.model, system, prompt, 32000), costUsd: null),
         ),
     ];

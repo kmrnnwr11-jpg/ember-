@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../mockups/mockup_controller.dart' show PanelMember;
 import 'reviewers.dart';
 
 /// The models that answered, and what the user decided about the ones that
-/// did not. [proceed] is false when the user chose to stop.
-typedef PanelCheck = ({bool proceed, Set<String> working});
+/// did not. [proceed] is false when the user chose to stop; [members] holds
+/// only the ones that answered, ready to be put to work.
+typedef PanelCheck = ({bool proceed, Set<String> working, List<PanelMember> members});
 
 /// Checks the design panel before any drawing starts and, when a model is
 /// down, names it and asks whether to go on without it.
@@ -17,20 +19,24 @@ typedef PanelCheck = ({bool proceed, Set<String> working});
 /// with the names, while there is still a choice.
 Future<PanelCheck> checkPanel(BuildContext context, WidgetRef ref) async {
   final settings = await ref.read(reviewerSettingsProvider.future);
-  if (settings.usable.length < 2) return (proceed: true, working: <String>{});
+  // Gemini needs no key from the user: it runs on the Runner's own.
+  final gemini = await runnerGeminiMember(ref);
+  final all = [...designPanel(settings), ?gemini];
+  if (all.length < 2) return (proceed: true, working: <String>{}, members: all);
 
-  final pings = await pingPanel(settings);
+  final pings = await pingMembers(all);
   final down = pings.where((p) => !p.ok).toList();
   final working = {for (final p in pings.where((p) => p.ok)) p.id};
-  if (down.isEmpty) return (proceed: true, working: working);
-  if (!context.mounted) return (proceed: false, working: working);
+  final members = [for (final m in all) if (working.contains(m.id)) m];
+  if (down.isEmpty) return (proceed: true, working: working, members: members);
+  if (!context.mounted) return (proceed: false, working: working, members: members);
 
   final answer = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
     builder: (d) => PanelDownDialog(down: down, workingCount: working.length),
   );
-  return (proceed: answer ?? false, working: working);
+  return (proceed: answer ?? false, working: working, members: members);
 }
 
 /// "Groq non sta funzionando" / "Groq e Gemini non stanno funzionando" /

@@ -133,6 +133,33 @@ export async function buildApp(
   const preview = new PreviewService(cfg, services, hub);
   const claudeCode = deps.claudeCode ?? new ClaudeCodeEngine(cfg);
 
+  /**
+   * One answer from Gemini on the Runner's own key, walking the fallback models
+   * until one replies. Shared by everything this machine offers Gemini for —
+   * drawing icons, reviewing a finished app — so the user never fetches a key
+   * for it. [accept] lets a caller demand more than a reply (an SVG, say) and
+   * move on to the next model when it does not get it.
+   */
+  const geminiComplete = async (system: string, prompt: string, accept: (text: string) => boolean = (t) => t.trim().length > 0): Promise<string> => {
+    if (!cfg.GEMINI_API_KEY) throw new Error('Gemini not configured');
+    for (const model of GEMINI_FALLBACKS) {
+      const res = await fetch(`${DEFAULT_UPSTREAMS.gemini}/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': cfg.GEMINI_API_KEY },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 16000, temperature: 1 },
+        }),
+      });
+      if (!res.ok) continue;
+      const j = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+      const text = j.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
+      if (accept(text)) return text;
+    }
+    throw new Error('Gemini non ha risposto (quota esaurita o servizio sovraccarico)');
+  };
+
   await app.register(cors, {
     origin: cfg.CORS_ORIGINS === '*' ? true : cfg.CORS_ORIGINS.split(',').map((s) => s.trim()),
     // @fastify/cors allows only GET, HEAD and POST unless told: the IDE also saves
@@ -1019,21 +1046,10 @@ export async function buildApp(
         .parse(req.body);
       const claudeOk = await claudeCode.isAvailable();
       const viaClaude = async (system: string, prompt: string) => (await claudeCode.complete({ system, prompt, quality: 'fast' })).text;
-      const viaGemini = async (system: string, prompt: string) => {
-        if (!cfg.GEMINI_API_KEY) throw new Error('Gemini not configured');
-        for (const model of GEMINI_FALLBACKS) {
-          const res = await fetch(`${DEFAULT_UPSTREAMS.gemini}/v1beta/models/${model}:generateContent`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json', 'x-goog-api-key': cfg.GEMINI_API_KEY },
-            body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 16000, temperature: 1 } }),
-          });
-          if (!res.ok) continue;
-          const j = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
-          const text = j.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
-          if (text.includes('</svg>')) return text;
-        }
-        throw new Error('Gemini could not draw the logo (quota or overload)');
-      };
+      // Drawing a logo has one extra demand on top of a plain answer: what
+      // comes back must actually be an SVG, so a model that chatted instead of
+      // drawing counts as a miss and the next one is tried.
+      const viaGemini = (system: string, prompt: string) => geminiComplete(system, prompt, (t) => t.includes('</svg>'));
       // Preferred engine first, the other one as fallback (free Gemini quota runs out quickly).
       const order =
         body.engine === 'gemini' ? [viaGemini, ...(claudeOk ? [viaClaude] : [])] : claudeOk ? [viaClaude, ...(cfg.GEMINI_API_KEY ? [viaGemini] : [])] : [viaGemini];
@@ -1189,11 +1205,20 @@ export async function buildApp(
                 model: z.string().min(1).max(120),
               }),
             )
-            .min(1)
+            .min(0)
             .max(6),
         })
         .parse(req.body);
-      return reviewApp(services.projectRoot(project), reviewers, deps.reviewFetch ?? fetch);
+      // Claude and Gemini read the finished app too, on this machine's own
+      // login and key: the app has no key for them to send, but they belong at
+      // the table as much as the ones that do.
+      const mine = [
+        ...((await claudeCode.isAvailable())
+          ? [{ id: 'claude_code', label: 'Claude', complete: async (system: string, prompt: string) => (await claudeCode.complete({ system, prompt, quality: 'fast', timeoutMs: 600_000 })).text }]
+          : []),
+        ...(cfg.GEMINI_API_KEY ? [{ id: 'gemini_runner', label: 'Gemini', complete: geminiComplete }] : []),
+      ];
+      return reviewApp(services.projectRoot(project), reviewers, deps.reviewFetch ?? fetch, mine);
     });
 
     r.post('/v1/projects/:projectId/check/fix', async (req, reply) => {

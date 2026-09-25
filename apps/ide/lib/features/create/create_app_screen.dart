@@ -28,6 +28,7 @@ import 'play_update_card.dart';
 import 'products_card.dart';
 import 'screenshots_card.dart';
 import 'ads_card.dart';
+import '../review/panel_health.dart';
 import '../review/review_card.dart';
 import '../review/reviewers.dart';
 import 'needs_you_card.dart';
@@ -129,10 +130,10 @@ final appBuilderProvider = ChangeNotifierProvider.family<AppBuilder, (String, St
     // built. None configured: an empty list, and the build just carries on.
     runReview: () async {
       final s = await ref.read(reviewerSettingsProvider.future);
-      final usable = s.usable;
-      if (usable.isEmpty) return const <Map<String, dynamic>>[];
+      // Not a shortcut when the list is empty: Claude and Gemini review on the
+      // Runner's own login and key, and the Runner adds them itself.
       final res = await (await ref.read(runnerApiProvider.future)).reviewApp(projectId, [
-        for (final r in usable)
+        for (final r in s.usable)
           {'id': r.id, 'label': r.label, 'baseUrl': r.baseUrl, 'apiKey': s.keys[r.id]!, 'model': r.model},
       ]);
       return [for (final f in (res['findings'] as List? ?? const [])) (f as Map).cast<String, dynamic>()];
@@ -420,6 +421,11 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
         : catalog.where((m) => m.key == args.modelKey).firstOrNull ??
             catalog.where((m) => m.provider == args.engine.provider && m.id == args.engine.defaultModel).firstOrNull ??
             catalog.where((m) => m.provider == args.engine.provider).firstOrNull;
+    // Nothing is written until every model has answered, or the user has said
+    // in so many words to go on without one.
+    if (!mounted) return;
+    final health = await checkPanel(context, ref);
+    if (!health.proceed) return quitEmber();
     b.build(
       prompt: args.prompt,
       engine: args.engine,

@@ -150,36 +150,28 @@ function parseFindings(text: string): Array<{ title: string; detail: string; ask
   }
 }
 
+/**
+ * A reviewer as the merge step needs it: a name and a way to ask it one
+ * question. A service with a key becomes one of these through [fromSpec]; so
+ * does Claude on the machine's login or Gemini on the Runner's key, neither of
+ * which has a key the app could have sent.
+ */
+export interface ReviewerLike {
+  id: string;
+  label: string;
+  complete: (system: string, prompt: string) => Promise<string>;
+}
+
+export const fromSpec = (r: ReviewerSpec, fetchImpl: typeof fetch = fetch): ReviewerLike => ({
+  id: r.id,
+  label: r.label,
+  complete: (system, prompt) => openAiComplete(r, system, prompt, fetchImpl),
+});
+
 /** Asks one reviewer. Never throws: a reviewer that is down must not stop the others. */
-async function askOne(r: ReviewerSpec, code: string, listing: string, fetchImpl: typeof fetch): Promise<ReviewerReport> {
-  const base = r.baseUrl.replace(/\/+$/, '');
+async function askOne(r: ReviewerLike, code: string, listing: string): Promise<ReviewerReport> {
   try {
-    const res = await fetchImpl(`${base}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${r.apiKey}`,
-        // Groq refuses requests without one; the others do not mind.
-        'user-agent': 'Ember/1.0',
-      },
-      body: JSON.stringify({
-        model: r.model,
-        temperature: 0.2,
-        // Reasoning models spend tokens thinking before they answer: too small
-        // a budget and the findings come back empty.
-        max_tokens: 4000,
-        messages: [
-          { role: 'system', content: SYSTEM },
-          { role: 'user', content: `${instruction(listing)}\n\nTHE APP:\n${code}` },
-        ],
-      }),
-    });
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      return { id: r.id, label: r.label, ok: false, error: `HTTP ${res.status} ${body.slice(0, 200)}`, findings: [] };
-    }
-    const j = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const text = j.choices?.[0]?.message?.content ?? '';
+    const text = await r.complete(SYSTEM, `${instruction(listing)}\n\nTHE APP:\n${code}`);
     const findings: Finding[] = parseFindings(text).map((f, i) => ({
       id: `ai_${r.id}_${i}`,
       title: f.title,
@@ -226,10 +218,13 @@ export async function reviewApp(
   root: string,
   reviewers: ReviewerSpec[],
   fetchImpl: typeof fetch = fetch,
+  /** Reviewers this machine provides itself: Claude's login, the Runner's Gemini. */
+  extra: ReviewerLike[] = [],
 ): Promise<{ reports: ReviewerReport[]; findings: Finding[]; files: number; truncated: boolean }> {
   const { text, files, truncated } = await collectCode(root);
   const listing = await readFile(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '');
-  const reports = await Promise.all(reviewers.map((r) => askOne(r, text, listing, fetchImpl)));
+  const all = [...extra, ...reviewers.map((r) => fromSpec(r, fetchImpl))];
+  const reports = await Promise.all(all.map((r) => askOne(r, text, listing)));
 
   const merged: Array<{ finding: Finding; seenBy: string[] }> = [];
   for (const rep of reports) {

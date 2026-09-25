@@ -40,7 +40,6 @@ const reviewerPresets = <Reviewer>[
   Reviewer(id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com', model: 'deepseek-chat'),
   Reviewer(id: 'groq', label: 'Groq', baseUrl: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile'),
   Reviewer(id: 'github', label: 'GitHub Models', baseUrl: 'https://models.github.ai/inference', model: 'gpt-4o'),
-  Reviewer(id: 'openrouter', label: 'OpenRouter', baseUrl: 'https://openrouter.ai/api/v1', model: 'meta-llama/llama-3.3-70b-instruct:free'),
 ];
 
 /// The reviewers the user configured, with their keys.
@@ -67,17 +66,21 @@ class ReviewerSettingsController extends AsyncNotifier<ReviewerSettings> {
   @override
   Future<ReviewerSettings> build() async {
     final raw = await Settings.instance.read(_listKey) ?? '';
-    final list = <Reviewer>[];
+    final saved = <String, Reviewer>{};
     if (raw.trim().isNotEmpty) {
       try {
         for (final e in jsonDecode(raw) as List) {
-          list.add(Reviewer.fromJson((e as Map).cast<String, dynamic>()));
+          final r = Reviewer.fromJson((e as Map).cast<String, dynamic>());
+          if (r.id.isNotEmpty) saved[r.id] = r;
         }
       } catch (_) {
         // A corrupted list just means starting from the presets again.
       }
     }
-    if (list.isEmpty) list.addAll(reviewerPresets);
+    // The presets decide who is on the list; a saved entry only carries the
+    // user's own edits for one of them. A service dropped from the presets
+    // disappears instead of lingering from an older version.
+    final list = [for (final p in reviewerPresets) saved[p.id] ?? p];
     final keys = <String, String>{};
     for (final r in list) {
       final k = await _secure.read(_keyName(r.id));

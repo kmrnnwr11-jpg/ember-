@@ -33,9 +33,9 @@ class AiSettingsScreen extends ConsumerWidget {
           children: [
             Text(l.apiKeysHint, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 16),
-            for (final p in [AiProviderId.gemini, AiProviderId.anthropic, AiProviderId.openai, AiProviderId.xai])
+            // Only what is actually used: the two engines that write apps.
+            for (final p in [AiProviderId.gemini, AiProviderId.anthropic])
               _KeyTile(provider: p, settings: s),
-            _CompatibleTile(settings: s),
             const Divider(height: 32),
             // Set once, used by every app: the models that check a finished app
             // on their own once it is built.

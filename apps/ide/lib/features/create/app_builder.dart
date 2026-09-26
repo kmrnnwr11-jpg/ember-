@@ -285,12 +285,35 @@ NEEDS YOU: sign in to Firebase and create the project, then tell me
 Write one such line per thing, in your reply, and carry on with everything else that does not depend on it.
 Never fake your way around a missing sign-in or key, and never report as working something that needs one.''';
 
+  /// The ten languages every app Ember builds speaks, and how.
+  ///
+  /// Retro-fitting this is the expensive way round: once a few hundred strings
+  /// are written inline in the widgets, translating them is a rewrite. Said at
+  /// the start, it costs the engine nothing.
+  static const languagesBlock = '''
+
+
+LANGUAGES — EVERY APP, NO EXCEPTIONS:
+The app speaks these ten languages, and picks the phone's own language automatically at startup:
+English (en, the default and the fallback), Italian (it), Spanish (es), Portuguese (pt-BR), French (fr),
+German (de), Hindi (hi), Arabic (ar), Indonesian (id), Russian (ru).
+- Use Flutter's own localisation: flutter_localizations, an l10n.yaml, and one .arb file per language under lib/l10n.
+  Generate the strings with gen-l10n and read them through AppLocalizations.
+- No user-facing text is written inline in a widget. Not one string, not a button label, not an error, not a
+  snackbar, not a dialog. Every one comes from the .arb files.
+- Every key exists in all ten files. A missing translation falls back to English rather than showing the key.
+- If the phone is set to a language not in the list, the app opens in English.
+- Arabic reads right to left: the layout must hold in RTL (use start/end padding and alignment, never left/right),
+  and it is worth checking one screen mentally in that direction before finishing.
+- A Settings screen lets the user pick a language by hand, overriding the phone's, and the choice is remembered.
+- Store listing text (title, short and full description) is written in all ten languages too.''';
+
   Future<String> _androidBlock() async {
     try {
       final info = await androidInfo?.call();
-      return '$_needsYouBlock${info == null ? '' : '\n\n$info'}';
+      return '$_needsYouBlock$languagesBlock${info == null ? '' : '\n\n$info'}';
     } catch (_) {
-      return _needsYouBlock;
+      return '$_needsYouBlock$languagesBlock';
     }
   }
 

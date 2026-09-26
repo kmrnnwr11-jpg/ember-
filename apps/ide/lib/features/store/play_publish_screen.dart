@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/session.dart';
 import '../../core/settings_store.dart';
 import '../../l10n/app_localizations.dart';
+import 'default_policy.dart';
 import 'play_links.dart';
 import '../ai/ai_settings.dart';
 import '../mockups/mockup_controller.dart' show CompleteText, apiCompleter, claudeCodeCompleter;
@@ -167,6 +168,24 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     return apiCompleter(ref.read(aiProviderFactory), model);
   }
 
+  /// Whether this app was built with ads and with purchases, as recorded by
+  /// the build itself rather than guessed from its description.
+  Future<({bool ads, bool purchases})> _whatWasBuilt() async {
+    try {
+      final raw = await Settings.instance.read('ember_session_${widget.projectId}');
+      if (raw == null) return (ads: false, purchases: false);
+      final m = jsonDecode(raw) as Map<String, dynamic>;
+      final ads = m['ads'];
+      final products = m['products'];
+      return (
+        ads: ads is Map && ads.values.any((v) => v == true),
+        purchases: products is List && products.isNotEmpty,
+      );
+    } catch (_) {
+      return (ads: false, purchases: false);
+    }
+  }
+
   Future<void> _generate() async {
     setState(() {
       _generating = true;
@@ -189,12 +208,41 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       _contentRating = '${j['contentRatingGuide'] ?? ''}';
       _otherDeclarations = '${j['otherDeclarationsGuide'] ?? ''}';
       final api = await ref.read(runnerApiProvider.future);
-      final saved = await api.savePrivacyPolicy(widget.projectId, _privacy, _title.text, email: _email.text.trim());
-      final session = ref.read(sessionProvider).value!;
-      // The published page is what Google can open; the local one only works on this computer.
-      _privacyUrl = saved.publicUrl ?? '${session.runnerUrl}${saved.path}';
-      final current = _privacyLink.text.trim();
-      if (current.isEmpty || current.contains('localhost') || current.contains('127.0.0.1')) _privacyLink.text = _privacyUrl!;
+      // Google will not take an app without a policy at a public address, so a
+      // model that answered everything else and skipped this one must not cost
+      // the upload: write a true one from what the app actually does.
+      if (_privacy.trim().length < 50) {
+        // What the app actually ships with, recorded by the build: a policy
+        // must not claim ads or purchases the app does not have, nor stay
+        // silent about the ones it does.
+        final built = await _whatWasBuilt();
+        _privacy = defaultPrivacyPolicy(
+          appName: _title.text,
+          email: _email.text.trim(),
+          ads: built.ads,
+          purchases: built.purchases,
+        );
+      }
+      // Its own try: publishing the policy can fail on its own (GitHub not
+      // signed in, network down) and that must not throw away the listing the
+      // model just wrote, which was the whole point of the step.
+      try {
+        final saved = await api.savePrivacyPolicy(widget.projectId, _privacy, _title.text, email: _email.text.trim());
+        final session = ref.read(sessionProvider).value!;
+        // The published page is what Google can open; the local one only works on this computer.
+        _privacyUrl = saved.publicUrl ?? '${session.runnerUrl}${saved.path}';
+        final current = _privacyLink.text.trim();
+        if (current.isEmpty || current.contains('localhost') || current.contains('127.0.0.1')) _privacyLink.text = _privacyUrl!;
+        // A local address is not an address Google can open: say so here
+        // rather than letting the upload fail at review.
+        if (saved.publicUrl == null) {
+          _error = "La privacy e salvata solo su questo computer: Google non puo aprirla. "
+              "Collega GitHub in Ember, oppure incolla qui sotto un link tuo.";
+        }
+      } catch (e) {
+        _error = "Privacy non pubblicata: ${e is RunnerException ? e.message : e}. "
+            "Il resto della scheda e stato salvato; incolla un link tuo qui sotto.";
+      }
       // A new listing means new translations: the old ones describe other words.
       _translations = {};
       await _saveListing();

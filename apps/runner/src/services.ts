@@ -55,17 +55,26 @@ export type SignedBuildPreparer = typeof prepareSignedBuild;
 export async function syncAdmobAppId(root: string): Promise<void> {
   const cfg = await readFile(path.join(root, 'lib', 'config', 'ads_config.dart'), 'utf8').catch(() => '');
   if (!cfg) return;
-  const androidId = /androidAppId\s*=\s*'([^']+)'/.exec(cfg)?.[1] ?? '';
-  const iosId = /iosAppId\s*=\s*'([^']+)'/.exec(cfg)?.[1] ?? '';
+  // Read a constant by its whole name. Unanchored, `androidAppId` also matches
+  // inside `testAndroidAppId`, and an app that keeps both would hand over
+  // whichever line came first — the test id, and ads that never earn.
+  const constant = (name: string) => new RegExp(`(?<![A-Za-z])${name}\\s*=\\s*'([^']+)'`).exec(cfg)?.[1] ?? '';
+  const androidId = constant('liveAndroidAppId') || constant('androidAppId');
+  const iosId = constant('liveIosAppId') || constant('iosAppId');
   const isReal = (id: string) => /^ca-app-pub-\d+~\d+$/.test(id) && !id.startsWith('ca-app-pub-3940256099942544');
+  // An app that fills the id per build type leaves a placeholder here on purpose:
+  // the real id belongs to the release alone. Writing it over the placeholder
+  // would put it in debug builds too, where every tap is a tap on your own ad —
+  // which is how AdMob accounts get closed.
+  const managed = (value: string) => /^\s*[$][{(]/.test(value);
 
   if (isReal(androidId)) {
     const p = path.join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml');
     const m = await readFile(p, 'utf8').catch(() => '');
     if (m) {
       const next = m.replace(
-        /(com\.google\.android\.gms\.ads\.APPLICATION_ID"[\s\S]*?android:value=")[^"]*(")/,
-        `$1${androidId}$2`,
+        /(com\.google\.android\.gms\.ads\.APPLICATION_ID"[\s\S]*?android:value=")([^"]*)(")/,
+        (whole, head: string, value: string, tail: string) => (managed(value) ? whole : `${head}${androidId}${tail}`),
       );
       if (next !== m) await writeFile(p, next);
     }
@@ -75,8 +84,8 @@ export async function syncAdmobAppId(root: string): Promise<void> {
     const pl = await readFile(p, 'utf8').catch(() => '');
     if (pl) {
       const next = pl.replace(
-        /(<key>GADApplicationIdentifier<\/key>\s*<string>)[^<]*(<\/string>)/,
-        `$1${iosId}$2`,
+        /(<key>GADApplicationIdentifier<\/key>\s*<string>)([^<]*)(<\/string>)/,
+        (whole, head: string, value: string, tail: string) => (managed(value) ? whole : `${head}${iosId}${tail}`),
       );
       if (next !== pl) await writeFile(p, next);
     }

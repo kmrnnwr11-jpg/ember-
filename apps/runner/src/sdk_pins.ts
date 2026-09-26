@@ -13,6 +13,15 @@ export const SDK_PINS: Array<{ when: RegExp; pkg: string; version: string; reaso
     version: '3.10.0',
     reason: 'firebase_core_web 3.11 uses Object.isA (newer Dart): web build fails on Flutter 3.38',
   },
+  {
+    when: /^\s+record:/m,
+    pkg: 'record_linux',
+    version: '^1.3.1',
+    reason:
+      'record 5.2.x resolves record_linux 0.7.2 against record_platform_interface 1.6.0, and 0.7.2 does not implement ' +
+      'startStream. Flutter compiles every endorsed plugin of a federated package, so the Android build fails on the ' +
+      'Linux one: a talking-pet app never got past kernel_snapshot.',
+  },
 ];
 
 /**

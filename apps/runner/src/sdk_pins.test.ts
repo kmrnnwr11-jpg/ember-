@@ -75,3 +75,26 @@ describe('SDK pins', () => {
     expect(applySdkPins(src)).toBe(src);
   });
 });
+
+describe('record', () => {
+  it('pins the Linux part of record, which breaks the Android build', () => {
+    const src = 'name: capy\ndependencies:\n  flutter:\n    sdk: flutter\n  record: ^5.2.0\n';
+    const out = applySdkPins(src);
+    expect(out).toContain('dependency_overrides:');
+    expect(out).toContain('record_linux: ^1.3.1');
+    // The reason travels with it: the next person sees why it is there.
+    expect(out).toContain('startStream');
+    // Applying it twice must not add it again.
+    expect(applySdkPins(out)).toBe(out);
+  });
+
+  it('leaves an app that does not record alone', () => {
+    const src = 'name: notes\ndependencies:\n  flutter:\n    sdk: flutter\n  http: ^1.2.0\n';
+    expect(applySdkPins(src)).toBe(src);
+  });
+
+  it('respects an override the project already chose', () => {
+    const src = 'dependencies:\n  record: ^5.2.0\ndependency_overrides:\n  record_linux: 2.0.0\n';
+    expect(applySdkPins(src)).toBe(src);
+  });
+});

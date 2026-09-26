@@ -12,6 +12,7 @@ import { ensureDevelopmentTeam } from './ios_signing.js';
 import { fixPreflight } from './ios_preflight.js';
 import { bumpBuildNumber, lastAppStoreBuildNumber, lastPublishedBuildNumber, lastPublishedVersionCode, prepareSignedBuild } from './signing.js';
 import { pinProjectSdk, tuneGradle } from './sdk_pins.js';
+import { storeIcons, withLauncherIcons } from './logos.js';
 import type { ProjectRow, Store, WorkspaceRow } from './store.js';
 import type { WorkspaceDriver } from './workspaces/driver.js';
 
@@ -231,6 +232,18 @@ export class Services {
     // Keep AI-chosen dependencies compatible with this Runner's Flutter SDK.
     await pinProjectSdk(this.projectRoot(project));
     await tuneGradle(this.projectRoot(project));
+    // Whatever the app is about to ship with, the two stores get the icon files
+    // they ask for — the 512 px one for Google, the 1024 px opaque one for Apple.
+    // Choosing a logo in Ember is not the only way an icon arrives, so this runs
+    // off the icon itself rather than off the last logo Ember drew.
+    if (kind === 'launcher_icons' || kind === 'build_aab' || kind === 'build_ipa') {
+      const root = this.projectRoot(project);
+      const pubspec = await readFile(path.join(root, 'pubspec.yaml'), 'utf8').catch(() => null);
+      // Without this config `flutter_launcher_icons` has nothing to read and the
+      // job fails on an app whose icon was put in by hand.
+      if (pubspec !== null && withLauncherIcons(pubspec) !== pubspec) await writeFile(path.join(root, 'pubspec.yaml'), withLauncherIcons(pubspec));
+      await storeIcons(root).catch(() => null);
+    }
     let env: Record<string, string> | undefined;
     if (kind === 'build_apk' || kind === 'build_aab') {
       // The package name is forever once Google has it: swap the placeholder for

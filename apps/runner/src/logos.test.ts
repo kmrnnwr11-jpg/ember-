@@ -2,7 +2,8 @@ import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { applyLogo, generateLogos, LOGO_SYSTEM, sanitizeSvg, withLauncherIcons } from './logos.js';
+import { applyLogo, generateLogos, LOGO_SYSTEM, quotedWords, sanitizeSvg, storeIcons, withLauncherIcons } from './logos.js';
+import sharp from 'sharp';
 
 const SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#123"/><circle cx="256" cy="256" r="120" fill="#fc3"/></svg>';
 
@@ -90,5 +91,30 @@ describe('store state', () => {
     expect(state.screenshots).toHaveLength(1);
     expect(state.listing).toMatchObject({ title: 'Demo' });
     await rm(root, { recursive: true, force: true });
+  });
+
+  it('builds both stores icons from the app own icon, whatever drew it', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'fc-storeicons-'));
+    const { mkdir } = await import('node:fs/promises');
+    await mkdir(path.join(root, 'assets', 'icon'), { recursive: true });
+    // An icon nobody generated through Ember: transparent corners, like a cut-out.
+    await writeFile(
+      path.join(root, 'assets', 'icon', 'app_icon.png'),
+      await sharp({ create: { width: 1024, height: 1024, channels: 4, background: { r: 255, g: 239, b: 218, alpha: 0.5 } } }).png().toBuffer(),
+    );
+    const made = await storeIcons(root);
+    expect(made?.appStoreIcon).toBe('store/appstore_icon_1024.png');
+    const play = sharp(await readFile(path.join(root, 'store', 'play_icon_512.png')));
+    expect((await play.metadata()).width).toBe(512);
+    const apple = await sharp(await readFile(path.join(root, 'store', 'appstore_icon_1024.png'))).metadata();
+    expect(apple.width).toBe(1024);
+    // Apple refuses an icon with an alpha channel (ITMS-90717).
+    expect(apple.hasAlpha).toBe(false);
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it('keeps the wording a brief asked for', () => {
+    expect(quotedWords('scrivi "I am Capy" sopra')).toEqual(['I am Capy']);
+    expect(quotedWords('nothing quoted here')).toEqual([]);
   });
 });

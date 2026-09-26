@@ -97,15 +97,51 @@ export async function renderPng(svg: string, size: number): Promise<Buffer> {
   return sharp(Buffer.from(svg), { density: 300 }).resize(size, size, { fit: 'cover' }).png().toBuffer();
 }
 
+/** The single pixel in an icon's top-left corner: the ground its artwork sits on. */
+async function cornerPixel(iconPng: Buffer): Promise<{ data: Buffer }> {
+  return sharp(iconPng).extract({ left: 0, top: 0, width: 1, height: 1 }).raw().toBuffer({ resolveWithObject: true });
+}
+
 /** Play Store feature graphic: the icon on a wide background taken from its own corner color. */
 export async function featureGraphic(iconPng: Buffer): Promise<Buffer> {
-  const { data } = await sharp(iconPng).resize(1, 1, { position: 'left top', fit: 'cover' }).raw().toBuffer({ resolveWithObject: true });
+  // Read one real corner pixel. Resizing to 1×1 averages the whole picture
+  // instead, which on an icon with a pale ground comes back muddy and draws a
+  // visible square around it on the Play Store banner.
+  const { data } = await cornerPixel(iconPng);
   const [r, g, b] = [data[0] ?? 20, data[1] ?? 20, data[2] ?? 20];
   const icon = await sharp(iconPng).resize(380, 380).toBuffer();
   return sharp({ create: { width: 1024, height: 500, channels: 4, background: { r, g, b, alpha: 1 } } })
     .composite([{ input: icon, left: 322, top: 60 }])
     .png()
     .toBuffer();
+}
+
+/**
+ * The icons the two stores ask for, rebuilt from whatever icon the app carries.
+ *
+ * [applyLogo] covers a logo Ember drew, but an icon can arrive any other way —
+ * dropped in by hand, cut out of a screenshot — and then the store files stayed
+ * at whatever the last generated logo was, or never existed at all. This reads
+ * `assets/icon/app_icon.png`, the one file every route writes, so the listing
+ * always shows the icon the phone shows.
+ */
+export async function storeIcons(projectRoot: string): Promise<{ playIcon: string; appStoreIcon: string; featureGraphic: string } | null> {
+  const icon = await readFile(path.join(projectRoot, 'assets', 'icon', 'app_icon.png')).catch(() => null);
+  if (!icon) return null;
+  const store = path.join(projectRoot, 'store');
+  await mkdir(store, { recursive: true });
+  // Apple refuses an icon that carries transparency (ITMS-90717), and a rounded
+  // PNG flattened onto white shows white corners: the icon's own corner colour
+  // is the one ground that stays invisible.
+  const { data } = await cornerPixel(icon);
+  const ground = { r: data[0] ?? 255, g: data[1] ?? 255, b: data[2] ?? 255 };
+  await writeFile(path.join(store, 'play_icon_512.png'), await sharp(icon).resize(512, 512, { fit: 'cover' }).png().toBuffer());
+  await writeFile(
+    path.join(store, 'appstore_icon_1024.png'),
+    await sharp(icon).resize(1024, 1024, { fit: 'cover' }).flatten({ background: ground }).png().toBuffer(),
+  );
+  await writeFile(path.join(store, 'feature_graphic.png'), await featureGraphic(icon));
+  return { playIcon: 'store/play_icon_512.png', appStoreIcon: 'store/appstore_icon_1024.png', featureGraphic: 'store/feature_graphic.png' };
 }
 
 export type CompleteFn = (system: string, prompt: string) => Promise<string>;
@@ -314,8 +350,8 @@ export async function applyLogo(projectRoot: string, logoId: string): Promise<{ 
   await mkdir(path.join(projectRoot, 'assets', 'icon'), { recursive: true });
   await writeFile(path.join(projectRoot, 'assets', 'icon', 'app_icon.png'), icon1024);
   const store = path.join(projectRoot, 'store');
-  await writeFile(path.join(store, 'play_icon_512.png'), await renderPng(svg, 512));
-  await writeFile(path.join(store, 'feature_graphic.png'), await featureGraphic(icon1024));
+  await mkdir(store, { recursive: true });
+  await storeIcons(projectRoot);
   await writeFile(path.join(store, 'logo.json'), JSON.stringify({ logoId, appliedAt: new Date().toISOString() }));
   const pubspecPath = path.join(projectRoot, 'pubspec.yaml');
   const pubspec = await readFile(pubspecPath, 'utf8').catch(() => null);

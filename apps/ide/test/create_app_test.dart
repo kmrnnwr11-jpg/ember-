@@ -80,6 +80,7 @@ class FakeRunner {
 final gemini = builtInCatalog.firstWhere((m) => m.id == 'gemini-2.5-flash');
 
 void main() {
+  ownerTests();
   resumeTests();
   test('API engine: writes files, detects analyzer error, fixes it, builds preview', () async {
     final runner = FakeRunner();
@@ -219,5 +220,32 @@ void resumeTests() {
       resolveProvider: (_) async => ScriptedProvider(['no code here']),
     );
     expect(b.canResume, isFalse);
+  });
+}
+
+/// Which findings the engine may fix by itself, and which belong to the owner.
+void ownerTests() {
+  test('keys, accounts and store setup are the owner\'s, not the engine\'s', () {
+    // Exactly the findings the reviewers raised on a real app.
+    expect(AppBuilder.needsOwner("AdMob App ID is Google's test ID, not a real one"), isTrue);
+    expect(AppBuilder.needsOwner('In-app purchase products likely not configured on stores'), isTrue);
+    expect(AppBuilder.needsOwner('Firebase project is missing google-services.json'), isTrue);
+    expect(AppBuilder.needsOwner('The API key for the weather service is empty'), isTrue);
+    expect(AppBuilder.needsOwner('Google Sign-In needs an OAuth client id'), isTrue);
+  });
+
+  test('everything an engine can actually write is left to it', () {
+    expect(AppBuilder.needsOwner("Export doesn't actually produce a video, only a PNG poster"), isFalse);
+    expect(AppBuilder.needsOwner('Captions are not burned into the export'), isFalse);
+    expect(AppBuilder.needsOwner('Volume slider for clip audio has no effect on demo clip'), isFalse);
+    expect(AppBuilder.needsOwner('The settings screen has no way back'), isFalse);
+  });
+
+  test('it reads the whole finding, not only its title', () {
+    // The title says nothing; the detail is where the blocker is.
+    expect(
+      AppBuilder.needsOwner('Ads never load. AndroidManifest hardcodes the test ad unit ids.'),
+      isTrue,
+    );
   });
 }

@@ -409,15 +409,60 @@ Never fake your way around a missing sign-in or key, and never report as working
   /// Applies a follow-up change to an already built app.
   bool _reviewed = false;
 
-  /// How many times the reviewers get to speak: one round to find the defects,
-  /// a second to confirm they are gone. More than that and a model that is
-  /// never satisfied would keep the build going forever.
-  static const _maxReviewRounds = 2;
+  /// How many times the reviewers get to speak. Each round finds what is left
+  /// and the next confirms it is gone; three is enough to converge without
+  /// letting a model that is never satisfied keep the build going forever.
+  static const _maxReviewRounds = 3;
+
+  /// A ceiling on the work one round may ask for, so a reviewer having a bad
+  /// day cannot turn one build into fifty.
+  static const _maxFixesPerRound = 8;
+
+  /// Whether a finding is one only the owner can settle.
+  ///
+  /// An engine cannot open an AdMob account, paste a Firebase key or create a
+  /// product in Play Console, and telling it to try produces invented ids and
+  /// a confident reply that fixed nothing. These go to the user by name
+  /// instead, and the rest is fixed without asking.
+  static bool needsOwner(String text) {
+    final t = text.toLowerCase();
+    const marks = [
+      'admob app id',
+      'admob account',
+      'test ad unit',
+      'test ad id',
+      'real ad unit',
+      'google-services.json',
+      'firebase project',
+      'firebase config',
+      'api key',
+      'apikey',
+      'client id',
+      'service account',
+      'play console',
+      'app store connect',
+      'signing key',
+      'keystore',
+      'oauth',
+      'not configured on stores',
+      'configured in play',
+      'configured on google play',
+    ];
+    return marks.any(t.contains);
+  }
 
   /// Other models read the finished app, each on its own, and what they found
-  /// is handed straight to the engine that wrote it. Nothing here asks the user
-  /// anything: a reviewer that is not configured, is down, or answers nonsense
-  /// simply leaves the app as it is.
+  /// is handed straight back to the engine that wrote it — one problem at a
+  /// time.
+  ///
+  /// Six problems in one message is what a reviewer's list used to become, and
+  /// an engine given six at once answers six times as shallowly: the user then
+  /// found ten of them still waiting, and fixing them by hand one by one
+  /// worked, which is the whole proof. Asked one at a time, the same engine
+  /// fixes them.
+  ///
+  /// Nothing here asks the user anything, except to name the few things only
+  /// they can do.
   Future<void> _autoReview() async {
     final run = runReview;
     if (run == null) return;
@@ -425,25 +470,42 @@ Never fake your way around a missing sign-in or key, and never report as working
       _log(strings.bReviewStart, kind: 'info');
       final findings = await run().catchError((_) => const <Map<String, dynamic>>[]);
       if (_cancelled) return;
-      final asks = [
+      final withAsk = [
         for (final f in findings)
           if ('${f['ask'] ?? ''}'.trim().isNotEmpty) f,
-      ].take(6).toList();
-      if (asks.isEmpty) {
+      ];
+      if (withAsk.isEmpty) {
         _log(strings.bReviewClean, kind: 'info');
         return;
       }
-      _log(strings.bReviewFound(asks.length), kind: 'error');
-      final list = [
-        for (var i = 0; i < asks.length; i++) '${i + 1}. ${asks[i]['title']}\n   ${asks[i]['ask']}',
-      ].join('\n');
-      await improve(
-        'Other reviewers read this app and found the problems below. Fix them all, keeping everything that already works.\n'
-        'A screen that only looks like it works is the worst of these: where a real capability is missing, add the package and implement it for real.\n'
-        'If one of them genuinely cannot be fixed in code — it needs a key, an account or a sign-in only the owner can do — say so plainly in your reply instead of pretending.\n\n'
-        '$list',
-        display: strings.bReviewFound(asks.length),
-      );
+
+      // What only the owner can do is not attempted: it is named to them.
+      final mine = <Map<String, dynamic>>[];
+      for (final f in withAsk) {
+        if (needsOwner('${f['title']} ${f['detail']} ${f['ask']}')) {
+          final note = '${f['title']}';
+          if (!needsYou.contains(note)) needsYou.add(note);
+        } else {
+          mine.add(f);
+        }
+      }
+      if (mine.isEmpty) {
+        _log(strings.bReviewClean, kind: 'info');
+        notifyListeners();
+        return;
+      }
+
+      _log(strings.bReviewFound(mine.length), kind: 'error');
+      for (final f in mine.take(_maxFixesPerRound)) {
+        if (_cancelled) return;
+        await improve(
+          'A reviewer read this finished app and found this one problem. Fix it, and change nothing else.\n'
+          'A screen that only looks like it works is the worst kind: where a real capability is missing, add the package and implement it for real.\n'
+          'If it genuinely cannot be fixed in code — it needs a key, an account or a sign-in only the owner can do — say so plainly instead of pretending.\n\n'
+          '${f['title']}\n${f['ask']}',
+          display: '${f['title']}',
+        );
+      }
     }
   }
 

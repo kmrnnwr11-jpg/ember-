@@ -486,18 +486,7 @@ class _MockupPage extends StatelessWidget {
           ),
         );
       case MockupStatus.ready:
-        return InAppWebView(
-          key: ValueKey(mockup.html.hashCode),
-          initialData: InAppWebViewInitialData(data: mockup.html!, mimeType: 'text/html', encoding: 'utf8'),
-          initialSettings: InAppWebViewSettings(
-            javaScriptEnabled: false,
-            supportZoom: false,
-            transparentBackground: false,
-            verticalScrollBarEnabled: false,
-          ),
-          // Horizontal swipes go to the PageView; vertical scroll stays in the mockup.
-          gestureRecognizers: const {},
-        );
+        return _MockupWebView(html: mockup.html!);
     }
   }
 }
@@ -513,4 +502,48 @@ class _RoundButton extends StatelessWidget {
     shape: const CircleBorder(),
     child: InkWell(customBorder: const CircleBorder(), onTap: onTap, child: Padding(padding: const EdgeInsets.all(8), child: Icon(icon, color: Colors.white))),
   );
+}
+
+
+/// The page itself, shown once and reloaded in place.
+///
+/// It used to be keyed by the page's own hash, so every redraw replaced the
+/// widget — and with it the native WebView underneath. The panel rounds redraw
+/// all eight, which meant eight native views torn down and rebuilt in a few
+/// seconds; on Windows the plugin fell over and took Ember with it
+/// (flutter_inappwebview_windows_plugin.dll, 0xc0000005). The view is now
+/// created once and simply given the new page.
+class _MockupWebView extends StatefulWidget {
+  const _MockupWebView({required this.html});
+
+  final String html;
+
+  @override
+  State<_MockupWebView> createState() => _MockupWebViewState();
+}
+
+class _MockupWebViewState extends State<_MockupWebView> {
+  InAppWebViewController? _controller;
+
+  @override
+  void didUpdateWidget(covariant _MockupWebView old) {
+    super.didUpdateWidget(old);
+    if (old.html != widget.html) {
+      _controller?.loadData(data: widget.html, mimeType: 'text/html', encoding: 'utf8');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => InAppWebView(
+        initialData: InAppWebViewInitialData(data: widget.html, mimeType: 'text/html', encoding: 'utf8'),
+        initialSettings: InAppWebViewSettings(
+          javaScriptEnabled: false,
+          supportZoom: false,
+          transparentBackground: false,
+          verticalScrollBarEnabled: false,
+        ),
+        onWebViewCreated: (c) => _controller = c,
+        // Horizontal swipes go to the PageView; vertical scroll stays in the mockup.
+        gestureRecognizers: const {},
+      );
 }

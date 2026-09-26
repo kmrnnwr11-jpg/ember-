@@ -70,7 +70,14 @@ class _LogoCardState extends ConsumerState<LogoCard> {
       final settings = await ref.read(reviewerSettingsProvider.future);
       final reviewers = settings.usable.where((r) => health.working.contains(r.id)).toList();
       final res = await api.generateLogos(widget.projectId, {
-        'about': widget.builder.prompt,
+        // The Runner takes 4000 characters, and a detailed brief runs well
+        // past that: the whole logo step failed with "Too big: expected string
+        // to have <=4000 characters", which says nothing about what to do.
+        // A logo is drawn from what the app is, and that is in the opening
+        // lines; the rest is instructions for the engine that writes it.
+        'about': widget.builder.prompt.length <= 4000
+            ? widget.builder.prompt
+            : widget.builder.prompt.substring(0, 4000),
         if (_hint.text.trim().isNotEmpty) 'hint': _hint.text.trim(),
         'count': _logos.isEmpty ? 6 : 5,
         if (reviewers.length > 1)

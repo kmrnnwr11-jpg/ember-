@@ -30,7 +30,8 @@ export const LOGO_2026 = `THIS MUST LOOK LIKE A 2026 APP ICON, NOT A 2015 ONE:
 - Flat or a single smooth gradient between two neighbouring hues. No bevels, no glossy highlight, no drop shadow, no outer glow, no skeuomorphic depth.
 - Two or three colours at most, confident and saturated, on a solid or single-gradient ground.
 - Thick, even strokes and generous rounding where the shape has corners; nothing hair-thin, which disappears when small.
-- No text, no thin decorative rings, no busy background patterns, no photo-realism.`;
+- No text of your own invention, no thin decorative rings, no busy background patterns, no photo-realism. Words the brief
+  asks for are the exception: draw those, once, short and heavy enough to survive 48 px.`;
 
 export const LOGO_SYSTEM = `You are a senior brand designer who draws mobile app icons as clean SVG code.
 
@@ -41,8 +42,21 @@ Rules:
 - viewBox="0 0 512 512", width="512" height="512". Full-bleed square background (the launcher masks corners): fill the whole canvas.
 - THE SUBJECT FILLS THE ICON: it spans at least 440 of the 512 units in its larger dimension — roughly 90% of the canvas, leaving only a thin margin (about 36 units) around it. A small mark floating in empty space is the most common failure and is rejected. Centre it, and let it touch that margin on the sides where its shape allows.
 - Draw exactly what was asked for, recognisably: if the user names a thing, that thing is the icon — its real silhouette, seen straight on, in a shape a person names at a glance and at 48 px. No unrelated shapes, no abstract blob standing in for the subject.
-- No text except at most one or two letters when the style asks for a monogram. No photos, no <image>, no external links, no scripts, no fonts.
+- Add no wording of your own: at most one or two letters when the style asks for a monogram. But when the brief asks for a
+  word or a phrase, that wording IS part of the icon and must appear, spelled exactly as asked, drawn with <text> in a
+  heavy sans-serif with font-family and a generic fallback (no webfonts), sized to be read at 48 px.
+- No photos, no <image>, no external links, no scripts, no font files.
 - Use gradients, shapes and paths only. Make it professional, distinctive and on-brand for the app.`;
+
+/** Words the brief put in quotes — English, Italian or typographic — deduplicated, longest first. */
+export function quotedWords(hint?: string): string[] {
+  const found = new Set<string>();
+  for (const m of (hint ?? '').matchAll(/["“”'‘’«»]([^"“”'‘’«»]{1,40})["“”'‘’«»]/g)) {
+    const word = (m[1] ?? '').trim();
+    if (word) found.add(word);
+  }
+  return [...found];
+}
 
 export function logoPrompt(opts: { appName: string; about: string; hint?: string; style: string; avoid?: string[] }): string {
   return [
@@ -53,6 +67,10 @@ export function logoPrompt(opts: { appName: string; about: string; hint?: string
     opts.hint
       ? `Visual style for this proposal: ${opts.style}. The style changes how the subject is drawn; it never replaces the subject.`
       : `Visual style for this proposal: ${opts.style}.`,
+    // Quoted wording in the brief is the one thing that must come back letter for
+    // letter: "write I am Capy on it" came back as icons with no words at all,
+    // because the rules above otherwise read as a flat ban on text.
+    ...quotedWords(opts.hint).map((w) => `The icon must carry this wording, spelled exactly: ${w}`),
     opts.avoid?.length ? `It must look clearly different from these previous proposals: ${opts.avoid.join(' | ')}` : '',
     'Draw the icon now, big, filling the canvas.',
   ]

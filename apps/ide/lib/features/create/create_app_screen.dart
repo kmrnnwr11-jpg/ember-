@@ -106,8 +106,17 @@ class CreateAppArgs {
   final BuildEngine designEngine;
 }
 
-/// One builder per project, kept alive so a build continues if the user navigates away.
+/// One builder per project, kept alive so a build continues if the user
+/// navigates away.
+///
+/// The keepAlive is the whole of that promise. Riverpod disposes a provider as
+/// soon as nothing watches it, so leaving the build screen threw the builder
+/// away mid-build: the engine carried on writing files on the Runner, but
+/// nothing in Ember was listening any more, and to the user the app had simply
+/// stopped. Going back to the list — the one thing this screen is meant to let
+/// you do — was what broke it.
 final appBuilderProvider = ChangeNotifierProvider.family<AppBuilder, (String, String)>((ref, key) {
+  ref.keepAlive();
   final (projectId, projectName) = key;
   final socket = ref.watch(runnerSocketProvider);
   final builder = AppBuilder(

@@ -435,6 +435,8 @@
   },
   "bClaudeApplying": "Claude Code is applying the change…",
   "bClaudeBuilding": "Claude Code is building the app on the PC…",
+  "statusBuilding": "Creating… {progress} files",
+  "@statusBuilding": {"placeholders": {"progress": {"type": "String"}}},
   "bClaudeFailed": "Claude Code did not finish the app: check the log.",
   "resumeFromHere": "Carry on from here ({count} files)",
   "@resumeFromHere": {"placeholders": {"count": {"type": "int"}}},

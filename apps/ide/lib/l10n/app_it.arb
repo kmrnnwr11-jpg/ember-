@@ -245,6 +245,8 @@
   "bErrorsFound": "{count} errori trovati",
   "bClaudeApplying": "Claude Code applica la modifica…",
   "bClaudeBuilding": "Claude Code costruisce l'app sul PC…",
+  "statusBuilding": "In creazione… {progress} file",
+  "@statusBuilding": {"placeholders": {"progress": {"type": "String"}}},
   "bClaudeFailed": "Claude Code non ha completato l'app: controlla il log.",
   "resumeFromHere": "Riprendi da qui ({count} file)",
   "@resumeFromHere": {"placeholders": {"count": {"type": "int"}}},

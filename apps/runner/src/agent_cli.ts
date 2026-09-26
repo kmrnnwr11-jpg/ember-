@@ -175,6 +175,25 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
     return [...this.runs.values()].find((r) => r.projectId === projectId && r.status === 'running');
   }
 
+  /**
+   * Every build still running for this user, one entry per project.
+   *
+   * The app list needs to say which projects are being written right now, and
+   * asking project by project would be one round trip each: with thirty
+   * projects on screen that is thirty questions to answer one.
+   */
+  runningFor(ownerId: string): Array<{ projectId: string; runId: string; startedAt: string; files: number; plannedFiles?: number }> {
+    return [...this.runs.values()]
+      .filter((r) => r.ownerId === ownerId && r.status === 'running' && r.projectId)
+      .map((r) => ({
+        projectId: r.projectId!,
+        runId: r.id,
+        startedAt: r.startedAt,
+        files: (r.events ?? []).filter((e) => e.kind === 'tool' && (e.name === 'Write' || e.name === 'Edit' || e.name === 'MultiEdit')).length,
+        plannedFiles: r.plannedFiles,
+      }));
+  }
+
   /** The running or most recent run of a project. */
   latestFor(projectId: string): AgentRun | undefined {
     return [...this.runs.values()].filter((r) => r.projectId === projectId).at(-1);

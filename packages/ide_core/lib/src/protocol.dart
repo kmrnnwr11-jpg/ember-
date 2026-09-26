@@ -25,6 +25,9 @@ abstract final class MsgType {
   static const agentCancel = 'agent.cancel';
   static const agentComplete = 'agent.complete';
   static const agentGet = 'agent.get';
+
+  /// Which projects are being written right now: one question for the whole list.
+  static const agentRunning = 'agent.running';
   static const jobGet = 'job.get';
   static const ping = 'ping';
 

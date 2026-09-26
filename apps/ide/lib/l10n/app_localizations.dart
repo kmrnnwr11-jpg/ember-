@@ -1574,6 +1574,12 @@ abstract class AppLocalizations {
   /// **'Claude Code is building the app on the PC…'**
   String get bClaudeBuilding;
 
+  /// No description provided for @statusBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating… {progress} files'**
+  String statusBuilding(String progress);
+
   /// No description provided for @bClaudeFailed.
   ///
   /// In en, this message translates to:

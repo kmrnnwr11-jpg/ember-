@@ -832,6 +832,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get bClaudeBuilding => 'Claude Code está creando la app en el PC…';
 
   @override
+  String statusBuilding(String progress) {
+    return 'Creating… $progress files';
+  }
+
+  @override
   String get bClaudeFailed =>
       'Claude Code no terminó la app: revisa el registro.';
 

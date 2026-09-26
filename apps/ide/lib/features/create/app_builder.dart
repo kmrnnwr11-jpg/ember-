@@ -610,6 +610,9 @@ Never fake your way around a missing sign-in or key, and never report as working
     'products': products,
     'ads': ads,
     'pending': _pending,
+    // Saved, not just held in memory: the app list marks a project that is
+    // waiting on the user, and it must still know after Ember is restarted.
+    'needsYou': needsYou,
     'conversation': [
       for (final m in conversation.length > 60 ? conversation.sublist(conversation.length - 60) : conversation) {'role': m.role, 'text': m.text},
     ],
@@ -632,6 +635,9 @@ Never fake your way around a missing sign-in or key, and never report as working
       ]);
     if (conversation.isEmpty) conversation.add((role: 'user', text: prompt));
     _pending = session['pending'] as String?;
+    needsYou
+      ..clear()
+      ..addAll((session['needsYou'] as List? ?? const []).whereType<String>());
     products = (session['products'] as List? ?? const []).whereType<Map<String, dynamic>>().toList();
     ads = session['ads'] as Map<String, dynamic>?;
     _status = session['status'] as String? ?? 'done';

@@ -312,6 +312,10 @@ export class Session {
         if (!run || run.ownerId !== uid) return { run: null };
         return { run: { ...run, events: p.withEvents === true ? run.events ?? [] : undefined } };
       }
+      // Which projects this user has a build running in, for the app list.
+      case 'agent.running': {
+        return { runs: this.claudeCode.runningFor(uid) };
+      }
       case 'job.get': {
         const job = this.services.jobs.get(str(p.jobId, 'jobId'));
         if (!job || job.ownerId !== uid) throw Object.assign(new Error('job not found'), { code: 'not_found' });

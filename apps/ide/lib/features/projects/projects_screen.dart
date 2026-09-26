@@ -11,6 +11,7 @@ import '../../l10n/app_localizations.dart';
 import '../../widgets/connection_badge.dart';
 import '../../widgets/ember_logo.dart';
 import '../assistant/home_assistant.dart';
+import 'build_watch.dart';
 import '../create/app_builder.dart';
 import '../create/create_app_screen.dart';
 import '../create/reference_app.dart';
@@ -268,21 +269,54 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                       );
                     }
                     final p = list[index - 1];
+                    // What the Runner says this project is doing right now: a
+                    // build carries on there while the user is elsewhere, so
+                    // the list, not the build screen, is where it shows.
+                    final watch = ref.watch(buildWatchProvider);
+                    final live = watch is AsyncData<Map<String, BuildState>> ? watch.value[p.id] : null;
+                    final building = live?.building ?? false;
                     final (label, icon) = switch (p.status) {
                       'ready' => (l.statusReady, Icons.folder_outlined),
                       'creating' => (l.statusCreating, Icons.hourglass_top),
                       _ => (l.statusError, Icons.error_outline),
                     };
                     return ListTile(
-                      leading: Icon(icon),
-                      title: Text(p.displayName),
-                      subtitle: Text(label),
-                      enabled: p.isReady,
-                      onTap: p.isReady ? () => context.go('/projects/${p.id}/create') : null,
+                      leading: building
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: Padding(
+                                padding: EdgeInsets.all(2),
+                                child: CircularProgressIndicator(strokeWidth: 2.5),
+                              ),
+                            )
+                          : Icon(icon),
+                      title: Row(
+                        children: [
+                          Flexible(child: Text(p.displayName, overflow: TextOverflow.ellipsis)),
+                          // A build waiting on a login or a key cannot move
+                          // until the user comes back, and would otherwise
+                          // look exactly like one that is working.
+                          if (live?.waiting ?? false) ...[
+                            const SizedBox(width: 8),
+                            Tooltip(
+                              message: live!.needsYou.join(', '),
+                              child: const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 18),
+                            ),
+                          ],
+                        ],
+                      ),
+                      subtitle: Text(building ? l.statusBuilding(live!.progress) : label),
+                      // A project being written opens like any other: the
+                      // build screen shows how far it has got.
+                      enabled: p.isReady || building,
+                      onTap: (p.isReady || building) ? () => context.go('/projects/${p.id}/create') : null,
                       trailing: IconButton(
                         tooltip: l.delete,
                         icon: const Icon(Icons.delete_outline),
-                        onPressed: p.status == 'creating' ? null : () => _delete(p),
+                        // Deleting a project mid-build would pull the files
+                        // out from under the engine writing them.
+                        onPressed: (p.status == 'creating' || building) ? null : () => _delete(p),
                       ),
                     );
                   },

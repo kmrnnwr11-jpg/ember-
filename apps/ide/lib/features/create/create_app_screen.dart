@@ -31,6 +31,7 @@ import 'ads_card.dart';
 import '../review/design_council.dart';
 import '../review/panel_health.dart';
 import '../review/review_card.dart';
+import '../review/review_state.dart';
 import '../review/reviewers.dart';
 import 'needs_you_card.dart';
 import 'app_builder.dart';
@@ -552,7 +553,10 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                         ),
                       // Several models read the finished app and say what is
                       // fake, missing or broken; one tap sends a fix back.
-                      if (b.phase == BuildPhase.ready && !_ios)
+                      // Visible while a fix is running too: it is the list the
+                      // user is working through, and taking it away mid-fix is
+                      // what made every finding vanish on the first tap.
+                      if ((b.phase == BuildPhase.ready || ref.watch(reviewStatesProvider.notifier).of(project.id).findings.isNotEmpty) && !_ios)
                         ReviewCard(
                           projectId: project.id,
                           onFix: (ask) => b.improve(ask, display: 'Correzione dai revisori'),

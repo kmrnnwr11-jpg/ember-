@@ -5,6 +5,7 @@ import 'package:ide_core/ide_core.dart' show RunnerException;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/session.dart';
+import 'review_state.dart';
 import 'reviewers.dart';
 
 /// Where the user turns on the models that check a finished app, and reads what
@@ -16,7 +17,9 @@ class ReviewCard extends ConsumerStatefulWidget {
   final String projectId;
 
   /// Sends one finding back to the engine that wrote the app, to be put right.
-  final void Function(String ask)? onFix;
+  /// Returns when the fix has been applied, so the card can mark it done
+  /// instead of guessing.
+  final Future<void> Function(String ask)? onFix;
 
   @override
   ConsumerState<ReviewCard> createState() => _ReviewCardState();
@@ -26,8 +29,10 @@ class _ReviewCardState extends ConsumerState<ReviewCard> {
   bool _busy = false;
   bool _setupOpen = false;
   String? _error;
-  List<Map<String, dynamic>> _findings = const [];
-  List<Map<String, dynamic>> _reports = const [];
+
+  ReviewState get _state => ref.watch(reviewStatesProvider.notifier).of(widget.projectId);
+  List<Map<String, dynamic>> get _findings => _state.findings;
+  List<Map<String, dynamic>> get _reports => _state.reports;
 
   /// Where each service hands out its key, so the user is one tap away from it.
   static const _signup = {
@@ -46,9 +51,8 @@ class _ReviewCardState extends ConsumerState<ReviewCard> {
     setState(() {
       _busy = true;
       _error = null;
-      _findings = const [];
-      _reports = const [];
     });
+    ref.read(reviewStatesProvider.notifier).found(widget.projectId, const [], const []);
     try {
       final api = await ref.read(runnerApiProvider.future);
       final res = await api.reviewApp(widget.projectId, [
@@ -56,10 +60,11 @@ class _ReviewCardState extends ConsumerState<ReviewCard> {
           {'id': r.id, 'label': r.label, 'baseUrl': r.baseUrl, 'apiKey': s.keys[r.id]!, 'model': r.model},
       ]);
       if (!mounted) return;
-      setState(() {
-        _findings = [for (final f in (res['findings'] as List? ?? const [])) (f as Map).cast<String, dynamic>()];
-        _reports = [for (final r in (res['reports'] as List? ?? const [])) (r as Map).cast<String, dynamic>()];
-      });
+      ref.read(reviewStatesProvider.notifier).found(
+            widget.projectId,
+            [for (final f in (res['findings'] as List? ?? const [])) (f as Map).cast<String, dynamic>()],
+            [for (final r in (res['reports'] as List? ?? const [])) (r as Map).cast<String, dynamic>()],
+          );
     } on RunnerException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (e) {
@@ -213,8 +218,24 @@ class _ReviewCardState extends ConsumerState<ReviewCard> {
     );
   }
 
+  /// Sends one finding to be fixed and keeps it on the list while that runs.
+  Future<void> _fix(String title, String ask) async {
+    final notifier = ref.read(reviewStatesProvider.notifier);
+    notifier.startFixing(widget.projectId, title);
+    try {
+      await widget.onFix!(ask);
+      notifier.doneFixing(widget.projectId, title);
+    } catch (e) {
+      notifier.failedFixing(widget.projectId, title);
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
   Widget _findingTile(Map<String, dynamic> f, ThemeData theme) {
     final ask = '${f['ask'] ?? ''}'.trim();
+    final title = '${f['title']}';
+    final done = _state.fixed.contains(title);
+    final busy = _state.fixing.contains(title);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Container(
@@ -233,11 +254,33 @@ class _ReviewCardState extends ConsumerState<ReviewCard> {
               const SizedBox(height: 6),
               Align(
                 alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: () => widget.onFix!(ask),
-                  icon: const Icon(Icons.auto_fix_high, size: 18),
-                  label: const Text('Correggi'),
-                ),
+                // A finding stays on the list after it has been sent to be
+                // fixed, marked as done. It disappears only when a new review
+                // no longer reports it: the engine saying it fixed something
+                // is not the same as it being fixed.
+                child: done
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.check_circle, size: 18, color: Colors.green),
+                          const SizedBox(width: 6),
+                          Text('Corretto — da ricontrollare', style: theme.textTheme.bodySmall),
+                        ],
+                      )
+                    : busy
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+                              const SizedBox(width: 8),
+                              Text('Sto correggendo…', style: theme.textTheme.bodySmall),
+                            ],
+                          )
+                        : TextButton.icon(
+                            onPressed: () => _fix(title, ask),
+                            icon: const Icon(Icons.auto_fix_high, size: 18),
+                            label: const Text('Correggi'),
+                          ),
               ),
             ],
           ],

@@ -300,15 +300,32 @@ String? referenceSiteUrl(String prompt) {
   return url;
 }
 
+/// Whether nothing but spaces and bullets precede [at] on its own line.
+///
+/// A line that opens with the word is a heading — "Come deve muoversi:" asks
+/// *how* it moves — not a comparison with another app. Read as one, it sent
+/// Ember searching Google Play for "deve muoversi", which returns removal
+/// firms. Someone comparing their app to another always writes something
+/// before the word.
+bool _opensLine(String text, int at) {
+  final lineStart = text.lastIndexOf('\n', at) + 1;
+  return text.substring(lineStart, at).trim().replaceAll(RegExp(r'^[-•*\d.)\s]+'), '').isEmpty;
+}
+
 /// Detects "an app like X" in a request and returns X, or a Play Store id from a link.
 String? referenceQuery(String prompt) {
   final link = RegExp(r'play\.google\.com/store/apps/details\?id=([A-Za-z][\w.]+)').firstMatch(prompt);
   if (link != null) return 'id:${link.group(1)}';
+  // The keyword has to sit inside a sentence, not open a line. "Come deve
+  // muoversi:" is a heading meaning "how", and taking it for "like <app>" sent
+  // Ember searching Google Play for "deve muoversi" — which returns moving
+  // companies. Someone comparing their app to another always writes something
+  // before the word.
   final m = RegExp(
     r"(?:\b(?:come|simile\s+a|uguale\s+a|identica\s+a|clone\s+di|copia\s+di|stile|like|similar\s+to|same\s+as|clone\s+of|como|parecida\s+a|comme|semblable\s+à|مثل)\s+)(?:(?:l'|la\s+|il\s+|lo\s+|the\s+|an?\s+|la\s+app\s+)?(?:app(?:licazione)?\s+)?)([\p{L}\p{N}][\p{L}\p{N} &'.+-]{1,40})",
     caseSensitive: false,
     unicode: true,
-  ).firstMatch(prompt);
+  ).allMatches(prompt).where((x) => !_opensLine(prompt, x.start)).firstOrNull;
   if (m == null) return null;
   // Stop at the words that start the rest of the sentence.
   final stop = RegExp(

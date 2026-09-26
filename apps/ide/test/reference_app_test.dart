@@ -3,6 +3,7 @@ import 'package:ide/features/create/reference_app.dart';
 import 'package:ide/features/mockups/mockup_controller.dart';
 
 void main() {
+  headingTests();
   test('finds the app a request is modelled on', () {
     expect(referenceQuery('creami app come bonus italia che è un app su playstore'), 'bonus italia');
     expect(referenceQuery('fammi una chat simile a Badoo con videochiamate'), 'Badoo');
@@ -109,5 +110,33 @@ All the games are designed with interactive graphics.''',
     expect(both.brief(), contains('in_app_purchase'));
     expect(both.brief(), contains('\$0.99 - \$49.99'));
     expect(both.brief(), contains('EMBER_PRODUCTS'));
+  });
+}
+
+void headingTests() {
+  test('a heading that starts with "Come" is not a reference to another app', () {
+    // This is the prompt that sent Ember looking for moving companies.
+    const prompt = '''
+Crea "Capy" — un capibara virtuale.
+
+Come deve muoversi, sempre, anche da fermo:
+- RESPIRO: il corpo si gonfia e sgonfia del 3%.
+''';
+    expect(referenceQuery(prompt), isNull);
+  });
+
+  test('a comparison written inside a sentence still works', () {
+    expect(referenceQuery('creami app come bonus italia che e un app su playstore'), 'bonus italia');
+    expect(referenceQuery('un gioco per bambini, come Duolingo ma per la matematica'), 'Duolingo');
+    expect(referenceQuery('build an app like Duolingo for kids'), 'Duolingo');
+  });
+
+  test('a heading in capitals is not a reference either', () {
+    expect(referenceQuery('COME FUNZIONA IL GIOCO\nil bambino tocca lo schermo'), isNull);
+  });
+
+  test('a Play Store link still wins over everything', () {
+    const prompt = 'Come deve muoversi il personaggio\nvedi https://play.google.com/store/apps/details?id=com.outfit7.mytalkingtom';
+    expect(referenceQuery(prompt), 'id:com.outfit7.mytalkingtom');
   });
 }

@@ -541,10 +541,22 @@ German (de), Hindi (hi), Arabic (ar), Indonesian (id), Russian (ru).
     }
   }
 
-  Future<void> improve(String change, {String? display}) {
+  /// True while the review's own fixes are being applied, so those do not
+  /// start another review — the round loop in [_autoReview] already governs
+  /// how many passes there are, and without this the two call each other
+  /// forever.
+  bool _fixingFromReview = false;
+
+  Future<void> improve(String change, {String? display, bool fromReview = false}) async {
     final e = engine;
-    if (e == null) return Future.value();
-    return _run(prompt: prompt, engine: e, model: model, change: change, display: display);
+    if (e == null) return;
+    final was = _fixingFromReview;
+    if (fromReview) _fixingFromReview = true;
+    try {
+      await _run(prompt: prompt, engine: e, model: model, change: change, display: display);
+    } finally {
+      _fixingFromReview = was;
+    }
   }
 
   /// True once something is on disk, so a failed build can be picked up
@@ -656,15 +668,24 @@ German (de), Hindi (hi), Arabic (ar), Indonesian (id), Russian (ru).
             'Add one screen for each, reachable from the home screen, with real content and at least two things to do in it, '
             'drawn in code like the screens that already exist. Keep everything already built.',
             display: strings.bMissingTopics(missing.join(', ')),
+            fromReview: true,
           );
         }
       }
       // Then other models read what was built, each on its own, and whatever
       // they found comes straight back here to be put right — the user watches,
       // never has to ask.
-      if (change == null && !_reviewed) {
+      //
+      // This used to run only on a brand new app, so every later change was
+      // written by one model and read by nobody. That is where the bad rounds
+      // came from: a change would land half-done and the owner found out by
+      // trying it on the phone. A change the owner asked for is reviewed the
+      // same way a new app is; only the review's own fixes are exempt, or the
+      // two would call each other forever.
+      if (!_fixingFromReview && !_reviewed) {
         _reviewed = true;
         await _autoReview();
+        _reviewed = false;
       }
     } on _Cancelled {
       _status = 'cancelled';

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/settings_store.dart';
 
 import '../../core/session.dart';
+import '../review/reviewers.dart';
 
 /// User AI configuration. Keys live in secure storage; the rest in prefs.
 @immutable
@@ -159,8 +160,26 @@ final aiProviderFactory = Provider<Future<AiProvider> Function(AiModel model)>((
   return (model) async {
     final settings = await ref.read(aiSettingsProvider.future);
     final session = ref.read(sessionProvider).value;
-    final key = settings.keys[model.provider] ?? '';
-    if (!settings.isConfigured(model.provider)) {
+    var key = settings.keys[model.provider] ?? '';
+    // A model with its own address takes the key pasted for the matching panel
+    // voice, so the same key serves both and there is only one place to put it.
+    if (key.isEmpty && model.baseUrl?.isNotEmpty == true) {
+      final panel = await ref.read(reviewerSettingsProvider.future);
+      key = panel.keys.entries
+              .firstWhere((e) => panel.reviewers.any((r) => r.id == e.key && r.baseUrl == model.baseUrl),
+                  orElse: () => const MapEntry('', ''))
+              .value;
+      if (key.isNotEmpty) {
+        final session2 = ref.read(sessionProvider).value;
+        return createProvider(
+          model.provider,
+          settings.effectiveProxy && session2 != null
+              ? AiEndpoint.proxy(apiKey: key, runnerUrl: session2.runnerUrl, runnerToken: await session2.token(), baseUrl: model.baseUrl)
+              : AiEndpoint.direct(apiKey: key, baseUrl: model.baseUrl),
+        );
+      }
+    }
+    if (key.isEmpty && !settings.isConfigured(model.provider)) {
       // No personal key: Gemini runs on the Runner's key, so users never need one.
       if (model.provider == AiProviderId.gemini && session != null && serverGeminiAvailable(await _health(ref))) {
         return createProvider(
@@ -170,7 +189,12 @@ final aiProviderFactory = Provider<Future<AiProvider> Function(AiModel model)>((
       }
       throw AiException('No API key configured for ${model.provider.vendor}');
     }
-    final baseUrl = model.provider == AiProviderId.openaiCompatible ? settings.compatibleBaseUrl : null;
+    // The model's own address wins: DeepSeek and Qwen are both
+    // OpenAI-compatible but live at different servers, and the single shared
+    // setting can only point at one of them.
+    final baseUrl = model.baseUrl?.isNotEmpty == true
+        ? model.baseUrl
+        : (model.provider == AiProviderId.openaiCompatible ? settings.compatibleBaseUrl : null);
     final endpoint = settings.effectiveProxy && session != null
         ? AiEndpoint.proxy(apiKey: key, runnerUrl: session.runnerUrl, runnerToken: await session.token(), baseUrl: baseUrl)
         : AiEndpoint.direct(apiKey: key, baseUrl: baseUrl);

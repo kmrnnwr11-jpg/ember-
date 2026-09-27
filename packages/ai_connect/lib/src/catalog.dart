@@ -15,9 +15,16 @@ class AiModel {
     this.contextTokens,
     this.tools = true,
     this.tags = const [],
+    this.baseUrl,
   });
 
   final AiProviderId provider;
+
+  /// Where this model lives, when the provider alone does not say. DeepSeek and
+  /// Qwen both speak OpenAI's dialect but at their own addresses, so the model
+  /// carries the address instead of the single shared setting — otherwise
+  /// picking one would silently point the other at the wrong server.
+  final String? baseUrl;
   final String id;
   final String label;
 
@@ -76,6 +83,25 @@ const builtInCatalog = <AiModel>[
   AiModel(provider: AiProviderId.openai, id: 'gpt-5-mini', label: 'GPT-5 mini', inputPerMTok: 0.25, outputPerMTok: 2, contextTokens: 400000, tags: ['fast', 'autocomplete']),
   AiModel(provider: AiProviderId.openai, id: 'text-embedding-3-small', label: 'text-embedding-3-small', inputPerMTok: 0.02, outputPerMTok: 0, tools: false, tags: ['embeddings']),
   AiModel(provider: AiProviderId.xai, id: 'grok-4', label: 'Grok 4', inputPerMTok: 3, outputPerMTok: 15, contextTokens: 256000),
+  // Two OpenAI-compatible providers worth building with on their own: DeepSeek
+  // is cheap and strong on code, Qwen's coder model is the best of the
+  // open-weight ones. Each states its own address.
+  AiModel(
+    provider: AiProviderId.openaiCompatible,
+    id: 'deepseek-chat',
+    label: 'DeepSeek',
+    baseUrl: 'https://api.deepseek.com',
+    inputPerMTok: 0.28,
+    outputPerMTok: 0.42,
+    contextTokens: 128000,
+  ),
+  AiModel(
+    provider: AiProviderId.openaiCompatible,
+    id: 'qwen/qwen3-coder',
+    label: 'Qwen Coder',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    contextTokens: 262144,
+  ),
   AiModel(provider: AiProviderId.xai, id: 'grok-3-mini', label: 'Grok 3 mini', inputPerMTok: 0.30, outputPerMTok: 0.50, contextTokens: 131072, tags: ['fast']),
   AiModel(provider: AiProviderId.gemini, id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', contextTokens: 1000000, tags: ['fast']),
   AiModel(provider: AiProviderId.gemini, id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash-Lite', contextTokens: 1000000, tags: ['fast', 'cheap']),

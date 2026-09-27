@@ -14,12 +14,21 @@ enum BuildEngine {
   openai(AiProviderId.openai, 'gpt-5', 64000),
   xai(AiProviderId.xai, 'grok-4', 32000),
   claude(AiProviderId.anthropic, 'claude-opus-5', 64000),
+  // Both speak OpenAI's dialect but live at their own addresses, which the
+  // catalogue entry carries; their keys come from the panel, where they are
+  // already pasted, so there is nothing new to fetch.
+  deepseek(AiProviderId.openaiCompatible, 'deepseek-chat', 64000, reviewerId: 'deepseek'),
+  qwen(AiProviderId.openaiCompatible, 'qwen/qwen3-coder', 64000, reviewerId: 'qwen'),
   claudeCode(null, null, 0, cli: 'claude-code'),
   // Subscriptions logged in on the Runner machine: ChatGPT plan (Codex CLI), Google account (Gemini CLI).
   codex(null, null, 0, cli: 'codex'),
   geminiCli(null, null, 0, cli: 'gemini-cli');
 
-  const BuildEngine(this.provider, this.defaultModel, this.maxTokens, {this.cli});
+  const BuildEngine(this.provider, this.defaultModel, this.maxTokens, {this.cli, this.reviewerId});
+
+  /// The panel voice this engine borrows its key from, when it has no slot of
+  /// its own among the providers.
+  final String? reviewerId;
   final AiProviderId? provider;
   final String? defaultModel;
   final int maxTokens;

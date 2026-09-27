@@ -173,7 +173,9 @@ class EngineOption {
   final String? reason;
 }
 
-List<EngineOption> engineOptions(AppLocalizations l, AiSettings s, bool claudeCodeAvailable, {bool serverGemini = false, Map<String, dynamic>? health}) => [
+List<EngineOption> engineOptions(AppLocalizations l, AiSettings s, bool claudeCodeAvailable,
+        {bool serverGemini = false, Map<String, dynamic>? health, Set<String> panelKeys = const {}}) =>
+    [
   EngineOption(BuildEngine.gemini, 'Gemini', l.badgeFreeTier, Icons.auto_awesome,
       available: serverGemini || s.isConfigured(AiProviderId.gemini), reason: l.needsKey('Gemini')),
   EngineOption(BuildEngine.claudeCode, 'Claude Code', l.badgeSubscription, Icons.terminal,
@@ -188,6 +190,12 @@ List<EngineOption> engineOptions(AppLocalizations l, AiSettings s, bool claudeCo
       available: s.isConfigured(AiProviderId.openai), reason: l.needsKey('ChatGPT')),
   EngineOption(BuildEngine.xai, 'Grok', l.badgePaid, Icons.bolt,
       available: s.isConfigured(AiProviderId.xai), reason: l.needsKey('Grok')),
+  // These two take the key already pasted for the matching panel voice, so
+  // they light up the moment that voice is configured.
+  EngineOption(BuildEngine.deepseek, 'DeepSeek', l.badgePaid, Icons.travel_explore,
+      available: panelKeys.contains('deepseek'), reason: l.needsKey('DeepSeek')),
+  EngineOption(BuildEngine.qwen, 'Qwen Coder', l.badgeFreeTier, Icons.hub_outlined,
+      available: panelKeys.contains('qwen'), reason: l.needsKey('Qwen')),
 ];
 
 /// Prompt box + engine chips + model menu, shared by home and project screens.
@@ -229,7 +237,14 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
     final health = ref.watch(runnerHealthProvider).value;
     final claudeCode = (health?['engines'] as Map?)?['claudeCode'] == true;
     final catalog = ref.watch(aiCatalogProvider).value ?? builtInCatalog;
-    final options = engineOptions(l, settings, claudeCode, serverGemini: serverGeminiAvailable(health), health: health);
+    final panel = ref.watch(reviewerSettingsProvider).value;
+    final options = engineOptions(l, settings, claudeCode,
+        serverGemini: serverGeminiAvailable(health),
+        health: health,
+        panelKeys: {
+          for (final e in (panel?.keys.entries ?? const <MapEntry<String, String>>[]))
+            if (e.value.trim().isNotEmpty) e.key,
+        });
 
     final engine = _engine ?? options.firstWhere((o) => o.available, orElse: () => options.first).engine;
     final option = options.firstWhere((o) => o.engine == engine);

@@ -27,10 +27,16 @@ describe('does Publish need a new iPhone build?', () => {
     expect((await needsFreshIpa(await project(3, 0))).build).toBe(true);
   });
 
-  it('yes when Apple already has this build number', async () => {
+  it('no build and no upload when Apple already has this very file', async () => {
     const root = await project(12, 12);
     await ipa(root, new Date(Date.now() + 60_000));
-    expect(await needsFreshIpa(root)).toMatchObject({ build: true, reason: expect.stringMatching(/già la build 12/) });
+    expect(await needsFreshIpa(root)).toMatchObject({ build: false, upload: false, reason: expect.stringMatching(/già questa build \(12\)/) });
+  });
+
+  it('yes when Apple has this build number but the code changed since', async () => {
+    const root = await project(12, 12);
+    await ipa(root, new Date(Date.now() - 3_600_000));
+    expect(await needsFreshIpa(root)).toMatchObject({ build: true, upload: true, reason: expect.stringMatching(/già la build 12/) });
   });
 
   it('yes when the code changed after the file was made', async () => {

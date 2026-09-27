@@ -723,6 +723,7 @@ export async function buildApp(
           } else {
             await tracker.progress(`File iPhone già pronto: ${fresh.reason}`);
           }
+          if (!fresh.upload) body.uploadBuild = false;
         }
         await tracker.phase('publishing', body.uploadBuild ? 'Carico su Apple, scrivo la scheda e gli screenshot' : 'Scrivo la scheda e gli screenshot');
         const input = await preparePublish(project, body, email, ownerId);

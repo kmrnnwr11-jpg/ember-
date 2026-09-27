@@ -116,12 +116,16 @@ async function newestSource(root: string): Promise<number> {
  * Whether Publish must build the iPhone app first: there is no .ipa yet, Apple
  * already has this build number, or the code changed after the .ipa was made.
  */
-export async function needsFreshIpa(root: string): Promise<{ build: boolean; reason: string }> {
+export async function needsFreshIpa(root: string): Promise<{ build: boolean; upload: boolean; reason: string }> {
   const ipa = await findIpa(root);
-  if (!ipa) return { build: true, reason: 'nessun file iPhone ancora' };
+  if (!ipa) return { build: true, upload: true, reason: 'nessun file iPhone ancora' };
   const [current, onApple] = await Promise.all([projectBuildNumber(root), lastAppStoreBuildNumber(root)]);
-  if (current <= onApple) return { build: true, reason: `Apple ha già la build ${onApple}` };
   const made = (await stat(ipa).catch(() => null))?.mtimeMs ?? 0;
-  if ((await newestSource(root)) > made) return { build: true, reason: 'il codice è cambiato dopo l’ultima build' };
-  return { build: false, reason: `uso la build ${current} già pronta` };
+  const changed = (await newestSource(root)) > made;
+  // The .ipa Apple already has, with no change since: nothing to build or
+  // send again, the publish attaches the build that is on Apple.
+  if (current === onApple && !changed) return { build: false, upload: false, reason: `Apple ha già questa build (${current})` };
+  if (current <= onApple) return { build: true, upload: true, reason: `Apple ha già la build ${onApple}` };
+  if (changed) return { build: true, upload: true, reason: 'il codice è cambiato dopo l’ultima build' };
+  return { build: false, upload: true, reason: `uso la build ${current} già pronta` };
 }

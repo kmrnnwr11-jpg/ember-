@@ -57,13 +57,15 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
 
   bool _busy = false; // publishing
   bool _verifying = false;
-  bool _uploadBuild = false;
-  bool _submit = false;
+  // A new app publishes everything with one press (build, screenshots, free,
+  // review); the choices made later are kept per app.
+  bool _uploadBuild = true;
+  bool _submit = true;
 
   // iOS submission chores Ember now fills automatically.
   String? _category; // App Store category id, e.g. "UTILITIES"
-  bool _free = false;
-  bool _screenshots = false;
+  bool _free = true;
+  bool _screenshots = true;
   final _reviewEmail = TextEditingController();
   final _reviewPhone = TextEditingController();
   final _marketingUrl = TextEditingController(); // developer website, where app-ads.txt lives
@@ -123,11 +125,11 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
     try {
       final o = jsonDecode(raw) as Map<String, dynamic>;
       setState(() {
-        _uploadBuild = o['uploadBuild'] == true;
-        _submit = o['submit'] == true;
+        _uploadBuild = o['uploadBuild'] != false;
+        _submit = o['submit'] != false;
         _category = o['category'] as String?;
-        _free = o['free'] == true;
-        _screenshots = o['screenshots'] == true;
+        _free = o['free'] != false;
+        _screenshots = o['screenshots'] != false;
       });
     } catch (_) {}
   }

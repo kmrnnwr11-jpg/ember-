@@ -249,6 +249,14 @@ export async function buildApp(
           : 'Apri l’app in Ember, scheda iPhone: da lì Ember prepara i dati per l’estensione.',
       });
     }
+    // A provisional Bundle ID can never go on the App Store: the plan was made
+    // before the app got its real one, so it is stale.
+    if (`${plan.bundleId ?? ''}`.startsWith('dev.fluttercursor.app.')) {
+      return reply.status(409).send({
+        code: 'stale_plan',
+        message: 'Questi dati sono vecchi (Bundle ID provvisorio): apri l’app in Ember, scheda iPhone, e riprova.',
+      });
+    }
     return plan;
   });
 

@@ -225,7 +225,18 @@ export async function androidAppInfo(cfg: Config, projectId: string, projectRoot
   const release = await keystoreSha1(key.keystorePath, key.alias, key.storePassword, keytool);
   const home = process.env.USERPROFILE ?? process.env.HOME ?? '';
   const debug = await keystoreSha1(path.join(home, '.android', 'debug.keystore'), 'androiddebugkey', 'android', keytool);
-  return { applicationId, sha1Release: release, sha1Debug: debug };
+  // The name the app calls itself. Without it the store listing was written
+  // from the package name, so an app whose folder was called "stampafacile"
+  // was published as StampaFacile although it is named PrintGo.
+  const manifest = path.join(projectRoot, 'android', 'app', 'src', 'main', 'AndroidManifest.xml');
+  const label = existsSync(manifest)
+    ? /android:label\s*=\s*"([^"@]{2,60})"/.exec(await readFile(manifest, 'utf8'))?.[1]?.trim()
+    : undefined;
+  const cfgFile = path.join(projectRoot, 'lib', 'config', 'app_config.dart');
+  const fromConfig = existsSync(cfgFile)
+    ? /static const String appName\s*=\s*'([^']{2,60})'/.exec(await readFile(cfgFile, 'utf8'))?.[1]?.trim()
+    : undefined;
+  return { applicationId, sha1Release: release, sha1Debug: debug, appLabel: fromConfig || label || null };
 }
 
 /** Prepares a project for a signed release build; returns env vars for Gradle. */

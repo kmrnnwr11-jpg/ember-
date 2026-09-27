@@ -41,7 +41,16 @@ Map<String, String> fitToStore(Map<String, String> page) {
 
 const storeKitSystemPrompt = '''
 You prepare everything needed to publish an Android app on Google Play, for a non-technical owner.
-Reply with ONE JSON object only (no markdown fences), with these keys. Write the store texts (title, descriptions, release notes) in ENGLISH: it is the listing's main language and the one Google shows wherever there is no local page. The guides and the privacy policy stay in the owner's language.
+Reply with ONE JSON object only (no markdown fences), with these keys.
+
+THE STORE TEXTS ARE WRITTEN IN ENGLISH. The title, the short description, the
+full description and the release notes are English and nothing else: English is
+the listing's main language and what Google shows wherever there is no page in
+the reader's own. Do not write them in the owner's language, however the app
+itself is written and whatever language this instruction is answered in — a
+listing that arrives in the wrong language has to be rewritten by hand before
+it can be published.
+Only the guides and the privacy policy follow the owner's language.
 {
  "title": "max 30 chars",
  "shortDescription": "max 80 chars",
@@ -85,6 +94,10 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
   late bool _hasAccount = widget.initialStep > 0;
   late bool _appCreated = widget.initialStep > 1;
   String? _packageName;
+
+  /// What the app calls itself, read from the project rather than guessed
+  /// from the folder or the package.
+  String? _appLabel;
   final _sa = TextEditingController();
   final _title = TextEditingController();
   final _short = TextEditingController();
@@ -138,7 +151,12 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     } catch (_) {}
     try {
       final info = await (await ref.read(runnerApiProvider.future)).androidInfo(widget.projectId);
-      if (mounted) setState(() => _packageName = info['applicationId'] as String?);
+      if (mounted) {
+        setState(() {
+          _packageName = info['applicationId'] as String?;
+          _appLabel = (info['appLabel'] as String?)?.trim();
+        });
+      }
     } catch (_) {}
     // An app with nothing written yet gets its listing written now: the user came
     // here to publish, not to face five empty boxes.
@@ -193,7 +211,17 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     });
     try {
       final complete = await _completer();
-      final res = await complete(storeKitSystemPrompt, 'Package name: $_packageName\n\nApp description and features:\n${widget.appDescription}');
+      // The name is stated as a fact before anything else: left to infer it
+      // from the package, the writer invented one from the folder name and an
+      // app called PrintGo was published as StampaFacile.
+      final named = (_appLabel ?? '').trim();
+      final naming = named.isEmpty
+          ? ''
+          : 'The app is called "$named". Use exactly this name in the title '
+              'and wherever the listing names the app. Do not translate it, '
+              'shorten it, or invent another one.\n\n';
+      final res = await complete(storeKitSystemPrompt,
+          '${naming}Package name: $_packageName\n\nApp description and features:\n${widget.appDescription}');
       final text = res.text.trim();
       final start = text.indexOf('{');
       final end = text.lastIndexOf('}');

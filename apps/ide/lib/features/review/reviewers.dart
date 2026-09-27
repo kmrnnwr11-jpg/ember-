@@ -53,6 +53,16 @@ const reviewerPresets = <Reviewer>[
     baseUrl: 'https://openrouter.ai/api/v1',
     model: 'deepseek/deepseek-chat-v3.1:free',
   ),
+  // Alibaba's Qwen, whose coder model is the strongest of the open-weight ones
+  // on code. Reached through OpenRouter so it takes the key that is already
+  // pasted there; point baseUrl at https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+  // and paste a DashScope key instead to talk to Alibaba directly.
+  Reviewer(
+    id: 'qwen',
+    label: 'Qwen',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: 'qwen/qwen3-coder:free',
+  ),
 ];
 
 /// The reviewers the user configured, with their keys.

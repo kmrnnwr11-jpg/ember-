@@ -103,6 +103,31 @@ export interface AiRouteOptions {
   authenticate: (req: FastifyRequest) => Promise<void>;
   upstreams?: Partial<typeof DEFAULT_UPSTREAMS>;
   fetchImpl?: typeof fetch;
+  /**
+   * The machine's Claude login, used by the free assistant when the Runner has
+   * no Gemini key: nobody has to create one for "Ask Ember" to answer.
+   */
+  claude?: {
+    isAvailable(): Promise<boolean>;
+    complete(opts: { prompt: string; system: string; timeoutMs?: number }): Promise<{ text: string }>;
+  };
+}
+
+type GeminiPart = { text?: string; inlineData?: unknown };
+type GeminiRequest = { contents?: Array<{ role?: string; parts?: GeminiPart[] }>; systemInstruction?: { parts?: GeminiPart[] } };
+
+/** A Gemini-style conversation as one plain prompt (images are named, not sent). */
+export function geminiToPrompt(body: GeminiRequest): { system: string; prompt: string } {
+  const text = (parts?: GeminiPart[]) =>
+    (parts ?? []).map((p) => (p.text ?? (p.inlineData ? '[immagine allegata: non visibile in questa modalità]' : ''))).join('\n').trim();
+  const system = text(body.systemInstruction?.parts) || 'You are Ember, a helpful assistant for building and publishing apps. Answer in the user\'s language.';
+  const turns = (body.contents ?? []).map((c) => `${c.role === 'model' ? 'Assistant' : 'User'}: ${text(c.parts)}`).filter((t) => !/: $/.test(t));
+  return { system, prompt: turns.join('\n\n') };
+}
+
+/** One answer in Gemini's streaming format (SSE), so the app reads it as usual. */
+export function geminiSse(text: string): string {
+  return `data: ${JSON.stringify({ candidates: [{ content: { role: 'model', parts: [{ text }] }, finishReason: 'STOP' }] })}\n\n`;
 }
 
 let cachedCatalog: { at: number; body: unknown } | null = null;
@@ -144,7 +169,7 @@ export async function registerAiRoutes(app: FastifyInstance, opts: AiRouteOption
     r.get('/v1/ai/models', async () => loadCatalog(cfg, fetchImpl));
 
     r.get('/v1/ai/assistant/status', async (req) => ({
-      enabled: cfg.GEMINI_API_KEY !== '',
+      enabled: cfg.GEMINI_API_KEY !== '' || !!(await opts.claude?.isAvailable().catch(() => false)),
       model: cfg.ASSISTANT_MODEL,
       dailyLimit: cfg.ASSISTANT_DAILY_LIMIT,
       used: assistantUsage.get(assistantKey(req.user.id)) ?? 0,
@@ -208,6 +233,23 @@ export async function registerAiRoutes(app: FastifyInstance, opts: AiRouteOption
     // Gemini streaming with the server's key, for the free in-app assistant only.
     r.post('/v1/ai/assistant/*', async (req, reply) => {
       const { '*': rest } = req.params as { '*': string };
+      if (!cfg.GEMINI_API_KEY && opts.claude && (await opts.claude.isAvailable().catch(() => false))) {
+        const k = assistantKey(req.user.id);
+        const used = assistantUsage.get(k) ?? 0;
+        if (used >= cfg.ASSISTANT_DAILY_LIMIT) {
+          return reply.status(429).send({ code: 'rate_limited', message: `Limite giornaliero dell'assistente raggiunto (${cfg.ASSISTANT_DAILY_LIMIT} messaggi). Riprova domani.` });
+        }
+        assistantUsage.set(k, used + 1);
+        try {
+          const { system, prompt } = geminiToPrompt((req.body ?? {}) as GeminiRequest);
+          const { text } = await opts.claude.complete({ system, prompt, timeoutMs: 180_000 });
+          reply.header('content-type', 'text/event-stream');
+          reply.header('cache-control', 'no-cache');
+          return reply.send(geminiSse(text));
+        } catch (e) {
+          return reply.status(502).send({ code: 'upstream_unreachable', message: `Claude non ha risposto: ${(e as Error).message}` });
+        }
+      }
       const allowed = `v1beta/models/${cfg.ASSISTANT_MODEL}:streamGenerateContent`;
       if (cfg.GEMINI_API_KEY && rest !== allowed) return reply.status(403).send({ code: 'forbidden', message: `assistant only allows ${allowed}` });
       return serverGemini(req, reply, {

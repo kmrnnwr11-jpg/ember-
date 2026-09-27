@@ -215,3 +215,24 @@ describe('server Gemini fallback', () => {
     await rm(tmp, { recursive: true, force: true });
   });
 });
+
+describe('free assistant without a Gemini key', () => {
+  it('turns the Gemini conversation into a prompt and answers in Gemini SSE', async () => {
+    const { geminiToPrompt, geminiSse } = await import('./ai.js');
+    const { system, prompt } = geminiToPrompt({
+      systemInstruction: { parts: [{ text: 'You are Ember.' }] },
+      contents: [
+        { role: 'user', parts: [{ text: 'Ciao' }] },
+        { role: 'model', parts: [{ text: 'Ciao! Come posso aiutarti?' }] },
+        { role: 'user', parts: [{ text: 'Pubblica su iPhone' }, { inlineData: { mimeType: 'image/png', data: 'x' } }] },
+      ],
+    });
+    expect(system).toBe('You are Ember.');
+    expect(prompt).toContain('User: Ciao');
+    expect(prompt).toContain('Assistant: Ciao! Come posso aiutarti?');
+    expect(prompt).toContain('immagine allegata');
+    const sse = geminiSse('Fatto.');
+    expect(sse.startsWith('data: ')).toBe(true);
+    expect(JSON.parse(sse.slice(6)).candidates[0].content.parts[0].text).toBe('Fatto.');
+  });
+});

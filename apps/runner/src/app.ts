@@ -371,7 +371,7 @@ export async function buildApp(
     store: cfg.supabaseEnabled ? 'supabase' : 'json',
     devAuth: cfg.DEV_AUTH,
     version: '0.2.0',
-    engines: { claudeCode: await claudeCode.isAvailable(), ...(driver.kind === 'local' ? await cliLogins().then((l) => ({ codex: l.codex, geminiCli: l['gemini-cli'] })) : { codex: false, geminiCli: false }), assistant: cfg.GEMINI_API_KEY !== '', serverGemini: cfg.GEMINI_API_KEY !== '' },
+    engines: { claudeCode: await claudeCode.isAvailable(), ...(driver.kind === 'local' ? await cliLogins().then((l) => ({ codex: l.codex, geminiCli: l['gemini-cli'] })) : { codex: false, geminiCli: false }), assistant: cfg.GEMINI_API_KEY !== '' || (await claudeCode.isAvailable()), serverGemini: cfg.GEMINI_API_KEY !== '' },
     // AI CLIs usable from the integrated terminal (local driver: host PATH).
     cli: driver.kind === 'local' ? await detectClis() : {},
     cliModels: driver.kind === 'local' ? cliModels() : {},
@@ -1419,7 +1419,7 @@ export async function buildApp(
 
   // ---------------- AI (Ãƒâ€šÃ‚Â§5B) ----------------
 
-  await registerAiRoutes(app, { cfg, authenticate, upstreams: deps.aiUpstreams });
+  await registerAiRoutes(app, { cfg, authenticate, upstreams: deps.aiUpstreams, claude: claudeCode });
   await registerResearchRoutes(app, { authenticate, fetchImpl: deps.playFetch });
 
   // ---------------- WebSocket ----------------

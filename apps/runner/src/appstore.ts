@@ -602,6 +602,29 @@ export const APPLE_SHOT_SPECS: Array<{ type: string; width: number; height: numb
 ];
 
 /**
+ * The App Store pages must show the iPhone app, not the Android one: apps hide
+ * things on iOS (ads in Kids apps, coin packs, "No ads" promises) by checking
+ * defaultTargetPlatform, which Flutter web reads from the browser. So the
+ * headless browser introduces itself as an iPhone/iPad.
+ */
+async function presentAsAppleDevice(page: { setUserAgent(ua: string): Promise<void>; evaluateOnNewDocument(script: string): Promise<unknown> }, ipad: boolean): Promise<void> {
+  const device = ipad ? 'iPad' : 'iPhone';
+  const os = ipad ? 'CPU OS 18_5 like Mac OS X' : 'CPU iPhone OS 18_5 like Mac OS X';
+  await page.setUserAgent(`Mozilla/5.0 (${device}; ${os}) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1`);
+  // Flutter reads userAgentData first when the browser has it, then platform;
+  // the store pages are in English, the default language of the listing.
+  // Sent as text: a compiled function can carry helpers the page lacks.
+  await page.evaluateOnNewDocument(`(() => {
+    const set = (k, v) => Object.defineProperty(Navigator.prototype, k, { get: () => v, configurable: true });
+    set('platform', '${device}');
+    set('userAgentData', undefined);
+    set('maxTouchPoints', 5);
+    set('language', 'en-US');
+    set('languages', ['en-US', 'en']);
+  })();`);
+}
+
+/**
  * Open the web preview at each device size and screen and grab a PNG, exactly as
  * the Play screenshots do — but at Apple's pixel sizes and grouped by device.
  */
@@ -628,6 +651,7 @@ export async function captureAppleScreenshots(opts: {
         const page = await browser.newPage();
         try {
           await page.setViewport({ width: spec.width, height: spec.height, deviceScaleFactor: spec.scale, isMobile: !spec.ipad, hasTouch: true });
+          await presentAsAppleDevice(page, !!spec.ipad);
           const sep = opts.previewUrl.includes('?') ? '&' : '?';
           await page.goto(`${opts.previewUrl}${sep}${SCREEN_PARAM}=${i}`, { waitUntil: 'networkidle0', timeout: 90_000 });
           await page.waitForFunction(() => document.querySelector('flutter-view, flt-glass-pane') !== null, { timeout: 60_000 });

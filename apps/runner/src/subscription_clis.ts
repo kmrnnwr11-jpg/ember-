@@ -36,6 +36,25 @@ export function cliBuildArgs(engine: Exclude<CliEngine, 'claude-code'>, cwd: str
 
 const base = (p: string) => p.replace(/\\/g, '/').split('/').slice(-3).join('/');
 
+/**
+ * The files a PowerShell command writes: `... | Set-Content lib\a.dart`,
+ * `Out-File -FilePath x`, `Add-Content -Path 'x'`, `[IO.File]::WriteAllText('x', ...)`.
+ * Only what is plainly a file write; anything cleverer stays a shell command.
+ */
+export function shellWrites(cmd: string): string[] {
+  const out: string[] = [];
+  const clean = (p: string) => p.trim().replace(/^['"]|['"]$/g, '').replace(/\\\\/g, '\\');
+  for (const m of cmd.matchAll(/\b(?:Set-Content|Add-Content|Out-File)\b([^|;\r\n]*)/gi)) {
+    const args = (m[1] ?? '').trim();
+    const named = /-(?:LiteralPath|FilePath|Path)\s+("[^"]+"|'[^']+'|\S+)/i.exec(args);
+    const rest = args.replace(/-(?:Encoding|Width)\s+\S+/gi, '').replace(/-(?:NoNewline|Force|Append|NoClobber)\b/gi, '').trim();
+    const target = named?.[1] ?? /^("[^"]+"|'[^']+'|\S+)/.exec(rest)?.[1];
+    if (target && !target.startsWith('-') && !target.startsWith('$')) out.push(clean(target));
+  }
+  for (const m of cmd.matchAll(/WriteAllText\(\s*("[^"]+"|'[^']+')/gi)) out.push(clean(m[1] ?? ''));
+  return [...new Set(out.filter((p) => p.length > 0))];
+}
+
 /** Parses one `codex exec --json` line. `lastText` keeps the final agent message for the result. */
 export function parseCodexLine(line: string, state: { lastText: string }): AgentEvent[] {
   let j: Record<string, unknown>;
@@ -55,6 +74,12 @@ export function parseCodexLine(line: string, state: { lastText: string }): Agent
   }
   if (j.type === 'item.started' && item.type === 'command_execution') {
     const cmd = String(item.command ?? '');
+    // On Windows Codex writes most files through PowerShell rather than its
+    // file tool, so the build read "0 of 24 files" and showed a bare "@'"
+    // while the app was being written. A write through the shell counts as a
+    // write, named by its file.
+    const written = shellWrites(cmd);
+    if (written.length > 0) return written.map((p) => ({ kind: 'tool', name: 'Write', summary: base(p) }));
     return [{ kind: 'tool', name: 'Bash', summary: cmd.replace(/^.*?-Command\s+/, '').replace(/^["']|["']$/g, '').slice(0, 160) }];
   }
   if (j.type === 'turn.completed') return [{ kind: 'result', ok: true, costUsd: null, turns: null, message: state.lastText }];

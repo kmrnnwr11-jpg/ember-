@@ -65,7 +65,7 @@ class _LogoCardState extends ConsumerState<LogoCard> {
       // The configured reviewers draw the icons together and then review each
       // other's drawings; with fewer than two the Runner's own engine draws.
       if (!mounted) return;
-      final health = await checkPanel(context, ref);
+      final health = await checkPanel(context, ref, forDrawing: true);
       if (!health.proceed) return quitEmber();
       final settings = await ref.read(reviewerSettingsProvider.future);
       final reviewers = settings.usable.where((r) => health.working.contains(r.id)).toList();
@@ -79,7 +79,9 @@ class _LogoCardState extends ConsumerState<LogoCard> {
             ? widget.builder.prompt
             : widget.builder.prompt.substring(0, 4000),
         if (_hint.text.trim().isNotEmpty) 'hint': _hint.text.trim(),
-        'count': _logos.isEmpty ? 6 : 5,
+        // Five a round, each drawn by a different model in turn.
+        'count': 5,
+        if (ref.read(chosenDesignersProvider) case final only?) 'only': only.toList(),
         if (reviewers.length > 1)
           'panel': [
             for (final r in reviewers)

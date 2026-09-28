@@ -1637,7 +1637,7 @@ abstract class AppLocalizations {
   /// No description provided for @chooseDesignAiHint.
   ///
   /// In en, this message translates to:
-  /// **'Gemini draws well and is free; the engine above writes the code.'**
+  /// **'Pick who draws: each one makes 2 mockups, and the 5 logos rotate among them. The engine above writes the code.'**
   String get chooseDesignAiHint;
 
   /// No description provided for @bLookingAtModel.

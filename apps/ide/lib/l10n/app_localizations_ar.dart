@@ -861,7 +861,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get chooseDesignAiHint =>
-      'Gemini draws well and is free; the engine above writes the code.';
+      'اختر من يرسم: كل واحد يصنع نموذجين، والشعارات الخمسة تتوزع بينهم. المحرك أعلاه يكتب الكود.';
 
   @override
   String get bLookingAtModel => 'Looking at the app being copied…';

@@ -19,13 +19,20 @@ typedef PanelCheck = ({bool proceed, Set<String> working, List<PanelMember> memb
 /// models than the user believes, and that is exactly the kind of quiet loss
 /// this is meant to prevent. So the question is asked out loud, with the name,
 /// and the answer is the user's: fix it and retry, go on without it, or stop.
-Future<PanelCheck> checkPanel(BuildContext context, WidgetRef ref) async {
+/// [forDrawing] applies the user's pick of who draws; the coding council and
+/// everything else always sit with the whole table.
+Future<PanelCheck> checkPanel(BuildContext context, WidgetRef ref, {bool forDrawing = false}) async {
   final settings = await ref.read(reviewerSettingsProvider.future);
   // Two members need no key from the user: Gemini runs on the Runner's own,
   // Claude on the machine's login. Both are free to the user and always there.
   final gemini = await runnerGeminiMember(ref);
   final claude = await runnerClaudeMember(ref);
-  final all = [?claude, ...designPanel(settings), ?gemini];
+  final gpt = await runnerCodexMember(ref);
+  final everyone = [?claude, ?gpt, ...designPanel(settings), ?gemini];
+  // The user may have picked who draws on the home screen; nobody left out is
+  // pinged, so one they did not choose cannot hold the others up.
+  final chosen = forDrawing ? ref.read(chosenDesignersProvider) : null;
+  final all = chosen == null ? everyone : [for (final m in everyone) if (chosen.contains(m.id)) m];
   if (all.isEmpty) return (proceed: true, working: <String>{}, members: all);
 
   final pings = await pingMembers(all);

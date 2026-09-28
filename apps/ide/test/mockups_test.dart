@@ -40,15 +40,15 @@ void main() {
       },
     );
     await c.generateSet();
-    expect(c.current.length, MockupController.setSize);
+    expect(c.current.length, c.setSize);
     expect(c.current.every((m) => m.status == MockupStatus.ready), isTrue);
     // Four at a time: quick, without asking a free tier for seven long answers at once.
     expect(maxInFlight, 4);
     final firstNames = c.current.map((m) => m.style.id).toSet();
-    expect(firstNames.length, MockupController.setSize);
+    expect(firstNames.length, c.setSize);
     // Each proposal carries its own direction: eight different styles, not one
     // page recoloured eight times.
-    expect(c.current.map((m) => m.style.direction).toSet(), hasLength(MockupController.setSize));
+    expect(c.current.map((m) => m.style.direction).toSet(), hasLength(c.setSize));
 
     await c.generateSet();
     expect(c.sets.length, 2);
@@ -61,8 +61,8 @@ void main() {
     expect(secondNames.difference(firstNames), isNotEmpty);
     c.showSet(0);
     expect(c.current.first.style.id, 'minimal');
-    // Two sets of MockupController.setSize proposals, at 0.01 each.
-    expect(c.costUsd, closeTo(0.01 * 2 * MockupController.setSize, 1e-9));
+    // Two sets of c.setSize proposals, at 0.01 each.
+    expect(c.costUsd, closeTo(0.01 * 2 * c.setSize, 1e-9));
   });
 
   test('edit keeps the previous mockup if regeneration fails', () async {
@@ -183,7 +183,7 @@ void main() {
 
     await c.generateSet();
 
-    expect(c.current, hasLength(MockupController.setSize));
+    expect(c.current, hasLength(c.setSize));
     // Fell back to the pool rather than showing an empty gallery.
     expect(c.current.every((x) => mockupStylePool.any((s) => s.id == x.style.id)), isTrue);
   });
@@ -217,8 +217,8 @@ void panelTests() {
   });
 
   test('the panel shares the drawing, scores it, and redraws with the others notes', () async {
-    final a = panelMember('a', allScored(8, 6, 'ingrandisci il titolo'));
-    final b = panelMember('b', allScored(8, 8, 'togli la cornice'));
+    final a = panelMember('a', allScored(4, 6, 'ingrandisci il titolo'));
+    final b = panelMember('b', allScored(4, 8, 'togli la cornice'));
     final c = MockupController(
       description: 'App ricette',
       engine: BuildEngine.gemini,
@@ -231,22 +231,22 @@ void panelTests() {
 
     await c.generateSet();
 
-    // Round-robin: neither model drew the whole set.
-    expect(c.current.where((m) => m.authorLabel == 'A').length, 4);
-    expect(c.current.where((m) => m.authorLabel == 'B').length, 4);
+    // Two each: neither model drew the whole set.
+    expect(c.current.where((m) => m.authorLabel == 'A').length, 2);
+    expect(c.current.where((m) => m.authorLabel == 'B').length, 2);
     // Scored by both, so the average of 6 and 8.
     expect(c.current.every((m) => m.score == 7.0), isTrue);
     // A note counts only when it comes from a different model.
     expect(c.current.firstWhere((m) => m.authorLabel == 'A').notes, ['B: togli la cornice']);
     expect(c.current.every((m) => m.refined), isTrue);
-    // Each member: 4 drawings + 1 critique + 4 redraws.
-    expect(a.calls.where((p) => p.contains('THE DESIGN PANEL HAS REVIEWED')).length, 4);
+    // Each member: 2 drawings + 1 critique + 2 redraws.
+    expect(a.calls.where((p) => p.contains('THE DESIGN PANEL HAS REVIEWED')).length, 2);
     expect(c.panelStatus, isEmpty);
   });
 
   test('a critic that is down does not stop the set', () async {
     final a = panelMember('a', 'not json');
-    final b = panelMember('b', allScored(8, 9, ''));
+    final b = panelMember('b', allScored(4, 9, ''));
     final c = MockupController(
       description: 'App ricette',
       engine: BuildEngine.gemini,
@@ -259,9 +259,17 @@ void panelTests() {
 
     await c.generateSet();
 
-    expect(c.current.where((m) => m.status == MockupStatus.ready).length, 8);
+    expect(c.current.where((m) => m.status == MockupStatus.ready).length, 4);
     // Only B voted, and it left no instruction, so nothing is redrawn.
     expect(c.current.every((m) => m.score == 9.0), isTrue);
     expect(c.current.every((m) => m.notes.isEmpty && !m.refined), isTrue);
+  });
+
+  test('two proposals for every model drawing', () {
+    PanelMember m(String id) => (id: id, label: id, complete: (String s, String p) async => (text: '', costUsd: null));
+    CompleteText solo = (s, p) async => (text: '', costUsd: null);
+    expect(MockupController(description: 'x', engine: BuildEngine.gemini, complete: solo).setSize, 8);
+    expect(MockupController(description: 'x', engine: BuildEngine.gemini, complete: solo, panel: [m('a'), m('b')]).setSize, 4);
+    expect(MockupController(description: 'x', engine: BuildEngine.gemini, complete: solo, panel: [for (final i in 'abcde'.split('')) m(i)]).setSize, 10);
   });
 }

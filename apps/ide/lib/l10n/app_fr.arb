@@ -454,5 +454,6 @@
   "phoneOpenHere": "Ouvrir tout de suite sur le téléphone",
   "phoneSameWifi": "Visez le code avec la caméra du téléphone. Le téléphone doit être sur le même Wi-Fi que cet ordinateur.",
   "playLanguages": "Langues de la fiche",
-  "playTranslating": "Rédaction de la fiche dans les autres langues…"
+  "playTranslating": "Rédaction de la fiche dans les autres langues…",
+  "chooseDesignAiHint": "Choisissez qui dessine : chacun fait 2 maquettes, et les 5 logos tournent entre eux. Le moteur ci-dessus écrit le code."
 }

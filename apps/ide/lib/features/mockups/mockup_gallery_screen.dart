@@ -72,14 +72,15 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
     // other; with fewer than two of them the design engine works alone. Any
     // that are down are named to the user before a single mockup is drawn.
     if (!mounted) return;
-    final health = await checkPanel(context, ref);
+    final health = await checkPanel(context, ref, forDrawing: true);
     if (!health.proceed) return quitEmber();
     final panel = health.members;
     final c = MockupController(
       description: '${a.prompt}${a.reference ?? ''}',
       engine: a.engine,
       model: model,
-      complete: complete,
+      // One model picked to draw: that one draws, not the default engine.
+      complete: panel.length == 1 ? panel.first.complete : complete,
       styleBrief: a.styleBrief,
       panel: panel.length > 1 ? panel : const [],
     );

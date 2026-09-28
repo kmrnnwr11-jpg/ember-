@@ -333,6 +333,53 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
     });
   }
 
+  /**
+   * One-shot text generation with the machine's ChatGPT login, through Codex.
+   *
+   * Codex could only build apps, so on a machine with a ChatGPT subscription
+   * GPT wrote code and sat out everything else — mockups, logos, the review
+   * of what was built. `codex exec` answers a single prompt just as well: it
+   * runs read-only in a neutral directory, so it can neither touch a project
+   * nor pick up one's instructions, and the last agent message is the answer.
+   */
+  completeCodex(opts: { prompt: string; system: string; timeoutMs?: number }): Promise<{ text: string; costUsd: number | null }> {
+    const cmd = cliCommand('codex');
+    if (!cmd) return Promise.reject(Object.assign(new Error('Codex is not installed on this Runner'), { code: 'unsupported' }));
+    const cwd = path.resolve(this.cfg.WORKSPACES_ROOT, '.tmp');
+    mkdirSync(cwd, { recursive: true });
+    const args = [...cmd.pre, 'exec', '--json', '--skip-git-repo-check', '--sandbox', 'read-only', '-C', cwd, '-'];
+    return new Promise((resolve, reject) => {
+      const child = this.spawnImpl(cmd.bin, args, { cwd, windowsHide: true, env: { ...process.env, CI: '1' } });
+      const state = { lastText: '' };
+      let buf = '';
+      let err = '';
+      const timer = setTimeout(() => {
+        child.kill();
+        reject(new Error('Codex timed out'));
+      }, opts.timeoutMs ?? 300_000);
+      child.stdout?.setEncoding('utf8').on('data', (c: string) => {
+        buf += c;
+        const lines = buf.split('\n');
+        buf = lines.pop() ?? '';
+        for (const l of lines) parseCodexLine(l, state);
+      });
+      child.stderr?.setEncoding('utf8').on('data', (c: string) => (err = (err + c).slice(-2000)));
+      child.on('error', (e) => (clearTimeout(timer), reject(e)));
+      child.on('close', (code) => {
+        clearTimeout(timer);
+        if (buf.trim()) parseCodexLine(buf, state);
+        if (code !== 0 || !state.lastText.trim()) {
+          reject(new Error(`Codex: ${err.trim() || `exit ${code}, no answer`}`.slice(0, 1000)));
+          return;
+        }
+        resolve({ text: state.lastText, costUsd: null });
+      });
+      // Codex has no separate system prompt in exec mode: the instructions go
+      // first, clearly fenced, then the request.
+      child.stdin?.end(`${opts.system}\n\n---\n\n${opts.prompt}`);
+    });
+  }
+
   cancel(runId: string): boolean {
     const run = this.runs.get(runId);
     if (!run) return false;

@@ -1036,6 +1036,8 @@ export async function buildApp(
           hint: z.string().max(500).optional(),
           count: z.number().int().min(1).max(6).default(6),
           engine: z.enum(['auto', 'claude', 'gemini']).default('auto'),
+          // Who the user picked to draw. Absent means everyone available.
+          only: z.array(z.string().min(1).max(40)).max(12).optional(),
           // When the user has configured reviewers, they draw the icons
           // together and then review each other instead of one model working
           // alone and nobody checking it.
@@ -1077,11 +1079,18 @@ export async function buildApp(
       // Claude and Gemini join the table on what this machine already has — a
       // login and a key — so the user never fetches anything for them; the app
       // cannot send them, having no key to send.
-      const members = [
+      const codexOk = (await cliLogins().catch(() => ({ codex: false }))).codex;
+      const everyone = [
         ...(claudeOk ? [{ id: 'claude_code', label: 'Claude', complete: viaClaude }] : []),
+        // GPT on the ChatGPT subscription, when this machine is logged in.
+        ...(codexOk ? [{ id: 'codex', label: 'GPT', complete: async (s: string, p: string) => (await claudeCode.completeCodex({ system: s, prompt: p })).text }] : []),
         ...body.panel.map((m) => ({ id: m.id, label: m.label, complete: (s: string, p: string) => openAiComplete(m, s, p, deps.reviewFetch ?? fetch) })),
         ...(cfg.GEMINI_API_KEY ? [{ id: 'gemini_runner', label: 'Gemini', complete: viaGemini }] : []),
       ];
+      // Only the ones the user picked draw; if the pick matches nobody here,
+      // everyone does rather than no logo at all.
+      const picked = body.only ? everyone.filter((m) => body.only!.includes(m.id)) : everyone;
+      const members = picked.length > 0 ? picked : everyone;
       const logos =
         members.length > 1
           ? await generateLogosPanel({
@@ -1226,6 +1235,11 @@ export async function buildApp(
           ? [{ id: 'claude_code', label: 'Claude', complete: async (system: string, prompt: string) => (await claudeCode.complete({ system, prompt, quality: 'fast', timeoutMs: 600_000 })).text }]
           : []),
         ...(cfg.GEMINI_API_KEY ? [{ id: 'gemini_runner', label: 'Gemini', complete: geminiComplete }] : []),
+        // GPT on the ChatGPT subscription, when this machine is logged in to
+        // Codex: it could write the app but never read one.
+        ...((await cliLogins().catch(() => ({ codex: false }))).codex
+          ? [{ id: 'codex', label: 'GPT', complete: async (system: string, prompt: string) => (await claudeCode.completeCodex({ system, prompt, timeoutMs: 600_000 })).text }]
+          : []),
       ];
       return reviewApp(services.projectRoot(project), reviewers, deps.reviewFetch ?? fetch, mine);
     });

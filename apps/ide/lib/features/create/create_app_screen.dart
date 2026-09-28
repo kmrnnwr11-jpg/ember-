@@ -267,6 +267,26 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
         ? _design!
         : designOptions.firstWhere((o) => o.engine == BuildEngine.gemini && o.available, orElse: () => designOptions.firstWhere((o) => o.available, orElse: () => designOptions.first)).engine;
 
+    // Everyone who can draw, as the panel will call them. The user switches
+    // each on or off; mockups come two per model and logos rotate among them.
+    final drawers = <({String id, String label, IconData icon, bool available})>[
+      (id: 'gemini_runner', label: 'Gemini', icon: Icons.auto_awesome, available: serverGeminiAvailable(health) || settings.isConfigured(AiProviderId.gemini)),
+      (id: 'claude_code', label: 'Claude', icon: Icons.psychology_outlined, available: claudeCode),
+      (id: 'codex', label: 'GPT', icon: Icons.chat_bubble_outline, available: (health?['engines'] as Map?)?['codex'] == true),
+      for (final r in panel?.usable ?? const <Reviewer>[])
+        (id: r.id, label: r.label, icon: Icons.hub_outlined, available: true),
+    ];
+    final availableIds = {for (final d in drawers) if (d.available) d.id};
+    final chosen = ref.watch(chosenDesignersProvider);
+    final drawing = chosen == null ? availableIds : chosen.intersection(availableIds);
+    void toggleDrawer(String id) {
+      final next = {...drawing};
+      if (!next.remove(id)) next.add(id);
+      // Never nobody: the last one stays on.
+      if (next.isEmpty) return;
+      ref.read(chosenDesignersProvider.notifier).set(next.length == availableIds.length ? null : next);
+    }
+
     void submit() {
       if (_text.text.trim().isEmpty || !option.available || widget.busy) return;
       // For subscription engines the chosen CLI model travels in `quality`.
@@ -321,13 +341,13 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            for (final o in designOptions)
-              ChoiceChip(
-                key: Key('design_${o.engine.name}'),
-                avatar: Icon(o.icon, size: 16),
-                label: Text(o.label),
-                selected: design == o.engine,
-                onSelected: o.available ? (_) => setState(() => _design = o.engine) : null,
+            for (final d in drawers)
+              FilterChip(
+                key: Key('design_${d.id}'),
+                avatar: Icon(d.icon, size: 16),
+                label: Text(d.label),
+                selected: drawing.contains(d.id),
+                onSelected: d.available ? (_) => toggleDrawer(d.id) : null,
               ),
           ],
         ),

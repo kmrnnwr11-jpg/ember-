@@ -442,7 +442,10 @@ class MockupController extends ChangeNotifier {
   /// How many proposals a set holds, and how many are drawn at once. A set is
   /// always 8: four light and four dark. Four at a time keeps it quick without
   /// asking a free tier for eight long answers in the same second.
-  static const setSize = 8;
+  /// How many proposals one set holds: two for every model drawing, so each
+  /// one shows both a light and a dark idea and nobody's taste fills the page.
+  /// Eight when there is no panel and one engine draws alone.
+  int get setSize => panel.length > 1 ? panel.length * 2 : 8;
   static const _atOnce = 4;
 
   /// Asks every model which directions suit this app and merges the answers.

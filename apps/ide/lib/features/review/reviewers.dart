@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:ai_connect/ai_connect.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ide_core/ide_core.dart' show MsgType;
 
 import '../../core/session.dart';
 import '../../core/settings_store.dart';
@@ -226,6 +227,52 @@ Future<PanelMember?> runnerClaudeMember(WidgetRef ref) async {
     return null;
   }
 }
+
+/// GPT drawing and reviewing through the machine's ChatGPT login (Codex).
+///
+/// A ChatGPT subscription used to buy only code: Codex built apps and sat out
+/// the mockups, the logos and the review. The Runner now answers one-shot
+/// prompts through it too, so it takes a seat like Claude does — no key, no
+/// extra cost. Null when this machine is not logged in to Codex.
+Future<PanelMember?> runnerCodexMember(WidgetRef ref) async {
+  try {
+    final health = await ref.read(runnerHealthProvider.future);
+    if ((health['engines'] as Map?)?['codex'] != true) return null;
+    final socket = ref.read(runnerSocketProvider);
+    return (
+      id: 'codex',
+      label: 'GPT',
+      complete: (String system, String prompt) async {
+        final res = await socket.request(
+          MsgType.agentComplete,
+          {'engine': 'codex', 'system': system, 'prompt': prompt},
+          timeout: const Duration(minutes: 6),
+        );
+        return (text: res['text'] as String, costUsd: null);
+      },
+    );
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Which models draw the mockups and logos, as the user picked them.
+///
+/// Null means "everyone who is available" — the default, so a new install
+/// draws with the whole table without anyone having to tick boxes. Kept for
+/// the whole session: the choice is made on the home screen and read by the
+/// mockup gallery and the logo card later.
+class ChosenDesigners extends Notifier<Set<String>?> {
+  @override
+  Set<String>? build() {
+    ref.keepAlive();
+    return null;
+  }
+
+  void set(Set<String>? ids) => state = ids;
+}
+
+final chosenDesignersProvider = NotifierProvider<ChosenDesigners, Set<String>?>(ChosenDesigners.new);
 
 /// Gemini drawing and reviewing on the Runner's own key.
 ///

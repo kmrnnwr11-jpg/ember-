@@ -298,6 +298,15 @@ export class Session {
         return { ...run };
       }
       case 'agent.complete': {
+        // GPT through the machine's ChatGPT login: the same one-shot answer,
+        // so it can draw and review alongside the others instead of only
+        // writing code.
+        if (p.engine === 'codex') {
+          const prompt = str(p.prompt, 'prompt');
+          const system = str(p.system, 'system');
+          if (prompt.length > 200_000 || system.length > 50_000) throw Object.assign(new Error('prompt too long'), { code: 'bad_request' });
+          return await this.claudeCode.completeCodex({ prompt, system });
+        }
         if (!(await this.claudeCode.isAvailable())) {
           throw Object.assign(new Error('Claude Code is not available on this Runner'), { code: 'unsupported' });
         }

@@ -454,5 +454,6 @@
   "phoneOpenHere": "Abrir ahora en el teléfono",
   "phoneSameWifi": "Enfoca el código con la cámara del teléfono. El teléfono debe estar en el mismo Wi-Fi que este ordenador.",
   "playLanguages": "Idiomas de la ficha",
-  "playTranslating": "Escribiendo la ficha en los demás idiomas…"
+  "playTranslating": "Escribiendo la ficha en los demás idiomas…",
+  "chooseDesignAiHint": "Elige quién dibuja: cada uno hace 2 bocetos y los 5 logos se reparten entre ellos. El motor de arriba escribe el código."
 }

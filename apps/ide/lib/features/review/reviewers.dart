@@ -61,7 +61,7 @@ const reviewerPresets = <Reviewer>[
     id: 'qwen',
     label: 'Qwen',
     baseUrl: 'https://openrouter.ai/api/v1',
-    model: 'qwen/qwen3-coder:free',
+    model: 'qwen/qwen3.8-27b:free',
   ),
 ];
 
@@ -79,6 +79,9 @@ class ReviewerSettings {
 
   bool hasKey(String id) => (keys[id] ?? '').isNotEmpty;
 }
+
+/// Models the services no longer offer (e.g. free variants withdrawn).
+const _withdrawnModels = {'qwen/qwen3-coder:free'};
 
 class ReviewerSettingsController extends AsyncNotifier<ReviewerSettings> {
   static const _listKey = 'ai_reviewers';
@@ -103,7 +106,12 @@ class ReviewerSettingsController extends AsyncNotifier<ReviewerSettings> {
     // The presets decide who is on the list; a saved entry only carries the
     // user's own edits for one of them. A service dropped from the presets
     // disappears instead of lingering from an older version.
-    final list = [for (final p in reviewerPresets) saved[p.id] ?? p];
+    final list = [
+      for (final p in reviewerPresets)
+        // A model OpenRouter has withdrawn answers 404 and stops every build:
+        // a saved entry still naming one falls back on the preset's model.
+        if (saved[p.id] != null && _withdrawnModels.contains(saved[p.id]!.model)) saved[p.id]!.copyWith(model: p.model) else saved[p.id] ?? p,
+    ];
     final keys = <String, String>{};
     for (final r in list) {
       final k = await _secure.read(_keyName(r.id));

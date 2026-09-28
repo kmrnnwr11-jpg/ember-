@@ -137,6 +137,14 @@ export function parseClaudeLine(line: string): AgentEvent[] {
   }
 }
 
+/** Added for Codex builds: its sandbox has no internet on Windows. */
+export const CODEX_OFFLINE_NOTE = `NO INTERNET IN THIS SANDBOX: do NOT run \`flutter pub get\`, \`flutter analyze\`, \`dart pub\` or anything that downloads (it would wait forever). Just write the code and list new packages in pubspec.yaml. Ember installs the packages after you and then asks you to check the analyzer.`;
+
+/** Second Codex pass, after the Runner has fetched the packages. */
+export const CODEX_FIX_PROMPT = `You are finishing a Flutter app in the current directory. Its packages are now installed. There is no internet: do NOT run \`flutter pub get\` or anything that downloads. Run \`flutter analyze --no-pub\` and fix every error, re-running until there are none (only packages already in pubspec.lock are available). Do not run tests, flutter run or builds. Stay inside this directory. Then give the final reply exactly as the build instructions asked:
+
+${CLAUDE_CODE_BUILD_PROMPT.slice(CLAUDE_CODE_BUILD_PROMPT.indexOf('FINAL REPLY'))}`;
+
 /**
  * Runs Claude Code headless in a project directory using the machine's own
  * Claude login (§3 "CLI con abbonamento", brought forward from Phase 7).
@@ -199,6 +207,28 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
     return [...this.runs.values()].filter((r) => r.projectId === projectId).at(-1);
   }
 
+  /** `flutter pub get` run by the Runner itself, with fixed arguments. */
+  private pubGet(cwd: string, runId: string): Promise<{ ok: boolean; output: string }> {
+    return new Promise((resolve) => {
+      const bin = this.cfg.FLUTTER_BIN;
+      const child = this.spawnImpl(bin, ['pub', 'get'], {
+        cwd,
+        windowsHide: true,
+        env: { ...process.env, CI: '1' },
+        // .bat/.cmd files need a shell on Windows; the arguments are fixed.
+        shell: process.platform === 'win32' && /\.(bat|cmd)$/i.test(bin),
+      });
+      this.procs.set(runId, child);
+      let output = '';
+      const keep = (c: string) => (output = (output + c).slice(-3000));
+      child.stdout?.setEncoding('utf8').on('data', keep);
+      child.stderr?.setEncoding('utf8').on('data', keep);
+      const timer = setTimeout(() => child.kill(), 10 * 60_000);
+      child.on('error', (e) => (clearTimeout(timer), resolve({ ok: false, output: e.message })));
+      child.on('close', (code) => (clearTimeout(timer), resolve({ ok: code === 0, output })));
+    });
+  }
+
   get(runId: string): AgentRun | undefined {
     return this.runs.get(runId);
   }
@@ -240,52 +270,87 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
     // Codex (ChatGPT plan) and Gemini CLI (Google account) get the same instructions through stdin.
     const other = engine === 'claude-code' ? null : cliCommand(engine);
     if (engine !== 'claude-code' && !other) throw Object.assign(new Error(`${engine} is not installed on this Runner`), { code: 'unsupported' });
-    const child = other
-      ? this.spawnImpl(other.bin, [...other.pre, ...cliBuildArgs(engine as 'codex' | 'gemini-cli', opts.cwd, opts.model)], { cwd: opts.cwd, windowsHide: true, env: { ...process.env, CI: '1' } })
-      : this.spawnImpl(resolveClaudeBin(this.cfg), args, {
-          cwd: opts.cwd,
-          windowsHide: true,
-          env: { ...process.env, CI: '1' },
-        });
-    this.procs.set(run.id, child);
-    this.emit('status', run);
-
-    // Prompt via stdin: avoids shell quoting of arbitrary user text.
-    child.stdin?.end(other ? `${CLAUDE_CODE_BUILD_PROMPT}\n\nUSER REQUEST (work in the current directory; keep what already works):\n${opts.prompt}` : opts.prompt);
+    const env = { ...process.env, CI: '1' };
+    const spawnCli = () =>
+      other
+        ? this.spawnImpl(other.bin, [...other.pre, ...cliBuildArgs(engine as 'codex' | 'gemini-cli', opts.cwd, opts.model)], { cwd: opts.cwd, windowsHide: true, env })
+        : this.spawnImpl(resolveClaudeBin(this.cfg), args, { cwd: opts.cwd, windowsHide: true, env });
+    const request = `USER REQUEST (work in the current directory; keep what already works):\n${opts.prompt}`;
+    // Codex works in a sandbox that, on Windows, has no internet: `flutter pub
+    // get` inside it waited for an hour without a word. So Codex writes the app
+    // offline, the Runner fetches the packages itself, and a second Codex pass
+    // (still sandboxed) runs the analyzer and fixes what it finds.
+    const firstInput =
+      engine === 'codex'
+        ? `${CLAUDE_CODE_BUILD_PROMPT}\n\n${CODEX_OFFLINE_NOTE}\n\n${request}`
+        : other
+          ? `${CLAUDE_CODE_BUILD_PROMPT}\n\n${request}`
+          : opts.prompt;
     const state = { lastText: '' };
     const parse = (line: string) => (engine === 'codex' ? parseCodexLine(line, state) : engine === 'gemini-cli' ? parseGeminiLine(line, state) : parseClaudeLine(line));
-
-    let buffer = '';
-    let sawResult = false;
-    child.stdout?.setEncoding('utf8').on('data', (chunk: string) => {
-      buffer += chunk;
-      let nl: number;
-      while ((nl = buffer.indexOf('\n')) >= 0) {
-        const line = buffer.slice(0, nl).trim();
-        buffer = buffer.slice(nl + 1);
-        if (!line) continue;
-        for (const ev of parse(line)) {
-          if (ev.kind === 'result') sawResult = true;
-          if (ev.kind === 'text' && run.plannedFiles === undefined) {
-            const m = PLAN_RE.exec(ev.text);
-            if (m) run.plannedFiles = Number(m[1]);
-          }
-          run.events = [...(run.events ?? []), ev].slice(-300);
-          this.emit('event', run, ev);
-        }
-      }
-    });
-    let stderr = '';
-    child.stderr?.setEncoding('utf8').on('data', (c: string) => (stderr = (stderr + c).slice(-4000)));
-    child.on('error', (e) => this.emit('event', run, { kind: 'error', message: `${engine} could not start: ${e.message}` }));
-    child.on('close', (code) => {
+    const emitEv = (ev: AgentEvent) => {
+      run.events = [...(run.events ?? []), ev].slice(-300);
+      this.emit('event', run, ev);
+    };
+    const finish = (ok: boolean, stderr = '') => {
       this.procs.delete(run.id);
       if (run.status === 'running') {
-        run.status = code === 0 && sawResult ? 'succeeded' : 'failed';
-        if (run.status === 'failed' && stderr.trim()) this.emit('event', run, { kind: 'error', message: stderr.trim().slice(-1000) });
+        run.status = ok ? 'succeeded' : 'failed';
+        if (!ok && stderr.trim()) emitEv({ kind: 'error', message: stderr.trim().slice(-1000) });
       }
       this.emit('status', run);
-    });
+    };
+
+    /** Runs one CLI pass, then calls `done` with whether it ended well (synchronously on close). */
+    const pass = (input: string, hideResult: boolean, done: (ok: boolean, stderr: string) => void) => {
+      {
+        const child = spawnCli();
+        this.procs.set(run.id, child);
+        // Prompt via stdin: avoids shell quoting of arbitrary user text.
+        child.stdin?.end(input);
+        let buffer = '';
+        let sawResult = false;
+        child.stdout?.setEncoding('utf8').on('data', (chunk: string) => {
+          buffer += chunk;
+          let nl: number;
+          while ((nl = buffer.indexOf('\n')) >= 0) {
+            const line = buffer.slice(0, nl).trim();
+            buffer = buffer.slice(nl + 1);
+            if (!line) continue;
+            for (const ev of parse(line)) {
+              if (ev.kind === 'result') {
+                sawResult = true;
+                if (hideResult) continue;
+              }
+              if (ev.kind === 'text' && run.plannedFiles === undefined) {
+                const m = PLAN_RE.exec(ev.text);
+                if (m) run.plannedFiles = Number(m[1]);
+              }
+              emitEv(ev);
+            }
+          }
+        });
+        let stderr = '';
+        child.stderr?.setEncoding('utf8').on('data', (c: string) => (stderr = (stderr + c).slice(-4000)));
+        child.on('error', (e) => emitEv({ kind: 'error', message: `${engine} could not start: ${e.message}` }));
+        child.on('close', (code) => done(code === 0 && sawResult, stderr));
+      }
+    };
+
+    this.emit('status', run);
+    if (engine !== 'codex') {
+      pass(firstInput, false, finish);
+    } else {
+      pass(firstInput, true, (ok, stderr) => {
+        if (!ok || run.status !== 'running') return finish(ok, stderr);
+        emitEv({ kind: 'tool', name: 'Bash', summary: 'flutter pub get' });
+        void this.pubGet(opts.cwd, run.id).then((pub) => {
+          if (run.status !== 'running') return finish(false);
+          if (!pub.ok) return finish(false, `flutter pub get failed:\n${pub.output}`);
+          pass(`${CODEX_FIX_PROMPT}\n\nThe user's request, for context:\n${opts.prompt}`, false, finish);
+        });
+      });
+    }
     return run;
   }
 

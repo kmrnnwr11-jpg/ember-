@@ -369,6 +369,13 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
         clearTimeout(timer);
         if (buf.trim()) parseCodexLine(buf, state);
         if (code !== 0 || !state.lastText.trim()) {
+          // A revoked ChatGPT login is the usual cause — signing in on another
+          // computer invalidates this one — and it came out as "internal
+          // error". Say what it is and what to do.
+          if (/token_revoked|refresh_token_invalidated|sign in again|401 Unauthorized/i.test(err)) {
+            reject(Object.assign(new Error('ChatGPT login expired on this computer: run "codex logout" then "codex login" and sign in again.'), { code: 'login_expired' }));
+            return;
+          }
           reject(new Error(`Codex: ${err.trim() || `exit ${code}, no answer`}`.slice(0, 1000)));
           return;
         }

@@ -6,7 +6,7 @@ export function errorPayload(e: unknown): { code: string; message: string } {
   if (e instanceof AuthError) return { code: 'unauthorized', message: e.message };
   if (e instanceof FsError || e instanceof PathError) return { code: e.code, message: e.message };
   const code = (e as { code?: unknown })?.code;
-  if (typeof code === 'string' && ['bad_request', 'unsupported', 'not_found', 'too_many_terminals'].includes(code)) {
+  if (typeof code === 'string' && ['bad_request', 'unsupported', 'not_found', 'too_many_terminals', 'login_expired'].includes(code)) {
     return { code, message: (e as Error).message };
   }
   return { code: 'internal', message: 'internal error' };

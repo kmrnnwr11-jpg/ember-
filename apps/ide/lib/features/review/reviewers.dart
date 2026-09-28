@@ -51,7 +51,7 @@ const reviewerPresets = <Reviewer>[
     id: 'openrouter',
     label: 'OpenRouter',
     baseUrl: 'https://openrouter.ai/api/v1',
-    model: 'deepseek/deepseek-chat-v3.1:free',
+    model: 'nvidia/nemotron-3-ultra-550b-a55b:free',
   ),
   // Alibaba's Qwen, whose coder model is the strongest of the open-weight ones
   // on code. Reached through OpenRouter so it takes the key that is already
@@ -61,7 +61,7 @@ const reviewerPresets = <Reviewer>[
     id: 'qwen',
     label: 'Qwen',
     baseUrl: 'https://openrouter.ai/api/v1',
-    model: 'qwen/qwen3.8-27b:free',
+    model: 'qwen/qwen3-coder-next',
   ),
 ];
 
@@ -81,7 +81,7 @@ class ReviewerSettings {
 }
 
 /// Models the services no longer offer (e.g. free variants withdrawn).
-const _withdrawnModels = {'qwen/qwen3-coder:free'};
+const _withdrawnModels = {'qwen/qwen3-coder:free', 'deepseek/deepseek-chat-v3.1:free'};
 
 class ReviewerSettingsController extends AsyncNotifier<ReviewerSettings> {
   static const _listKey = 'ai_reviewers';

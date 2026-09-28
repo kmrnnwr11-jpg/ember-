@@ -194,7 +194,7 @@ List<EngineOption> engineOptions(AppLocalizations l, AiSettings s, bool claudeCo
   // they light up the moment that voice is configured.
   EngineOption(BuildEngine.deepseek, 'DeepSeek', l.badgePaid, Icons.travel_explore,
       available: panelKeys.contains('deepseek'), reason: l.needsKey('DeepSeek')),
-  EngineOption(BuildEngine.qwen, 'Qwen Coder', l.badgeFreeTier, Icons.hub_outlined,
+  EngineOption(BuildEngine.qwen, 'Qwen Coder', l.badgePaid, Icons.hub_outlined,
       available: panelKeys.contains('qwen'), reason: l.needsKey('Qwen')),
 ];
 

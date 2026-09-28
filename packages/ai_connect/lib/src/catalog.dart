@@ -97,8 +97,10 @@ const builtInCatalog = <AiModel>[
   ),
   AiModel(
     provider: AiProviderId.openaiCompatible,
-    id: 'qwen/qwen3.8-27b:free',
-    label: 'Qwen 3.8',
+    id: 'qwen/qwen3-coder-next',
+    label: 'Qwen3 Coder Next',
+    inputPerMTok: 0.12,
+    outputPerMTok: 0.80,
     baseUrl: 'https://openrouter.ai/api/v1',
     contextTokens: 262144,
   ),

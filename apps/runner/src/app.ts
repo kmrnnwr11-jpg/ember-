@@ -26,7 +26,7 @@ import path from 'node:path';
 import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
 import websocket from '@fastify/websocket';
-import { PathError, safeResolve } from './paths.js';
+import { PathError, safeResolve, parseJson } from './paths.js';
 import { PreviewService } from './preview.js';
 import { DEFAULT_UPSTREAMS, GEMINI_FALLBACKS, registerAiRoutes } from './ai.js';
 import { applyLogo, generateLogos, generateLogosPanel, storeState } from './logos.js';
@@ -66,7 +66,7 @@ async function storeTitle(projectRoot: string): Promise<{ title?: string }> {
   const read = (...rel: string[]) => readFileAsync(path.join(projectRoot, ...rel), 'utf8').catch(() => '');
 
   const listing = await read('store', 'listing.json');
-  const fromListing = `${(JSON.parse(listing || 'null') as { title?: string } | null)?.title ?? ''}`.trim();
+  const fromListing = `${(parseJson(listing || 'null') as { title?: string } | null)?.title ?? ''}`.trim();
   if (fromListing) return { title: fromListing };
 
   const manifest = await read('android', 'app', 'src', 'main', 'AndroidManifest.xml');
@@ -573,7 +573,7 @@ export async function buildApp(
      */
     const appleProductsOf = async (project: ProjectRow, ownerId: string): Promise<{ products: AppleProduct[]; screenshot?: Buffer }> => {
       const root = services.projectRoot(project);
-      const own = JSON.parse(await readFileAsync(path.join(root, 'store', 'apple_products.json'), 'utf8').catch(() => 'null')) as AppleProduct[] | null;
+      const own = parseJson(await readFileAsync(path.join(root, 'store', 'apple_products.json'), 'utf8').catch(() => 'null')) as AppleProduct[] | null;
       let products = Array.isArray(own) ? own : [];
       if (!products.length) {
         const session = JSON.parse((await readSettings(ownerId).catch(() => ({}) as Record<string, string>))[`ember_session_${project.id}`] ?? '{}') as { products?: DeclaredProduct[] };
@@ -601,7 +601,7 @@ export async function buildApp(
       }
       // Hand-picked App Store keywords per language (store/apple_keywords.json,
       // keyed by the listing's language) win over the ones made from the text.
-      const keywords = JSON.parse(await readFileAsync(path.join(root, 'store', 'apple_keywords.json'), 'utf8').catch(() => '{}')) as Record<string, string>;
+      const keywords = parseJson(await readFileAsync(path.join(root, 'store', 'apple_keywords.json'), 'utf8').catch(() => '{}')) as Record<string, string>;
       for (const page of [body.listing, ...(body.translations ?? [])]) {
         const k = page && keywords[`${page.language ?? ''}`];
         if (page && k) page.keywords = k;
@@ -744,7 +744,7 @@ export async function buildApp(
 
     /** The listing the checks read: what the IDE sent, else what the project saved. */
     const preflightContext = async (root: string, body?: Partial<PublishBody>) => {
-      const saved = JSON.parse(await readFileAsync(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '{}')) as { title?: string; privacyUrl?: string };
+      const saved = parseJson(await readFileAsync(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '{}')) as { title?: string; privacyUrl?: string };
       const review = body?.review?.phone || (await readReviewPhone().catch(() => ''));
       return {
         root,
@@ -945,7 +945,7 @@ export async function buildApp(
       const root = services.projectRoot(project);
       const key = await ensureKey(cfg, project.id, project.name);
       const info = await (deps.androidInfo ?? androidAppInfo)(cfg, project.id, root, project.name);
-      const listing = JSON.parse(await readFileAsync(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '{}')) as { title?: string };
+      const listing = parseJson(await readFileAsync(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '{}')) as { title?: string };
       try {
         return await (deps.backupKey ?? backupKey)({
           appName: listing.title?.trim() || project.name,
@@ -1352,7 +1352,7 @@ export async function buildApp(
       const facts = await detectDataFacts(root);
       try {
         // The form has ~800 rows with stable ids: filled from the app's own facts, no AI, no waiting.
-        const listing = JSON.parse(await readFileAsync(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '{}')) as { privacyUrl?: string };
+        const listing = parseJson(await readFileAsync(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '{}')) as { privacyUrl?: string };
         const filled = validateFilledCsv(csv, fillCsv(csv, facts, listing.privacyUrl ?? ''));
         await uploadDataSafety({ serviceAccount: parseServiceAccount(body.serviceAccount), packageName: info.applicationId, csv: filled }, deps.playFetch ?? fetch);
         return { ok: true, source: csvPath ?? 'pasted', facts };
@@ -1413,7 +1413,7 @@ export async function buildApp(
       await mkdirAsync(dir, { recursive: true });
       const name = appName ?? project.name;
       // A policy with "[EMAIL]" left in it is refused at review: fill the blanks first.
-      const listing = JSON.parse(await readFileAsync(path.join(dir, 'listing.json'), 'utf8').catch(() => '{}')) as { contactEmail?: string };
+      const listing = parseJson(await readFileAsync(path.join(dir, 'listing.json'), 'utf8').catch(() => '{}')) as { contactEmail?: string };
       const filled = fillPolicy(markdown, { name: cfg.STUDIO_NAME || name, email: email || listing.contactEmail || '' });
       await writeFileAsync(path.join(dir, 'privacy_policy.md'), `<!-- ${name} -->\n${filled}`);
       // Google needs an address anyone can open; this computer is not one.

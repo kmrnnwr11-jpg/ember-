@@ -3,6 +3,7 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { nanoid } from 'nanoid';
 import sharp from 'sharp';
+import { parseJson } from './paths.js';
 
 /**
  * App logos: the AI draws vector logos (SVG), the Runner renders them to PNG,
@@ -457,7 +458,7 @@ export async function storeState(projectRoot: string): Promise<{
       .filter((f) => f.endsWith('.json'))
       .map(async (f) => {
         const id = f.slice(0, -5);
-        const meta = JSON.parse(await readFile(path.join(dir, f), 'utf8').catch(() => '{}')) as { createdAt?: string };
+        const meta = parseJson(await readFile(path.join(dir, f), 'utf8').catch(() => '{}')) as { createdAt?: string };
         return { id, at: meta.createdAt ?? '' };
       }),
   );
@@ -470,7 +471,7 @@ export async function storeState(projectRoot: string): Promise<{
     if (png) logos.push({ id: m.id, thumb: png.toString('base64') });
   }
   const store = path.join(projectRoot, 'store');
-  const applied = JSON.parse(await readFile(path.join(store, 'logo.json'), 'utf8').catch(() => '{}')) as { logoId?: string };
+  const applied = parseJson(await readFile(path.join(store, 'logo.json'), 'utf8').catch(() => '{}')) as { logoId?: string };
   const shotsDir = path.join(store, 'screenshots');
   const shotFiles = (await readdir(shotsDir).catch(() => [] as string[]))
     .filter((f) => /^phone_\d+\.png$/.test(f))
@@ -480,6 +481,6 @@ export async function storeState(projectRoot: string): Promise<{
     const buf = await readFile(path.join(shotsDir, f)).catch(() => null);
     if (buf) screenshots.push((await sharp(buf).resize(270, 480).png().toBuffer()).toString('base64'));
   }
-  const listing = JSON.parse(await readFile(path.join(store, 'listing.json'), 'utf8').catch(() => 'null')) as Record<string, unknown> | null;
+  const listing = parseJson(await readFile(path.join(store, 'listing.json'), 'utf8').catch(() => 'null')) as Record<string, unknown> | null;
   return { logos, appliedLogo: applied.logoId ?? null, screenshots, listing };
 }

@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { AppDataFacts } from './data_safety.js';
+import { parseJson } from './paths.js';
 
 /**
  * Per-app choices for the App Store that the code alone cannot tell, in
@@ -21,7 +22,7 @@ export interface AppleSettings {
 
 export async function readAppleSettings(root: string): Promise<AppleSettings> {
   try {
-    return JSON.parse(await readFile(path.join(root, 'store', 'apple_settings.json'), 'utf8')) as AppleSettings;
+    return parseJson(await readFile(path.join(root, 'store', 'apple_settings.json'), 'utf8')) as AppleSettings;
   } catch {
     return {};
   }

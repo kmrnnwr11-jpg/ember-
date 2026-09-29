@@ -48,3 +48,8 @@ export function validateProjectName(name: unknown): string {
   }
   return name;
 }
+
+/** JSON.parse that accepts a leading UTF-8 BOM (PowerShell writes one). */
+export function parseJson(text: string): unknown {
+  return JSON.parse(text.replace(/^﻿/, ''));
+}

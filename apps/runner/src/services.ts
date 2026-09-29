@@ -5,7 +5,7 @@ import { nanoid } from 'nanoid';
 import type { Config } from './config.js';
 import { FsError, ProjectFs } from './fs.js';
 import type { Job, JobKind, JobManager } from './jobs.js';
-import { validateProjectName } from './paths.js';
+import { validateProjectName, parseJson } from './paths.js';
 import { claimBundleId, claimPackageName } from './publish_prep.js';
 import { readAppleCreds, readAppleKey, rememberTeamId } from './apple_creds.js';
 import { ensureDevelopmentTeam } from './ios_signing.js';
@@ -258,7 +258,7 @@ export class Services {
       // The package name is forever once Google has it: swap the placeholder for
       // the app's real name before the first file that could reach the store.
       const root = this.projectRoot(project);
-      const listing = JSON.parse(await readFile(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '{}')) as { title?: string };
+      const listing = parseJson(await readFile(path.join(root, 'store', 'listing.json'), 'utf8').catch(() => '{}')) as { title?: string };
       const manifest = await readFile(path.join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml'), 'utf8').catch(() => '');
       const appName = listing.title || /android:label\s*=\s*"([^"@]+)"/.exec(manifest)?.[1] || '';
       // Every app: real AdMob App ID flows from ads_config.dart into the manifest.

@@ -2,6 +2,7 @@ import { readdir, readFile, stat, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { findIpa, projectBuildNumber } from './appstore.js';
 import { lastAppStoreBuildNumber } from './signing.js';
+import { parseJson } from './paths.js';
 
 /**
  * "Publish" as one press: build the iPhone app when needed, upload it, write
@@ -36,7 +37,7 @@ const file = (root: string) => path.join(root, 'store', 'appstore_auto.json');
 
 export async function readAutoStatus(root: string): Promise<AutoStatus | null> {
   try {
-    return JSON.parse(await readFile(file(root), 'utf8')) as AutoStatus;
+    return parseJson(await readFile(file(root), 'utf8')) as AutoStatus;
   } catch {
     return null;
   }

@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { detectDataFacts, type AppDataFacts } from './data_safety.js';
+import { parseJson } from './paths.js';
 
 /**
  * Play Console "App content": eleven declarations Google asks for before an app
@@ -29,7 +30,7 @@ interface Listing {
 }
 
 async function readJson<T>(file: string): Promise<T | null> {
-  return JSON.parse(await readFile(file, 'utf8').catch(() => 'null')) as T | null;
+  return parseJson(await readFile(file, 'utf8').catch(() => 'null')) as T | null;
 }
 
 /** Answers for every App content row, from the project's own dependencies and setup. */

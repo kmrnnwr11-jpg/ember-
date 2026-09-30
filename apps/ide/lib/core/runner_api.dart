@@ -127,10 +127,10 @@ class RunnerApi {
 
   /// Several models read the finished app, each on its own, and report what is
   /// fake, missing or broken; their reports come back merged.
-  Future<Map<String, dynamic>> reviewApp(String projectId, List<Map<String, String>> reviewers) => _call(
+  Future<Map<String, dynamic>> reviewApp(String projectId, List<Map<String, String>> reviewers, {List<String>? own}) => _call(
     () => _dio.post(
       '/v1/projects/$projectId/review',
-      data: {'reviewers': reviewers},
+      data: {'reviewers': reviewers, 'own': ?own},
       options: Options(receiveTimeout: const Duration(minutes: 5)),
     ),
     (d) => d as Map<String, dynamic>,

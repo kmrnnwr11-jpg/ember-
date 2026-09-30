@@ -541,6 +541,7 @@ German (de), Hindi (hi), Arabic (ar), Indonesian (id), Russian (ru).
           'If it genuinely cannot be fixed in code — it needs a key, an account or a sign-in only the owner can do — say so plainly instead of pretending.\n\n'
           '${f['title']}\n${f['ask']}',
           display: '${f['title']}',
+          reviewFix: true,
         );
       }
     }
@@ -552,15 +553,21 @@ German (de), Hindi (hi), Arabic (ar), Indonesian (id), Russian (ru).
   /// forever.
   bool _fixingFromReview = false;
 
-  Future<void> improve(String change, {String? display, bool fromReview = false}) async {
+  Future<void> improve(String change, {String? display, bool fromReview = false, bool reviewFix = false}) async {
     final e = engine;
     if (e == null) return;
     final was = _fixingFromReview;
     if (fromReview) _fixingFromReview = true;
+    // The app is written with the model the owner chose (Opus); a reviewer's
+    // finding is a small, precise fix, done by Claude Sonnet in about half
+    // the time.
+    final chosenQuality = quality;
+    if (reviewFix && e == BuildEngine.claudeCode) quality = 'sonnet';
     try {
       await _run(prompt: prompt, engine: e, model: model, change: change, display: display);
     } finally {
       _fixingFromReview = was;
+      quality = chosenQuality;
     }
   }
 

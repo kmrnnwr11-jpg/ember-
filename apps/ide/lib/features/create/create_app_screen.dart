@@ -143,10 +143,18 @@ final appBuilderProvider = ChangeNotifierProvider.family<AppBuilder, (String, St
       final s = await ref.read(reviewerSettingsProvider.future);
       // Not a shortcut when the list is empty: Claude and Gemini review on the
       // Runner's own login and key, and the Runner adds them itself.
-      final res = await (await ref.read(runnerApiProvider.future)).reviewApp(projectId, [
-        for (final r in s.usable)
-          {'id': r.id, 'label': r.label, 'baseUrl': r.baseUrl, 'apiKey': s.keys[r.id]!, 'model': r.model},
-      ]);
+      // The owner's pick: GPT (ChatGPT subscription), Gemini and DeepSeek read
+      // the app — three different eyes from Claude, who fixes what they find.
+      // More reviewers only meant more "one more thing" rounds.
+      final res = await (await ref.read(runnerApiProvider.future)).reviewApp(
+        projectId,
+        [
+          for (final r in s.usable)
+            if (r.id == 'deepseek')
+              {'id': r.id, 'label': r.label, 'baseUrl': r.baseUrl, 'apiKey': s.keys[r.id]!, 'model': r.model},
+        ],
+        own: const ['gemini_runner', 'codex'],
+      );
       return [for (final f in (res['findings'] as List? ?? const [])) (f as Map).cast<String, dynamic>()];
     },
     androidInfo: () async {

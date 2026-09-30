@@ -1211,8 +1211,11 @@ export async function buildApp(
     r.post('/v1/projects/:projectId/review', async (req) => {
       const { projectId } = req.params as { projectId: string };
       const { project } = await services.ownedProject(req.user.id, projectId);
-      const { reviewers } = z
+      const { reviewers, own } = z
         .object({
+          // Which of this machine's own reviewers (claude_code, gemini_runner,
+          // codex) take part; all of them when absent.
+          own: z.array(z.string().max(40)).max(6).optional(),
           reviewers: z
             .array(
               z.object({
@@ -1241,7 +1244,8 @@ export async function buildApp(
           ? [{ id: 'codex', label: 'GPT', complete: async (system: string, prompt: string) => (await claudeCode.completeCodex({ system, prompt, timeoutMs: 600_000 })).text }]
           : []),
       ];
-      return reviewApp(services.projectRoot(project), reviewers, deps.reviewFetch ?? fetch, mine);
+      const chosen = own ? mine.filter((m) => own.includes(m.id)) : mine;
+      return reviewApp(services.projectRoot(project), reviewers, deps.reviewFetch ?? fetch, chosen);
     });
 
     r.post('/v1/projects/:projectId/check/fix', async (req, reply) => {

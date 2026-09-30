@@ -221,6 +221,10 @@ export function fillCsv(csv: string, facts: AppDataFacts, deletionUrl = ''): str
     const [question = '', response = ''] = cols;
     let value = '';
     if (question === 'PSL_DATA_COLLECTION_COLLECTS_PERSONAL_DATA') value = collects ? 'TRUE' : 'FALSE';
+    // An app that collects nothing answers nothing else: Google refuses the
+    // encryption, account-creation and deletion answers when no data is
+    // collected ("You cannot answer PSL_DATA_COLLECTION_ENCRYPTED_IN_TRANSIT").
+    else if (!collects) value = '';
     else if (question === 'PSL_DATA_COLLECTION_ENCRYPTED_IN_TRANSIT') value = 'TRUE';
     else if (question === 'PSL_SUPPORT_DATA_DELETION_BY_USER') value = response === (facts.account ? 'DATA_DELETION_YES' : 'DATA_DELETION_NO') ? 'TRUE' : '';
     // Saying users can ask for deletion obliges us to say where: the privacy policy page explains how.

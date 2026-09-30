@@ -130,7 +130,7 @@ describe('fillCsv', () => {
     const csv = await readFile(FIXTURE, 'utf8');
     const filled = fillCsv(csv, facts());
     expect(valueOf(filled, 'PSL_DATA_COLLECTION_COLLECTS_PERSONAL_DATA')).toBe('FALSE');
-    expect(valueOf(filled, 'PSL_SUPPORTED_ACCOUNT_CREATION_METHODS', 'PSL_ACM_NONE')).toBe('TRUE');
+    expect(valueOf(filled, 'PSL_SUPPORTED_ACCOUNT_CREATION_METHODS', 'PSL_ACM_NONE')).toBe('');
     expect(valueOf(filled, 'PSL_DATA_TYPES_PHOTOS_AND_VIDEOS', 'PSL_PHOTOS')).toBe('');
   });
 
@@ -158,5 +158,16 @@ describe('fillCsv', () => {
     const csv = await readFile(FIXTURE, 'utf8');
     const filled = fillCsv(csv, facts({ account: true }), 'https://example.com/privacy');
     expect(filled).toContain('"Quale dei seguenti metodi di creazione dell\'account supporta la tua app? Seleziona tutte le opzioni pertinenti/Nome utente, password e altre autenticazioni"');
+  });
+});
+
+describe('an app that collects no data', () => {
+  it('answers only "no data collected", nothing Google would refuse', async () => {
+    const csv = await readFile(FIXTURE, 'utf8');
+    const filled = fillCsv(csv, facts());
+    expect(valueOf(filled, 'PSL_DATA_COLLECTION_COLLECTS_PERSONAL_DATA')).toBe('FALSE');
+    for (const q of ['PSL_DATA_COLLECTION_ENCRYPTED_IN_TRANSIT', 'PSL_SUPPORTED_ACCOUNT_CREATION_METHODS', 'PSL_SUPPORT_DATA_DELETION_BY_USER']) {
+      expect(filled.split('\n').filter((l) => l.startsWith(q + ',') && /,TRUE/.test(l))).toEqual([]);
+    }
   });
 });

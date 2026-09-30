@@ -221,6 +221,21 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
   }
 
   // ---- Store page ----
+  // The store page is in English first: an app locked to another language,
+  // or without English at all, is sent back as incomplete (2.1(a), Doodle Dino).
+  const forced = /\blocale\s*:\s*(?:const\s+)?Locale\(\s*'([a-z]{2})'/.exec(code)?.[1];
+  const supported = /supportedLocales\s*:[^;\]]*\]/.exec(code)?.[0] ?? '';
+  const noEnglish = !!supported && /Locale\(/.test(supported) && !/Locale\(\s*'en'/.test(supported);
+  if ((forced && forced !== 'en') || noEnglish) {
+    add({
+      id: 'app_language',
+      severity: 'block',
+      title: forced && forced !== 'en' ? `L’app è bloccata in una lingua (${forced}) diversa dall’inglese della scheda` : 'L’app non ha l’inglese, la lingua principale della scheda',
+      detail: 'Apple rifiuta l’app se non è nella lingua della scheda che il recensore apre (2.1(a)): l’app deve seguire la lingua del telefono, con l’inglese come base.',
+      fixable: false,
+      ask: 'Localize the app: follow the device language (no fixed MaterialApp.locale), English as the default and fallback, plus every other language of the store listing; move every user-visible string into the localization.',
+    });
+  }
   const display = plistString(plist, 'CFBundleDisplayName') ?? '';
   if (listing.title && display && !namesMatch(display, listing.title)) {
     add({

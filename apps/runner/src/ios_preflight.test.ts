@@ -160,4 +160,13 @@ describe('subscriptions', () => {
     const ok = await reelMakerBefore({ code: "requestTrackingAuthorization restore ember_screen premium_monthly launchUrl('stdeula') privacy" });
     expect(blocking(await preflightIos({ root: ok, listing, reviewPhone: '1', fetchImpl: okFetch, marketingUrl: 'https://dev.example' }))).toEqual([]);
   });
+
+  it('blocks an app locked to Italian or without English, as Doodle Dino was sent back', async () => {
+    const it = await reelMakerBefore({ code: "void main() { AppTrackingTransparency.requestTrackingAuthorization(); } // restorePurchases ember_screen\nfinal a = MaterialApp(locale: const Locale('it'), supportedLocales: const <Locale>[Locale('it'), Locale('en')]);" });
+    expect(ids(blocking(await preflightIos({ root: it, listing, reviewPhone: '+39 333', fetchImpl: okFetch, marketingUrl: 'https://dev.example' })))).toEqual(['app_language']);
+    const noEn = await reelMakerBefore({ code: "void main() { AppTrackingTransparency.requestTrackingAuthorization(); } // restorePurchases ember_screen\nfinal a = MaterialApp(supportedLocales: const <Locale>[Locale('it'), Locale('fr')]);" });
+    expect(ids(blocking(await preflightIos({ root: noEn, listing, reviewPhone: '+39 333', fetchImpl: okFetch, marketingUrl: 'https://dev.example' })))).toEqual(['app_language']);
+    const ok = await reelMakerBefore({ code: "void main() { AppTrackingTransparency.requestTrackingAuthorization(); } // restorePurchases ember_screen\nfinal a = MaterialApp(supportedLocales: const <Locale>[Locale('en'), Locale('it')]);" });
+    expect(ids(blocking(await preflightIos({ root: ok, listing, reviewPhone: '+39 333', fetchImpl: okFetch, marketingUrl: 'https://dev.example' })))).toEqual([]);
+  });
 });

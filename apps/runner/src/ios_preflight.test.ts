@@ -178,4 +178,12 @@ describe('subscriptions', () => {
     await writeFile(path.join(root, 'store', 'apple_products.json'), JSON.stringify([{ productId: 'x_premium_monthly', kind: 'subscription', price: 4.99 }]));
     expect(ids(blocking(await preflightIos({ root, listing, reviewPhone: '+39 333', fetchImpl: okFetch, marketingUrl: 'https://dev.example' })))).toEqual(['subscription_links']);
   });
+
+  it('blocks a Google Play mention in any string, as Read Master was sent back', async () => {
+    const base = "void main() { AppTrackingTransparency.requestTrackingAuthorization(); } // restorePurchases ember_screen";
+    const bad = await reelMakerBefore({ code: `${base}\nconst t = {'pending': 'Waiting for Google Play.'};` });
+    expect(ids(blocking(await preflightIos({ root: bad, listing, reviewPhone: '+39 333', fetchImpl: okFetch, marketingUrl: 'https://dev.example' })))).toEqual(['play_mentions']);
+    const comment = await reelMakerBefore({ code: `${base}\n// IDs must match the Play Console\nconst t = {'pending': 'Waiting for the store.'};` });
+    expect(ids(blocking(await preflightIos({ root: comment, listing, reviewPhone: '+39 333', fetchImpl: okFetch, marketingUrl: 'https://dev.example' })))).toEqual([]);
+  });
 });

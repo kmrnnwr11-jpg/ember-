@@ -225,6 +225,20 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
     });
   }
 
+  // Apple reads every text in the binary, even ones only Android shows (2.3.10,
+  // Read Master): no "Google Play" / "Play Store" / "Play Console" in any string.
+  const literalLines = code.split('\n').filter((l) => !/^\s*\/\//.test(l));
+  const playMention = literalLines.find((l) => /['"][^'"]*\b(google\s*play|play\s*store|play\s*console)\b[^'"]*['"]/i.test(l));
+  if (playMention) {
+    add({
+      id: 'play_mentions',
+      severity: 'block',
+      title: 'L’app nomina Google Play in un testo',
+      detail: `Apple rifiuta l’app se un testo parla di Google Play, anche se su iPhone non si vede (2.3.10): «${playMention.trim().slice(0, 120)}».`,
+      fixable: false,
+      ask: 'Remove every mention of Google Play, Play Store and Play Console from the app\'s strings (all languages, including texts only Android shows): say "the store" / "your store account" instead.',
+    });
+  }
   // ---- Store page ----
   // The store page is in English first: an app locked to another language,
   // or without English at all, is sent back as incomplete (2.1(a), Doodle Dino).

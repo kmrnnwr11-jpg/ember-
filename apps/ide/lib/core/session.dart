@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -64,7 +65,18 @@ class SessionController extends AsyncNotifier<Session?> {
       return Session(runnerUrl: runner, email: s.user.email ?? email ?? '');
     }
     final token = await _store.read(_kDevToken);
-    if (token != null && email != null) return Session(runnerUrl: runner, email: email, devToken: token);
+    if (token != null && email != null) {
+      if (!_expiresSoon(token)) return Session(runnerUrl: runner, email: email, devToken: token);
+      // A dev token lasts 7 days: an older one made every call fail with
+      // "invalid token" until the user signed out by hand. Renew it instead.
+      try {
+        final (fresh, _) = await RunnerApi(runner).devLogin(email);
+        await _store.write(_kDevToken, fresh);
+        return Session(runnerUrl: runner, email: email, devToken: fresh);
+      } catch (_) {
+        // Runner unreachable: fall through to the sign-in as last used on this Mac.
+      }
+    }
     // The browser opened by `flutter run` starts empty every time: sign in again
     // as whoever signed in last on this Mac, instead of asking each restart.
     final api = RunnerApi(runner);
@@ -77,6 +89,21 @@ class SessionController extends AsyncNotifier<Session?> {
       return Session(runnerUrl: runner, email: last, devToken: fresh);
     } catch (_) {
       return null;
+    }
+  }
+
+  /// True when the JWT is expired or has less than a day left (or cannot be read).
+  static bool _expiresSoon(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return true;
+      final payload = jsonDecode(utf8.decode(base64Url.decode(base64Url.normalize(parts[1])))) as Map<String, dynamic>;
+      final exp = payload['exp'];
+      if (exp is! num) return false;
+      final expires = DateTime.fromMillisecondsSinceEpoch(exp.toInt() * 1000);
+      return expires.isBefore(DateTime.now().add(const Duration(days: 1)));
+    } catch (_) {
+      return true;
     }
   }
 

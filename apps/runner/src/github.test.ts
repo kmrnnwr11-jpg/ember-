@@ -127,3 +127,11 @@ describe('apps saved on GitHub', () => {
     await rm(dir, { recursive: true, force: true });
   });
 });
+
+describe('a dropped upload', () => {
+  it('is told apart from a real refusal', async () => {
+    const { isDroppedConnection } = await import('./github.js');
+    expect(isDroppedConnection('error: RPC failed; curl 55 Send failure: Connection was aborted')).toBe(true);
+    expect(isDroppedConnection('remote: Permission to x denied')).toBe(false);
+  });
+});

@@ -66,6 +66,11 @@ async function api(token: string, method: string, url: string, body: unknown, fe
   throw new GitHubError('github_error', `GitHub refused: ${String(json.message ?? text).slice(0, 300)}`);
 }
 
+/** The upload was cut by the network, not refused by GitHub: worth another try. */
+export function isDroppedConnection(output: string): boolean {
+  return /RPC failed|curl \d+|remote end hung up|unexpected disconnect|Connection (was )?(aborted|reset)|early EOF|timed out/i.test(output);
+}
+
 /** A repository name GitHub accepts, from the app's own name. */
 export function repoName(appName: string): string {
   const slug = appName
@@ -138,7 +143,17 @@ export async function saveToGitHub(input: SaveInput, fetchImpl: typeof fetch = f
 
   // The token travels in this one command and is never stored as a remote.
   const url = `https://x-access-token:${input.token}@github.com/${owner}/${repo}.git`;
-  const push = await run(['push', url, 'HEAD:main', '--force'], root);
+  // Videos and images go up in one large request, and on Windows git's HTTP/2
+  // connection is often cut halfway ("curl 55 Send failure: Connection was
+  // aborted"). HTTP/1.1 with a large buffer carries it; a dropped connection
+  // is tried again before giving up.
+  await run(['config', 'http.version', 'HTTP/1.1'], root);
+  await run(['config', 'http.postBuffer', '524288000'], root);
+  let push = await run(['push', url, 'HEAD:main', '--force'], root);
+  for (let attempt = 1; push.code !== 0 && attempt < 3 && isDroppedConnection(`${push.err}${push.out}`); attempt++) {
+    await new Promise((r) => setTimeout(r, 2000 * attempt));
+    push = await run(['push', url, 'HEAD:main', '--force'], root);
+  }
   if (push.code !== 0) {
     const reason = (push.err || push.out).replace(input.token, '***').slice(-300);
     throw new GitHubError('push_failed', `GitHub refused the upload: ${reason}`);

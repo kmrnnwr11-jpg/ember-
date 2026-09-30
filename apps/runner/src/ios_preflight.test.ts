@@ -169,4 +169,13 @@ describe('subscriptions', () => {
     const ok = await reelMakerBefore({ code: "void main() { AppTrackingTransparency.requestTrackingAuthorization(); } // restorePurchases ember_screen\nfinal a = MaterialApp(supportedLocales: const <Locale>[Locale('en'), Locale('it')]);" });
     expect(ids(blocking(await preflightIos({ root: ok, listing, reviewPhone: '+39 333', fetchImpl: okFetch, marketingUrl: 'https://dev.example' })))).toEqual([]);
   });
+
+  it('trusts the Apple product list: no subscription links for a one-time purchase', async () => {
+    const root = await reelMakerBefore({ code: "void main() { AppTrackingTransparency.requestTrackingAuthorization(); } // restorePurchases ember_screen monthly yearly" });
+    await mkdir(path.join(root, 'store'), { recursive: true });
+    await writeFile(path.join(root, 'store', 'apple_products.json'), JSON.stringify([{ productId: 'x_unlock_all', kind: 'non_consumable', price: 3.99 }]));
+    expect(ids(blocking(await preflightIos({ root, listing, reviewPhone: '+39 333', fetchImpl: okFetch, marketingUrl: 'https://dev.example' })))).toEqual([]);
+    await writeFile(path.join(root, 'store', 'apple_products.json'), JSON.stringify([{ productId: 'x_premium_monthly', kind: 'subscription', price: 4.99 }]));
+    expect(ids(blocking(await preflightIos({ root, listing, reviewPhone: '+39 333', fetchImpl: okFetch, marketingUrl: 'https://dev.example' })))).toEqual(['subscription_links']);
+  });
 });

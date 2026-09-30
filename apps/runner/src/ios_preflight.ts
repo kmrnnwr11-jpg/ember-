@@ -186,7 +186,12 @@ export async function preflightIos(ctx: PreflightContext): Promise<PreflightFind
       ask: 'Add a visible "Restore purchases" button on the paywall/premium screen (and in settings) that calls the store restore (InAppPurchase.instance.restorePurchases() or Purchases.restorePurchases()) and unlocks what the user already bought, with a short message when nothing is found.',
     });
   }
-  const sellsSubscriptions = has('purchases_flutter', 'adapty_flutter', 'qonversion_flutter') || (d.has('in_app_purchase') && /subscri|monthly|yearly|annual|weekly/i.test(code));
+  // The Apple product list, when the app has one, says it for certain: words
+  // like "monthly" also turn up in translations of an app that sells none.
+  const appleProducts = JSON.parse((await read(root, 'store', 'apple_products.json')) || 'null') as Array<{ kind?: string }> | null;
+  const sellsSubscriptions = Array.isArray(appleProducts)
+    ? appleProducts.some((p) => p.kind === 'subscription')
+    : has('purchases_flutter', 'adapty_flutter', 'qonversion_flutter') || (d.has('in_app_purchase') && /subscri|monthly|yearly|annual|weekly/i.test(code));
   if (sellsSubscriptions && !(/stdeula|terms[\s_-]?of[\s_-]?(use|service)|\beula\b/i.test(code) && /privacy/i.test(code) && /launchUrl|url_launcher|openUrl/.test(code))) {
     add({
       id: 'subscription_links',

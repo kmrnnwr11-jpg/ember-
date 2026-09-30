@@ -49,6 +49,24 @@ import { JsonStore, SupabaseStore, type ProjectRow, type Store } from './store.j
 import { DockerDriver } from './workspaces/docker.js';
 import type { WorkspaceDriver } from './workspaces/driver.js';
 import { LocalDriver } from './workspaces/local.js';
+
+/**
+ * Store texts that are too long are shortened, never refused. Play takes a
+ * 30-character title, an 80-character short description, 4000 for the full
+ * one and 500 for release notes; translations made by an AI often go a few
+ * characters over in some languages, and one of them used to fail the whole
+ * upload of a new version. Cut at a word where possible.
+ */
+export function fitStoreText(text: string, max: number): string {
+  const t = text.trim();
+  const chars = Array.from(t);
+  if (chars.length <= max) return t;
+  let cut = chars.slice(0, max).join('');
+  const space = cut.lastIndexOf(' ');
+  if (space > max * 0.6) cut = cut.slice(0, space);
+  return cut.replace(/[\s,;:.\-–—·|]+$/u, '').trim();
+}
+const fitted = (max: number) => z.string().transform((s) => fitStoreText(s, max));
 import { Session } from './ws.js';
 
 declare module 'fastify' {
@@ -971,23 +989,23 @@ export async function buildApp(
           listing: z
             .object({
               language: z.string().default('it-IT'),
-              title: z.string().max(30).optional(),
-              shortDescription: z.string().max(80).optional(),
-              fullDescription: z.string().max(4000).optional(),
+              title: fitted(30).optional(),
+              shortDescription: fitted(80).optional(),
+              fullDescription: fitted(4000).optional(),
             })
             .optional(),
           translations: z
             .array(
               z.object({
                 language: z.string().min(2).max(10),
-                title: z.string().max(30).optional(),
-                shortDescription: z.string().max(80).optional(),
-                fullDescription: z.string().max(4000).optional(),
+                title: fitted(30).optional(),
+                shortDescription: fitted(80).optional(),
+                fullDescription: fitted(4000).optional(),
               }),
             )
             .max(20)
             .optional(),
-          releaseNotes: z.object({ language: z.string().default('it-IT'), text: z.string().max(500) }).optional(),
+          releaseNotes: z.object({ language: z.string().default('it-IT'), text: fitted(500) }).optional(),
           contactEmail: z.string().email().optional(),
         })
         .parse(req.body);
@@ -1278,10 +1296,10 @@ export async function buildApp(
       const { project } = await services.ownedProject(req.user.id, projectId);
       const listing = z
         .object({
-          title: z.string().max(30).default(''),
-          shortDescription: z.string().max(80).default(''),
-          fullDescription: z.string().max(4000).default(''),
-          releaseNotes: z.string().max(500).default(''),
+          title: fitted(30).default(''),
+          shortDescription: fitted(80).default(''),
+          fullDescription: fitted(4000).default(''),
+          releaseNotes: fitted(500).default(''),
           contactEmail: z.string().max(200).default(''),
           privacyUrl: z.string().max(500).default(''),
           dataSafety: z.string().max(20000).default(''),

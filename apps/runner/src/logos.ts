@@ -141,7 +141,10 @@ export async function storeIcons(projectRoot: string): Promise<{ playIcon: strin
     path.join(store, 'appstore_icon_1024.png'),
     await sharp(icon).resize(1024, 1024, { fit: 'cover' }).flatten({ background: ground }).png().toBuffer(),
   );
-  await writeFile(path.join(store, 'feature_graphic.png'), await featureGraphic(icon));
+  // A banner made by hand (store/feature_graphic_custom.png) is kept as it is;
+  // otherwise one is drawn from the icon.
+  const custom = await readFile(path.join(store, 'feature_graphic_custom.png')).catch(() => null);
+  await writeFile(path.join(store, 'feature_graphic.png'), custom ?? (await featureGraphic(icon)));
   return { playIcon: 'store/play_icon_512.png', appStoreIcon: 'store/appstore_icon_1024.png', featureGraphic: 'store/feature_graphic.png' };
 }
 

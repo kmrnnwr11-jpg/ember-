@@ -443,14 +443,15 @@ German (de), Hindi (hi), Arabic (ar), Indonesian (id), Russian (ru).
   /// Applies a follow-up change to an already built app.
   bool _reviewed = false;
 
-  /// How many times the reviewers get to speak. Each round finds what is left
-  /// and the next confirms it is gone; three is enough to converge without
-  /// letting a model that is never satisfied keep the build going forever.
-  static const _maxReviewRounds = 3;
-
-  /// A ceiling on the work one round may ask for, so a reviewer having a bad
-  /// day cannot turn one build into fifty.
-  static const _maxFixesPerRound = 8;
+  /// How many times the reviewers get to speak, and how much each round may
+  /// ask for. Every fix is a full engine run plus a rebuild (two to four
+  /// minutes), and reviewers always find "one more thing": with three rounds
+  /// of eight a single change on Yumi ran for over an hour and looked like a
+  /// build that never finished. A new app gets two short rounds; a change the
+  /// owner asked for gets one — it is a small edit on an app already reviewed.
+  static const _maxReviewRounds = 2;
+  static const _maxFixesPerRound = 4;
+  static const _maxFixesAfterChange = 3;
 
   /// Whether a finding is one only the owner can settle.
   ///
@@ -497,10 +498,12 @@ German (de), Hindi (hi), Arabic (ar), Indonesian (id), Russian (ru).
   ///
   /// Nothing here asks the user anything, except to name the few things only
   /// they can do.
-  Future<void> _autoReview() async {
+  Future<void> _autoReview({bool afterChange = false}) async {
     final run = runReview;
     if (run == null) return;
-    for (var round = 1; round <= _maxReviewRounds && !_cancelled; round++) {
+    final rounds = afterChange ? 1 : _maxReviewRounds;
+    final perRound = afterChange ? _maxFixesAfterChange : _maxFixesPerRound;
+    for (var round = 1; round <= rounds && !_cancelled; round++) {
       _log(strings.bReviewStart, kind: 'info');
       final findings = await run().catchError((_) => const <Map<String, dynamic>>[]);
       if (_cancelled) return;
@@ -530,7 +533,7 @@ German (de), Hindi (hi), Arabic (ar), Indonesian (id), Russian (ru).
       }
 
       _log(strings.bReviewFound(mine.length), kind: 'error');
-      for (final f in mine.take(_maxFixesPerRound)) {
+      for (final f in mine.take(perRound)) {
         if (_cancelled) return;
         await improve(
           'A reviewer read this finished app and found this one problem. Fix it, and change nothing else.\n'
@@ -686,7 +689,7 @@ German (de), Hindi (hi), Arabic (ar), Indonesian (id), Russian (ru).
       // two would call each other forever.
       if (!_fixingFromReview && !_reviewed) {
         _reviewed = true;
-        await _autoReview();
+        await _autoReview(afterChange: change != null);
         _reviewed = false;
       }
     } on _Cancelled {

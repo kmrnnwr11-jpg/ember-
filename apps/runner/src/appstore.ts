@@ -1032,6 +1032,8 @@ export async function uploadIpa(
 
 export interface AppStorePublishInput {
   key: AppStoreKey;
+  /** Things decided before publishing that the user must read (e.g. screenshots skipped). */
+  notes?: string[];
   bundleId: string;
   /** Version shown on the store, e.g. "1.0.0". */
   versionString: string;
@@ -1105,7 +1107,7 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
     }
     throw e;
   });
-  const notes: string[] = [];
+  const notes: string[] = [...(input.notes ?? [])];
 
   let buildUploaded = false;
   if (input.uploadBuild) {

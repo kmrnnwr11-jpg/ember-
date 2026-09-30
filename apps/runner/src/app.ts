@@ -1,7 +1,7 @@
 ﻿import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
-import { AppStore, AppStoreError, appleText, applePrivacyPlan, cutAtWord, finishWhenBuildReady, parseAppStoreKey, projectBuildNumber, projectVersion, publishToAppStore, type AppStoreListing, type AppStorePublishInput, type AppStorePublishResult } from './appstore.js';
+import { AppStore, AppStoreError, setIosExportCompliance, appleText, applePrivacyPlan, cutAtWord, finishWhenBuildReady, parseAppStoreKey, projectBuildNumber, projectVersion, publishToAppStore, type AppStoreListing, type AppStorePublishInput, type AppStorePublishResult } from './appstore.js';
 import { AutoTracker, isRunning, needsFreshIpa, type AutoStatus } from './appstore_auto.js';
 import { MAX_VALUE, readSettings, SETTING_KEY, writeSettings } from './settings_store.js';
 import { appleProductsFrom, type AppleProduct, type DeclaredProduct } from './appstore_products.js';
@@ -633,12 +633,21 @@ export async function buildApp(
       // Screenshots need the local web preview and a browser; only wire them up
       // when the app has a screenshot mode and the preview is ready.
       let screenshots: { previewUrl: string; browser: string } | undefined;
+      const screenshotNotes: string[] = [];
       if (body.screenshots) {
         const browser = findBrowser();
-        const info = await preview.info(project);
-        if (browser && info.built && !info.building && (await hasScreenshotMode(root))) {
-          screenshots = { previewUrl: `http://127.0.0.1:${cfg.PORT}${info.path}`, browser };
+        // The iPhone build touches project files, which rebuilds the web
+        // preview: photographing it half-built gave no screenshots at all, and
+        // Apple then refused the version. Wait for the preview instead.
+        let info = await preview.info(project);
+        for (let waited = 0; info.building && waited < 8 * 60_000; waited += 5_000) {
+          await new Promise((r) => setTimeout(r, 5_000));
+          info = await preview.info(project);
         }
+        if (!browser) screenshotNotes.push('Screenshot non caricati: su questo computer non trovo Chrome.');
+        else if (!info.built || info.building) screenshotNotes.push('Screenshot non caricati: l’anteprima dell’app non è pronta. Aprila una volta in Ember e premi di nuovo Publish.');
+        else if (!(await hasScreenshotMode(root))) screenshotNotes.push('Screenshot non caricati: l’app non ha la modalità screenshot.');
+        else screenshots = { previewUrl: `http://127.0.0.1:${cfg.PORT}${info.path}`, browser };
       }
       // Default the reviewer contact to the signed-in email so the form is never empty.
       // The phone is remembered for the account: typed once, reused by every app.
@@ -664,6 +673,7 @@ export async function buildApp(
         review,
         free: body.free,
         screenshots,
+        notes: screenshotNotes,
         marketingUrl,
         ...(ownerId ? await appleProductsOf(project, ownerId).then(({ products, screenshot }) => ({ products, productScreenshot: screenshot })) : {}),
       };
@@ -720,6 +730,9 @@ export async function buildApp(
           }
         }
         if (body.uploadBuild) {
+          // Written before deciding: added after the build, this Info.plist line
+          // made the next Publish think the code had changed and build again.
+          await setIosExportCompliance(root).catch(() => false);
           const fresh = await needsFreshIpa(root);
           if (fresh.build) {
             await tracker.phase('building', `Creo il file iPhone (${fresh.reason})`);

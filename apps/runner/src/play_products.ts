@@ -266,3 +266,33 @@ export async function syncProducts(input: { serviceAccount: ServiceAccount; pack
   }
   return results;
 }
+
+/**
+ * Whether each product is already on sale on Google Play: a subscription with
+ * an active base plan, an in-app product with an active purchase option (or,
+ * on the older API, status "active"). A product Google does not know is not
+ * active.
+ */
+export async function productStatuses(
+  input: { serviceAccount: ServiceAccount; packageName: string; products: Array<{ id: string; type: 'inapp' | 'subscription' }> },
+  fetchImpl: Fetch = fetch,
+): Promise<Array<{ id: string; active: boolean }>> {
+  const token = await getAccessToken(input.serviceAccount, fetchImpl);
+  const pkg = input.packageName;
+  return Promise.all(
+    input.products.map(async (p) => {
+      const id = encodeURIComponent(p.id);
+      if (p.type === 'subscription') {
+        const r = await call(fetchImpl, token, 'GET', `${API}/${pkg}/subscriptions/${id}`);
+        const plans = (r.json.basePlans ?? []) as Array<{ state?: string }>;
+        return { id: p.id, active: r.res.ok && plans.some((b) => b.state === 'ACTIVE') };
+      }
+      const r = await call(fetchImpl, token, 'GET', `${API}/${pkg}/onetimeproducts/${id}`);
+      const options = (r.json.purchaseOptions ?? []) as Array<{ state?: string }>;
+      if (r.res.ok && options.some((o) => o.state === 'ACTIVE')) return { id: p.id, active: true };
+      const legacy = await call(fetchImpl, token, 'GET', `${API}/${pkg}/inappproducts/${id}`);
+      return { id: p.id, active: legacy.res.ok && legacy.json.status === 'active' };
+    }),
+  );
+}
+

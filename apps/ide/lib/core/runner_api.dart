@@ -329,6 +329,12 @@ class RunnerApi {
       _call(() => _dio.get('/v1/projects/$projectId/app-content'), (d) => d as Map<String, dynamic>);
 
   /// Creates and activates in-app products / subscriptions on Google Play.
+  /// Which of these products are already active on Google Play: id -> true/false.
+  Future<Map<String, dynamic>> playProductStatuses(String projectId, String serviceAccount, List<Map<String, dynamic>> products) => _call(
+    () => _dio.post('/v1/projects/$projectId/play/products/status', data: {'serviceAccount': serviceAccount, 'products': products}, options: Options(receiveTimeout: const Duration(minutes: 1))),
+    (d) => d as Map<String, dynamic>,
+  );
+
   Future<Map<String, dynamic>> syncPlayProducts(String projectId, String serviceAccount, List<Map<String, dynamic>> products) => _call(
     () => _dio.post('/v1/projects/$projectId/play/products', data: {'serviceAccount': serviceAccount, 'products': products}, options: Options(receiveTimeout: const Duration(minutes: 5))),
     (d) => d as Map<String, dynamic>,

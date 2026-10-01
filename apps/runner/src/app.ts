@@ -1,5 +1,5 @@
 ﻿import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
-import { syncProducts } from './play_products.js';
+import { productStatuses, syncProducts } from './play_products.js';
 import { appContentAnswers } from './app_content.js';
 import { AppStore, AppStoreError, setIosExportCompliance, appleText, applePrivacyPlan, cutAtWord, finishWhenBuildReady, parseAppStoreKey, projectBuildNumber, projectVersion, publishToAppStore, type AppStoreListing, type AppStorePublishInput, type AppStorePublishResult } from './appstore.js';
 import { AutoTracker, isRunning, needsFreshIpa, type AutoStatus } from './appstore_auto.js';
@@ -1433,6 +1433,37 @@ export async function buildApp(
         return { packageName: info.applicationId, results };
       } catch (e) {
         if (e instanceof PlayError) return reply.status(e.code === 'bad_request' ? 400 : 422).send({ code: e.code, message: e.message });
+        throw e;
+      }
+    });
+
+    // Which of the app's products are already active on Google Play.
+    r.post('/v1/projects/:projectId/play/products/status', async (req, reply) => {
+      const { projectId } = req.params as { projectId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      const body = z
+        .object({
+          serviceAccount: z.string().min(50).max(20000),
+          products: z
+            .array(z.object({ id: z.string().min(1).max(139), type: z.enum(['inapp', 'subscription']) }).passthrough())
+            .min(1)
+            .max(30),
+        })
+        .parse(req.body);
+      const info = await (deps.androidInfo ?? androidAppInfo)(cfg, project.id, services.projectRoot(project), project.name);
+      if (!info.applicationId) return reply.status(409).send({ code: 'not_ready', message: 'Android package name not found' });
+      try {
+        const statuses = await productStatuses(
+          {
+            serviceAccount: parseServiceAccount(body.serviceAccount),
+            packageName: info.applicationId,
+            products: body.products.map((p) => ({ id: p.id, type: p.type })),
+          },
+          deps.playFetch ?? fetch,
+        );
+        return { statuses };
+      } catch (e) {
+        if (e instanceof PlayError) return reply.status(422).send({ code: e.code, message: e.message });
         throw e;
       }
     });

@@ -151,3 +151,39 @@ describe('Play products', () => {
     expect(explainProductError(400, 'This app does not have BILLING permission')).toContain('upload the AAB');
   });
 });
+
+describe('Product status on Google Play', () => {
+  it('marks active subscriptions and products, and only those', async () => {
+    const { productStatuses } = await import('./play_products.js');
+    const fake = (async (url: string | URL | Request) => {
+      const u = String(url);
+      if (u.includes('oauth2')) return new Response('{"access_token":"t"}', { status: 200 });
+      if (u.endsWith('/subscriptions/premium_monthly')) return new Response(JSON.stringify({ basePlans: [{ state: 'ACTIVE' }] }), { status: 200 });
+      if (u.endsWith('/subscriptions/premium_yearly')) return new Response(JSON.stringify({ basePlans: [{ state: 'DRAFT' }] }), { status: 200 });
+      if (u.endsWith('/onetimeproducts/remove_ads')) return new Response(JSON.stringify({ purchaseOptions: [{ state: 'ACTIVE' }] }), { status: 200 });
+      if (u.endsWith('/inappproducts/old_coins')) return new Response(JSON.stringify({ status: 'active' }), { status: 200 });
+      return new Response('{"error":{"message":"not found"}}', { status: 404 });
+    }) as typeof fetch;
+    const out = await productStatuses(
+      {
+        serviceAccount: sa,
+        packageName: 'com.demo.app',
+        products: [
+          { id: 'premium_monthly', type: 'subscription' },
+          { id: 'premium_yearly', type: 'subscription' },
+          { id: 'remove_ads', type: 'inapp' },
+          { id: 'old_coins', type: 'inapp' },
+          { id: 'missing', type: 'inapp' },
+        ],
+      },
+      fake,
+    );
+    expect(out).toEqual([
+      { id: 'premium_monthly', active: true },
+      { id: 'premium_yearly', active: false },
+      { id: 'remove_ads', active: true },
+      { id: 'old_coins', active: true },
+      { id: 'missing', active: false },
+    ]);
+  });
+});

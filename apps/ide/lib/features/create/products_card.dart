@@ -26,6 +26,32 @@ class _ProductsCardState extends ConsumerState<ProductsCard> {
   String? _error;
   Map<String, Map<String, dynamic>> _results = {};
 
+  /// Products Google Play already sells, read when the card opens.
+  Set<String> _active = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStatus();
+  }
+
+  /// Asks Google Play which products are active. Quiet on failure: without a
+  /// key or a connection the card simply looks as it always did.
+  Future<void> _loadStatus() async {
+    if (widget.builder.products.isEmpty) return;
+    try {
+      final sa = await ref.read(settingsStoreProvider).read(_saKey);
+      if (sa == null || sa.trim().isEmpty) return;
+      final api = await ref.read(runnerApiProvider.future);
+      final res = await api.playProductStatuses(widget.projectId, sa, widget.builder.products);
+      final list = (res['statuses'] as List).cast<Map<String, dynamic>>();
+      if (!mounted) return;
+      setState(() => _active = {for (final s in list) if (s['active'] == true) s['id'] as String});
+    } catch (_) {}
+  }
+
+  bool _isActive(Map<String, dynamic> p) => _active.contains(p['id']) || _results[p['id']]?['ok'] == true;
+
   static String _period(String? p) => switch (p) {
     'P1W' => '1 w',
     'P1M' => '1 m',
@@ -52,6 +78,8 @@ class _ProductsCardState extends ConsumerState<ProductsCard> {
       final res = await api.syncPlayProducts(widget.projectId, sa, widget.builder.products);
       final list = (res['results'] as List).cast<Map<String, dynamic>>();
       setState(() => _results = {for (final r in list) r['id'] as String: r});
+      // What Google really has now, not only what this run managed.
+      await _loadStatus();
     } on RunnerException catch (e) {
       setState(() => _error = e.message);
     } finally {
@@ -84,13 +112,15 @@ class _ProductsCardState extends ConsumerState<ProductsCard> {
               ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
-                leading: Icon(p['type'] == 'subscription' ? Icons.autorenew : Icons.toll_outlined),
+                leading: _isActive(p)
+                    ? const Icon(Icons.check_circle, color: Color(0xFF2ECC71))
+                    : Icon(p['type'] == 'subscription' ? Icons.autorenew : Icons.toll_outlined),
                 title: Text('${p['title']}  ·  ${p['id']}'),
                 subtitle: Text([
                   p['type'] == 'subscription' ? l.productPerPeriod('${p['price']} ${p['currency']}', _period(p['period'] as String?)) : '${p['price']} ${p['currency']}',
                   if ((p['freeTrialDays'] as num? ?? 0) > 0) l.productTrial((p['freeTrialDays'] as num).toInt()),
-                  if (_results[p['id']]?['ok'] == true) l.productsActive,
-                  if (_results[p['id']]?['ok'] == false) '⚠️ ${_results[p['id']]!['error']}',
+                  if (_isActive(p)) l.productsActive,
+                  if (!_isActive(p) && _results[p['id']]?['ok'] == false) '⚠️ ${_results[p['id']]!['error']}',
                 ].join('\n')),
               ),
             const SizedBox(height: 8),

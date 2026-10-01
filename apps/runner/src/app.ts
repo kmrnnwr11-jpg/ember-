@@ -1138,7 +1138,8 @@ export async function buildApp(
               about: body.about,
               hint: body.hint,
               count: body.count,
-              complete,
+              // A single designer picked: that one draws, not the default engine.
+              complete: members.length === 1 && body.only && members[0] ? members[0].complete : complete,
             });
       if (logos.length === 0) return reply.status(502).send({ code: 'logo_failed', message: 'The AI could not draw logos right now, try again' });
       return { logos };

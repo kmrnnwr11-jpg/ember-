@@ -81,8 +81,9 @@ class _LogoCardState extends ConsumerState<LogoCard> {
         if (_hint.text.trim().isNotEmpty) 'hint': _hint.text.trim(),
         // Five a round, each drawn by a different model in turn.
         'count': 5,
-        if (ref.read(chosenDesignersProvider) case final only?) 'only': only.toList(),
-        if (reviewers.length > 1)
+        // Logos are drawn by Gemini and DeepSeek only: the user's choice.
+        'only': const <String>['gemini_runner', 'deepseek'],
+        if (reviewers.isNotEmpty)
           'panel': [
             for (final r in reviewers)
               {'id': r.id, 'label': r.label, 'baseUrl': r.baseUrl, 'apiKey': settings.keys[r.id]!, 'model': r.model},

@@ -9,6 +9,7 @@ import 'core/locale.dart';
 import 'l10n/app_localizations.dart';
 import 'router.dart';
 import 'widgets/ember_logo.dart';
+import 'widgets/keyboard_scroll.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -103,6 +104,8 @@ class FlutterCursorApp extends ConsumerWidget {
       ],
       scrollBehavior: const MaterialScrollBehavior().copyWith(scrollbars: true, dragDevices: PointerDeviceKind.values.toSet()),
       routerConfig: ref.watch(routerProvider),
+      // Arrow keys and Page Up/Down scroll every screen, no mouse drag needed.
+      builder: (BuildContext context, Widget? child) => KeyboardScroll(child: child ?? const SizedBox.shrink()),
     );
   }
 }

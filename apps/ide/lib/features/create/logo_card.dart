@@ -12,6 +12,8 @@ import '../review/reviewers.dart';
 import 'app_builder.dart';
 
 /// Logo studio: describe the logo (optional), get 6 proposals, "More logos" adds 5 more, pick one.
+/// A proposal nobody wants is deleted; one the user likes is dragged into the
+/// description box and comes back as 5 variants of itself.
 class LogoCard extends ConsumerStatefulWidget {
   const LogoCard({super.key, required this.builder, required this.projectId});
   final AppBuilder builder;
@@ -29,6 +31,10 @@ class _LogoCardState extends ConsumerState<LogoCard> {
   bool _busy = false;
   String? _error;
 
+  /// The logo dragged into the box: the next round draws variants of it.
+  String? _base;
+  bool _dragOver = false;
+
   @override
   void initState() {
     super.initState();
@@ -37,12 +43,17 @@ class _LogoCardState extends ConsumerState<LogoCard> {
 
   Future<void> _loadSaved() async {
     try {
-      final s = await (await ref.read(runnerApiProvider.future)).storeState(widget.projectId);
+      final s = await (await ref.read(
+        runnerApiProvider.future,
+      )).storeState(widget.projectId);
       if (!mounted) return;
       setState(() {
         _logos
           ..clear()
-          ..addAll([for (final l in (s['logos'] as List).cast<Map<String, dynamic>>()) (id: l['id'] as String, png: base64Decode(l['thumb'] as String))]);
+          ..addAll([
+            for (final l in (s['logos'] as List).cast<Map<String, dynamic>>())
+              (id: l['id'] as String, png: base64Decode(l['thumb'] as String)),
+          ]);
         _applied = s['appliedLogo'] as String?;
         _selected ??= _applied;
       });
@@ -53,6 +64,30 @@ class _LogoCardState extends ConsumerState<LogoCard> {
   void dispose() {
     _hint.dispose();
     super.dispose();
+  }
+
+  Future<void> _delete(String id) async {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await (await ref.read(
+        runnerApiProvider.future,
+      )).deleteLogo(widget.projectId, id);
+      if (!mounted) return;
+      setState(() {
+        _logos.removeWhere((x) => x.id == id);
+        if (_selected == id) _selected = _applied;
+        if (_base == id) _base = null;
+      });
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l.logoDeleted),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } on RunnerException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    }
   }
 
   Future<void> _generate() async {
@@ -68,7 +103,9 @@ class _LogoCardState extends ConsumerState<LogoCard> {
       final health = await checkPanel(context, ref, forDrawing: true);
       if (!health.proceed) return quitEmber();
       final settings = await ref.read(reviewerSettingsProvider.future);
-      final reviewers = settings.usable.where((r) => health.working.contains(r.id)).toList();
+      final reviewers = settings.usable
+          .where((r) => health.working.contains(r.id))
+          .toList();
       final res = await api.generateLogos(widget.projectId, {
         // The Runner takes 4000 characters, and a detailed brief runs well
         // past that: the whole logo step failed with "Too big: expected string
@@ -79,6 +116,8 @@ class _LogoCardState extends ConsumerState<LogoCard> {
             ? widget.builder.prompt
             : widget.builder.prompt.substring(0, 4000),
         if (_hint.text.trim().isNotEmpty) 'hint': _hint.text.trim(),
+        // Variants of the logo the user dragged in.
+        if (_base != null) 'base': _base,
         // Five a round, each drawn by a different model in turn.
         'count': 5,
         // Logos are drawn by Gemini and DeepSeek only: the user's choice.
@@ -86,14 +125,26 @@ class _LogoCardState extends ConsumerState<LogoCard> {
         if (reviewers.isNotEmpty)
           'panel': [
             for (final r in reviewers)
-              {'id': r.id, 'label': r.label, 'baseUrl': r.baseUrl, 'apiKey': settings.keys[r.id]!, 'model': r.model},
+              {
+                'id': r.id,
+                'label': r.label,
+                'baseUrl': r.baseUrl,
+                'apiKey': settings.keys[r.id]!,
+                'model': r.model,
+              },
           ],
         // Drawing is the graphics engine's job, not the coding engine's.
-        'engine': widget.builder.designEngine == BuildEngine.claudeCode ? 'claude' : 'auto',
+        'engine': widget.builder.designEngine == BuildEngine.claudeCode
+            ? 'claude'
+            : 'auto',
       });
       final list = (res['logos'] as List).cast<Map<String, dynamic>>();
       setState(() {
-        _logos.insertAll(0, [for (final l in list) (id: l['id'] as String, png: base64Decode(l['png'] as String))]);
+        _logos.insertAll(0, [
+          for (final l in list)
+            (id: l['id'] as String, png: base64Decode(l['png'] as String)),
+        ]);
+        _base = null;
       });
     } on RunnerException catch (e) {
       setState(() => _error = e.message);
@@ -115,7 +166,10 @@ class _LogoCardState extends ConsumerState<LogoCard> {
       final api = await ref.read(runnerApiProvider.future);
       await api.applyLogo(widget.projectId, id);
       // Generate Android / iOS / web / Windows icons from the chosen logo.
-      await ref.read(runnerSocketProvider).request(MsgType.jobStart, {'projectId': widget.projectId, 'kind': 'launcher_icons'});
+      await ref.read(runnerSocketProvider).request(MsgType.jobStart, {
+        'projectId': widget.projectId,
+        'kind': 'launcher_icons',
+      });
       setState(() => _applied = id);
       messenger.showSnackBar(SnackBar(content: Text(l.logoApplied)));
     } on RunnerException catch (e) {
@@ -140,24 +194,93 @@ class _LogoCardState extends ConsumerState<LogoCard> {
               children: [
                 const Icon(Icons.auto_awesome_outlined),
                 const SizedBox(width: 8),
-                Expanded(child: Text(l.logoTitle, style: theme.textTheme.titleMedium)),
+                Expanded(
+                  child: Text(l.logoTitle, style: theme.textTheme.titleMedium),
+                ),
               ],
             ),
             const SizedBox(height: 4),
             Text(l.logoHint, style: theme.textTheme.bodySmall),
             const SizedBox(height: 10),
-            TextField(
-              key: const Key('logoHint'),
-              controller: _hint,
-              // One line, so Enter means "go" instead of a new line.
-              maxLines: 1,
-              // Enter starts the drawing: typing then pressing enter is what a
-              // person expects here, not a hunt for the button.
-              textInputAction: TextInputAction.go,
-              onSubmitted: (_) {
-                if (!_busy) _generate();
+            DragTarget<String>(
+              onWillAcceptWithDetails: (d) {
+                if (_busy) return false;
+                setState(() => _dragOver = true);
+                return true;
               },
-              decoration: InputDecoration(labelText: l.logoDescribe, hintText: l.logoDescribeHint, border: const OutlineInputBorder(), isDense: true),
+              onLeave: (_) => setState(() => _dragOver = false),
+              onAcceptWithDetails: (d) {
+                setState(() {
+                  _dragOver = false;
+                  _base = d.data;
+                });
+                _generate();
+              },
+              builder: (context, _, _) => AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  color: _dragOver
+                      ? theme.colorScheme.primary.withValues(alpha: 0.12)
+                      : null,
+                  border: _dragOver
+                      ? Border.all(color: theme.colorScheme.primary, width: 2)
+                      : null,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_base != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            for (final b in _logos.where((x) => x.id == _base))
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.memory(
+                                  b.png,
+                                  width: 36,
+                                  height: 36,
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                l.logoVariantsOf,
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                            ),
+                            if (!_busy)
+                              IconButton(
+                                icon: const Icon(Icons.close, size: 18),
+                                onPressed: () => setState(() => _base = null),
+                              ),
+                          ],
+                        ),
+                      ),
+                    TextField(
+                      key: const Key('logoHint'),
+                      controller: _hint,
+                      // One line, so Enter means "go" instead of a new line.
+                      maxLines: 1,
+                      // Enter starts the drawing: typing then pressing enter is what a
+                      // person expects here, not a hunt for the button.
+                      textInputAction: TextInputAction.go,
+                      onSubmitted: (_) {
+                        if (!_busy) _generate();
+                      },
+                      decoration: InputDecoration(
+                        labelText: l.logoDescribe,
+                        hintText: l.logoDescribeHint,
+                        helperText: l.logoDropHint,
+                        border: const OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 10),
             if (_logos.isNotEmpty)
@@ -169,23 +292,101 @@ class _LogoCardState extends ConsumerState<LogoCard> {
                 crossAxisSpacing: 10,
                 children: [
                   for (final logo in _logos)
-                    InkWell(
-                      borderRadius: BorderRadius.circular(22),
-                      onTap: _busy ? null : () => setState(() => _selected = logo.id),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(22),
-                          border: Border.all(width: 3, color: logo.id == _selected ? theme.colorScheme.primary : Colors.transparent),
+                    Draggable<String>(
+                      data: logo.id,
+                      maxSimultaneousDrags: _busy ? 0 : 1,
+                      feedback: Material(
+                        color: Colors.transparent,
+                        child: Opacity(
+                          opacity: 0.85,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: Image.memory(
+                              logo.png,
+                              width: 96,
+                              height: 96,
+                            ),
+                          ),
                         ),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            ClipRRect(borderRadius: BorderRadius.circular(18), child: Image.memory(logo.png, fit: BoxFit.cover)),
-                            if (logo.id == _applied)
-                              const Align(alignment: Alignment.topRight, child: Padding(padding: EdgeInsets.all(4), child: Icon(Icons.check_circle, color: Colors.greenAccent))),
-                          ],
+                      ),
+                      childWhenDragging: Opacity(
+                        opacity: 0.35,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(18),
+                          child: Image.memory(logo.png, fit: BoxFit.cover),
+                        ),
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(22),
+                        onTap: _busy
+                            ? null
+                            : () => setState(() => _selected = logo.id),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              width: 3,
+                              color: logo.id == _selected
+                                  ? theme.colorScheme.primary
+                                  : Colors.transparent,
+                            ),
+                          ),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(18),
+                                child: Image.memory(
+                                  logo.png,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              if (logo.id == _applied)
+                                const Align(
+                                  alignment: Alignment.topRight,
+                                  child: Padding(
+                                    padding: EdgeInsets.all(4),
+                                    child: Icon(
+                                      Icons.check_circle,
+                                      color: Colors.greenAccent,
+                                    ),
+                                  ),
+                                ),
+                              // The applied logo is the app's icon: it cannot be deleted from here.
+                              if (logo.id != _applied)
+                                Align(
+                                  alignment: Alignment.topLeft,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4),
+                                    child: Material(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.55,
+                                      ),
+                                      shape: const CircleBorder(),
+                                      child: InkWell(
+                                        customBorder: const CircleBorder(),
+                                        onTap: _busy
+                                            ? null
+                                            : () => _delete(logo.id),
+                                        child: Tooltip(
+                                          message: l.logoDelete,
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(5),
+                                            child: Icon(
+                                              Icons.delete_outline,
+                                              size: 16,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -203,7 +404,12 @@ class _LogoCardState extends ConsumerState<LogoCard> {
                 FilledButton.icon(
                   key: const Key('generateLogos'),
                   onPressed: _busy ? null : _generate,
-                  icon: _busy ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.brush_outlined),
+                  icon: _busy
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.brush_outlined),
                   label: Text(_logos.isEmpty ? l.logoGenerate : l.logoMore),
                 ),
                 if (_selected != null)

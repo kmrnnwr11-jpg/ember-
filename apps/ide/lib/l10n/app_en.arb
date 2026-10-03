@@ -1001,5 +1001,9 @@
   "phoneOpenHere": "Open on the phone now",
   "phoneSameWifi": "Point the phone camera at the code. The phone must be on the same Wi-Fi as this computer.",
   "playLanguages": "Store languages",
-  "playTranslating": "Writing the listing in the other languages…"
+  "playTranslating": "Writing the listing in the other languages…",
+  "logoDelete": "Delete",
+  "logoDeleted": "Logo deleted",
+  "logoDropHint": "Drag a logo here for 5 variants of it",
+  "logoVariantsOf": "Variants of this logo"
 }

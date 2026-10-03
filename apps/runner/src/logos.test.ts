@@ -118,3 +118,26 @@ describe('store state', () => {
     expect(quotedWords('nothing quoted here')).toEqual([]);
   });
 });
+
+describe('logo variants and delete', () => {
+  it('a variant prompt carries the liked icon and one change', async () => {
+    const { logoPrompt, VARIANT_TWEAKS } = await import('./logos.js');
+    const p = logoPrompt({ appName: 'X', about: 'a', style: VARIANT_TWEAKS[0]!, base: '<svg id="liked"></svg>' });
+    expect(p).toContain('VARIANT');
+    expect(p).toContain('<svg id="liked"></svg>');
+    expect(p).toContain(VARIANT_TWEAKS[0]!);
+  });
+
+  it('deletes the files of one proposal only', async () => {
+    const { deleteLogo, logosDir } = await import('./logos.js');
+    const { mkdtemp, mkdir: mk, writeFile: wf, readdir: rd } = await import('node:fs/promises');
+    const os = await import('node:os');
+    const root = await mkdtemp(path.join(os.tmpdir(), 'logo-del-'));
+    const dir = logosDir(root);
+    await mk(dir, { recursive: true });
+    for (const f of ['abcd1234.svg', 'abcd1234.json', 'keep5678.svg', 'keep5678.json']) await wf(path.join(dir, f), 'x');
+    expect(await deleteLogo(root, 'abcd1234')).toEqual({ deleted: 2 });
+    expect((await rd(dir)).sort()).toEqual(['keep5678.json', 'keep5678.svg']);
+    await expect(deleteLogo(root, '../x')).rejects.toThrow();
+  });
+});

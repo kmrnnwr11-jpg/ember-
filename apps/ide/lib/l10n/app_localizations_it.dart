@@ -1748,4 +1748,16 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get playTranslating => 'Scrivo la scheda nelle altre lingue…';
+
+  @override
+  String get logoDelete => 'Elimina';
+
+  @override
+  String get logoDeleted => 'Logo eliminato';
+
+  @override
+  String get logoDropHint => 'Trascina qui un logo per averne 5 varianti';
+
+  @override
+  String get logoVariantsOf => 'Varianti di questo logo';
 }

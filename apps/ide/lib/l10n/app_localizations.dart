@@ -3079,6 +3079,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Writing the listing in the other languages…'**
   String get playTranslating;
+
+  /// No description provided for @logoDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get logoDelete;
+
+  /// No description provided for @logoDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Logo deleted'**
+  String get logoDeleted;
+
+  /// No description provided for @logoDropHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag a logo here for 5 variants of it'**
+  String get logoDropHint;
+
+  /// No description provided for @logoVariantsOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Variants of this logo'**
+  String get logoVariantsOf;
 }
 
 class _AppLocalizationsDelegate

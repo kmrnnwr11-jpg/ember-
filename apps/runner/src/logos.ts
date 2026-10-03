@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { nanoid } from 'nanoid';
 import sharp from 'sharp';
@@ -11,6 +11,16 @@ import { parseJson } from './paths.js';
  * 1024×500 feature graphic. Vector output keeps logos crisp at every size and
  * works on free text models (image models have no free quota).
  */
+
+/** For variants of a logo the user liked: the same icon, one change each. */
+export const VARIANT_TWEAKS = [
+  'the same icon with a richer, more saturated version of its colours',
+  'the same icon with its main shape a little bigger and bolder',
+  'the same icon on a different background shade from the same colour family',
+  'the same icon with a subtle extra highlight and depth',
+  'the same icon with cleaner, simpler shapes',
+  'the same icon with a slightly different accent colour',
+];
 
 export const LOGO_STYLES = [
   'flat minimal geometric symbol, two or three solid colors',
@@ -59,7 +69,21 @@ export function quotedWords(hint?: string): string[] {
   return [...found];
 }
 
-export function logoPrompt(opts: { appName: string; about: string; hint?: string; style: string; avoid?: string[] }): string {
+export function logoPrompt(opts: { appName: string; about: string; hint?: string; style: string; avoid?: string[]; base?: string }): string {
+  if (opts.base) {
+    // A variant of an icon the user picked: it must stay that icon.
+    return [
+      'Draw a VARIANT of this icon, which the user likes. Keep the same subject, the same composition and layout, ' +
+        'the same colour family and the same style: someone must see at once that it is the same logo.',
+      `Change only this: ${opts.style}.`,
+      opts.hint ? `The user also asks: ${opts.hint.slice(0, 500)}` : '',
+      `App name: ${opts.appName}`,
+      `The icon to vary:\n${opts.base.slice(0, 6000)}`,
+      'Draw the complete variant now, filling the canvas.',
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
   return [
     // What the user asked for outranks everything else, so it goes first.
     opts.hint ? `DRAW THIS, exactly this, as the subject of the icon: ${opts.hint.slice(0, 500)}\nIt must be immediately recognisable as that, and fill about 90% of the canvas.` : '',
@@ -239,16 +263,18 @@ export async function generateLogosPanel(opts: {
   hint?: string;
   count: number;
   members: LogoPanelMember[];
+  base?: string;
 }): Promise<LogoProposal[]> {
   const dir = logosDir(opts.projectRoot);
   await mkdir(dir, { recursive: true });
   const previous = (await readdir(dir).catch(() => [] as string[])).filter((f) => f.endsWith('.json')).length;
 
   // Round-robin, so the set is never one model's taste repeated six times.
+  const styleOf = (i: number) => (opts.base ? VARIANT_TWEAKS[i % VARIANT_TWEAKS.length]! : LOGO_STYLES[(previous + i) % LOGO_STYLES.length]!);
   const jobs = Array.from({ length: opts.count }, (_, i) => ({
-    style: LOGO_STYLES[(previous + i) % LOGO_STYLES.length]!,
+    style: styleOf(i),
     member: opts.members[i % opts.members.length]!,
-    prompt: logoPrompt({ appName: opts.appName, about: opts.about, hint: opts.hint, style: LOGO_STYLES[(previous + i) % LOGO_STYLES.length]! }),
+    prompt: logoPrompt({ appName: opts.appName, about: opts.about, hint: opts.hint, style: styleOf(i), base: opts.base }),
   }));
 
   const drawn = (
@@ -317,18 +343,28 @@ export function logosDir(projectRoot: string) {
 }
 
 /** Generates [count] proposals in parallel; failed drawings are simply skipped. */
-export async function generateLogos(opts: { projectRoot: string; appName: string; about: string; hint?: string; count: number; complete: CompleteFn }): Promise<LogoProposal[]> {
+export async function generateLogos(opts: {
+  projectRoot: string;
+  appName: string;
+  about: string;
+  hint?: string;
+  count: number;
+  complete: CompleteFn;
+  base?: string;
+}): Promise<LogoProposal[]> {
   const dir = logosDir(opts.projectRoot);
   await mkdir(dir, { recursive: true });
   const previous = (await readdir(dir).catch(() => [] as string[])).filter((f) => f.endsWith('.json')).length;
-  const styles = Array.from({ length: opts.count }, (_, i) => LOGO_STYLES[(previous + i) % LOGO_STYLES.length]!);
+  const styles = Array.from({ length: opts.count }, (_, i) =>
+    opts.base ? VARIANT_TWEAKS[i % VARIANT_TWEAKS.length]! : LOGO_STYLES[(previous + i) % LOGO_STYLES.length]!,
+  );
   const made = await Promise.all(
     styles.map(async (style) => {
       try {
         // One retry per proposal: models sometimes return a cut or invalid drawing.
         let svg: string | null = null;
         for (let attempt = 0; attempt < 2 && !svg; attempt++) {
-          svg = sanitizeSvg(await opts.complete(LOGO_SYSTEM, logoPrompt({ appName: opts.appName, about: opts.about, hint: opts.hint, style })).catch(() => ''));
+          svg = sanitizeSvg(await opts.complete(LOGO_SYSTEM, logoPrompt({ appName: opts.appName, about: opts.about, hint: opts.hint, style, base: opts.base })).catch(() => ''));
           if (svg) await renderPng(svg, 64).catch(() => (svg = null));
         }
         if (!svg) return null;
@@ -343,6 +379,21 @@ export async function generateLogos(opts: { projectRoot: string; appName: string
     }),
   );
   return made.filter((m): m is LogoProposal => m !== null);
+}
+
+/** The SVG of a saved proposal, or null. */
+export async function readLogoSvg(projectRoot: string, logoId: string): Promise<string | null> {
+  if (!/^[\w-]{4,20}$/.test(logoId)) return null;
+  return readFile(path.join(logosDir(projectRoot), `${logoId}.svg`), 'utf8').catch(() => null);
+}
+
+/** Removes a proposal the user does not want, freeing its files. The icon already applied to the app is not touched. */
+export async function deleteLogo(projectRoot: string, logoId: string): Promise<{ deleted: number }> {
+  if (!/^[\w-]{4,20}$/.test(logoId)) throw Object.assign(new Error('invalid logo id'), { code: 'bad_request' });
+  const dir = logosDir(projectRoot);
+  const files = (await readdir(dir).catch(() => [] as string[])).filter((f) => f.startsWith(`${logoId}.`));
+  await Promise.all(files.map((f) => rm(path.join(dir, f), { force: true })));
+  return { deleted: files.length };
 }
 
 /** Writes the chosen logo into the project: launcher icon source, Play icon and feature graphic, and icon generator config. */

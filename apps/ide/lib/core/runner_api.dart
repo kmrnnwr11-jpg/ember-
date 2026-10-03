@@ -174,6 +174,10 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// Deletes a logo proposal the user does not want (frees its files).
+  Future<void> deleteLogo(String projectId, String logoId) =>
+      _call(() => _dio.delete('/v1/projects/$projectId/logos/$logoId'), (_) {});
+
   /// Uses a proposal as app icon, Play icon and feature graphic.
   Future<Map<String, dynamic>> applyLogo(String projectId, String logoId) =>
       _call(() => _dio.post('/v1/projects/$projectId/logos/$logoId/apply', data: const <String, dynamic>{}), (d) => d as Map<String, dynamic>);

@@ -29,7 +29,7 @@ import websocket from '@fastify/websocket';
 import { PathError, safeResolve, parseJson } from './paths.js';
 import { PreviewService } from './preview.js';
 import { DEFAULT_UPSTREAMS, GEMINI_FALLBACKS, registerAiRoutes } from './ai.js';
-import { applyLogo, generateLogos, generateLogosPanel, storeState } from './logos.js';
+import { applyLogo, deleteLogo, generateLogos, generateLogosPanel, readLogoSvg, storeState } from './logos.js';
 import { captureScreenshots, findBrowser, hasScreenshotMode, SCREENSHOT_UPGRADE_REQUEST } from './screenshots.js';
 import { parseScreenshots, registerResearchRoutes, saveReferenceShots } from './research.js';
 import { readSite, saveSiteShots } from './web_reference.js';
@@ -1065,6 +1065,8 @@ export async function buildApp(
           about: z.string().max(4000).default(''),
           appName: z.string().max(80).optional(),
           hint: z.string().max(500).optional(),
+          // A saved proposal to draw variants of (the user dragged a logo they like).
+          base: z.string().regex(/^[\w-]{4,20}$/).optional(),
           count: z.number().int().min(1).max(6).default(6),
           engine: z.enum(['auto', 'claude', 'gemini']).default('auto'),
           // Who the user picked to draw. Absent means everyone available.
@@ -1107,6 +1109,8 @@ export async function buildApp(
         throw last instanceof Error ? last : new Error('no AI available for logos');
       };
       const appName = body.appName ?? project.name.replace(/_\d+$/, '').replace(/_/g, ' ');
+      const baseSvg = body.base ? await readLogoSvg(services.projectRoot(project), body.base) : null;
+      if (body.base && !baseSvg) return reply.status(404).send({ code: 'logo_not_found', message: 'That logo is no longer saved' });
       // Claude and Gemini join the table on what this machine already has — a
       // login and a key — so the user never fetches anything for them; the app
       // cannot send them, having no key to send.
@@ -1131,6 +1135,7 @@ export async function buildApp(
               hint: body.hint,
               count: body.count,
               members,
+              base: baseSvg ?? undefined,
             })
           : await generateLogos({
               projectRoot: services.projectRoot(project),
@@ -1140,6 +1145,7 @@ export async function buildApp(
               count: body.count,
               // A single designer picked: that one draws, not the default engine.
               complete: members.length === 1 && body.only && members[0] ? members[0].complete : complete,
+              base: baseSvg ?? undefined,
             });
       if (logos.length === 0) return reply.status(502).send({ code: 'logo_failed', message: 'The AI could not draw logos right now, try again' });
       return { logos };
@@ -1327,6 +1333,17 @@ export async function buildApp(
       await mkdirAsync(dir, { recursive: true });
       await writeFileAsync(path.join(dir, 'listing.json'), JSON.stringify({ ...listing, savedAt: new Date().toISOString() }, null, 2));
       return { ok: true };
+    });
+
+    // Removes a proposal the user does not want (frees its files).
+    r.delete('/v1/projects/:projectId/logos/:logoId', async (req, reply) => {
+      const { projectId, logoId } = req.params as { projectId: string; logoId: string };
+      const { project } = await services.ownedProject(req.user.id, projectId);
+      try {
+        return await deleteLogo(services.projectRoot(project), logoId);
+      } catch (e) {
+        return reply.status(400).send({ code: 'bad_request', message: (e as Error).message });
+      }
     });
 
     r.post('/v1/projects/:projectId/logos/:logoId/apply', async (req) => {

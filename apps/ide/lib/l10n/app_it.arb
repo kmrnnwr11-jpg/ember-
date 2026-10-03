@@ -523,5 +523,9 @@
   "phoneOpenHere": "Apri subito sul telefono",
   "phoneSameWifi": "Inquadra il codice con la fotocamera del telefono. Il telefono deve essere sullo stesso Wi-Fi di questo computer.",
   "playLanguages": "Lingue della scheda",
-  "playTranslating": "Scrivo la scheda nelle altre lingue…"
+  "playTranslating": "Scrivo la scheda nelle altre lingue…",
+  "logoDelete": "Elimina",
+  "logoDeleted": "Logo eliminato",
+  "logoDropHint": "Trascina qui un logo per averne 5 varianti",
+  "logoVariantsOf": "Varianti di questo logo"
 }

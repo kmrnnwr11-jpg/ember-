@@ -1723,4 +1723,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get playTranslating => 'جارٍ كتابة الصفحة باللغات الأخرى…';
+
+  @override
+  String get logoDelete => 'حذف';
+
+  @override
+  String get logoDeleted => 'تم حذف الشعار';
+
+  @override
+  String get logoDropHint => 'اسحب شعارًا هنا للحصول على 5 نسخ منه';
+
+  @override
+  String get logoVariantsOf => 'نسخ من هذا الشعار';
 }

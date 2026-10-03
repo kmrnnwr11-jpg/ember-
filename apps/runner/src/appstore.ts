@@ -821,15 +821,39 @@ export function appleLocale(language: string): string {
   return map[language] ?? map[language.replace('_', '-')] ?? language;
 }
 
+/**
+ * Languages Apple added in March 2026 (50 in all). Its documentation names
+ * them with a region (pa-IN) while the older ones go by the bare code (it):
+ * both spellings are tried, the one Apple takes is kept.
+ */
+const APPLE_2026: Record<string, string[]> = {
+  'bn-BD': ['bn', 'bn-IN'],
+  gu: ['gu', 'gu-IN'],
+  'kn-IN': ['kn', 'kn-IN'],
+  'ml-IN': ['ml', 'ml-IN'],
+  'mr-IN': ['mr', 'mr-IN'],
+  pa: ['pa', 'pa-IN'],
+  sl: ['sl', 'sl-SI'],
+  'ta-IN': ['ta', 'ta-IN'],
+  'te-IN': ['te', 'te-IN'],
+  ur: ['ur', 'ur-PK'],
+};
+
 /** The Google Play languages the App Store also has a page for (the others are skipped there). */
 const ON_APPLE = new Set([
   'en-US', 'en-GB', 'en-AU', 'en-CA', 'it-IT', 'fr-FR', 'fr-CA', 'es-ES', 'es-419', 'de-DE', 'pt-PT', 'pt-BR', 'ru-RU',
   'tr-TR', 'hi-IN', 'ar', 'ar-SA', 'id', 'vi', 'th', 'ja-JP', 'ko-KR', 'pl-PL', 'nl-NL', 'ms', 'uk', 'zh-TW', 'zh-CN',
   'zh-HK', 'iw-IL', 'el-GR', 'ro', 'cs-CZ', 'sk', 'hu-HU', 'hr', 'sv-SE', 'da-DK', 'no-NO', 'fi-FI', 'ca',
+  ...Object.keys(APPLE_2026),
 ]);
 
 export function appleSupports(language: string): boolean {
   return ON_APPLE.has(language);
+}
+
+/** The Apple locale codes to try for a Google Play language, best first. */
+export function appleLocaleCandidates(language: string): string[] {
+  return APPLE_2026[language] ?? [appleLocale(language)];
 }
 
 /**
@@ -1166,19 +1190,40 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
   if (input.products?.some((p) => p.kind === 'subscription')) {
     pages = pages.map((p) => ({ ...p, description: withLegalLinks(p.description ?? '', input.privacyPolicyUrl) }));
   }
-  for (const page of pages) {
-    // Apple will not send a version for review without a support page: the
-    // privacy page carries the contact address, so it stands in for one.
-    await store.writeVersionPage(version.id, {
-      ...page,
-      supportUrl: page.supportUrl || input.privacyPolicyUrl || undefined,
-      // AdMob checks app-ads.txt on the developer website of the store listing.
-      marketingUrl: page.marketingUrl || input.marketingUrl || undefined,
-      // The line at the top of the page, changeable without a review: the short pitch.
-      promotionalText: page.promotionalText || promotionalFrom(page),
-    });
-    await store.writeAppPage(app.id, { ...page, privacyPolicyUrl: input.privacyPolicyUrl });
+  const writtenPages: AppStoreListing[] = [];
+  const skippedLanguages: string[] = [];
+  for (const [i, page] of pages.entries()) {
+    let written = false;
+    let lastError: unknown;
+    for (const locale of appleLocaleCandidates(page.language)) {
+      // An Apple code is passed through appleLocale unchanged.
+      const localized = { ...page, language: locale };
+      try {
+        // Apple will not send a version for review without a support page: the
+        // privacy page carries the contact address, so it stands in for one.
+        await store.writeVersionPage(version.id, {
+          ...localized,
+          supportUrl: page.supportUrl || input.privacyPolicyUrl || undefined,
+          // AdMob checks app-ads.txt on the developer website of the store listing.
+          marketingUrl: page.marketingUrl || input.marketingUrl || undefined,
+          // The line at the top of the page, changeable without a review: the short pitch.
+          promotionalText: page.promotionalText || promotionalFrom(page),
+        });
+        await store.writeAppPage(app.id, { ...localized, privacyPolicyUrl: input.privacyPolicyUrl });
+        written = true;
+        writtenPages.push(localized);
+        break;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (!written) {
+      // The main page must go up; a language Apple refuses is skipped.
+      if (i === 0) throw lastError;
+      skippedLanguages.push(page.language);
+    }
   }
+  if (skippedLanguages.length > 0) notes.push(`Lingue non accettate da Apple, saltate: ${skippedLanguages.join(', ')}`);
 
   // Apple's public API has no App Privacy endpoint (appDataUsages is refused),
   // so the privacy answers may have to be given once on the website: say what
@@ -1331,7 +1376,7 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
     versionId: version.id,
     versionString: version.versionString,
     versionCreated: version.created,
-    languages: pages.map((p) => appleLocale(p.language)),
+    languages: writtenPages.map((p) => appleLocale(p.language)),
     privacy,
     buildUploaded,
     buildAttached,

@@ -296,3 +296,15 @@ describe('subscriptions need the Terms of Use on the store page', () => {
     expect(withLegalLinks(once, 'https://example.com/privacy')).toBe(once);
   });
 });
+
+describe('App Store languages', () => {
+  it('knows the 2026 languages and skips the ones Apple does not have', async () => {
+    const { appleSupports, appleLocaleCandidates } = await import('./appstore.js');
+    expect(appleSupports('ur')).toBe(true);
+    expect(appleSupports('pa')).toBe(true);
+    expect(appleLocaleCandidates('pa')).toEqual(['pa', 'pa-IN']);
+    expect(appleLocaleCandidates('it-IT')).toEqual(['it']);
+    expect(appleSupports('sw')).toBe(false);
+    expect(appleSupports('fil')).toBe(false);
+  });
+});

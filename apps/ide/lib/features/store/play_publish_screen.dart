@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ide_core/ide_core.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/runner_api.dart';
 import '../../core/session.dart';
 import '../../core/settings_store.dart';
 import '../../l10n/app_localizations.dart';
@@ -112,16 +113,38 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
   String _otherDeclarations = '';
   String? _privacyUrl;
   String _track = 'internal';
-  bool _generating = false;
-  bool _publishing = false;
-  String? _error;
-  Map<String, dynamic>? _result;
+  // The long work (writing, translating, uploading) lives in a job that
+  // outlives this screen: leaving does not stop it, coming back shows it.
+  late final PublishJob _job = PublishJob.of(widget.projectId);
+  bool get _generating => _job.generating;
+  set _generating(bool v) => _job.generating = v;
+  bool get _publishing => _job.publishing;
+  set _publishing(bool v) => _job.publishing = v;
+  String? get _error => _job.error;
+  set _error(String? v) => _job.error = v;
+  Map<String, dynamic>? get _result => _job.result;
+  set _result(Map<String, dynamic>? v) => _job.result = v;
+
+  /// Changes job state and shows it here (and on this screen if reopened).
+  void _update([VoidCallback? change]) {
+    change?.call();
+    _job.changed();
+  }
+
+  void _onJob() {
+    if (!mounted) return;
+    setState(() {
+      if (_result != null && _step < 4) _step = 4;
+    });
+  }
 
   static const _saKey = 'play_service_account';
 
   @override
   void initState() {
     super.initState();
+    _job.addListener(_onJob);
+    if (_result != null) _step = 4;
     _load();
   }
 
@@ -145,7 +168,9 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
           _dataSafety = '${listing['dataSafety'] ?? ''}';
           _contentRating = '${listing['contentRating'] ?? ''}';
           _otherDeclarations = '${listing['otherDeclarations'] ?? ''}';
-          _loadTranslations('${listing['translations'] ?? ''}');
+          // Reopened while Ember works on it: the job holds the newer state.
+          if (!_job.loaded) _loadTranslations('${listing['translations'] ?? ''}');
+          _job.loaded = true;
         });
       }
     } catch (_) {}
@@ -165,6 +190,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
 
   @override
   void dispose() {
+    _job.removeListener(_onJob);
     for (final c in [_sa, _title, _short, _full, _notes, _email, _privacyLink, _consoleLink]) {
       c.dispose();
     }
@@ -205,12 +231,13 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
   }
 
   Future<void> _generate() async {
-    setState(() {
+    _update(() {
       _generating = true;
       _error = null;
     });
     try {
-      final complete = await _completer();
+      final complete = _job.complete = await _completer();
+      _job.api ??= await ref.read(runnerApiProvider.future);
       // The name is stated as a fact before anything else: left to infer it
       // from the package, the writer invented one from the folder name and an
       // app called PrintGo was published as StampaFacile.
@@ -240,7 +267,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       _dataSafety = '${j['dataSafetyGuide'] ?? ''}';
       _contentRating = '${j['contentRatingGuide'] ?? ''}';
       _otherDeclarations = '${j['otherDeclarationsGuide'] ?? ''}';
-      final api = await ref.read(runnerApiProvider.future);
+      final api = _job.api!;
       // Google will not take an app without a policy at a public address, so a
       // model that answered everything else and skipped this one must not cost
       // the upload: write a true one from what the app actually does.
@@ -282,7 +309,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     } catch (e) {
       _error = e is RunnerException ? e.message : e.toString();
     }
-    if (mounted) setState(() => _generating = false);
+    _update(() => _generating = false);
     await _translate();
   }
 
@@ -378,16 +405,19 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     'en-SG': 'English (Singapore)',
     'en-ZA': 'English (South Africa)',
   };
-  final Set<String> _languages = {...storeLanguages.keys};
+  Set<String> get _languages => _job.languages;
 
   /// The listing in each language, as {language: {title, shortDescription, fullDescription}}.
-  Map<String, Map<String, String>> _translations = {};
-  bool _translating = false;
+  Map<String, Map<String, String>> get _translations => _job.translations;
+  set _translations(Map<String, Map<String, String>> v) => _job.translations = v;
+  bool get _translating => _job.translating;
+  set _translating(bool v) => _job.translating = v;
 
   /// The English text the translations were written from. When the title or
   /// a description changes, the translations still carry the old words (the
   /// old app name in 82 languages): they are written again.
-  String? _translatedFrom;
+  String? get _translatedFrom => _job.translatedFrom;
+  set _translatedFrom(String? v) => _job.translatedFrom = v;
   String get _source => '${_title.text.trim()}\u0001${_short.text.trim()}\u0001${_full.text.trim()}';
   bool get _translationsStale => _translations.isNotEmpty && _translatedFrom != null && _translatedFrom != _source;
 
@@ -439,9 +469,9 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     }
     final wanted = _languages.where((l) => !_translations.containsKey(l)).toList();
     if (wanted.isEmpty || _title.text.trim().isEmpty) return;
-    setState(() => _translating = true);
+    _update(() => _translating = true);
     try {
-      final complete = await _completer();
+      final complete = _job.complete ?? (_job.complete = await _completer());
       // A few languages per call: 25 full listings in one answer are far past
       // what a model writes in one go, and one cut answer lost them all.
       const group = 4;
@@ -455,13 +485,13 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
           if (r != null) lastError = r is RunnerException ? r.message : r.toString();
         }
         await _saveListing();
-        if (mounted) setState(() {});
+        _update(() {});
       }
       if (lastError != null && wanted.any((l) => !_translations.containsKey(l))) _error = lastError;
     } catch (e) {
       _error = e is RunnerException ? e.message : e.toString();
     }
-    if (mounted) setState(() => _translating = false);
+    _update(() => _translating = false);
   }
 
   Future<void> _translateGroup(CompleteText complete, List<String> langs) async {
@@ -580,7 +610,12 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
 
   Future<void> _saveListing() async {
     try {
-      await (await ref.read(runnerApiProvider.future)).saveListing(widget.projectId, {
+      var api = _job.api;
+      if (api == null) {
+        api = await ref.read(runnerApiProvider.future);
+        _job.api = api;
+      }
+      await api!.saveListing(widget.projectId, {
         'title': _title.text.trim(),
         'shortDescription': _short.text.trim(),
         'fullDescription': _full.text.trim(),
@@ -596,16 +631,19 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
   }
 
   Future<void> _publish({bool listingOnly = false}) async {
-    setState(() {
+    _update(() {
       _publishing = true;
       _error = null;
     });
+    final store = ref.read(settingsStoreProvider);
+    _job.api ??= await ref.read(runnerApiProvider.future);
+    _job.complete ??= await _completer().then<CompleteText?>((c) => c, onError: (Object _) => null);
     // Languages switched on after the listing was written still need their page.
     await _translate();
     await _saveListing();
     try {
-      await ref.read(settingsStoreProvider).write(_saKey, _sa.text.trim());
-      final api = await ref.read(runnerApiProvider.future);
+      await store.write(_saKey, _sa.text.trim());
+      final api = _job.api!;
       _result = await api.publishToPlay(widget.projectId, {
         'serviceAccount': _sa.text.trim(),
         'track': _track,
@@ -625,13 +663,13 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
         // Only the store page of an app already on Google Play: no new version.
         if (listingOnly) 'listingOnly': true,
       });
-      _step = 4;
+      if (mounted) _step = 4;
     } on RunnerException catch (e) {
       _error = e.message;
     } catch (e) {
       _error = e.toString();
     }
-    if (mounted) setState(() => _publishing = false);
+    _update(() => _publishing = false);
   }
 
   /// Saves the pasted Play Console address so every button opens the user's own account.
@@ -956,4 +994,37 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       ),
     );
   }
+}
+
+
+/// The publishing work of one app, alive as long as Ember runs. Writing the
+/// listing, translating it into every language and uploading it take minutes:
+/// the user goes to another screen meanwhile, and the work must not stop
+/// there. The screen shows the job and gives it its texts; reopened, it shows
+/// where the job is.
+class PublishJob extends ChangeNotifier {
+  PublishJob._();
+
+  static final Map<String, PublishJob> _all = {};
+  static PublishJob of(String projectId) => _all.putIfAbsent(projectId, PublishJob._);
+
+  final Set<String> languages = {..._PlayPublishScreenState.storeLanguages.keys};
+  Map<String, Map<String, String>> translations = {};
+  String? translatedFrom;
+  bool generating = false;
+  bool translating = false;
+  bool publishing = false;
+  String? error;
+  Map<String, dynamic>? result;
+
+  /// The saved listing was read into this job once; later opens keep the job's.
+  bool loaded = false;
+
+  /// Taken while the screen was open, used after it closed.
+  RunnerApi? api;
+  CompleteText? complete;
+
+  bool get busy => generating || translating || publishing;
+
+  void changed() => notifyListeners();
 }

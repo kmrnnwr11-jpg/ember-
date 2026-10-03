@@ -79,7 +79,7 @@ export interface PublishResult {
    * user must press "Send for review" once in the Play Console. */
   reviewNotSent: boolean;
   /** Listing languages written and graphics uploaded, so the client can say exactly what changed. */
-  uploaded: { languages: string[]; listing: boolean; icon: boolean; featureGraphic: boolean; screenshots: number };
+  uploaded: { languages: string[]; listing: boolean; icon: boolean; featureGraphic: boolean; screenshots: number; skipped?: string[] };
 }
 
 type Fetch = typeof fetch;
@@ -202,16 +202,25 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
   if (hasText(input.listing)) for (const lang of languages) pages.set(lang, input.listing!);
   for (const t of input.translations ?? []) if (t.language && hasText(t)) pages.set(t.language, t);
 
+  const skippedLanguages: string[] = [];
   for (const [lang, l] of pages) {
-    await json('PUT', `${base}/listings/${encodeURIComponent(lang)}`, {
-      language: lang,
-      ...(l.title ? { title: l.title.slice(0, 30) } : {}),
-      ...(l.shortDescription ? { shortDescription: l.shortDescription.slice(0, 80) } : {}),
-      ...(l.fullDescription ? { fullDescription: l.fullDescription.slice(0, 4000) } : {}),
-    });
+    try {
+      await json('PUT', `${base}/listings/${encodeURIComponent(lang)}`, {
+        language: lang,
+        ...(l.title ? { title: l.title.slice(0, 30) } : {}),
+        ...(l.shortDescription ? { shortDescription: l.shortDescription.slice(0, 80) } : {}),
+        ...(l.fullDescription ? { fullDescription: l.fullDescription.slice(0, 4000) } : {}),
+      });
+    } catch (e) {
+      // A language Google refuses for this app is skipped; the main page never is.
+      if (lang === languages[0]) throw e;
+      skippedLanguages.push(lang);
+      continue;
+    }
     uploaded.languages.push(lang);
     uploaded.listing = true;
   }
+  if (skippedLanguages.length > 0) (uploaded as { skipped?: string[] }).skipped = skippedLanguages;
   if (input.contactEmail) {
     await json('PATCH', `${base}/details`, { contactEmail: input.contactEmail });
   }

@@ -789,8 +789,26 @@ export function appleLocale(language: string): string {
     'hi-IN': 'hi',
     ar: 'ar-SA',
     'ar-SA': 'ar-SA',
+    id: 'id',
+    vi: 'vi',
+    th: 'th',
+    'ja-JP': 'ja',
+    'ko-KR': 'ko',
+    'pl-PL': 'pl',
+    'nl-NL': 'nl-NL',
+    ms: 'ms',
+    uk: 'uk',
+    'es-419': 'es-MX',
+    'zh-TW': 'zh-Hant',
   };
   return map[language] ?? map[language.replace('_', '-')] ?? language;
+}
+
+/** Google Play languages the App Store has no page for (Apple refuses them). */
+const NOT_ON_APPLE = new Set(['fil', 'bn-BD', 'ta-IN', 'te-IN', 'mr-IN']);
+
+export function appleSupports(language: string): boolean {
+  return !NOT_ON_APPLE.has(language);
 }
 
 /**
@@ -1119,7 +1137,9 @@ export async function publishToAppStore(input: AppStorePublishInput, fetchImpl: 
   }
 
   const version = await store.ensureVersion(app.id, input.versionString);
-  let pages = [input.listing, ...(input.translations ?? [])].filter((p): p is AppStoreListing => !!p && !!p.language);
+  let pages = [input.listing, ...(input.translations ?? [])].filter(
+    (p): p is AppStoreListing => !!p && !!p.language && appleSupports(p.language),
+  );
   // Auto-renewable subscriptions: Apple wants the Terms of Use (EULA) linked in the
   // description itself (3.1.2), with the privacy policy.
   if (input.products?.some((p) => p.kind === 'subscription')) {

@@ -285,18 +285,36 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
   /// country with no page of its own, so it reaches everyone.
   static const mainLanguage = 'en-US';
 
-  /// The other store languages offered, as Google Play names them. All on by
-  /// default: a page in the reader's language costs nothing and sells more.
+  /// The other store languages offered, as Google Play names them: the ten
+  /// languages every Ember app speaks, then the big creator and app markets.
+  /// All on by default: a page in the reader's language costs nothing and
+  /// sells more.
   static const storeLanguages = <String, String>{
     'it-IT': 'Italiano',
-    'fr-FR': 'Français',
     'es-ES': 'Español',
-    'ar': 'العربية',
+    'pt-BR': 'Português (BR)',
+    'fr-FR': 'Français',
     'de-DE': 'Deutsch',
-    'pt-BR': 'Português',
-    'tr-TR': 'Türkçe',
     'hi-IN': 'हिन्दी',
+    'ar': 'العربية',
+    'id': 'Bahasa Indonesia',
     'ru-RU': 'Русский',
+    'tr-TR': 'Türkçe',
+    'vi': 'Tiếng Việt',
+    'th': 'ไทย',
+    'ja-JP': '日本語',
+    'ko-KR': '한국어',
+    'pl-PL': 'Polski',
+    'nl-NL': 'Nederlands',
+    'fil': 'Filipino',
+    'ms': 'Bahasa Melayu',
+    'bn-BD': 'বাংলা',
+    'ta-IN': 'தமிழ்',
+    'te-IN': 'తెలుగు',
+    'mr-IN': 'मराठी',
+    'uk': 'Українська',
+    'es-419': 'Español (Latinoamérica)',
+    'zh-TW': '繁體中文',
   };
   final Set<String> _languages = {...storeLanguages.keys};
 
@@ -310,9 +328,14 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       final j = jsonDecode(saved) as Map<String, dynamic>;
       final langs = (j['languages'] as List?)?.cast<String>();
       if (langs != null) {
+        // A listing saved when Ember offered fewer languages gets the new
+        // ones too (they are translated next time); a language the user
+        // switched off among those offered back then stays off.
+        const before = {'it-IT', 'fr-FR', 'es-ES', 'ar', 'de-DE', 'pt-BR', 'tr-TR', 'hi-IN', 'ru-RU'};
         _languages
           ..clear()
-          ..addAll(langs);
+          ..addAll(langs)
+          ..addAll(storeLanguages.keys.where((l) => !before.contains(l)));
       }
       _translations = {
         for (final e in ((j['pages'] as Map?) ?? const {}).entries) '${e.key}': (e.value as Map).map((k, v) => MapEntry('$k', '$v')),
@@ -332,41 +355,60 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     setState(() => _translating = true);
     try {
       final complete = await _completer();
-      final prompt = [
-        'Translate this Google Play store listing into these languages: ${wanted.join(', ')}.',
-        'Keep the app name "${_title.text.trim().split(':').first.trim()}" unchanged in every language.',
-        'Limits: title 30 characters, shortDescription 80, fullDescription 4000. Write naturally for each market, not word for word.',
-        'Reply with JSON only: {"<language code>": {"title": "...", "shortDescription": "...", "fullDescription": "..."}}',
-        '',
-        'title: ${_title.text.trim()}',
-        'shortDescription: ${_short.text.trim()}',
-        'fullDescription:',
-        _full.text.trim(),
-      ].join('\n');
-      final res = await complete('You translate app store listings for Google Play. You answer with JSON only.', prompt);
-      final text = res.text.trim();
-      final start = text.indexOf('{');
-      final end = text.lastIndexOf('}');
-      if (start < 0 || end <= start) throw const FormatException('Risposta AI non valida');
-      final j = jsonDecode(text.substring(start, end + 1)) as Map<String, dynamic>;
-      for (final entry in j.entries) {
-        final v = (entry.value as Map).cast<String, dynamic>();
-        final tt = '${v['title'] ?? ''}'.trim();
-        // The default (en-US) listing must keep the installed app's exact name,
-        // so Google's name-match check on the default listing always passes.
-        // Every other language gets a localised name (better discovery).
-        final isDefault = entry.key == 'en-US';
-        _translations[entry.key] = {
-          'title': (isDefault || tt.isEmpty) ? _title.text.trim() : tt,
-          'shortDescription': '${v['shortDescription'] ?? ''}',
-          'fullDescription': '${v['fullDescription'] ?? ''}',
-        };
+      // A few languages per call: 25 full listings in one answer are far past
+      // what a model writes in one go, and one cut answer lost them all.
+      const group = 4;
+      final batches = [for (var i = 0; i < wanted.length; i += group) wanted.sublist(i, i + group > wanted.length ? wanted.length : i + group)];
+      String? lastError;
+      for (var i = 0; i < batches.length; i += 3) {
+        final results = await Future.wait(
+          batches.skip(i).take(3).map((langs) => _translateGroup(complete, langs).then<Object?>((_) => null, onError: (Object e) => e)),
+        );
+        for (final r in results) {
+          if (r != null) lastError = r is RunnerException ? r.message : r.toString();
+        }
+        await _saveListing();
+        if (mounted) setState(() {});
       }
-      await _saveListing();
+      if (lastError != null && wanted.any((l) => !_translations.containsKey(l))) _error = lastError;
     } catch (e) {
       _error = e is RunnerException ? e.message : e.toString();
     }
     if (mounted) setState(() => _translating = false);
+  }
+
+  Future<void> _translateGroup(CompleteText complete, List<String> langs) async {
+    final prompt = [
+      'Translate this Google Play store listing into these languages: ${langs.join(', ')}.',
+      'Keep the app name "${_title.text.trim().split(':').first.trim()}" unchanged in every language.',
+      'Limits: title 30 characters, shortDescription 80, fullDescription 4000. Write naturally for each market, not word for word.',
+      'Reply with JSON only: {"<language code>": {"title": "...", "shortDescription": "...", "fullDescription": "..."}}',
+      '',
+      'title: ${_title.text.trim()}',
+      'shortDescription: ${_short.text.trim()}',
+      'fullDescription:',
+      _full.text.trim(),
+    ].join('\n');
+    final res = await complete('You translate app store listings for Google Play. You answer with JSON only.', prompt);
+    final text = res.text.trim();
+    final start = text.indexOf('{');
+    final end = text.lastIndexOf('}');
+    if (start < 0 || end <= start) throw const FormatException('Risposta AI non valida');
+    final j = jsonDecode(text.substring(start, end + 1)) as Map<String, dynamic>;
+    for (final entry in j.entries) {
+      if (!langs.contains(entry.key)) continue;
+      final v = (entry.value as Map).cast<String, dynamic>();
+      final tt = '${v['title'] ?? ''}'.trim();
+      // The default (en-US) listing must keep the installed app's exact name,
+      // so Google's name-match check on the default listing always passes.
+      // Every other language gets a localised name (better discovery).
+      final isDefault = entry.key == 'en-US';
+      _translations[entry.key] = {
+        'title': (isDefault || tt.isEmpty) ? _title.text.trim() : tt,
+        'shortDescription': '${v['shortDescription'] ?? ''}',
+        'fullDescription': '${v['fullDescription'] ?? ''}',
+      };
+    }
   }
 
   Future<void> _saveListing() async {

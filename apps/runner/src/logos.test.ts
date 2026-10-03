@@ -123,7 +123,7 @@ describe('logo variants and delete', () => {
   it('a variant prompt carries the liked icon and one change', async () => {
     const { logoPrompt, VARIANT_TWEAKS } = await import('./logos.js');
     const p = logoPrompt({ appName: 'X', about: 'a', style: VARIANT_TWEAKS[0]!, base: '<svg id="liked"></svg>' });
-    expect(p).toContain('VARIANT');
+    expect(p).toContain('NEW, different icon in exactly the same style');
     expect(p).toContain('<svg id="liked"></svg>');
     expect(p).toContain(VARIANT_TWEAKS[0]!);
   });

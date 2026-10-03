@@ -12,14 +12,17 @@ import { parseJson } from './paths.js';
  * works on free text models (image models have no free quota).
  */
 
-/** For variants of a logo the user liked: the same icon, one change each. */
+/**
+ * For a logo the user liked: five NEW designs in its style, each with its own
+ * idea, so the five differ from each other and from the original.
+ */
 export const VARIANT_TWEAKS = [
-  'the same icon with a richer, more saturated version of its colours',
-  'the same icon with its main shape a little bigger and bolder',
-  'the same icon on a different background shade from the same colour family',
-  'the same icon with a subtle extra highlight and depth',
-  'the same icon with cleaner, simpler shapes',
-  'the same icon with a slightly different accent colour',
+  'a new composition: the same kind of elements rearranged in a different layout and proportion',
+  'a different main symbol for what the app does, drawn in this exact style',
+  'a bold minimal mark: one single strong shape that captures the app, in this style',
+  'a richer design that combines two symbols of the app into one emblem, in this style',
+  'a fresh metaphor for the app (another object or sign people associate with it), in this style',
+  'a monogram built from the first letter of the app name, in this style',
 ];
 
 export const LOGO_STYLES = [
@@ -71,15 +74,20 @@ export function quotedWords(hint?: string): string[] {
 
 export function logoPrompt(opts: { appName: string; about: string; hint?: string; style: string; avoid?: string[]; base?: string }): string {
   if (opts.base) {
-    // A variant of an icon the user picked: it must stay that icon.
+    // A logo the user liked: keep its STYLE, draw a NEW design. Five of these
+    // run side by side, each with a different idea, so they differ from each
+    // other instead of coming back as five copies.
     return [
-      'Draw a VARIANT of this icon, which the user likes. Keep the same subject, the same composition and layout, ' +
-        'the same colour family and the same style: someone must see at once that it is the same logo.',
-      `Change only this: ${opts.style}.`,
+      'The user likes the STYLE of this icon. Draw a NEW, different icon in exactly the same style: ' +
+        'the same colour palette, the same background treatment, the same rendering (flat, gradient, 3D, glow...), ' +
+        'the same line weight, corner roundness and level of detail. It must look like it comes from the same designer and the same set.',
+      `The design idea for this one: ${opts.style}.`,
+      'Do NOT copy the icon below and do not just recolour it: the shapes and the composition must be clearly different.',
       opts.hint ? `The user also asks: ${opts.hint.slice(0, 500)}` : '',
       `App name: ${opts.appName}`,
-      `The icon to vary:\n${opts.base.slice(0, 6000)}`,
-      'Draw the complete variant now, filling the canvas.',
+      `What the app does: ${opts.about.slice(0, 800)}`,
+      `The icon whose style to follow:\n${opts.base.slice(0, 6000)}`,
+      'Draw the complete new icon now, filling the canvas.',
     ]
       .filter(Boolean)
       .join('\n');

@@ -3103,6 +3103,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Variants of this logo'**
   String get logoVariantsOf;
+
+  /// No description provided for @playUpdateListingOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Update only the store page'**
+  String get playUpdateListingOnly;
+
+  /// No description provided for @playUpdateListingOnlyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For an app already on Google Play: texts, all languages and graphics go live without a new version.'**
+  String get playUpdateListingOnlyHint;
 }
 
 class _AppLocalizationsDelegate

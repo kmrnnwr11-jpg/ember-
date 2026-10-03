@@ -459,5 +459,7 @@
   "logoDelete": "Supprimer",
   "logoDeleted": "Logo supprimé",
   "logoDropHint": "Glisse un logo ici pour en avoir 5 variantes",
-  "logoVariantsOf": "Variantes de ce logo"
+  "logoVariantsOf": "Variantes de ce logo",
+  "playUpdateListingOnly": "Mettre à jour seulement la fiche",
+  "playUpdateListingOnlyHint": "Pour une app déjà sur Google Play : textes, toutes les langues et visuels sans nouvelle version."
 }

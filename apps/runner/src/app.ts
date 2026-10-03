@@ -1016,15 +1016,18 @@ export async function buildApp(
                 fullDescription: fitted(4000).optional(),
               }),
             )
-            .max(20)
+            // Every store language Ember writes (25 + the main one), with room to spare.
+            .max(60)
             .optional(),
           releaseNotes: z.object({ language: z.string().default('it-IT'), text: fitted(500) }).optional(),
           contactEmail: z.string().email().optional(),
+          // Update only the store page of an app already on Google Play.
+          listingOnly: z.boolean().default(false),
         })
         .parse(req.body);
       const root = services.projectRoot(project);
       const aabPath = path.join(root, ARTIFACTS['app-release.aab']!.rel);
-      if (!(await stat(aabPath).catch(() => null))) {
+      if (!body.listingOnly && !(await stat(aabPath).catch(() => null))) {
         return reply.status(409).send({ code: 'not_ready', message: 'Generate the signed AAB first' });
       }
       const info = await (deps.androidInfo ?? androidAppInfo)(cfg, project.id, root, project.name);
@@ -1042,11 +1045,12 @@ export async function buildApp(
             releaseNotes: body.releaseNotes,
             contactEmail: body.contactEmail,
             images: await storeImages(root),
+            listingOnly: body.listingOnly,
           },
           deps.playFetch ?? fetch,
         );
         // Remembering the version must never turn a successful upload into an error.
-        await rememberPublishedVersionCode(root, result.versionCode).catch(() => {});
+        if (!body.listingOnly) await rememberPublishedVersionCode(root, result.versionCode).catch(() => {});
         return { ...result, packageName: info.applicationId };
       } catch (e) {
         if (e instanceof PlayError) {

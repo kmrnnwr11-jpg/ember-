@@ -1742,4 +1742,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logoVariantsOf => 'Variants of this logo';
+
+  @override
+  String get playUpdateListingOnly => 'Update only the store page';
+
+  @override
+  String get playUpdateListingOnlyHint =>
+      'For an app already on Google Play: texts, all languages and graphics go live without a new version.';
 }

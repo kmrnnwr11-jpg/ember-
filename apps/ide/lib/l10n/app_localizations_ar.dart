@@ -1735,4 +1735,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get logoVariantsOf => 'نسخ من هذا الشعار';
+
+  @override
+  String get playUpdateListingOnly => 'تحديث صفحة المتجر فقط';
+
+  @override
+  String get playUpdateListingOnlyHint =>
+      'لتطبيق موجود على Google Play: النصوص وكل اللغات والصور بدون إصدار جديد.';
 }

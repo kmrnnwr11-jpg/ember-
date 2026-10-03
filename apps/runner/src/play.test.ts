@@ -56,6 +56,28 @@ describe('Google Play publishing', () => {
   });
   afterAll(() => rm(tmp, { recursive: true, force: true }));
 
+  it('updates only the store page: no bundle, no release, every language', async () => {
+    const g = fakeGoogle();
+    const langs = ['it-IT', 'tr-TR', 'vi', 'ja-JP', 'zh-TW'];
+    const res = await publishToPlay(
+      {
+        serviceAccount: parseServiceAccount(saJson),
+        packageName: 'com.example.app',
+        aabPath: path.join(tmp, 'missing.aab'),
+        track: 'production',
+        status: 'completed',
+        listing: { language: 'en-US', title: 'App', shortDescription: 's', fullDescription: 'f' },
+        translations: langs.map((language) => ({ language, title: 'App', shortDescription: 's', fullDescription: 'f' })),
+        listingOnly: true,
+      },
+      g.impl,
+    );
+    expect(g.calls.some((c) => c.url.includes('/bundles'))).toBe(false);
+    expect(g.calls.some((c) => c.url.includes('/tracks/'))).toBe(false);
+    expect(g.calls.some((c) => c.url.includes(':commit'))).toBe(true);
+    expect(res.uploaded.languages).toEqual(expect.arrayContaining(['en-US', ...langs]));
+  });
+
   it('validates service account JSON', () => {
     expect(parseServiceAccount(saJson).client_email).toContain('@');
     expect(() => parseServiceAccount('nope')).toThrow(PlayError);

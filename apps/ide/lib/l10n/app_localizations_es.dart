@@ -1759,4 +1759,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get logoVariantsOf => 'Variantes de este logo';
+
+  @override
+  String get playUpdateListingOnly => 'Actualizar solo la ficha';
+
+  @override
+  String get playUpdateListingOnlyHint =>
+      'Para una app ya en Google Play: textos, todos los idiomas y gráficos sin una nueva versión.';
 }

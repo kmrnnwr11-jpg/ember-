@@ -459,5 +459,7 @@
   "logoDelete": "حذف",
   "logoDeleted": "تم حذف الشعار",
   "logoDropHint": "اسحب شعارًا هنا للحصول على 5 نسخ منه",
-  "logoVariantsOf": "نسخ من هذا الشعار"
+  "logoVariantsOf": "نسخ من هذا الشعار",
+  "playUpdateListingOnly": "تحديث صفحة المتجر فقط",
+  "playUpdateListingOnlyHint": "لتطبيق موجود على Google Play: النصوص وكل اللغات والصور بدون إصدار جديد."
 }

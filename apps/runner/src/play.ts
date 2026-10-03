@@ -66,6 +66,8 @@ export interface PublishInput {
   contactEmail?: string;
   /** Store graphics (PNG paths): replaced on every upload when present. */
   images?: { icon?: string; featureGraphic?: string; phoneScreenshots?: string[] };
+  /** Only the store page (texts, languages, graphics): no new bundle, no release. */
+  listingOnly?: boolean;
 }
 
 export interface PublishResult {
@@ -161,6 +163,9 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
   const editId = String(edit.id);
   const base = `${API}/${pkg}/edits/${encodeURIComponent(editId)}`;
 
+  // Only the store page: the app already published stays as it is.
+  const bundle: { versionCode?: number } = input.listingOnly ? { versionCode: 0 } : await uploadBundle();
+  async function uploadBundle(): Promise<{ versionCode?: number }> {
   const aab = await readFile(input.aabPath);
   // A bundle is tens of megabytes: on a slow uplink the connection can die mid-way, so try again.
   let upload: Response | null = null;
@@ -185,8 +190,10 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
     );
   }
   if (!upload.ok) throw await googleError(upload);
-  const bundle = (await upload.json()) as { versionCode?: number };
-  if (typeof bundle.versionCode !== 'number') throw new PlayError('play_api_error', 'Google Play did not return a versionCode for the bundle');
+  const uploadedBundle = (await upload.json()) as { versionCode?: number };
+  if (typeof uploadedBundle.versionCode !== 'number') throw new PlayError('play_api_error', 'Google Play did not return a versionCode for the bundle');
+  return uploadedBundle;
+  }
 
   // The main store listing is the app's DEFAULT language: write there too, otherwise Play Console shows it empty.
   const details = await json('GET', `${base}/details`).catch(() => ({}) as Record<string, unknown>);
@@ -263,7 +270,7 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
   let downgradedToDraft = false;
   let reviewNotSent = false;
   const commit = async (notSentForReview = false) => {
-    await json('PUT', `${base}/tracks/${input.track}`, release(status));
+    if (!input.listingOnly) await json('PUT', `${base}/tracks/${input.track}`, release(status));
     // New apps (never reviewed) cannot be auto-submitted; Google requires this flag, then the
     // user sends for review once from the Play Console UI.
     await json('POST', `${base}:commit${notSentForReview ? '?changesNotSentForReview=true' : ''}`);
@@ -293,7 +300,7 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
       throw e;
     }
   }
-  return { editId, versionCode: bundle.versionCode, track: input.track, status, downgradedToDraft, reviewNotSent, uploaded };
+  return { editId, versionCode: bundle.versionCode ?? 0, track: input.track, status, downgradedToDraft, reviewNotSent, uploaded };
 }
 
 /** Minimal, safe Markdown → HTML for hosted privacy policies (headings, lists, bold, links, paragraphs). */

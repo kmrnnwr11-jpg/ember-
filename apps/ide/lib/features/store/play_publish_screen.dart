@@ -428,7 +428,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     } catch (_) {}
   }
 
-  Future<void> _publish() async {
+  Future<void> _publish({bool listingOnly = false}) async {
     setState(() {
       _publishing = true;
       _error = null;
@@ -455,6 +455,8 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
         ],
         if (_notes.text.trim().isNotEmpty) 'releaseNotes': {'language': mainLanguage, 'text': _notes.text.trim()},
         if (_email.text.trim().isNotEmpty) 'contactEmail': _email.text.trim(),
+        // Only the store page of an app already on Google Play: no new version.
+        if (listingOnly) 'listingOnly': true,
       });
       _step = 4;
     } on RunnerException catch (e) {
@@ -714,6 +716,19 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                     onPressed: _publishing || !saValid ? null : _publish,
                     icon: _publishing ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.cloud_upload),
                     label: Padding(padding: const EdgeInsets.all(10), child: Text(l.playUpload)),
+                  ),
+                  const SizedBox(height: 8),
+                  // For apps already on Google Play: new languages, new texts or
+                  // graphics go live without building and sending a new version.
+                  OutlinedButton.icon(
+                    key: const Key('updateListingOnly'),
+                    onPressed: _publishing || !saValid ? null : () => _publish(listingOnly: true),
+                    icon: const Icon(Icons.translate),
+                    label: Padding(padding: const EdgeInsets.all(10), child: Text(l.playUpdateListingOnly)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(l.playUpdateListingOnlyHint, style: Theme.of(context).textTheme.bodySmall),
                   ),
                   if (_error != null)
                     Padding(

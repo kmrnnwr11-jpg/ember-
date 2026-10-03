@@ -1016,8 +1016,8 @@ export async function buildApp(
                 fullDescription: fitted(4000).optional(),
               }),
             )
-            // Every store language Ember writes (25 + the main one), with room to spare.
-            .max(60)
+            // Every store language Google Play has (83), with room to spare.
+            .max(100)
             .optional(),
           releaseNotes: z.object({ language: z.string().default('it-IT'), text: fitted(500) }).optional(),
           contactEmail: z.string().email().optional(),

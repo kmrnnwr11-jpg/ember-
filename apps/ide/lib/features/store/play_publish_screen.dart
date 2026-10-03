@@ -285,10 +285,10 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
   /// country with no page of its own, so it reaches everyone.
   static const mainLanguage = 'en-US';
 
-  /// The other store languages offered, as Google Play names them: the ten
-  /// languages every Ember app speaks, then the big creator and app markets.
-  /// All on by default: a page in the reader's language costs nothing and
-  /// sells more.
+  /// Every store language Google Play has (82 besides the main English one),
+  /// as Google Play names them: the ten languages every Ember app speaks
+  /// first, then the rest. All on by default: a page in the reader's language
+  /// costs nothing and sells more. The English variants copy the main text.
   static const storeLanguages = <String, String>{
     'it-IT': 'Italiano',
     'es-ES': 'Español',
@@ -315,6 +315,63 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     'uk': 'Українська',
     'es-419': 'Español (Latinoamérica)',
     'zh-TW': '繁體中文',
+    'ur': 'اردو',
+    'pa': 'ਪੰਜਾਬੀ',
+    'zh-CN': '简体中文',
+    'zh-HK': '繁體中文 (香港)',
+    'pt-PT': 'Português (PT)',
+    'es-US': 'Español (EE. UU.)',
+    'fr-CA': 'Français (Canada)',
+    'gu': 'ગુજરાતી',
+    'kn-IN': 'ಕನ್ನಡ',
+    'ml-IN': 'മലയാളം',
+    'ne-NP': 'नेपाली',
+    'si-LK': 'සිංහල',
+    'fa': 'فارسی',
+    'iw-IL': 'עברית',
+    'el-GR': 'Ελληνικά',
+    'ro': 'Română',
+    'cs-CZ': 'Čeština',
+    'sk': 'Slovenčina',
+    'hu-HU': 'Magyar',
+    'bg': 'Български',
+    'sr': 'Српски',
+    'hr': 'Hrvatski',
+    'sl': 'Slovenščina',
+    'mk-MK': 'Македонски',
+    'sq': 'Shqip',
+    'sv-SE': 'Svenska',
+    'da-DK': 'Dansk',
+    'no-NO': 'Norsk',
+    'fi-FI': 'Suomi',
+    'is-IS': 'Íslenska',
+    'et': 'Eesti',
+    'lv': 'Latviešu',
+    'lt': 'Lietuvių',
+    'be': 'Беларуская',
+    'ka-GE': 'ქართული',
+    'hy-AM': 'Հայերեն',
+    'az-AZ': 'Azərbaycan',
+    'kk': 'Қазақ',
+    'ky-KG': 'Кыргызча',
+    'mn-MN': 'Монгол',
+    'my-MM': 'မြန်မာ',
+    'km-KH': 'ខ្មែរ',
+    'lo-LA': 'ລາວ',
+    'sw': 'Kiswahili',
+    'am': 'አማርኛ',
+    'zu': 'isiZulu',
+    'af': 'Afrikaans',
+    'ca': 'Català',
+    'eu-ES': 'Euskara',
+    'gl-ES': 'Galego',
+    'rm': 'Rumantsch',
+    'en-GB': 'English (UK)',
+    'en-AU': 'English (Australia)',
+    'en-CA': 'English (Canada)',
+    'en-IN': 'English (India)',
+    'en-SG': 'English (Singapore)',
+    'en-ZA': 'English (South Africa)',
   };
   final Set<String> _languages = {...storeLanguages.keys};
 
@@ -350,6 +407,12 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
   /// One call for all of them: the same model keeps the same tone and the same
   /// app name in every language, which separate calls tend not to.
   Future<void> _translate() async {
+    // English pages for other countries say what the main page says.
+    if (_title.text.trim().isNotEmpty) {
+      for (final l in _languages.where((l) => l.startsWith('en-') && !_translations.containsKey(l)).toList()) {
+        _translations[l] = {'title': _title.text.trim(), 'shortDescription': _short.text.trim(), 'fullDescription': _full.text.trim()};
+      }
+    }
     final wanted = _languages.where((l) => !_translations.containsKey(l)).toList();
     if (wanted.isEmpty || _title.text.trim().isEmpty) return;
     setState(() => _translating = true);

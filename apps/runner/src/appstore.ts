@@ -800,15 +800,36 @@ export function appleLocale(language: string): string {
     uk: 'uk',
     'es-419': 'es-MX',
     'zh-TW': 'zh-Hant',
+    'zh-CN': 'zh-Hans',
+    'zh-HK': 'zh-Hant',
+    'fr-CA': 'fr-CA',
+    'en-AU': 'en-AU',
+    'en-CA': 'en-CA',
+    'iw-IL': 'he',
+    'el-GR': 'el',
+    ro: 'ro',
+    'cs-CZ': 'cs',
+    sk: 'sk',
+    'hu-HU': 'hu',
+    hr: 'hr',
+    'sv-SE': 'sv',
+    'da-DK': 'da',
+    'no-NO': 'no',
+    'fi-FI': 'fi',
+    ca: 'ca',
   };
   return map[language] ?? map[language.replace('_', '-')] ?? language;
 }
 
-/** Google Play languages the App Store has no page for (Apple refuses them). */
-const NOT_ON_APPLE = new Set(['fil', 'bn-BD', 'ta-IN', 'te-IN', 'mr-IN']);
+/** The Google Play languages the App Store also has a page for (the others are skipped there). */
+const ON_APPLE = new Set([
+  'en-US', 'en-GB', 'en-AU', 'en-CA', 'it-IT', 'fr-FR', 'fr-CA', 'es-ES', 'es-419', 'de-DE', 'pt-PT', 'pt-BR', 'ru-RU',
+  'tr-TR', 'hi-IN', 'ar', 'ar-SA', 'id', 'vi', 'th', 'ja-JP', 'ko-KR', 'pl-PL', 'nl-NL', 'ms', 'uk', 'zh-TW', 'zh-CN',
+  'zh-HK', 'iw-IL', 'el-GR', 'ro', 'cs-CZ', 'sk', 'hu-HU', 'hr', 'sv-SE', 'da-DK', 'no-NO', 'fi-FI', 'ca',
+]);
 
 export function appleSupports(language: string): boolean {
-  return !NOT_ON_APPLE.has(language);
+  return ON_APPLE.has(language);
 }
 
 /**

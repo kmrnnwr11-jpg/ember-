@@ -531,5 +531,7 @@
   "playUpdateListingOnly": "Aggiorna solo la scheda",
   "playUpdateListingOnlyHint": "Per un'app già su Google Play: testi, tutte le lingue e grafiche vanno online senza una nuova versione.",
   "playTranslationsStale": "Il testo è cambiato: le altre lingue hanno ancora quello vecchio.",
-  "playTranslateAgain": "Traduci di nuovo"
+  "playTranslateAgain": "Traduci di nuovo",
+  "playLanguageIncluded": "Pubblica questa lingua su Google Play",
+  "playLanguageNotTranslated": "Non ancora tradotta: viene scritta quando salvi con questa lingua attiva."
 }

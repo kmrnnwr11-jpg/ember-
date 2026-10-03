@@ -463,5 +463,7 @@
   "playUpdateListingOnly": "تحديث صفحة المتجر فقط",
   "playUpdateListingOnlyHint": "لتطبيق موجود على Google Play: النصوص وكل اللغات والصور بدون إصدار جديد.",
   "playTranslationsStale": "تغيّر النص: اللغات الأخرى ما زالت بالنص القديم.",
-  "playTranslateAgain": "ترجمة من جديد"
+  "playTranslateAgain": "ترجمة من جديد",
+  "playLanguageIncluded": "نشر هذه اللغة على Google Play",
+  "playLanguageNotTranslated": "لم تُترجم بعد: تُكتب عند الحفظ مع تفعيل هذه اللغة."
 }

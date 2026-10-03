@@ -1756,4 +1756,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playTranslateAgain => 'Translate again';
+
+  @override
+  String get playLanguageIncluded => 'Publish this language on Google Play';
+
+  @override
+  String get playLanguageNotTranslated =>
+      'Not translated yet: it is written when you save with this language on.';
 }

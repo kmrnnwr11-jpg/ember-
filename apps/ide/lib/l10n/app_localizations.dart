@@ -3127,6 +3127,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Translate again'**
   String get playTranslateAgain;
+
+  /// No description provided for @playLanguageIncluded.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish this language on Google Play'**
+  String get playLanguageIncluded;
+
+  /// No description provided for @playLanguageNotTranslated.
+  ///
+  /// In en, this message translates to:
+  /// **'Not translated yet: it is written when you save with this language on.'**
+  String get playLanguageNotTranslated;
 }
 
 class _AppLocalizationsDelegate

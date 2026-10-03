@@ -214,12 +214,17 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       // The name is stated as a fact before anything else: left to infer it
       // from the package, the writer invented one from the folder name and an
       // app called PrintGo was published as StampaFacile.
-      final named = (_appLabel ?? '').trim();
+      // A title the user typed is theirs: the writer keeps it word for word
+      // and names the app as it does. Generating again used to put the
+      // project's name back over it.
+      final typedTitle = _title.text.trim();
+      final named = typedTitle.isNotEmpty ? typedTitle.split(':').first.trim() : (_appLabel ?? '').trim();
       final naming = named.isEmpty
           ? ''
           : 'The app is called "$named". Use exactly this name in the title '
               'and wherever the listing names the app. Do not translate it, '
-              'shorten it, or invent another one.\n\n';
+              'shorten it, or invent another one.\n'
+              '${typedTitle.isNotEmpty ? 'The store title is exactly "$typedTitle": return it unchanged as "title".\n' : ''}\n';
       final res = await complete(storeKitSystemPrompt,
           '${naming}Package name: $_packageName\n\nApp description and features:\n${widget.appDescription}');
       final text = res.text.trim();
@@ -227,7 +232,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       final end = text.lastIndexOf('}');
       if (start < 0 || end <= start) throw const FormatException('Risposta AI non valida');
       final j = jsonDecode(text.substring(start, end + 1)) as Map<String, dynamic>;
-      _title.text = '${j['title'] ?? ''}';
+      _title.text = typedTitle.isNotEmpty ? typedTitle : '${j['title'] ?? ''}';
       _short.text = '${j['shortDescription'] ?? ''}';
       _full.text = '${j['fullDescription'] ?? ''}';
       _notes.text = '${j['releaseNotes'] ?? ''}';
@@ -406,6 +411,13 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       };
       // Saved before Ember remembered the source: take them as matching it.
       _translatedFrom = j['from'] as String? ?? _source;
+      // The name is the same in every language (older listings translated it).
+      final name = _title.text.trim();
+      if (name.isNotEmpty) {
+        for (final page in _translations.values) {
+          page['title'] = name;
+        }
+      }
     } catch (_) {
       // An unreadable old value just means translating again.
     }
@@ -455,11 +467,10 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
   Future<void> _translateGroup(CompleteText complete, List<String> langs) async {
     final prompt = [
       'Translate this Google Play store listing into these languages: ${langs.join(', ')}.',
-      'Keep the app name "${_title.text.trim().split(':').first.trim()}" unchanged in every language.',
-      'Limits: title 30 characters, shortDescription 80, fullDescription 4000. Write naturally for each market, not word for word.',
-      'Reply with JSON only: {"<language code>": {"title": "...", "shortDescription": "...", "fullDescription": "..."}}',
+      'The title is the app name: it stays exactly "${_title.text.trim()}" in every language. Translate only the descriptions.',
+      'Limits: shortDescription 80 characters, fullDescription 4000. Write naturally for each market, not word for word.',
+      'Reply with JSON only: {"<language code>": {"shortDescription": "...", "fullDescription": "..."}}',
       '',
-      'title: ${_title.text.trim()}',
       'shortDescription: ${_short.text.trim()}',
       'fullDescription:',
       _full.text.trim(),
@@ -473,17 +484,98 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
     for (final entry in j.entries) {
       if (!langs.contains(entry.key)) continue;
       final v = (entry.value as Map).cast<String, dynamic>();
-      final tt = '${v['title'] ?? ''}'.trim();
-      // The default (en-US) listing must keep the installed app's exact name,
-      // so Google's name-match check on the default listing always passes.
-      // Every other language gets a localised name (better discovery).
-      final isDefault = entry.key == 'en-US';
+      // The name is the same on every store page: the one the user wrote.
       _translations[entry.key] = {
-        'title': (isDefault || tt.isEmpty) ? _title.text.trim() : tt,
+        'title': _title.text.trim(),
         'shortDescription': '${v['shortDescription'] ?? ''}',
         'fullDescription': '${v['fullDescription'] ?? ''}',
       };
     }
+  }
+
+  /// One store page in one language: the name (the same everywhere), the
+  /// two descriptions as they will appear, editable, and whether this
+  /// language goes on Google Play at all.
+  Future<void> _openLanguage(String code, String name) async {
+    final l = AppLocalizations.of(context);
+    final page = _translations[code];
+    final short = TextEditingController(text: page?['shortDescription'] ?? '');
+    final full = TextEditingController(text: page?['fullDescription'] ?? '');
+    var included = _languages.contains(code);
+    final rtl = const {'ar', 'ur', 'fa', 'iw-IL'}.contains(code);
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (d) => StatefulBuilder(
+        builder: (d, setD) => AlertDialog(
+          title: Text('$name  ·  $code'),
+          content: SizedBox(
+            width: 720,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: included,
+                    onChanged: (v) => setD(() => included = v),
+                    title: Text(l.playLanguageIncluded),
+                  ),
+                  if (page == null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Text(l.playLanguageNotTranslated),
+                    )
+                  else ...[
+                    const SizedBox(height: 8),
+                    InputDecorator(
+                      decoration: InputDecoration(labelText: l.playTitle, border: const OutlineInputBorder()),
+                      child: Text(page['title'] ?? _title.text.trim(), style: const TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: short,
+                      maxLength: 80,
+                      textDirection: rtl ? TextDirection.rtl : null,
+                      decoration: InputDecoration(labelText: l.playShortDescription, border: const OutlineInputBorder()),
+                    ),
+                    TextField(
+                      controller: full,
+                      maxLength: 4000,
+                      minLines: 6,
+                      maxLines: 16,
+                      textDirection: rtl ? TextDirection.rtl : null,
+                      decoration: InputDecoration(labelText: l.playFullDescription, border: const OutlineInputBorder()),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(d).pop(false), child: Text(MaterialLocalizations.of(d).cancelButtonLabel)),
+            FilledButton(onPressed: () => Navigator.of(d).pop(true), child: Text(MaterialLocalizations.of(d).saveButtonLabel)),
+          ],
+        ),
+      ),
+    );
+    if (saved == true && mounted) {
+      setState(() {
+        included ? _languages.add(code) : _languages.remove(code);
+        if (page != null) {
+          _translations[code] = {
+            'title': _title.text.trim(),
+            'shortDescription': short.text.trim(),
+            'fullDescription': full.text.trim(),
+          };
+        }
+      });
+      await _saveListing();
+      // Switched on and not written yet: write it now.
+      if (included && page == null && !_translating) await _translate();
+    }
+    short.dispose();
+    full.dispose();
   }
 
   Future<void> _saveListing() async {
@@ -699,12 +791,8 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                           label: Text(e.value),
                           selected: _languages.contains(e.key),
                           avatar: _translations.containsKey(e.key) && !_translationsStale ? const Icon(Icons.check, size: 16) : null,
-                          onSelected: _translating
-                              ? null
-                              : (on) {
-                                  setState(() => on ? _languages.add(e.key) : _languages.remove(e.key));
-                                  if (on) _translate();
-                                },
+                          // A tap opens that language's page: read it, fix it, or leave the language out.
+                          onSelected: (_) => _openLanguage(e.key, e.value),
                         ),
                     ],
                   ),

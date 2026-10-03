@@ -1009,5 +1009,7 @@
   "playUpdateListingOnly": "Update only the store page",
   "playUpdateListingOnlyHint": "For an app already on Google Play: texts, all languages and graphics go live without a new version.",
   "playTranslationsStale": "The text changed: the other languages still have the old one.",
-  "playTranslateAgain": "Translate again"
+  "playTranslateAgain": "Translate again",
+  "playLanguageIncluded": "Publish this language on Google Play",
+  "playLanguageNotTranslated": "Not translated yet: it is written when you save with this language on."
 }

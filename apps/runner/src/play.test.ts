@@ -56,6 +56,44 @@ describe('Google Play publishing', () => {
   });
   afterAll(() => rm(tmp, { recursive: true, force: true }));
 
+  it('sends a big bundle in pieces and resumes a dropped one', async () => {
+    const big = path.join(tmp, 'big.aab');
+    const size = 20 * 1024 * 1024;
+    await writeFile(big, Buffer.alloc(size, 1));
+    const g = fakeGoogle();
+    let got = 0;
+    let dropped = false;
+    const ranges: string[] = [];
+    const impl = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('/bundles?uploadType=resumable')) return new Response('', { status: 200, headers: { location: 'https://upload.test/session' } });
+      if (url === 'https://upload.test/session') {
+        const range = String((init?.headers as Record<string, string>)['content-range']);
+        ranges.push(range);
+        const m = /bytes (\d+)-(\d+)\//.exec(range);
+        if (m) {
+          // The second piece is lost on the way, once.
+          if (Number(m[1]) > 0 && !dropped) {
+            dropped = true;
+            throw new Error('socket hang up');
+          }
+          expect(Number(m[1])).toBe(got);
+          got = Number(m[2]) + 1;
+        }
+        if (got >= size) return new Response(JSON.stringify({ versionCode: 9 }), { status: 200 });
+        return new Response('', { status: 308, headers: got > 0 ? { range: `bytes=0-${got - 1}` } : {} });
+      }
+      return g.impl(input, init);
+    }) as typeof fetch;
+    const res = await publishToPlay(
+      { serviceAccount: parseServiceAccount(saJson), packageName: 'com.example.app', aabPath: big, track: 'production', status: 'completed' },
+      impl,
+    );
+    expect(res.versionCode).toBe(9);
+    expect(got).toBe(size);
+    expect(ranges).toContain(`bytes */${size}`);
+  }, 20_000);
+
   it('updates only the store page: no bundle, no release, every language', async () => {
     const g = fakeGoogle();
     const langs = ['it-IT', 'tr-TR', 'vi', 'ja-JP', 'zh-TW'];

@@ -345,7 +345,7 @@ class RunnerApi {
   );
 
   Future<Map<String, dynamic>> publishToPlay(String projectId, Map<String, dynamic> body) => _call(
-    () => _dio.post('/v1/projects/$projectId/play/publish', data: body, options: Options(receiveTimeout: const Duration(minutes: 15), sendTimeout: const Duration(minutes: 2))),
+    () => _dio.post('/v1/projects/$projectId/play/publish', data: body, options: Options(receiveTimeout: const Duration(minutes: 90), sendTimeout: const Duration(minutes: 2))),
     (d) => d as Map<String, dynamic>,
   );
 

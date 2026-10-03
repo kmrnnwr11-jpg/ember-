@@ -10,6 +10,8 @@ import { importPKCS8, SignJWT } from 'jose';
 export const PLAY_SCOPE = 'https://www.googleapis.com/auth/androidpublisher';
 const API = 'https://androidpublisher.googleapis.com/androidpublisher/v3/applications';
 const UPLOAD = 'https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications';
+/** One piece of a big bundle (Google wants multiples of 256 KB). */
+const CHUNK = 8 * 1024 * 1024;
 
 export interface ServiceAccount {
   client_email: string;
@@ -167,6 +169,9 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
   const bundle: { versionCode?: number } = input.listingOnly ? { versionCode: 0 } : await uploadBundle();
   async function uploadBundle(): Promise<{ versionCode?: number }> {
   const aab = await readFile(input.aabPath);
+  // A big bundle in one request outlives the 5 minutes Node waits for an answer:
+  // it goes in pieces, and a dropped piece resumes where Google stopped receiving.
+  if (aab.length > CHUNK) return uploadBundleInPieces(aab);
   // A bundle is tens of megabytes: on a slow uplink the connection can die mid-way, so try again.
   let upload: Response | null = null;
   let networkError: Error | null = null;
@@ -193,6 +198,63 @@ export async function publishToPlay(input: PublishInput, fetchImpl: Fetch = fetc
   const uploadedBundle = (await upload.json()) as { versionCode?: number };
   if (typeof uploadedBundle.versionCode !== 'number') throw new PlayError('play_api_error', 'Google Play did not return a versionCode for the bundle');
   return uploadedBundle;
+  }
+
+  async function uploadBundleInPieces(aab: Buffer): Promise<{ versionCode?: number }> {
+    const total = aab.length;
+    const interrupted = (why: string) =>
+      new PlayError(
+        'upload_interrupted',
+        `The connection dropped while sending the ${Math.round(total / 1_000_000)} MB bundle to Google (${why}). Nothing was published: try again on a steadier connection.`,
+      );
+    const start = await fetchImpl(`${UPLOAD}/${pkg}/edits/${encodeURIComponent(editId)}/bundles?uploadType=resumable`, {
+      method: 'POST',
+      headers: { ...auth, 'x-upload-content-type': 'application/octet-stream', 'x-upload-content-length': String(total) },
+    });
+    if (!start.ok) throw await googleError(start);
+    const session = start.headers.get('location');
+    if (!session) throw new PlayError('play_api_error', 'Google Play did not open an upload session for the bundle');
+
+    // How far Google got, from the Range header of a 308 answer.
+    const received = (res: Response) => {
+      const m = /bytes=0-(\d+)/.exec(res.headers.get('range') ?? '');
+      return m ? Number(m[1]) + 1 : 0;
+    };
+    let offset = 0;
+    let failures = 0;
+    while (true) {
+      const end = Math.min(offset + CHUNK, total);
+      let res: Response;
+      try {
+        res = await fetchImpl(session, {
+          method: 'PUT',
+          headers: { 'content-range': `bytes ${offset}-${end - 1}/${total}` },
+          body: aab.subarray(offset, end) as unknown as BodyInit,
+          signal: AbortSignal.timeout(4 * 60_000),
+        });
+      } catch (e) {
+        if (++failures > 8) throw interrupted((e as Error).message || 'network error');
+        await new Promise((r) => setTimeout(r, 3000));
+        try {
+          const ask = await fetchImpl(session, { method: 'PUT', headers: { 'content-range': `bytes */${total}` } });
+          if (ask.status === 308) offset = received(ask);
+          else if (ask.ok) res = ask;
+          else continue;
+        } catch {
+          continue;
+        }
+        if (!res!) continue;
+      }
+      if (res.status === 308) {
+        offset = received(res) || end;
+        failures = 0;
+        continue;
+      }
+      if (!res.ok) throw await googleError(res);
+      const uploadedBundle = (await res.json()) as { versionCode?: number };
+      if (typeof uploadedBundle.versionCode !== 'number') throw new PlayError('play_api_error', 'Google Play did not return a versionCode for the bundle');
+      return uploadedBundle;
+    }
   }
 
   // The main store listing is the app's DEFAULT language: write there too, otherwise Play Console shows it empty.

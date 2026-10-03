@@ -1767,4 +1767,11 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get playUpdateListingOnlyHint =>
       'Per un\'app già su Google Play: testi, tutte le lingue e grafiche vanno online senza una nuova versione.';
+
+  @override
+  String get playTranslationsStale =>
+      'Il testo è cambiato: le altre lingue hanno ancora quello vecchio.';
+
+  @override
+  String get playTranslateAgain => 'Traduci di nuovo';
 }

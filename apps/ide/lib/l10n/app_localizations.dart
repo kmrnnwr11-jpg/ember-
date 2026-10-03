@@ -3115,6 +3115,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'For an app already on Google Play: texts, all languages and graphics go live without a new version.'**
   String get playUpdateListingOnlyHint;
+
+  /// No description provided for @playTranslationsStale.
+  ///
+  /// In en, this message translates to:
+  /// **'The text changed: the other languages still have the old one.'**
+  String get playTranslationsStale;
+
+  /// No description provided for @playTranslateAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Translate again'**
+  String get playTranslateAgain;
 }
 
 class _AppLocalizationsDelegate

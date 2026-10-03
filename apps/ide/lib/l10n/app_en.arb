@@ -1007,5 +1007,7 @@
   "logoDropHint": "Drag a logo here for 5 variants of it",
   "logoVariantsOf": "Variants of this logo",
   "playUpdateListingOnly": "Update only the store page",
-  "playUpdateListingOnlyHint": "For an app already on Google Play: texts, all languages and graphics go live without a new version."
+  "playUpdateListingOnlyHint": "For an app already on Google Play: texts, all languages and graphics go live without a new version.",
+  "playTranslationsStale": "The text changed: the other languages still have the old one.",
+  "playTranslateAgain": "Translate again"
 }

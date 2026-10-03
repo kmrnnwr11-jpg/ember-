@@ -1769,4 +1769,11 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get playUpdateListingOnlyHint =>
       'Pour une app déjà sur Google Play : textes, toutes les langues et visuels sans nouvelle version.';
+
+  @override
+  String get playTranslationsStale =>
+      'Le texte a changé : les autres langues ont encore l\'ancien.';
+
+  @override
+  String get playTranslateAgain => 'Retraduire';
 }

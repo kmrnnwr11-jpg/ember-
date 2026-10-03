@@ -1742,4 +1742,11 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get playUpdateListingOnlyHint =>
       'لتطبيق موجود على Google Play: النصوص وكل اللغات والصور بدون إصدار جديد.';
+
+  @override
+  String get playTranslationsStale =>
+      'تغيّر النص: اللغات الأخرى ما زالت بالنص القديم.';
+
+  @override
+  String get playTranslateAgain => 'ترجمة من جديد';
 }

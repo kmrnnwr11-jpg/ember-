@@ -529,5 +529,7 @@
   "logoDropHint": "Trascina qui un logo per averne 5 varianti",
   "logoVariantsOf": "Varianti di questo logo",
   "playUpdateListingOnly": "Aggiorna solo la scheda",
-  "playUpdateListingOnlyHint": "Per un'app già su Google Play: testi, tutte le lingue e grafiche vanno online senza una nuova versione."
+  "playUpdateListingOnlyHint": "Per un'app già su Google Play: testi, tutte le lingue e grafiche vanno online senza una nuova versione.",
+  "playTranslationsStale": "Il testo è cambiato: le altre lingue hanno ancora quello vecchio.",
+  "playTranslateAgain": "Traduci di nuovo"
 }

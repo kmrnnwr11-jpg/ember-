@@ -461,5 +461,7 @@
   "logoDropHint": "اسحب شعارًا هنا للحصول على 5 نسخ منه",
   "logoVariantsOf": "نسخ من هذا الشعار",
   "playUpdateListingOnly": "تحديث صفحة المتجر فقط",
-  "playUpdateListingOnlyHint": "لتطبيق موجود على Google Play: النصوص وكل اللغات والصور بدون إصدار جديد."
+  "playUpdateListingOnlyHint": "لتطبيق موجود على Google Play: النصوص وكل اللغات والصور بدون إصدار جديد.",
+  "playTranslationsStale": "تغيّر النص: اللغات الأخرى ما زالت بالنص القديم.",
+  "playTranslateAgain": "ترجمة من جديد"
 }

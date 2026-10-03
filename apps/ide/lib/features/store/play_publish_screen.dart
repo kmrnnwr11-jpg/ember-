@@ -379,6 +379,13 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
   Map<String, Map<String, String>> _translations = {};
   bool _translating = false;
 
+  /// The English text the translations were written from. When the title or
+  /// a description changes, the translations still carry the old words (the
+  /// old app name in 82 languages): they are written again.
+  String? _translatedFrom;
+  String get _source => '${_title.text.trim()}\u0001${_short.text.trim()}\u0001${_full.text.trim()}';
+  bool get _translationsStale => _translations.isNotEmpty && _translatedFrom != null && _translatedFrom != _source;
+
   void _loadTranslations(String saved) {
     if (saved.isEmpty) return;
     try {
@@ -397,6 +404,8 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
       _translations = {
         for (final e in ((j['pages'] as Map?) ?? const {}).entries) '${e.key}': (e.value as Map).map((k, v) => MapEntry('$k', '$v')),
       };
+      // Saved before Ember remembered the source: take them as matching it.
+      _translatedFrom = j['from'] as String? ?? _source;
     } catch (_) {
       // An unreadable old value just means translating again.
     }
@@ -407,6 +416,9 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
   /// One call for all of them: the same model keeps the same tone and the same
   /// app name in every language, which separate calls tend not to.
   Future<void> _translate() async {
+    // The English text changed since the translations were written: they are redone.
+    if (_translationsStale) _translations = {};
+    if (_title.text.trim().isNotEmpty) _translatedFrom = _source;
     // English pages for other countries say what the main page says.
     if (_title.text.trim().isNotEmpty) {
       for (final l in _languages.where((l) => l.startsWith('en-') && !_translations.containsKey(l)).toList()) {
@@ -486,7 +498,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
         'dataSafety': _dataSafety,
         'contentRating': _contentRating,
         'otherDeclarations': _otherDeclarations,
-        'translations': jsonEncode({'languages': _languages.toList(), 'pages': _translations}),
+        'translations': jsonEncode({'languages': _languages.toList(), 'pages': _translations, 'from': _translatedFrom}),
       });
     } catch (_) {}
   }
@@ -686,7 +698,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                         FilterChip(
                           label: Text(e.value),
                           selected: _languages.contains(e.key),
-                          avatar: _translations.containsKey(e.key) ? const Icon(Icons.check, size: 16) : null,
+                          avatar: _translations.containsKey(e.key) && !_translationsStale ? const Icon(Icons.check, size: 16) : null,
                           onSelected: _translating
                               ? null
                               : (on) {
@@ -696,6 +708,15 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                         ),
                     ],
                   ),
+                  if (_translationsStale && !_translating) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(child: Text(l.playTranslationsStale, style: Theme.of(context).textTheme.bodySmall)),
+                        TextButton.icon(onPressed: _translate, icon: const Icon(Icons.translate), label: Text(l.playTranslateAgain)),
+                      ],
+                    ),
+                  ],
                   if (_translating) ...[
                     const SizedBox(height: 6),
                     Row(children: [const SizedBox.square(dimension: 14, child: CircularProgressIndicator(strokeWidth: 2)), const SizedBox(width: 8), Text(l.playTranslating)]),
@@ -703,16 +724,19 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: _title,
+                    onChanged: (_) => setState(() {}),
                     maxLength: 30,
                     decoration: InputDecoration(labelText: l.playTitle, border: const OutlineInputBorder()),
                   ),
                   TextField(
                     controller: _short,
+                    onChanged: (_) => setState(() {}),
                     maxLength: 80,
                     decoration: InputDecoration(labelText: l.playShortDescription, border: const OutlineInputBorder()),
                   ),
                   TextField(
                     controller: _full,
+                    onChanged: (_) => setState(() {}),
                     maxLength: 4000,
                     minLines: 4,
                     maxLines: 12,

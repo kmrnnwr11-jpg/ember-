@@ -1763,4 +1763,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get playLanguageNotTranslated =>
       'Not translated yet: it is written when you save with this language on.';
+
+  @override
+  String get playListingSaved =>
+      'Listing saved: nothing to generate. Change the text only if you want, then upload.';
+
+  @override
+  String get playRewriteWithAi => 'Write it again with AI';
 }

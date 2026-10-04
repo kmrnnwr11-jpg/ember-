@@ -3139,6 +3139,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not translated yet: it is written when you save with this language on.'**
   String get playLanguageNotTranslated;
+
+  /// No description provided for @playListingSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Listing saved: nothing to generate. Change the text only if you want, then upload.'**
+  String get playListingSaved;
+
+  /// No description provided for @playRewriteWithAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Write it again with AI'**
+  String get playRewriteWithAi;
 }
 
 class _AppLocalizationsDelegate

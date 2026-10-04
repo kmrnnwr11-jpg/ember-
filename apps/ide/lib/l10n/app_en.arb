@@ -1011,5 +1011,7 @@
   "playTranslationsStale": "The text changed: the other languages still have the old one.",
   "playTranslateAgain": "Translate again",
   "playLanguageIncluded": "Publish this language on Google Play",
-  "playLanguageNotTranslated": "Not translated yet: it is written when you save with this language on."
+  "playLanguageNotTranslated": "Not translated yet: it is written when you save with this language on.",
+  "playListingSaved": "Listing saved: nothing to generate. Change the text only if you want, then upload.",
+  "playRewriteWithAi": "Write it again with AI"
 }

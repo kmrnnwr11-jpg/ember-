@@ -1780,4 +1780,11 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get playLanguageNotTranslated =>
       'Aún no traducido: se escribe al guardar con este idioma activo.';
+
+  @override
+  String get playListingSaved =>
+      'Ficha guardada: no hace falta generar. Cambia el texto solo si quieres y sube.';
+
+  @override
+  String get playRewriteWithAi => 'Reescribir con IA';
 }

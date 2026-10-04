@@ -533,5 +533,7 @@
   "playTranslationsStale": "Il testo è cambiato: le altre lingue hanno ancora quello vecchio.",
   "playTranslateAgain": "Traduci di nuovo",
   "playLanguageIncluded": "Pubblica questa lingua su Google Play",
-  "playLanguageNotTranslated": "Non ancora tradotta: viene scritta quando salvi con questa lingua attiva."
+  "playLanguageNotTranslated": "Non ancora tradotta: viene scritta quando salvi con questa lingua attiva.",
+  "playListingSaved": "Scheda salvata: non serve generare. Cambia il testo solo se vuoi, poi carica.",
+  "playRewriteWithAi": "Riscrivi con l'AI"
 }

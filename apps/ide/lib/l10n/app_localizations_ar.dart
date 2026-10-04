@@ -1756,4 +1756,11 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get playLanguageNotTranslated =>
       'لم تُترجم بعد: تُكتب عند الحفظ مع تفعيل هذه اللغة.';
+
+  @override
+  String get playListingSaved =>
+      'تم حفظ الصفحة: لا حاجة للتوليد. عدّل النص إن أردت ثم ارفع.';
+
+  @override
+  String get playRewriteWithAi => 'إعادة الكتابة بالذكاء الاصطناعي';
 }

@@ -1783,4 +1783,11 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get playLanguageNotTranslated =>
       'Pas encore traduite : elle est écrite quand tu enregistres avec cette langue activée.';
+
+  @override
+  String get playListingSaved =>
+      'Fiche enregistrée : rien à générer. Modifiez le texte si vous voulez, puis envoyez.';
+
+  @override
+  String get playRewriteWithAi => 'Réécrire avec l\'IA';
 }

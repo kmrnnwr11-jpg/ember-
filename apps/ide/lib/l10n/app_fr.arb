@@ -465,5 +465,7 @@
   "playTranslationsStale": "Le texte a changé : les autres langues ont encore l'ancien.",
   "playTranslateAgain": "Retraduire",
   "playLanguageIncluded": "Publier cette langue sur Google Play",
-  "playLanguageNotTranslated": "Pas encore traduite : elle est écrite quand tu enregistres avec cette langue activée."
+  "playLanguageNotTranslated": "Pas encore traduite : elle est écrite quand tu enregistres avec cette langue activée.",
+  "playListingSaved": "Fiche enregistrée : rien à générer. Modifiez le texte si vous voulez, puis envoyez.",
+  "playRewriteWithAi": "Réécrire avec l'IA"
 }

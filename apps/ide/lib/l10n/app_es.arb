@@ -465,5 +465,7 @@
   "playTranslationsStale": "El texto cambió: los otros idiomas aún tienen el anterior.",
   "playTranslateAgain": "Traducir de nuevo",
   "playLanguageIncluded": "Publicar este idioma en Google Play",
-  "playLanguageNotTranslated": "Aún no traducido: se escribe al guardar con este idioma activo."
+  "playLanguageNotTranslated": "Aún no traducido: se escribe al guardar con este idioma activo.",
+  "playListingSaved": "Ficha guardada: no hace falta generar. Cambia el texto solo si quieres y sube.",
+  "playRewriteWithAi": "Reescribir con IA"
 }

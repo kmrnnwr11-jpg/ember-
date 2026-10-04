@@ -810,11 +810,28 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
               content: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  FilledButton.tonalIcon(
-                    onPressed: _generating ? null : _generate,
-                    icon: _generating ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.auto_awesome),
-                    label: Text(l.playGenerateWithAi),
-                  ),
+                  // A listing written once is kept (store/listing.json, shared by
+                  // Google Play and the App Store): an update only needs Upload.
+                  // The big button is for an app with nothing written yet.
+                  if (_title.text.trim().isNotEmpty && !_generating)
+                    Row(
+                      children: [
+                        Icon(Icons.check_circle, size: 20, color: Theme.of(context).colorScheme.primary),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(l.playListingSaved)),
+                        TextButton.icon(
+                          onPressed: _generate,
+                          icon: const Icon(Icons.auto_awesome, size: 18),
+                          label: Text(l.playRewriteWithAi),
+                        ),
+                      ],
+                    )
+                  else
+                    FilledButton.tonalIcon(
+                      onPressed: _generating ? null : _generate,
+                      icon: _generating ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.auto_awesome),
+                      label: Text(l.playGenerateWithAi),
+                    ),
                   const SizedBox(height: 12),
                   // The other store pages: English is the one below, these are written from it.
                   Text(l.playLanguages, style: Theme.of(context).textTheme.titleSmall),

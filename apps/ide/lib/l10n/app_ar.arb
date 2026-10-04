@@ -465,5 +465,7 @@
   "playTranslationsStale": "تغيّر النص: اللغات الأخرى ما زالت بالنص القديم.",
   "playTranslateAgain": "ترجمة من جديد",
   "playLanguageIncluded": "نشر هذه اللغة على Google Play",
-  "playLanguageNotTranslated": "لم تُترجم بعد: تُكتب عند الحفظ مع تفعيل هذه اللغة."
+  "playLanguageNotTranslated": "لم تُترجم بعد: تُكتب عند الحفظ مع تفعيل هذه اللغة.",
+  "playListingSaved": "تم حفظ الصفحة: لا حاجة للتوليد. عدّل النص إن أردت ثم ارفع.",
+  "playRewriteWithAi": "إعادة الكتابة بالذكاء الاصطناعي"
 }

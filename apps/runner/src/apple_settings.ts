@@ -18,6 +18,12 @@ export interface AppleSettings {
   reviewScreenshot?: string;
   /** false when the iPhone build hides sign-in (and so any cloud upload). */
   iosAccount?: boolean;
+  /**
+   * The Bundle ID Apple already has for this app, when it is not the Android
+   * package name (an app published before Ember, e.g. with an underscore in
+   * the Android name). Ember then leaves the Xcode project's id alone.
+   */
+  bundleId?: string;
 }
 
 export async function readAppleSettings(root: string): Promise<AppleSettings> {

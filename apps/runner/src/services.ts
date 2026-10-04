@@ -7,6 +7,7 @@ import { FsError, ProjectFs } from './fs.js';
 import type { Job, JobKind, JobManager } from './jobs.js';
 import { validateProjectName, parseJson } from './paths.js';
 import { claimBundleId, claimPackageName } from './publish_prep.js';
+import { readAppleSettings } from './apple_settings.js';
 import { readAppleCreds, readAppleKey, rememberTeamId } from './apple_creds.js';
 import { ensureDevelopmentTeam } from './ios_signing.js';
 import { fixPreflight } from './ios_preflight.js';
@@ -282,7 +283,9 @@ export class Services {
       await syncAdmobAppId(root).catch(() => null);
       const gradle = await readFile(path.join(root, 'android', 'app', 'build.gradle.kts'), 'utf8').catch(() => '');
       const applicationId = /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
-      if (applicationId && !applicationId.startsWith('dev.fluttercursor.app.')) {
+      // An app Apple already knows under another Bundle ID keeps that one.
+      const ownBundleId = (await readAppleSettings(root)).bundleId;
+      if (!ownBundleId && applicationId && !applicationId.startsWith('dev.fluttercursor.app.')) {
         // Only Apple fixes the Bundle ID for good: a version already on Google
         // Play must not keep the placeholder on the iPhone.
         await claimBundleId(root, applicationId, (await lastAppStoreBuildNumber(root)) > 0).catch(() => null);

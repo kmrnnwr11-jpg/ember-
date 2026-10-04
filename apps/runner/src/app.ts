@@ -625,11 +625,12 @@ export async function buildApp(
         if (page && k) page.keywords = k;
       }
       const gradle = await readFileAsync(path.join(root, 'android', 'app', 'build.gradle.kts'), 'utf8').catch(() => '');
-      const bundleId = /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
+      const settings = await readAppleSettings(root);
+      // The app's own Bundle ID when Apple has it under another name than Android's.
+      const bundleId = settings.bundleId ?? /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
       if (!bundleId) throw new AppStoreError('no_bundle_id', 'Build the app once before publishing: its name is set at the first build.');
       // Always prefer the saved account key; fall back to any key sent in the body.
       const key = (await readAppleKey()) ?? parseAppStoreKey(body);
-      const settings = await readAppleSettings(root);
       // Screenshots need the local web preview and a browser; only wire them up
       // when the app has a screenshot mode and the preview is ready.
       let screenshots: { previewUrl: string; browser: string } | undefined;
@@ -1330,7 +1331,7 @@ export async function buildApp(
           contentRating: z.string().max(20000).default(''),
           otherDeclarations: z.string().max(20000).default(''),
           // The listing in other languages, kept as the JSON the app wrote it in.
-          translations: z.string().max(80000).default(''),
+          translations: z.string().max(600000).default(''),
         })
         .parse(req.body);
       const dir = path.join(services.projectRoot(project), 'store');

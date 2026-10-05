@@ -78,4 +78,4 @@
 - Settings: one page for language, appearance, AI keys and reviewers, connected accounts, advanced, sign out.
 - Words: five complete languages, no text in code, plain names for APK/AAB/Runner, long guides as numbered steps.
 - Cancelling the "AI not available" check goes back instead of closing the app.
-- Not verified live yet: the redesign was checked with the analyzer and widget tests only; a walk through the real app with a Runner (Node 22) is still to do.
+- Verified: analyzer clean, 209 tests (screens at phone/tablet/desktop width, English and Arabic, light and dark), web release build, and a walk through the real web app against a local Runner (home, options, settings, an existing app and its six pages; screenshots in `docs/ux/dopo`). Not walked live: a new build from prompt to ready, the mockup gallery, publishing to the stores, the Windows and phone builds, the light theme.

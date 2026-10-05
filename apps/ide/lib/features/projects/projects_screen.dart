@@ -214,7 +214,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       appBar: AppBar(
         title: const EmberLockup(size: 18, subtitle: false),
         actions: [
-          const ConnectionBadge(),
+          const ConnectionBadge(hideWhenConnected: true),
           IconButton(
             key: const Key('toggleAssistant'),
             tooltip: l.assistantTitle,

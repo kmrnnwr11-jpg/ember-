@@ -202,9 +202,8 @@ ThemeData emberTheme(Brightness b) {
       shape: const RoundedRectangleBorder(borderRadius: Radii.smAll),
     ),
     filledButtonTheme: FilledButtonThemeData(
+      // No colours here: they would also paint the tonal variant red.
       style: FilledButton.styleFrom(
-        backgroundColor: scheme.primary,
-        foregroundColor: scheme.onPrimary,
         textStyle: label,
         shape: buttonShape,
         padding: buttonPadding,

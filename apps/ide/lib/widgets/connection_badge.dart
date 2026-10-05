@@ -7,7 +7,10 @@ import '../l10n/app_localizations.dart';
 import '../ui/ui.dart';
 
 class ConnectionBadge extends ConsumerWidget {
-  const ConnectionBadge({super.key});
+  const ConnectionBadge({super.key, this.hideWhenConnected = false});
+
+  /// Show nothing while all is well: the badge appears only when it has something to say.
+  final bool hideWhenConnected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -16,6 +19,7 @@ class ConnectionBadge extends ConsumerWidget {
     return ValueListenableBuilder(
       valueListenable: socket.state,
       builder: (context, state, _) {
+        if (hideWhenConnected && state == SocketState.connected) return const SizedBox.shrink();
         // The state is told by the icon and the label too, not by colour alone.
         final (color, icon, label) = switch (state) {
           SocketState.connected => (context.ember.success, Icons.check, l.connected),

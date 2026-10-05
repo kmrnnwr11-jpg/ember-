@@ -33,7 +33,7 @@ class NeedsYouCard extends StatelessWidget {
                 children: [
                   Expanded(child: SelectableText(need)),
                   Gap.hSm,
-                  FilledButton.icon(
+                  FilledButton.tonalIcon(
                     onPressed: builder.running ? null : () => builder.resolveNeed(need),
                     icon: const Icon(Icons.check, size: 18),
                     label: Text(l.done),

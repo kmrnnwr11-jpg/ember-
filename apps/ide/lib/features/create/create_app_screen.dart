@@ -209,6 +209,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
               // Right at the top: what only the owner can do blocks the
               // rest, so it must not be scrolled to.
               NeedsYouCard(builder: b),
+              Gap.vMd,
               PromptCard(prompt: b.prompt, engine: b.engine, model: b.model, designName: b.designName, quality: b.quality),
               Gap.vMd,
               AnimatedSwitcher(

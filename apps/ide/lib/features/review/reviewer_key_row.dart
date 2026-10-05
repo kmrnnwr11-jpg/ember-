@@ -80,7 +80,6 @@ class _ReviewerKeyRowState extends ConsumerState<ReviewerKeyRow> {
               decoration: InputDecoration(
                 isDense: true,
                 labelText: has ? 'Sostituisci la chiave' : 'Chiave API',
-                border: const OutlineInputBorder(),
                 suffixIcon: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

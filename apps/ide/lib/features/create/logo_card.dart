@@ -274,7 +274,6 @@ class _LogoCardState extends ConsumerState<LogoCard> {
                         labelText: l.logoDescribe,
                         hintText: l.logoDescribeHint,
                         helperText: l.logoDropHint,
-                        border: const OutlineInputBorder(),
                         isDense: true,
                       ),
                     ),

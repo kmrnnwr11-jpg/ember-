@@ -131,7 +131,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
               autofocus: true,
               minLines: 2,
               maxLines: 5,
-              decoration: InputDecoration(hintText: l.editMockupHint, border: const OutlineInputBorder()),
+              decoration: InputDecoration(hintText: l.editMockupHint),
             ),
             const SizedBox(height: 8),
             FilledButton(onPressed: () => Navigator.pop(d, ctrl.text.trim()), child: Text(l.applyChange)),

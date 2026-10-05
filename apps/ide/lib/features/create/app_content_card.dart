@@ -152,7 +152,6 @@ class _AppContentCardState extends ConsumerState<AppContentCard> {
                 decoration: InputDecoration(
                   labelText: l.acAppLink,
                   hintText: 'https://play.google.com/console/u/0/developers/…/app/…/app-dashboard',
-                  border: const OutlineInputBorder(),
                   suffixIcon: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

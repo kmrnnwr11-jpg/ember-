@@ -1021,5 +1021,6 @@
   "historyYesterday": "Yesterday",
   "historyLast7Days": "Last 7 days",
   "historyOlder": "Older",
-  "historyEmpty": "Nothing here yet. The apps you start and the drafts you write show up here."
+  "historyEmpty": "Nothing here yet. The apps you start and the drafts you write show up here.",
+  "brandTagline": "APP MAKER"
 }

@@ -307,7 +307,7 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
                       controller: _input,
                       minLines: 1,
                       maxLines: 4,
-                      decoration: InputDecoration(hintText: waitingLink ? l.pubPasteLink : l.pubAskAnything, border: const OutlineInputBorder(), isDense: true),
+                      decoration: InputDecoration(hintText: waitingLink ? l.pubPasteLink : l.pubAskAnything, isDense: true),
                     ),
                   ),
                   const SizedBox(width: 8),

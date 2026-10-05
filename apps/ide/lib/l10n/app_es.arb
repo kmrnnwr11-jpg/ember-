@@ -475,5 +475,6 @@
   "historyYesterday": "Ayer",
   "historyLast7Days": "Últimos 7 días",
   "historyOlder": "Más antiguas",
-  "historyEmpty": "Aún no hay nada. Las apps que empiezas y los borradores que escribes aparecen aquí."
+  "historyEmpty": "Aún no hay nada. Las apps que empiezas y los borradores que escribes aparecen aquí.",
+  "brandTagline": "CREADOR DE APPS"
 }

@@ -1815,4 +1815,7 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get historyEmpty =>
       'Rien pour l\'instant. Les apps que vous commencez et les brouillons que vous écrivez apparaissent ici.';
+
+  @override
+  String get brandTagline => 'CRÉATEUR D\'APPS';
 }

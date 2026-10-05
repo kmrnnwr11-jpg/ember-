@@ -126,7 +126,7 @@ class _NamePickerSheetState extends State<NamePickerSheet> {
               onSubmitted: (_) {
                 if (_choice != null) Navigator.pop(context, _choice);
               },
-              decoration: InputDecoration(labelText: l.nameYourOwn, border: const OutlineInputBorder(), isDense: true),
+              decoration: InputDecoration(labelText: l.nameYourOwn, isDense: true),
             ),
             const SizedBox(height: 12),
             Row(

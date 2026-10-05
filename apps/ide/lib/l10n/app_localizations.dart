@@ -3199,6 +3199,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing here yet. The apps you start and the drafts you write show up here.'**
   String get historyEmpty;
+
+  /// No description provided for @brandTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'APP MAKER'**
+  String get brandTagline;
 }
 
 class _AppLocalizationsDelegate

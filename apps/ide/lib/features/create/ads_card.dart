@@ -166,7 +166,6 @@ class _AdsCardState extends State<AdsCard> {
                   helperMaxLines: 2,
                   prefixIcon: const Icon(Icons.android, size: 20),
                   isDense: true,
-                  border: const OutlineInputBorder(),
                 ),
               ),
               for (final e in _units.entries) ...[
@@ -181,7 +180,6 @@ class _AdsCardState extends State<AdsCard> {
                     helperMaxLines: 2,
                     prefixIcon: const Icon(Icons.crop_16_9, size: 20),
                     isDense: true,
-                    border: const OutlineInputBorder(),
                   ),
                 ),
               ],

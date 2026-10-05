@@ -43,9 +43,6 @@ flutter:
   uses-material-design: true
   generate: true
   fonts:
-    - family: Nosifer
-      fonts:
-        - asset: assets/fonts/Nosifer-Regular.ttf
     - family: ChakraPetch
       fonts:
         - asset: assets/fonts/ChakraPetch-Medium.ttf

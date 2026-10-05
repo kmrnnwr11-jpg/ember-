@@ -1795,4 +1795,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get historyEmpty =>
       'Nothing here yet. The apps you start and the drafts you write show up here.';
+
+  @override
+  String get brandTagline => 'APP MAKER';
 }

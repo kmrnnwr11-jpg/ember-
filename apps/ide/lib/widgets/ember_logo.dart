@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-const emberRed = Color(0xFFFF1A2E);
-const emberBlood = Color(0xFFB00018);
+import '../l10n/app_localizations.dart';
+import '../ui/theme.dart';
 
 /// The Ember mark: a phone with a red eye rising from a ring of fire.
 class EmberMark extends StatefulWidget {
@@ -103,7 +103,7 @@ class EmberMarkPainter extends CustomPainter {
   bool shouldRepaint(EmberMarkPainter old) => old.t != t;
 }
 
-/// "EMBER" in the dripping horror face with a red glow, optional "APP MAKER" line.
+/// "EMBER" in the display face, with the optional tagline under it.
 class EmberWordmark extends StatelessWidget {
   const EmberWordmark({super.key, this.size = 28, this.subtitle = true, this.center = false});
   final double size;
@@ -112,6 +112,7 @@ class EmberWordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: center ? CrossAxisAlignment.center : CrossAxisAlignment.start,
@@ -119,23 +120,22 @@ class EmberWordmark extends StatelessWidget {
         Text(
           'EMBER',
           style: TextStyle(
-            fontFamily: 'Nosifer',
+            fontFamily: 'ChakraPetch',
+            fontWeight: FontWeight.w700,
             fontSize: size,
             height: 1.1,
-            color: const Color(0xFFFF2A3D),
-            letterSpacing: size * 0.06,
-            shadows: const [Shadow(color: Color(0x88FF0000), blurRadius: 12)],
+            color: scheme.onSurface,
+            letterSpacing: size * 0.22,
           ),
         ),
         if (subtitle)
           Text(
-            'APP MAKER',
+            AppLocalizations.of(context).brandTagline,
             style: TextStyle(
-              fontFamily: 'monospace',
               fontSize: size * 0.34,
-              letterSpacing: size * 0.18,
+              letterSpacing: size * 0.1,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFFD9A0A8),
+              color: scheme.onSurfaceVariant,
             ),
           ),
       ],

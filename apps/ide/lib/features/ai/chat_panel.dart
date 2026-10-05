@@ -172,7 +172,7 @@ class _ChatPanelState extends ConsumerState<ChatPanel> {
                             minLines: 1,
                             maxLines: 8,
                             textInputAction: TextInputAction.newline,
-                            decoration: InputDecoration(hintText: l.askAi, isDense: true, border: const OutlineInputBorder()),
+                            decoration: InputDecoration(hintText: l.askAi, isDense: true),
                           ),
                         ),
                       ),

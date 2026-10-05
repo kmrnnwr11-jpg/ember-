@@ -637,7 +637,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
                     child: TextField(
                       controller: _keyId,
                       onChanged: (_) => _onIdChanged(),
-                      decoration: InputDecoration(labelText: l.ascKeyId, border: const OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: l.ascKeyId),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -645,7 +645,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
                     child: TextField(
                       controller: _issuer,
                       onChanged: (_) => _onIdChanged(),
-                      decoration: InputDecoration(labelText: l.ascIssuerId, border: const OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: l.ascIssuerId),
                     ),
                   ),
                 ],
@@ -658,7 +658,6 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
                 decoration: const InputDecoration(
                   labelText: 'Team ID (facoltativo)',
                   helperText: 'Serve a firmare l’app iPhone. Se lo lasci vuoto lo leggo da Apple con la chiave.',
-                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 8),
@@ -683,7 +682,6 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
                   maxLines: 4,
                   decoration: InputDecoration(
                     labelText: l.ascPrivateKey,
-                    border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       tooltip: l.paste,
                       icon: const Icon(Icons.content_paste),
@@ -755,7 +753,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
             DropdownButtonFormField<String>(
               initialValue: _category,
               isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Categoria App Store', border: OutlineInputBorder()),
+              decoration: const InputDecoration(labelText: 'Categoria App Store'),
               items: [
                 const DropdownMenuItem<String>(value: null, child: Text('— non impostare —')),
                 for (final c in _categories) DropdownMenuItem<String>(value: c.$2, child: Text(c.$1)),
@@ -793,7 +791,7 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
               children: [
                 TextField(
                   controller: _reviewEmail,
-                  decoration: const InputDecoration(labelText: 'Email di contatto (vuoto = il tuo account)', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(labelText: 'Email di contatto (vuoto = il tuo account)'),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -802,7 +800,6 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
                   decoration: const InputDecoration(
                     labelText: 'Sito sviluppatore (Marketing URL)',
                     helperText: 'AdMob cerca app-ads.txt qui. Salvato per tutte le app.',
-                    border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -812,7 +809,6 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
                   decoration: const InputDecoration(
                     labelText: 'Telefono di contatto (obbligatorio per Apple, es. +39 333 1234567)',
                     helperText: 'Lo vede solo chi rivede l’app. Lo ricordo per le prossime app.',
-                    border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -820,14 +816,14 @@ class _AppStoreCardState extends ConsumerState<AppStoreCard> with AutomaticKeepA
                   controller: _reviewNotes,
                   minLines: 1,
                   maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'Note per il recensore', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(labelText: 'Note per il recensore'),
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Expanded(child: TextField(controller: _demoUser, decoration: const InputDecoration(labelText: 'Account demo (se serve login)', border: OutlineInputBorder()))),
+                    Expanded(child: TextField(controller: _demoUser, decoration: const InputDecoration(labelText: 'Account demo (se serve login)'))),
                     const SizedBox(width: 8),
-                    Expanded(child: TextField(controller: _demoPass, decoration: const InputDecoration(labelText: 'Password demo', border: OutlineInputBorder()))),
+                    Expanded(child: TextField(controller: _demoPass, decoration: const InputDecoration(labelText: 'Password demo'))),
                   ],
                 ),
               ],

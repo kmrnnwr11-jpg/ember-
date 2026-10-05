@@ -102,7 +102,6 @@ class _RestoreFromGitHubDialogState extends ConsumerState<RestoreFromGitHubDialo
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: l.ghToken,
-                  border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
                     tooltip: l.paste,
                     icon: const Icon(Icons.content_paste),

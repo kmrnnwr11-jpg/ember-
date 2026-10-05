@@ -559,7 +559,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                   else ...[
                     const SizedBox(height: 8),
                     InputDecorator(
-                      decoration: InputDecoration(labelText: l.playTitle, border: const OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: l.playTitle),
                       child: Text(page['title'] ?? _title.text.trim(), style: const TextStyle(fontWeight: FontWeight.w700)),
                     ),
                     const SizedBox(height: 12),
@@ -567,7 +567,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                       controller: short,
                       maxLength: 80,
                       textDirection: rtl ? TextDirection.rtl : null,
-                      decoration: InputDecoration(labelText: l.playShortDescription, border: const OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: l.playShortDescription),
                     ),
                     TextField(
                       controller: full,
@@ -575,7 +575,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                       minLines: 6,
                       maxLines: 16,
                       textDirection: rtl ? TextDirection.rtl : null,
-                      decoration: InputDecoration(labelText: l.playFullDescription, border: const OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: l.playFullDescription),
                     ),
                   ],
                 ],
@@ -703,7 +703,6 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
         ),
         helperText: _console.developerId == null ? l.consoleLinkHint : l.consoleLinkSaved(_console.developerId!),
         helperMaxLines: 3,
-        border: const OutlineInputBorder(),
         isDense: true,
       ),
     ),
@@ -797,7 +796,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                     maxLines: 8,
                     onChanged: (_) => setState(() {}),
                     style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-                    decoration: InputDecoration(labelText: l.playServiceAccountJson, border: const OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: l.playServiceAccountJson),
                   ),
                   const SizedBox(height: 8),
                   FilledButton(onPressed: saValid ? () => setState(() => _step = 3) : null, child: Text(l.next)),
@@ -869,13 +868,13 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                     controller: _title,
                     onChanged: (_) => setState(() {}),
                     maxLength: 30,
-                    decoration: InputDecoration(labelText: l.playTitle, border: const OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: l.playTitle),
                   ),
                   TextField(
                     controller: _short,
                     onChanged: (_) => setState(() {}),
                     maxLength: 80,
-                    decoration: InputDecoration(labelText: l.playShortDescription, border: const OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: l.playShortDescription),
                   ),
                   TextField(
                     controller: _full,
@@ -883,19 +882,19 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                     maxLength: 4000,
                     minLines: 4,
                     maxLines: 12,
-                    decoration: InputDecoration(labelText: l.playFullDescription, border: const OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: l.playFullDescription),
                   ),
                   TextField(
                     controller: _notes,
                     maxLength: 500,
                     minLines: 2,
                     maxLines: 4,
-                    decoration: InputDecoration(labelText: l.playReleaseNotes, border: const OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: l.playReleaseNotes),
                   ),
                   TextField(
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(labelText: l.playContactEmail, border: const OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: l.playContactEmail),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -907,7 +906,6 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                       hintText: 'https://…',
                       helperText: _privacyLink.text.contains('localhost') || _privacyLink.text.contains('127.0.0.1') ? l.privacyLocalWarning : l.privacyPublicHint,
                       helperMaxLines: 3,
-                      border: const OutlineInputBorder(),
                       suffixIcon: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -932,7 +930,7 @@ class _PlayPublishScreenState extends ConsumerState<PlayPublishScreen> {
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: _track,
-                    decoration: InputDecoration(labelText: l.playTrack, border: const OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: l.playTrack),
                     items: [
                       DropdownMenuItem(value: 'internal', child: Text(l.playTrackInternal)),
                       DropdownMenuItem(value: 'alpha', child: Text(l.playTrackClosed)),

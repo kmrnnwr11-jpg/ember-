@@ -185,7 +185,6 @@ class _ReviewCardState extends ConsumerState<ReviewCard> {
               obscureText: true,
               decoration: InputDecoration(
                 isDense: true,
-                border: const OutlineInputBorder(),
                 hintText: has ? '•••••• (chiave salvata)' : 'incolla qui la chiave',
                 suffixIcon: IconButton(
                   tooltip: 'Incolla',

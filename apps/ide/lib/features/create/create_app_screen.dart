@@ -318,7 +318,6 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
             textInputAction: TextInputAction.newline,
             decoration: InputDecoration(
               hintText: l.appPromptHint,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (text) {
               widget.onChanged?.call(text);
@@ -396,7 +395,7 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
             key: ValueKey('cliModel_${engine.name}'),
             initialValue: cliModel,
             isExpanded: true,
-            decoration: InputDecoration(labelText: l.selectModel, border: const OutlineInputBorder(), isDense: true),
+            decoration: InputDecoration(labelText: l.selectModel, isDense: true),
             items: [
               for (final m in cliModels)
                 DropdownMenuItem(value: m.id, child: Text(m.description == null ? m.label : '${m.label} — ${m.description}', overflow: TextOverflow.ellipsis)),
@@ -410,7 +409,7 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
             key: ValueKey('apiModel_${engine.name}'),
             initialValue: model?.key,
             isDense: true,
-            decoration: InputDecoration(labelText: l.selectModel, border: const OutlineInputBorder(), isDense: true),
+            decoration: InputDecoration(labelText: l.selectModel, isDense: true),
             items: [for (final m in models) DropdownMenuItem(value: m.key, child: Text(m.label))],
             onChanged: (k) => setState(() => _model = models.firstWhere((m) => m.key == k)),
           ),
@@ -655,7 +654,7 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                           controller: _change,
                           minLines: 2,
                           maxLines: 8,
-                          decoration: InputDecoration(hintText: l.improveAppHint, border: const OutlineInputBorder()),
+                          decoration: InputDecoration(hintText: l.improveAppHint),
                         ),
                         const SizedBox(height: 8),
                         Align(

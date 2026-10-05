@@ -129,7 +129,6 @@ class _GitHubCardState extends ConsumerState<GitHubCard> {
                   labelText: l.ghToken,
                   helperText: l.ghTokenHelp,
                   helperMaxLines: 3,
-                  border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
                     tooltip: l.paste,
                     icon: const Icon(Icons.content_paste),

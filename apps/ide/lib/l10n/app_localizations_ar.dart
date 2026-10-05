@@ -1788,4 +1788,7 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get historyEmpty =>
       'لا شيء هنا بعد. التطبيقات التي تبدأها والمسودات التي تكتبها تظهر هنا.';
+
+  @override
+  String get brandTagline => 'صانع التطبيقات';
 }

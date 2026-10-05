@@ -322,7 +322,7 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
                       textInputAction: TextInputAction.send,
                       keyboardType: TextInputType.multiline,
                       onSubmitted: (_) => _send(c),
-                      decoration: InputDecoration(hintText: l.assistantHint, isDense: true, border: const OutlineInputBorder()),
+                      decoration: InputDecoration(hintText: l.assistantHint, isDense: true),
                     ),
                   ),
                   const SizedBox(width: 6),

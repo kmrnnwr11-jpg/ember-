@@ -1813,4 +1813,7 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get historyEmpty =>
       'Ancora niente. Le app che inizi e le bozze che scrivi compaiono qui.';
+
+  @override
+  String get brandTagline => 'CREA APP';
 }

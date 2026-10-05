@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,12 +17,14 @@ const appLanguages = <(String, String)>[
   ('ar', 'العربية'),
 ];
 
-/// The UI language: English by default, the user's choice is saved.
+/// The UI language: the device's own when Ember speaks it, English otherwise;
+/// the user's choice is saved.
 class LocaleController extends Notifier<Locale> {
   @override
   Locale build() {
     _load();
-    return const Locale('en');
+    final device = PlatformDispatcher.instance.locale.languageCode;
+    return Locale(appLanguages.any((l) => l.$1 == device) ? device : 'en');
   }
 
   Future<void> _load() async {

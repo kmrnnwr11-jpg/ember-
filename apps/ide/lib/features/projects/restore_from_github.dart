@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ide_core/ide_core.dart' show Project, RunnerException;
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/session.dart';
 import '../../core/settings_store.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 
 /// The apps saved on GitHub, ready to come back onto this computer.
 /// This is how the same apps are opened from Windows and from a Mac.
@@ -83,7 +82,6 @@ class _RestoreFromGitHubDialogState extends ConsumerState<RestoreFromGitHubDialo
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final apps = _apps;
 
     return AlertDialog(
@@ -94,34 +92,17 @@ class _RestoreFromGitHubDialogState extends ConsumerState<RestoreFromGitHubDialo
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(l.ghRestoreHint, style: theme.textTheme.bodySmall),
+            Text(l.ghRestoreHint, style: context.text.bodySmall),
             if (apps == null) ...[
-              const SizedBox(height: 12),
-              TextField(
+              Gap.vMd,
+              SecretField(
                 controller: _token,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: l.ghToken,
-                  suffixIcon: IconButton(
-                    tooltip: l.paste,
-                    icon: const Icon(Icons.content_paste),
-                    onPressed: () async {
-                      final data = await Clipboard.getData(Clipboard.kTextPlain);
-                      if (data?.text != null) _token.text = data!.text!.trim();
-                    },
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () => launchUrl(Uri.parse('https://github.com/settings/tokens/new?scopes=repo&description=Ember'), mode: LaunchMode.externalApplication),
-                  icon: const Icon(Icons.open_in_new, size: 18),
-                  label: Text(l.ghGetToken),
-                ),
+                label: l.ghToken,
+                getUrl: 'https://github.com/settings/tokens/new?scopes=repo&description=Ember',
+                getLabel: l.ghGetToken,
               ),
             ] else if (apps.isEmpty)
-              Padding(padding: const EdgeInsets.only(top: 16), child: Text(l.ghRestoreNone))
+              EmptyState(icon: Icons.cloud_off_outlined, text: l.ghRestoreNone, compact: true)
             else
               Flexible(
                 child: ListView.separated(
@@ -143,8 +124,8 @@ class _RestoreFromGitHubDialogState extends ConsumerState<RestoreFromGitHubDialo
                   },
                 ),
               ),
-            if (_busy) const Padding(padding: EdgeInsets.only(top: 12), child: LinearProgressIndicator()),
-            if (_error != null) Padding(padding: const EdgeInsets.only(top: 12), child: SelectableText(_error!, style: TextStyle(color: theme.colorScheme.error))),
+            if (_busy) const Padding(padding: EdgeInsets.only(top: Gap.md), child: LinearProgressIndicator()),
+            if (_error != null) Padding(padding: const EdgeInsets.only(top: Gap.md), child: InlineMessage(_error!, error: true)),
           ],
         ),
       ),

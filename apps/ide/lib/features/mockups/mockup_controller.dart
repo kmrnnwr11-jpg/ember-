@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show Locale;
 
 import 'package:ai_connect/ai_connect.dart';
 import 'package:flutter/foundation.dart';
@@ -412,7 +413,12 @@ class MockupController extends ChangeNotifier {
     this.model,
     this.styleBrief = '',
     this.panel = const [],
-  }) : _complete = complete;
+    AppLocalizations? strings,
+  }) : _complete = complete,
+       strings = strings ?? lookupAppLocalizations(const Locale('en'));
+
+  /// The texts this controller shows while it works, in the user's language.
+  final AppLocalizations strings;
 
   /// The models that share the drawing and then review each other. Empty or a
   /// single member means the old behaviour: one model draws, nobody reviews.
@@ -452,7 +458,7 @@ class MockupController extends ChangeNotifier {
   /// Returns empty when nobody usable answered, and the caller then falls back
   /// to the old fixed pool rather than showing nothing.
   Future<List<Direction>> _agreeDirections() async {
-    panelStatus = 'I ${panel.length} AI stanno decidendo insieme le 8 direzioni…';
+    panelStatus = strings.mockupAgreeing(panel.length);
     notifyListeners();
     final answers = await Future.wait([
       for (final m in panel)
@@ -547,7 +553,7 @@ class MockupController extends ChangeNotifier {
     final ready = [for (final (i, m) in set.indexed) if (m.status == MockupStatus.ready && m.html != null) (i: i, m: m)];
     if (ready.length < 2) return;
 
-    panelStatus = 'I ${panel.length} designer si confrontano sui ${ready.length} mockup…';
+    panelStatus = strings.mockupComparing(panel.length, ready.length);
     notifyListeners();
 
     final summaries = [for (final (k, r) in ready.indexed) r.m.critiqueSummary(k + 1)].join('\n\n');
@@ -585,7 +591,7 @@ class MockupController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    panelStatus = 'Ogni designer sta rifacendo il suo mockup con le note degli altri…';
+    panelStatus = strings.mockupRedrawing;
     notifyListeners();
     for (var i = 0; i < toRedraw.length; i += _atOnce) {
       await Future.wait([
@@ -646,7 +652,7 @@ class MockupController extends ChangeNotifier {
         m
           ..html = fallbackHtml
           ..status = fallbackHtml == null ? MockupStatus.failed : MockupStatus.ready
-          ..error = 'Il modello non ha restituito un mockup valido';
+          ..error = strings.mockupInvalid;
       }
     } catch (e) {
       m

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ide_core/ide_core.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import 'project_controller.dart';
 
 enum _Action { newFile, newFolder, rename, delete }
@@ -27,7 +28,7 @@ class FileTree extends StatelessWidget {
                 addDir(e.path, depth + 1);
               } else {
                 rows.add(Padding(
-                  padding: EdgeInsets.only(left: 28.0 + depth * 14, top: 4, bottom: 4),
+                  padding: EdgeInsetsDirectional.only(start: Gap.xxl + depth * Gap.lg, top: Gap.xs, bottom: Gap.xs),
                   child: const SizedBox.square(dimension: 12, child: CircularProgressIndicator(strokeWidth: 1.5)),
                 ));
               }
@@ -36,28 +37,32 @@ class FileTree extends StatelessWidget {
         }
 
         addDir('', 0);
+        const target = BoxConstraints(minWidth: 40, minHeight: 40);
         return Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+              padding: const EdgeInsetsDirectional.fromSTEB(Gap.md, Gap.xs, Gap.xs, Gap.xs),
               child: Row(
                 children: [
-                  Expanded(child: Text(l.files.toUpperCase(), style: Theme.of(context).textTheme.labelSmall)),
+                  Expanded(child: Text(l.files.toUpperCase(), style: context.text.labelSmall)),
                   IconButton(
                     tooltip: l.newFile,
                     iconSize: 18,
+                    constraints: target,
                     icon: const Icon(Icons.note_add_outlined),
                     onPressed: () => _prompt(context, l.newFile, '', (n) => controller.createFile('', n)),
                   ),
                   IconButton(
                     tooltip: l.newFolder,
                     iconSize: 18,
+                    constraints: target,
                     icon: const Icon(Icons.create_new_folder_outlined),
                     onPressed: () => _prompt(context, l.newFolder, '', (n) => controller.createFolder('', n)),
                   ),
                   IconButton(
                     tooltip: l.reload,
                     iconSize: 18,
+                    constraints: target,
                     icon: const Icon(Icons.refresh),
                     onPressed: () => controller.loadDir(''),
                   ),
@@ -69,8 +74,8 @@ class FileTree extends StatelessWidget {
               child: controller.children.containsKey('')
                   ? ListView(children: rows)
                   : controller.error != null
-                  ? Center(child: Text(l.error(controller.error.toString())))
-                  : const Center(child: CircularProgressIndicator()),
+                  ? ErrorState(message: l.error(controller.error.toString()), onRetry: () => controller.loadDir(''))
+                  : const LoadingState(),
             ),
           ],
         );
@@ -81,23 +86,25 @@ class FileTree extends StatelessWidget {
   Widget _row(BuildContext context, FsEntry e, int depth) {
     final open = controller.expanded.contains(e.path);
     final isActive = controller.activeFile?.path == e.path;
+    // A collapsed folder points towards the end of the line, in either reading direction.
+    final collapsed = Directionality.of(context) == TextDirection.rtl ? Icons.keyboard_arrow_left : Icons.keyboard_arrow_right;
     return InkWell(
       key: ValueKey('tree:${e.path}'),
       onTap: () => e.isDir ? controller.toggleDir(e.path) : onOpen(e.path),
       onLongPress: () => _menu(context, e, null),
       onSecondaryTapUp: (d) => _menu(context, e, d.globalPosition),
-      child: Container(
-        color: isActive ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15) : null,
-        padding: EdgeInsets.only(left: 8.0 + depth * 14, top: 6, bottom: 6, right: 8),
-        child: Row(
-          children: [
-            Icon(
-              e.isDir ? (open ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right) : Icons.description_outlined,
-              size: 16,
-            ),
-            const SizedBox(width: 6),
-            Expanded(child: Text(e.name, overflow: TextOverflow.ellipsis)),
-          ],
+      child: Semantics(
+        selected: isActive,
+        child: Container(
+          color: isActive ? context.scheme.primary.withValues(alpha: 0.15) : null,
+          padding: EdgeInsetsDirectional.only(start: Gap.sm + depth * Gap.lg, top: Gap.sm, bottom: Gap.sm, end: Gap.sm),
+          child: Row(
+            children: [
+              Icon(e.isDir ? (open ? Icons.keyboard_arrow_down : collapsed) : Icons.description_outlined, size: 16),
+              Gap.hSm,
+              Expanded(child: Text(e.name, overflow: TextOverflow.ellipsis)),
+            ],
+          ),
         ),
       ),
     );
@@ -127,17 +134,8 @@ class FileTree extends StatelessWidget {
       case _Action.rename:
         await _prompt(context, l.rename, e.name, (n) => controller.rename(e, n));
       case _Action.delete:
-        final ok = await showDialog<bool>(
-          context: context,
-          builder: (c) => AlertDialog(
-            content: Text(l.deleteConfirm(e.path)),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(c, false), child: Text(l.cancel)),
-              FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(l.delete)),
-            ],
-          ),
-        );
-        if (ok == true && context.mounted) await _guard(context, () => controller.delete(e));
+        final ok = await showConfirm(context, title: l.deleteConfirm(e.path), confirmLabel: l.delete, destructive: true);
+        if (ok && context.mounted) await _guard(context, () => controller.delete(e));
     }
   }
 
@@ -170,9 +168,7 @@ class FileTree extends StatelessWidget {
     try {
       await fn();
     } on RunnerException catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).error(e.message))));
-      }
+      if (context.mounted) showEmberSnack(context, AppLocalizations.of(context).error(e.message), error: true);
     }
   }
 }

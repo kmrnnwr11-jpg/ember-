@@ -2,6 +2,7 @@ import 'package:ai_connect/ai_connect.dart';
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import 'ai_settings.dart';
 
 String formatPer1k(double? usd) {
@@ -43,16 +44,16 @@ class ModelPicker extends StatelessWidget {
           final ok = settings.isConfigured(provider);
           items.add(PopupMenuItem<Object>(
             enabled: false,
-            height: 32,
+            height: Gap.xxl,
             child: Row(
               children: [
-                Text(provider.product, style: Theme.of(context).textTheme.labelMedium),
-                const SizedBox(width: 6),
-                _Badge(label: 'BYOK', color: Theme.of(context).colorScheme.primary),
-                const SizedBox(width: 6),
-                Icon(ok ? Icons.check_circle : Icons.key_off, size: 14, color: ok ? Colors.green : Colors.orange),
-                const SizedBox(width: 4),
-                Text(ok ? l.keyPresent : l.notConfigured, style: Theme.of(context).textTheme.labelSmall),
+                Text(provider.product, style: context.text.labelMedium),
+                Gap.hSm,
+                const Pill('BYOK'),
+                Gap.hSm,
+                Icon(ok ? Icons.check_circle_outline : Icons.key_off_outlined, size: 14, color: ok ? context.ember.success : context.ember.warning),
+                Gap.hXs,
+                Flexible(child: Text(ok ? l.keyPresent : l.notConfigured, style: context.text.labelSmall, overflow: TextOverflow.ellipsis)),
               ],
             ),
           ));
@@ -67,10 +68,10 @@ class ModelPicker extends StatelessWidget {
                     child: sel?.key == m.key ? const Icon(Icons.check, size: 16) : null,
                   ),
                   Expanded(child: Text(m.label, overflow: TextOverflow.ellipsis)),
-                  const SizedBox(width: 12),
+                  Gap.hMd,
                   Text(
                     '${formatPer1k(m.inputPer1k)} / ${formatPer1k(m.outputPer1k)} ${l.per1k}',
-                    style: Theme.of(context).textTheme.labelSmall,
+                    style: context.text.labelSmall,
                   ),
                 ],
               ),
@@ -79,16 +80,16 @@ class ModelPicker extends StatelessWidget {
         }
         items
           ..add(const PopupMenuDivider())
-          ..add(PopupMenuItem<Object>(value: 'settings', child: ListTile(dense: true, leading: const Icon(Icons.key), title: Text(l.aiSettings))));
+          ..add(PopupMenuItem<Object>(value: 'settings', child: ListTile(dense: true, leading: const Icon(Icons.key_outlined), title: Text(l.aiSettings))));
         return items;
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        padding: const EdgeInsets.all(Gap.sm),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.auto_awesome, size: 16),
-            const SizedBox(width: 6),
+            const Icon(Icons.auto_awesome_outlined, size: 16),
+            Gap.hSm,
             Flexible(child: Text(sel?.label ?? l.selectModel, overflow: TextOverflow.ellipsis)),
             const Icon(Icons.arrow_drop_down),
           ],
@@ -96,17 +97,4 @@ class ModelPicker extends StatelessWidget {
       ),
     );
   }
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({required this.label, required this.color});
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-    decoration: BoxDecoration(border: Border.all(color: color), borderRadius: BorderRadius.circular(4)),
-    child: Text(label, style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.w600)),
-  );
 }

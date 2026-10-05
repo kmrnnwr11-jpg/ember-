@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ide_core/ide_core.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 
 /// Shows the line diff between the current file and the AI proposal.
 /// Returns true when the user accepts.
@@ -16,23 +17,23 @@ Future<bool> showApplyDiff(BuildContext context, {required String path, required
     builder: (d) => AlertDialog(
       title: Text(l.applyTo(path)),
       content: SizedBox(
-        width: 760,
+        width: Widths.page,
         height: 480,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('+$added  −$removed', style: const TextStyle(fontFamily: 'monospace')),
-            const SizedBox(height: 8),
+            Text('+$added  −$removed', style: kMono),
+            Gap.vSm,
             Expanded(
               child: hunks.isEmpty
                   ? Center(child: Text(l.noChanges))
-                  : Container(
-                      color: const Color(0xFF1E1E1E),
+                  : LogSurface(
+                      padding: const EdgeInsets.symmetric(vertical: Gap.sm),
                       child: ListView(
                         children: [
                           for (final h in hunks) ...[
                             for (final line in h.lines) _DiffRow(line: line),
-                            const Divider(height: 12, color: Colors.white24),
+                            Divider(height: Gap.md, color: d.ember.codeMuted.withValues(alpha: 0.4)),
                           ],
                         ],
                       ),
@@ -56,18 +57,18 @@ class _DiffRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Tints over the always-dark code surface.
     final (bg, sign) = switch (line.kind) {
-      DiffKind.added => (const Color(0x3325A244), '+'),
-      DiffKind.removed => (const Color(0x33E5484D), '-'),
+      DiffKind.added => (context.ember.success.withValues(alpha: 0.2), '+'),
+      DiffKind.removed => (context.scheme.error.withValues(alpha: 0.2), '-'),
       DiffKind.same => (Colors.transparent, ' '),
     };
     final num = (line.kind == DiffKind.added ? line.newLine : line.oldLine)?.toString() ?? '';
     return Container(
       color: bg,
-      padding: const EdgeInsets.symmetric(horizontal: 6),
+      padding: const EdgeInsets.symmetric(horizontal: Gap.sm),
       child: Text(
         '${num.padLeft(4)} $sign ${line.text}',
-        style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.white70, height: 1.35),
         softWrap: false,
         overflow: TextOverflow.fade,
       ),

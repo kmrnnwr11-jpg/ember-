@@ -5,6 +5,7 @@ import '../../core/env.dart';
 import '../../core/locale.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import '../../widgets/ember_logo.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -19,6 +20,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _runner = TextEditingController(text: Env.runnerUrl);
+
+  /// The Runner address is right for almost everyone: it stays folded away.
+  bool _advanced = false;
 
   @override
   void initState() {
@@ -36,8 +40,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  bool get _runnerValid {
+    final u = Uri.tryParse(_runner.text.trim());
+    return u != null && (u.scheme == 'http' || u.scheme == 'https') && u.host.isNotEmpty;
+  }
+
   Future<void> _submit({bool signUp = false}) async {
-    if (!_form.currentState!.validate()) return;
+    // A wrong address must be seen to be corrected.
+    if (!_runnerValid && !_advanced) setState(() => _advanced = true);
+    if (!_form.currentState!.validate() || !_runnerValid) return;
     await ref.read(sessionProvider.notifier).signIn(
       runnerUrl: _runner.text,
       email: _email.text.trim(),
@@ -51,27 +62,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final l = AppLocalizations.of(context);
     final session = ref.watch(sessionProvider);
     final busy = session.isLoading;
-    final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.transparent, actions: const [LanguageButton()]),
+      appBar: AppBar(backgroundColor: Colors.transparent, actions: const [LanguageButton(), Gap.hSm]),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(Gap.xl),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+            constraints: const BoxConstraints(maxWidth: Widths.form),
             child: Form(
               key: _form,
               child: AutofillGroup(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Center(child: EmberMark(size: 110)),
-                    const SizedBox(height: 8),
-                    const Center(child: EmberWordmark(size: 38, center: true)),
-                    const SizedBox(height: 4),
-                    Text(l.loginSubtitle, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
-                    const SizedBox(height: 32),
+                    const Center(child: ExcludeSemantics(child: EmberMark(size: 96))),
+                    Gap.vMd,
+                    const Center(child: EmberWordmark(size: 34, center: true)),
+                    Gap.vSm,
+                    Text(l.loginSubtitle, textAlign: TextAlign.center, style: context.text.bodyMedium?.copyWith(color: context.scheme.onSurfaceVariant)),
+                    Gap.vXl,
                     TextFormField(
                       key: const Key('email'),
                       controller: _email,
@@ -79,9 +89,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       autofillHints: const [AutofillHints.email],
                       validator: (v) => v != null && RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim()) ? null : l.invalidEmail,
+                      onFieldSubmitted: Env.supabaseEnabled ? null : (_) => _submit(),
                     ),
                     if (Env.supabaseEnabled) ...[
-                      const SizedBox(height: 12),
+                      Gap.vMd,
                       TextFormField(
                         controller: _password,
                         obscureText: true,
@@ -91,37 +102,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onFieldSubmitted: (_) => _submit(),
                       ),
                     ],
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _runner,
-                      decoration: InputDecoration(labelText: l.runnerUrl, prefixIcon: const Icon(Icons.dns_outlined)),
-                      keyboardType: TextInputType.url,
-                      validator: (v) {
-                        final u = Uri.tryParse(v?.trim() ?? '');
-                        return u != null && (u.scheme == 'http' || u.scheme == 'https') && u.host.isNotEmpty ? null : l.runnerUrl;
-                      },
-                    ),
-                    if (!Env.supabaseEnabled) ...[
-                      const SizedBox(height: 12),
-                      Text(l.devLoginHint, style: theme.textTheme.bodySmall),
-                    ],
                     if (session.hasError) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        l.error(session.error.toString()),
-                        style: TextStyle(color: theme.colorScheme.error),
-                      ),
+                      Gap.vMd,
+                      InlineMessage(l.error(session.error.toString()), error: true),
                     ],
-                    const SizedBox(height: 24),
+                    Gap.vXl,
                     FilledButton(
                       key: const Key('signIn'),
                       onPressed: busy ? null : _submit,
-                      child: busy
-                          ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : Text(l.signIn),
+                      child: busy ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(l.signIn),
                     ),
-                    if (Env.supabaseEnabled)
-                      TextButton(onPressed: busy ? null : () => _submit(signUp: true), child: Text(l.signUp)),
+                    if (Env.supabaseEnabled) TextButton(onPressed: busy ? null : () => _submit(signUp: true), child: Text(l.signUp)),
+                    Gap.vSm,
+                    Center(
+                      child: TextButton.icon(
+                        key: const Key('loginAdvanced'),
+                        onPressed: () => setState(() => _advanced = !_advanced),
+                        icon: Icon(_advanced ? Icons.expand_less : Icons.expand_more, size: 18),
+                        label: Text(l.advanced),
+                        style: TextButton.styleFrom(foregroundColor: context.scheme.onSurfaceVariant),
+                      ),
+                    ),
+                    AnimatedSize(
+                      duration: Motion.of(context),
+                      curve: Motion.curve,
+                      alignment: Alignment.topCenter,
+                      child: !_advanced
+                          ? const SizedBox(width: double.infinity)
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Gap.vSm,
+                                TextFormField(
+                                  key: const Key('runnerUrl'),
+                                  controller: _runner,
+                                  decoration: InputDecoration(labelText: l.runnerAddress, helperText: l.runnerAddressHint, helperMaxLines: 3, prefixIcon: const Icon(Icons.dns_outlined)),
+                                  keyboardType: TextInputType.url,
+                                  validator: (_) => _runnerValid ? null : l.runnerUrl,
+                                ),
+                                if (!Env.supabaseEnabled) ...[
+                                  Gap.vMd,
+                                  Text(l.devLoginHint, style: context.text.bodySmall),
+                                ],
+                              ],
+                            ),
+                    ),
                   ],
                 ),
               ),

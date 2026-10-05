@@ -4,20 +4,21 @@ import 'package:ai_connect/ai_connect.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ide_core/ide_core.dart';
-import 'package:pointer_interceptor/pointer_interceptor.dart';
 
+import '../../core/locale.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import '../ai/ai_settings.dart';
 import '../create/app_builder.dart';
 import '../create/create_app_screen.dart';
 import '../projects/projects_screen.dart';
 import '../review/panel_health.dart';
 import 'mockup_controller.dart';
+import 'mockup_gallery_widgets.dart';
 import 'name_picker.dart';
 
 /// Full-screen gallery of 5 style mockups shown right after the user
@@ -74,7 +75,11 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
     // that are down are named to the user before a single mockup is drawn.
     if (!mounted) return;
     final health = await checkPanel(context, ref, forDrawing: true);
-    if (!health.proceed) return quitEmber();
+    if (!health.proceed) {
+      // Stopping here goes back to the description; the app is not closed.
+      if (mounted) context.pop();
+      return;
+    }
     final panel = health.members;
     final c = MockupController(
       description: '${a.prompt}${a.reference ?? ''}',
@@ -84,6 +89,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
       complete: panel.length == 1 ? panel.first.complete : complete,
       styleBrief: a.styleBrief,
       panel: panel.length > 1 ? panel : const [],
+      strings: ref.read(stringsProvider),
     );
     c.addListener(() {
       if (mounted) setState(() {});
@@ -100,8 +106,10 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
   }
 
   void _slide(int i) {
-    if (_pages.hasClients) {
-      _pages.animateToPage(i, duration: const Duration(milliseconds: 300), curve: Curves.easeOutCubic);
+    // No slide when the system asks for reduced motion.
+    final duration = Motion.of(context);
+    if (_pages.hasClients && duration > Duration.zero) {
+      _pages.animateToPage(i, duration: duration, curve: Motion.curve);
     } else {
       _jumpTo(i);
     }
@@ -118,14 +126,14 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
     final change = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      builder: (d) => _OverPage(child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(d).viewInsets.bottom + 16),
+      builder: (d) => OverPage(child: Padding(
+        padding: EdgeInsets.fromLTRB(Gap.lg, Gap.lg, Gap.lg, MediaQuery.of(d).viewInsets.bottom + Gap.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(l.editMockup, style: Theme.of(d).textTheme.titleMedium),
-            const SizedBox(height: 8),
+            Text(l.editMockup, style: d.text.titleMedium),
+            Gap.vSm,
             TextField(
               controller: ctrl,
               autofocus: true,
@@ -133,7 +141,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
               maxLines: 5,
               decoration: InputDecoration(hintText: l.editMockupHint),
             ),
-            const SizedBox(height: 8),
+            Gap.vSm,
             FilledButton(onPressed: () => Navigator.pop(d, ctrl.text.trim()), child: Text(l.applyChange)),
           ],
         ),
@@ -152,7 +160,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      builder: (d) => _OverPage(child: NamePickerSheet(
+      builder: (d) => OverPage(child: NamePickerSheet(
         load: () => suggestNames(complete, '${widget.args.prompt}${widget.args.reference ?? ''}'),
       )),
     );
@@ -173,7 +181,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
       final ok = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
-        builder: (_) => _OverPage(child: JobLogDialog(title: l.creatingProject(project.name), jobId: job.jobId)),
+        builder: (_) => OverPage(child: JobLogDialog(title: l.creatingProject(project.name), jobId: job.jobId)),
       );
       // The name is saved before the build: from here on the package name, the
       // privacy policy and the store listing all read it from the same place.
@@ -201,7 +209,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
         );
       }
     } on RunnerException catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.error(e.message))));
+      if (mounted) showEmberSnack(context, l.error(e.message), error: true);
     } finally {
       if (mounted) setState(() => _creating = false);
     }
@@ -214,19 +222,23 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
     final mockups = c?.current ?? const <Mockup>[];
     final m = mockups.isEmpty ? null : mockups[_page.clamp(0, mockups.length - 1)];
     final readyCount = mockups.where((x) => x.status == MockupStatus.ready).length;
+    final ember = context.ember;
+    final material = MaterialLocalizations.of(context);
+    // The start side goes back: the chevrons swap in right-to-left languages.
+    final rtl = Directionality.of(context) == TextDirection.rtl;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: ember.codeSurface,
       body: Stack(
         children: [
           if (mockups.isEmpty)
-            const Center(child: CircularProgressIndicator())
+            const LoadingState()
           else
             PageView.builder(
               controller: _pages,
               itemCount: mockups.length,
               onPageChanged: (i) => setState(() => _page = i),
-              itemBuilder: (_, i) => _MockupPage(mockup: mockups[i], onRetry: () => c!.retry(mockups[i])),
+              itemBuilder: (_, i) => MockupPage(mockup: mockups[i], onRetry: () => c!.retry(mockups[i])),
             ),
           // Previous / next arrows (a mouse cannot swipe the pages).
           if (mockups.length > 1) ...[
@@ -234,13 +246,12 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
               Align(
                 alignment: AlignmentDirectional.centerStart,
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: _OverPage(child: IconButton.filled(
+                  padding: const EdgeInsets.all(Gap.sm),
+                  child: OverPage(child: OverlayButton(
                     key: const Key('mockupPrev'),
-                    style: IconButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, fixedSize: const Size(52, 52)),
-                    tooltip: '$_page / ${mockups.length}',
+                    tooltip: material.previousPageTooltip,
                     onPressed: () => _slide(_page - 1),
-                    icon: const Icon(Icons.chevron_left, size: 32),
+                    icon: rtl ? Icons.chevron_right : Icons.chevron_left,
                   )),
                 ),
               ),
@@ -248,13 +259,12 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
               Align(
                 alignment: AlignmentDirectional.centerEnd,
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: _OverPage(child: IconButton.filled(
+                  padding: const EdgeInsets.all(Gap.sm),
+                  child: OverPage(child: OverlayButton(
                     key: const Key('mockupNext'),
-                    style: IconButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, fixedSize: const Size(52, 52)),
-                    tooltip: '${_page + 2} / ${mockups.length}',
+                    tooltip: material.nextPageTooltip,
                     onPressed: () => _slide(_page + 1),
-                    icon: const Icon(Icons.chevron_right, size: 32),
+                    icon: rtl ? Icons.chevron_left : Icons.chevron_right,
                   )),
                 ),
               ),
@@ -262,36 +272,50 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
           // Top bar: close, progress, page dots, previous sets.
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: _OverPage(child: Row(
+              padding: const EdgeInsets.symmetric(horizontal: Gap.sm, vertical: Gap.xs),
+              child: OverPage(child: Row(
                 children: [
-                  _RoundButton(icon: Icons.close, onTap: () => context.pop()),
-                  const SizedBox(width: 8),
+                  OverlayButton(icon: Icons.close, tooltip: l.close, onPressed: () => context.pop()),
+                  Gap.hSm,
                   Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        for (var i = 0; i < mockups.length; i++)
-                          GestureDetector(
-                            onTap: () => _jumpTo(i),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              margin: const EdgeInsets.symmetric(horizontal: 3),
-                              width: i == _page ? 22 : 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: mockups[i].status == MockupStatus.ready ? Colors.white : Colors.white38,
-                                borderRadius: BorderRadius.circular(4),
+                    // Eight dots with a full tap area each do not fit a narrow
+                    // phone: they shrink together rather than overflow.
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (var i = 0; i < mockups.length; i++)
+                            Semantics(
+                              button: true,
+                              selected: i == _page,
+                              label: '${i + 1} / ${mockups.length}',
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () => _jumpTo(i),
+                                // The dot stays 8px; the area that answers a tap is 32x48.
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: Gap.md, vertical: 20),
+                                  child: AnimatedContainer(
+                                    duration: Motion.of(context, Motion.fast),
+                                    width: i == _page ? 22 : 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: mockups[i].status == MockupStatus.ready ? ember.onCodeSurface : ember.codeMuted,
+                                      borderRadius: Radii.pillAll,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   if ((c?.sets.length ?? 0) > 1)
                     PopupMenuButton<int>(
                       tooltip: l.previousMockups,
-                      icon: const Icon(Icons.history, color: Colors.white),
+                      icon: Icon(Icons.history, color: ember.onCodeSurface),
                       onSelected: (i) {
                         c!.showSet(i);
                         _jumpTo(0);
@@ -301,8 +325,8 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
                           CheckedPopupMenuItem(value: i, checked: i == c.viewingSet, child: Text(l.mockupSet(i + 1))),
                       ],
                     ),
-                  const SizedBox(width: 4),
-                  Text('$readyCount/${mockups.length}', style: const TextStyle(color: Colors.white70)),
+                  Gap.hXs,
+                  Text('$readyCount/${mockups.length}', style: TextStyle(color: ember.onCodeSurface)),
                 ],
               )),
             ),
@@ -311,10 +335,10 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
           Align(
             alignment: Alignment.bottomCenter,
             child: SafeArea(
-              child: _OverPage(child: Container(
-                margin: const EdgeInsets.all(10),
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.82), borderRadius: BorderRadius.circular(18)),
+              child: OverPage(child: Container(
+                margin: const EdgeInsets.all(Gap.sm),
+                padding: const EdgeInsets.symmetric(horizontal: Gap.lg, vertical: Gap.md),
+                decoration: BoxDecoration(color: ember.codeSurface.withValues(alpha: 0.82), borderRadius: Radii.lgAll),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -324,15 +348,20 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
                         Expanded(
                           child: Text(
                             m == null ? l.generatingMockups : (m.name.isEmpty ? mockupStyleLabel(l, m.style.id) : m.name),
-                            style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600),
+                            style: TextStyle(color: ember.onCodeSurface, fontSize: 17, fontWeight: FontWeight.w600),
                           ),
                         ),
+                        // The mockup's own colours: data, not theme.
                         for (final hex in m?.palette.take(5) ?? const <String>[])
                           Container(
                             width: 18,
                             height: 18,
-                            margin: const EdgeInsets.only(left: 4),
-                            decoration: BoxDecoration(color: _hex(hex), shape: BoxShape.circle, border: Border.all(color: Colors.white24)),
+                            margin: const EdgeInsetsDirectional.only(start: Gap.xs),
+                            decoration: BoxDecoration(
+                              color: _hex(hex) ?? ember.codeMuted,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: ember.onCodeSurface.withValues(alpha: 0.24)),
+                            ),
                           ),
                       ],
                     ),
@@ -341,54 +370,47 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
                     // fastest way to see which ones are worth opening.
                     if (m != null && m.authorLabel.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(top: 6),
+                        padding: const EdgeInsets.only(top: Gap.sm),
                         child: Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
+                          spacing: Gap.sm,
+                          runSpacing: Gap.xs,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            _Tag('✏️ ${m.authorLabel}'),
-                            if (m.score != null) _Tag('⭐ ${m.score!.toStringAsFixed(1)}/10'),
-                            if (m.refined) const _Tag('✓ rifatto con le note'),
+                            Pill(m.authorLabel, icon: Icons.edit_outlined, onDark: true),
+                            if (m.score != null) Pill('${m.score!.toStringAsFixed(1)}/10', icon: Icons.star_outline, onDark: true),
+                            if (m.refined) Pill(l.mockupRefined, icon: Icons.check, onDark: true),
                           ],
                         ),
                       ),
                     if (m != null && m.notes.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.only(top: Gap.xs),
                         child: Text(
-                          'Note del tavolo: ${m.notes.join(' · ')}',
-                          style: const TextStyle(color: Colors.white54, fontSize: 11),
+                          l.mockupPanelNotes(m.notes.join(' · ')),
+                          style: TextStyle(color: ember.codeMuted, fontSize: 11),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     if (c != null && c.panelStatus.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Row(children: [
-                          const SizedBox(
-                            width: 12,
-                            height: 12,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(c.panelStatus, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                          ),
-                        ]),
+                        padding: const EdgeInsets.only(top: Gap.sm),
+                        child: DefaultTextStyle.merge(
+                          style: TextStyle(color: ember.onCodeSurface, fontSize: 12),
+                          child: BusyRow(c.panelStatus),
+                        ),
                       ),
                     if (m != null && (m.tagline.isNotEmpty || m.font.isNotEmpty))
                       Padding(
-                        padding: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.only(top: Gap.xs),
                         child: Text(
                           [if (m.tagline.isNotEmpty) m.tagline, if (m.font.isNotEmpty) l.fontLabel(m.font)].join(' · '),
-                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          style: TextStyle(color: ember.onCodeSurface, fontSize: 12),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    const SizedBox(height: 10),
+                    Gap.vMd,
                     Row(
                       children: [
                         Expanded(
@@ -401,13 +423,13 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
                             label: Text(l.chooseMockup),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        Gap.hSm,
                         IconButton.filledTonal(
                           tooltip: l.editMockup,
                           onPressed: m?.status == MockupStatus.ready ? () => _edit(m!) : null,
                           icon: const Icon(Icons.edit),
                         ),
-                        const SizedBox(width: 4),
+                        Gap.hXs,
                         IconButton.filledTonal(
                           key: const Key('newMockups'),
                           tooltip: l.newMockups,
@@ -417,8 +439,9 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
                       ],
                     ),
                     TextButton(
+                      style: TextButton.styleFrom(foregroundColor: ember.onCodeSurface, disabledForegroundColor: ember.codeMuted),
                       onPressed: _creating ? null : () => _choose(null),
-                      child: Text(l.skipMockups, style: const TextStyle(color: Colors.white60)),
+                      child: Text(l.skipMockups),
                     ),
                   ],
                 ),
@@ -430,135 +453,10 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
     );
   }
 
-  static Color _hex(String s) {
+  /// Null when the mockup's colour cannot be read.
+  static Color? _hex(String s) {
     final v = s.replaceAll('#', '');
     final n = int.tryParse(v.length == 6 ? 'FF$v' : v, radix: 16);
-    return n == null ? Colors.grey : Color(n);
+    return n == null ? null : Color(n);
   }
-}
-
-/// Controls drawn over a mockup.
-///
-/// In the browser the mockup is an iframe, and an iframe takes every click
-/// made over it: the arrows, the choose button and the sheets above the page
-/// were all on screen and none of them answered. Elsewhere this does nothing.
-class _OverPage extends StatelessWidget {
-  const _OverPage({required this.child});
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => PointerInterceptor(child: child);
-}
-
-/// A quiet label on the dark panel: it names a fact, it is not a button.
-class _Tag extends StatelessWidget {
-  const _Tag(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(999)),
-        child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 11)),
-      );
-}
-
-class _MockupPage extends StatelessWidget {
-  const _MockupPage({required this.mockup, required this.onRetry});
-
-  final Mockup mockup;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    switch (mockup.status) {
-      case MockupStatus.loading:
-        return Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text(l.designingStyle(mockupStyleLabel(l, mockup.style.id)), style: const TextStyle(color: Colors.white70)),
-            ],
-          ),
-        );
-      case MockupStatus.failed:
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline, color: Colors.orangeAccent, size: 40),
-                const SizedBox(height: 8),
-                Text(mockup.error ?? '', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
-                const SizedBox(height: 12),
-                FilledButton(onPressed: onRetry, child: Text(l.retry)),
-              ],
-            ),
-          ),
-        );
-      case MockupStatus.ready:
-        return _MockupWebView(html: mockup.html!);
-    }
-  }
-}
-
-class _RoundButton extends StatelessWidget {
-  const _RoundButton({required this.icon, required this.onTap});
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.black54,
-    shape: const CircleBorder(),
-    child: InkWell(customBorder: const CircleBorder(), onTap: onTap, child: Padding(padding: const EdgeInsets.all(8), child: Icon(icon, color: Colors.white))),
-  );
-}
-
-
-/// The page itself, shown once and reloaded in place.
-///
-/// It used to be keyed by the page's own hash, so every redraw replaced the
-/// widget — and with it the native WebView underneath. The panel rounds redraw
-/// all eight, which meant eight native views torn down and rebuilt in a few
-/// seconds; on Windows the plugin fell over and took Ember with it
-/// (flutter_inappwebview_windows_plugin.dll, 0xc0000005). The view is now
-/// created once and simply given the new page.
-class _MockupWebView extends StatefulWidget {
-  const _MockupWebView({required this.html});
-
-  final String html;
-
-  @override
-  State<_MockupWebView> createState() => _MockupWebViewState();
-}
-
-class _MockupWebViewState extends State<_MockupWebView> {
-  InAppWebViewController? _controller;
-
-  @override
-  void didUpdateWidget(covariant _MockupWebView old) {
-    super.didUpdateWidget(old);
-    if (old.html != widget.html) {
-      _controller?.loadData(data: widget.html, mimeType: 'text/html', encoding: 'utf8');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => InAppWebView(
-        initialData: InAppWebViewInitialData(data: widget.html, mimeType: 'text/html', encoding: 'utf8'),
-        initialSettings: InAppWebViewSettings(
-          javaScriptEnabled: false,
-          supportZoom: false,
-          transparentBackground: false,
-          verticalScrollBarEnabled: false,
-        ),
-        onWebViewCreated: (c) => _controller = c,
-        // Horizontal swipes go to the PageView; vertical scroll stays in the mockup.
-        gestureRecognizers: const {},
-      );
 }

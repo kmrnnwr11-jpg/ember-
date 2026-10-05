@@ -119,7 +119,7 @@ abstract class AppLocalizations {
   /// No description provided for @loginSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Build Flutter apps from any device, with AI.'**
+  /// **'Create apps from any device, with AI.'**
   String get loginSubtitle;
 
   /// No description provided for @email.
@@ -155,7 +155,7 @@ abstract class AppLocalizations {
   /// No description provided for @devLoginHint.
   ///
   /// In en, this message translates to:
-  /// **'Development mode: Supabase not configured, email-only sign in through the Runner.'**
+  /// **'Development mode: Supabase is not set up, so you sign in with email only, through the computer where Ember runs.'**
   String get devLoginHint;
 
   /// No description provided for @invalidEmail.
@@ -185,7 +185,7 @@ abstract class AppLocalizations {
   /// No description provided for @noProjects.
   ///
   /// In en, this message translates to:
-  /// **'No apps summoned yet. Describe one above.'**
+  /// **'No apps yet. Describe one above.'**
   String get noProjects;
 
   /// No description provided for @newProject.
@@ -335,7 +335,7 @@ abstract class AppLocalizations {
   /// No description provided for @conflictBody.
   ///
   /// In en, this message translates to:
-  /// **'{path} changed on the Runner after you opened it.'**
+  /// **'{path} changed on the computer where Ember runs after you opened it.'**
   String conflictBody(String path);
 
   /// No description provided for @reload.
@@ -461,7 +461,7 @@ abstract class AppLocalizations {
   /// No description provided for @qrLocalhostWarning.
   ///
   /// In en, this message translates to:
-  /// **'This address only works on this computer. Use the Runner\'s LAN IP (e.g. http://192.168.1.20:8787) to open it from a phone.'**
+  /// **'This address only works on this computer. To open it from a phone, use the network address of the computer where Ember runs (e.g. http://192.168.1.20:8787).'**
   String get qrLocalhostWarning;
 
   /// No description provided for @copy.
@@ -509,31 +509,31 @@ abstract class AppLocalizations {
   /// No description provided for @aiSettings.
   ///
   /// In en, this message translates to:
-  /// **'API keys & models'**
+  /// **'Add a key'**
   String get aiSettings;
 
   /// No description provided for @apiKeysHint.
   ///
   /// In en, this message translates to:
-  /// **'Keys stay encrypted on this device (secure storage). With the proxy on they pass through your Runner for each request only and are never stored or logged.'**
+  /// **'Keys stay encrypted on this device. When requests go through the computer where Ember runs, the keys pass through it for that request only and are never saved.'**
   String get apiKeysHint;
 
   /// No description provided for @useRunnerProxy.
   ///
   /// In en, this message translates to:
-  /// **'Route through Runner (proxy)'**
+  /// **'Go through the computer where Ember runs'**
   String get useRunnerProxy;
 
   /// No description provided for @useRunnerProxyHint.
   ///
   /// In en, this message translates to:
-  /// **'Recommended. Turn off to call providers directly from this device.'**
+  /// **'Recommended. Turn it off to contact the AI services straight from this device.'**
   String get useRunnerProxyHint;
 
   /// No description provided for @useRunnerProxyWeb.
   ///
   /// In en, this message translates to:
-  /// **'Required on web: browsers cannot call providers directly.'**
+  /// **'Always on in the browser: a web page cannot contact the AI services directly.'**
   String get useRunnerProxyWeb;
 
   /// No description provided for @apiKey.
@@ -569,7 +569,7 @@ abstract class AppLocalizations {
   /// No description provided for @keyWorks.
   ///
   /// In en, this message translates to:
-  /// **'Works ✓ ({model})'**
+  /// **'Works ({model})'**
   String keyWorks(String model);
 
   /// No description provided for @getKey.
@@ -743,7 +743,7 @@ abstract class AppLocalizations {
   /// No description provided for @claudeCodeUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Claude Code is not available on this Runner (it must be installed and logged in on the Runner\'s PC).'**
+  /// **'Claude Code is not available: it must be installed and signed in on the computer where Ember runs.'**
   String get claudeCodeUnavailable;
 
   /// No description provided for @appPromptHint.
@@ -755,13 +755,13 @@ abstract class AppLocalizations {
   /// No description provided for @chooseAi.
   ///
   /// In en, this message translates to:
-  /// **'Choose the engine'**
+  /// **'Who writes the code'**
   String get chooseAi;
 
   /// No description provided for @createApp.
   ///
   /// In en, this message translates to:
-  /// **'Ember App'**
+  /// **'Create app'**
   String get createApp;
 
   /// No description provided for @openEditor.
@@ -773,13 +773,13 @@ abstract class AppLocalizations {
   /// No description provided for @describeYourApp.
   ///
   /// In en, this message translates to:
-  /// **'Summon your app'**
+  /// **'What app do you want to create?'**
   String get describeYourApp;
 
   /// No description provided for @describeYourAppHint.
   ///
   /// In en, this message translates to:
-  /// **'Describe what it should do and how it should look. Ember writes it, checks it and shows it to you. (*Gemini: Google\'s free tier with daily limits)'**
+  /// **'Write what it should do and how you picture it. Ember builds it, checks it and shows it to you.'**
   String get describeYourAppHint;
 
   /// No description provided for @improveApp.
@@ -851,7 +851,7 @@ abstract class AppLocalizations {
   /// No description provided for @appReadyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Your app is ready 🎉'**
+  /// **'Your app is ready'**
   String get appReadyTitle;
 
   /// No description provided for @openApp.
@@ -899,55 +899,55 @@ abstract class AppLocalizations {
   /// No description provided for @androidFileQuestion.
   ///
   /// In en, this message translates to:
-  /// **'Do you want the Android file?'**
+  /// **'Do you want the file for Android?'**
   String get androidFileQuestion;
 
   /// No description provided for @androidFileHint.
   ///
   /// In en, this message translates to:
-  /// **'APK: install on a phone. AAB: upload to Google Play Console. Both signed.'**
+  /// **'File to install (APK): goes on a phone. File for Google Play (AAB): goes to Google Play Console. Both are signed.'**
   String get androidFileHint;
 
   /// No description provided for @generateApk.
   ///
   /// In en, this message translates to:
-  /// **'Build APK'**
+  /// **'Create the file to install (APK)'**
   String get generateApk;
 
   /// No description provided for @generateAab.
   ///
   /// In en, this message translates to:
-  /// **'Build AAB'**
+  /// **'Create the file for Google Play (AAB)'**
   String get generateAab;
 
   /// No description provided for @androidBuilding.
   ///
   /// In en, this message translates to:
-  /// **'Building {kind}… the first time can take 3-5 minutes.'**
+  /// **'Creating the {kind} file… the first time can take 3-5 minutes.'**
   String androidBuilding(String kind);
 
   /// No description provided for @downloadApk.
   ///
   /// In en, this message translates to:
-  /// **'Download & install APK'**
+  /// **'Download and install the file (APK)'**
   String get downloadApk;
 
   /// No description provided for @downloadAab.
   ///
   /// In en, this message translates to:
-  /// **'Download AAB'**
+  /// **'Download the file for Google Play (AAB)'**
   String get downloadAab;
 
   /// No description provided for @apkInstallHint.
   ///
   /// In en, this message translates to:
-  /// **'Signed APK. If Android asks, allow installs from this source.'**
+  /// **'The file to install (APK) is signed. If Android asks, allow installs from this source.'**
   String get apkInstallHint;
 
   /// No description provided for @aabHint.
   ///
   /// In en, this message translates to:
-  /// **'AAB signed with this app\'s upload key: ready for Google Play Console. The version code increases on every build.'**
+  /// **'The file for Google Play (AAB) is signed with this app\'s upload key and ready for Google Play Console. The version number goes up by itself every time.'**
   String get aabHint;
 
   /// No description provided for @androidFailed.
@@ -989,13 +989,13 @@ abstract class AppLocalizations {
   /// No description provided for @cliNotInstalled.
   ///
   /// In en, this message translates to:
-  /// **'not installed on the Runner ({name})'**
+  /// **'not installed on the computer where Ember runs ({name})'**
   String cliNotInstalled(String name);
 
   /// No description provided for @terminalCliHint.
   ///
   /// In en, this message translates to:
-  /// **'Claude Code, Codex and Gemini use the login on the Runner\'s machine. The first time, follow the instructions in the terminal to sign in.'**
+  /// **'Claude Code, Codex and Gemini use the sign-in made on the computer where Ember runs. The first time, follow the instructions in the terminal to sign in.'**
   String get terminalCliHint;
 
   /// No description provided for @generatingMockups.
@@ -1145,7 +1145,7 @@ abstract class AppLocalizations {
   /// No description provided for @playConnectGuide.
   ///
   /// In en, this message translates to:
-  /// **'You need a **service account key** (once for all your apps):\n1. Open **Google Cloud** and enable **Google Play Android Developer API**\n2. **Service accounts** → **Create** → **Keys** → **Add key** → **JSON** (a file downloads)\n3. In **Play Console** → **Users and permissions** → **Invite new users** → paste the service account email → grant **release** permissions\n4. Open the downloaded JSON and **paste its whole content here**\n\nThe key stays encrypted on this device and is used only for uploads.'**
+  /// **'1. Open **Google Cloud**: you create a **service account key**, once for all your apps.\n2. Turn on **Google Play Android Developer API**.\n3. Go to **Service accounts** and press **Create**.\n4. Open **Keys** → **Add key** → **JSON**. A file downloads.\n5. In **Play Console** go to **Users and permissions** → **Invite new users**.\n6. Paste the service account email and grant the **release** permissions.\n7. Open the downloaded JSON file and **paste its whole content here**.\n8. Done: the key stays encrypted on this device and is used only for uploads.'**
   String get playConnectGuide;
 
   /// No description provided for @playOpenApiLibrary.
@@ -1253,7 +1253,7 @@ abstract class AppLocalizations {
   /// No description provided for @playUploaded.
   ///
   /// In en, this message translates to:
-  /// **'✅ Uploaded! Version {version} on track “{track}”. {draft}'**
+  /// **'Uploaded. Version {version} on track “{track}”. {draft}'**
   String playUploaded(String version, String track, String draft);
 
   /// No description provided for @playDraftNote.
@@ -1313,7 +1313,7 @@ abstract class AppLocalizations {
   /// No description provided for @assistantUnconfigured.
   ///
   /// In en, this message translates to:
-  /// **'The free assistant is not active on this server yet (the Runner\'s Gemini key is missing).'**
+  /// **'The free assistant is not active yet: the Gemini key is missing on the computer where Ember runs.'**
   String get assistantUnconfigured;
 
   /// No description provided for @assistantHint.
@@ -1553,7 +1553,7 @@ abstract class AppLocalizations {
   /// No description provided for @bNoErrors.
   ///
   /// In en, this message translates to:
-  /// **'No errors ✓'**
+  /// **'No errors'**
   String get bNoErrors;
 
   /// No description provided for @bErrorsFound.
@@ -1619,13 +1619,13 @@ abstract class AppLocalizations {
   /// No description provided for @bApk.
   ///
   /// In en, this message translates to:
-  /// **'Building the APK (the first time can take a few minutes)…'**
+  /// **'Creating the file to install (APK). The first time can take a few minutes…'**
   String get bApk;
 
   /// No description provided for @bAab.
   ///
   /// In en, this message translates to:
-  /// **'Building the AAB for the Play Store…'**
+  /// **'Creating the file for Google Play (AAB)…'**
   String get bAab;
 
   /// No description provided for @chooseDesignAi.
@@ -1703,7 +1703,7 @@ abstract class AppLocalizations {
   /// No description provided for @bIosReady.
   ///
   /// In en, this message translates to:
-  /// **'iPhone app ready ✓'**
+  /// **'iPhone app ready'**
   String get bIosReady;
 
   /// No description provided for @bIosFailed.
@@ -1781,7 +1781,7 @@ abstract class AppLocalizations {
   /// No description provided for @ascKeyHelp.
   ///
   /// In en, this message translates to:
-  /// **'In App Store Connect: Users and Access → Integrations → App Store Connect API → + . Choose the App Manager role, then download the .p8 file (Apple lets you download it once).'**
+  /// **'1. Open App Store Connect and go to Users and Access → Integrations → App Store Connect API.\n2. Press + and choose the App Manager role.\n3. Download the .p8 file. Apple lets you download it only once.'**
   String get ascKeyHelp;
 
   /// No description provided for @ascKeyId.
@@ -1859,7 +1859,7 @@ abstract class AppLocalizations {
   /// No description provided for @bAndroidReady.
   ///
   /// In en, this message translates to:
-  /// **'{kind} ready ✓'**
+  /// **'{kind} file ready'**
   String bAndroidReady(String kind);
 
   /// No description provided for @bStopped.
@@ -1871,7 +1871,7 @@ abstract class AppLocalizations {
   /// No description provided for @bAppReady.
   ///
   /// In en, this message translates to:
-  /// **'App ready ✓'**
+  /// **'App ready'**
   String get bAppReady;
 
   /// No description provided for @bReviewStart.
@@ -1895,7 +1895,7 @@ abstract class AppLocalizations {
   /// No description provided for @bAppUpdated.
   ///
   /// In en, this message translates to:
-  /// **'App updated ✓'**
+  /// **'App updated'**
   String get bAppUpdated;
 
   /// No description provided for @actWrites.
@@ -1931,13 +1931,13 @@ abstract class AppLocalizations {
   /// No description provided for @forgeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Ember is summoning your app'**
+  /// **'Ember is creating your app'**
   String get forgeTitle;
 
   /// No description provided for @forgeFiles.
   ///
   /// In en, this message translates to:
-  /// **'{count} files summoned'**
+  /// **'{count} files written'**
   String forgeFiles(int count);
 
   /// No description provided for @researchingApp.
@@ -1967,7 +1967,7 @@ abstract class AppLocalizations {
   /// No description provided for @forgeFilesOf.
   ///
   /// In en, this message translates to:
-  /// **'{count} of {total} files summoned'**
+  /// **'{count} of {total} files written'**
   String forgeFilesOf(int count, int total);
 
   /// No description provided for @forgeEta.
@@ -2027,13 +2027,13 @@ abstract class AppLocalizations {
   /// No description provided for @subscriptionNotConnected.
   ///
   /// In en, this message translates to:
-  /// **'{name} is not connected: log in with your subscription on the Runner PC.'**
+  /// **'{name} is not connected: sign in with your subscription on the computer where Ember runs.'**
   String subscriptionNotConnected(String name);
 
   /// No description provided for @connectHowTo.
   ///
   /// In en, this message translates to:
-  /// **'Ember uses your own {plan} subscription, logged in on the PC where the Runner runs (no API key, no extra cost).\n\n1. On that PC open a terminal (or Ember\'s terminal).\n2. Run: {command}\n3. Complete the login in the browser with your account.\n\nCome back here: the engine turns on within a minute.'**
+  /// **'1. Go to the computer where Ember runs and open a terminal (Ember\'s own works too).\n2. Type: {command}\n3. Finish signing in in the browser with your {plan} account: no API key, no extra cost.\n4. Come back here: within a minute it is ready to use.'**
   String connectHowTo(String plan, String command);
 
   /// No description provided for @connectPersonalNote.
@@ -2117,7 +2117,7 @@ abstract class AppLocalizations {
   /// No description provided for @productsBefore.
   ///
   /// In en, this message translates to:
-  /// **'Before activating, once per account/app:\n1. Play Console → Setup → Payments profile (bank account, tax info)\n2. Upload this app\'s AAB to internal testing (Google requires a version with billing)\n3. Users and permissions → give the service account \"Manage orders and subscriptions\"'**
+  /// **'1. Before activating, open Play Console. You do these steps once per account and per app.\n2. Go to Setup → Payments profile and add your bank account and tax details.\n3. Upload this app\'s file for Google Play (AAB) to internal testing: Google wants a version with payments.\n4. In Users and permissions, give the service account \"Manage orders and subscriptions\".'**
   String get productsBefore;
 
   /// No description provided for @productsOpenPayments.
@@ -2129,13 +2129,13 @@ abstract class AppLocalizations {
   /// No description provided for @productsUploadFirst.
   ///
   /// In en, this message translates to:
-  /// **'Upload AAB'**
+  /// **'Upload the file for Google Play (AAB)'**
   String get productsUploadFirst;
 
   /// No description provided for @productsActive.
   ///
   /// In en, this message translates to:
-  /// **'Active on Google Play ✓'**
+  /// **'Active on Google Play'**
   String get productsActive;
 
   /// No description provided for @productPerPeriod.
@@ -2291,7 +2291,7 @@ abstract class AppLocalizations {
   /// No description provided for @pubConnect.
   ///
   /// In en, this message translates to:
-  /// **'Now I connect Ember to Google Play, so I can upload your apps. **I do it myself**: I create a special key in your Google account on this PC (Google Cloud project, Play API and key). It is used only to upload apps and stays on your device.'**
+  /// **'1. Now I connect Ember to Google Play, so I can upload your apps.\n2. **I do it myself**: I create a special key in your Google account, on this PC.\n3. For that I set up a Google Cloud project, the Play API and the key.\n4. The key is used only to upload apps and stays on your device.'**
   String get pubConnect;
 
   /// No description provided for @pubDoItEmber.
@@ -2315,7 +2315,7 @@ abstract class AppLocalizations {
   /// No description provided for @pubInvite.
   ///
   /// In en, this message translates to:
-  /// **'Key created ✓\n\nLast connection: the key must be allowed to publish in **your** Play Console.\n1. Press **Open Play Console** below\n2. Copy the address of the page you see (any page) and **paste it here in the chat**\n\nThen the PC browser opens once: sign in with the same Google account and press **Allow**. I send the invitation myself.'**
+  /// **'Key created.\n\nLast connection: the key must be allowed to publish in **your** Play Console.\n1. Press **Open Play Console** below\n2. Copy the address of the page you see (any page) and **paste it here in the chat**\n\nThen the PC browser opens once: sign in with the same Google account and press **Allow**. I send the invitation myself.'**
   String get pubInvite;
 
   /// No description provided for @pubInviteBadLink.
@@ -2339,7 +2339,7 @@ abstract class AppLocalizations {
   /// No description provided for @pubGraphics.
   ///
   /// In en, this message translates to:
-  /// **'Connected to Google Play ✓\n\nFor the store page Google wants the **512×512 icon**, the **1024×500 banner** and at least **2 screenshots**. If you haven\'t done them yet, go back to the app screen: in **App logo** and **Play Store screenshots** Ember makes them in one tap. I upload them automatically together with the app.'**
+  /// **'Connected to Google Play.\n\nFor the store page Google wants the **512×512 icon**, the **1024×500 banner** and at least **2 screenshots**. If you haven\'t done them yet, go back to the app screen: in **App logo** and **Play Store screenshots** Ember makes them in one tap. I upload them automatically together with the app.'**
   String get pubGraphics;
 
   /// No description provided for @pubContinue.
@@ -2369,7 +2369,7 @@ abstract class AppLocalizations {
   /// No description provided for @pubFinish.
   ///
   /// In en, this message translates to:
-  /// **'Great, the app is on Google Play ✓\n\nGoogle still asks you to confirm a few forms by hand in Play Console (**Data safety**, **Content rating**, **Target audience**, **Ads**, **App access**): the ready answers are in the last screen. New personal accounts must also run a **closed test with 12 testers for 14 days** before going public.\n\nAny doubt? Ask me here below.'**
+  /// **'1. Your app is on Google Play. A few forms are left: open **Play Console**.\n2. Confirm by hand **Data safety**, **Content rating**, **Target audience**, **Ads** and **App access**.\n3. Copy the answers from the last screen: they are ready.\n4. If your personal account is new, run a **closed test with 12 testers for 14 days** before going public.\n5. Any doubt? Ask me here below.'**
   String get pubFinish;
 
   /// No description provided for @pubReviewAnswers.
@@ -2405,7 +2405,7 @@ abstract class AppLocalizations {
   /// No description provided for @adsSteps.
   ///
   /// In en, this message translates to:
-  /// **'In AdMob (5 minutes, once per app):\n1. Apps → Add app → Android → \"Is the app on Google Play?\" (No if not published yet) → name → Add\n2. Copy the App ID (ca-app-pub-…~…)\n3. Ad units → Add ad unit → choose each format below → Create → copy its ID (ca-app-pub-…/…)\n4. After publishing, link the app to its Play Store listing in AdMob and add app-ads.txt if AdMob asks'**
+  /// **'1. Open AdMob. It takes 5 minutes, once per app.\n2. Go to Apps → Add app → Android.\n3. At \"Is the app on Google Play?\" answer No if it is not published yet.\n4. Write the name and press Add.\n5. Copy the App ID (ca-app-pub-…~…).\n6. Go to Ad units → Add ad unit and choose a format from the list below.\n7. Press Create and copy its ID (ca-app-pub-…/…). Repeat for each format.\n8. After publishing, link the app to its Play Store listing in AdMob.\n9. Add app-ads.txt if AdMob asks for it.'**
   String get adsSteps;
 
   /// No description provided for @adsOpenAdmob.
@@ -2543,7 +2543,7 @@ abstract class AppLocalizations {
   /// No description provided for @upBuilding.
   ///
   /// In en, this message translates to:
-  /// **'Building the new signed AAB…'**
+  /// **'Creating the new file for Google Play (AAB)…'**
   String get upBuilding;
 
   /// No description provided for @upUploading.
@@ -2597,7 +2597,7 @@ abstract class AppLocalizations {
   /// No description provided for @consoleLinkSaved.
   ///
   /// In en, this message translates to:
-  /// **'Saved ✓ developer account {id}: the buttons now open your console directly.'**
+  /// **'Developer account {id} saved: the buttons now open your console directly.'**
   String consoleLinkSaved(String id);
 
   /// No description provided for @upStateConnected.
@@ -2639,7 +2639,7 @@ abstract class AppLocalizations {
   /// No description provided for @dsDone.
   ///
   /// In en, this message translates to:
-  /// **'Data safety sent to Google Play ✓ — check it in Play Console → App content → Data safety and press Submit.'**
+  /// **'Data safety sent to Google Play — check it in Play Console → App content → Data safety and press Submit.'**
   String get dsDone;
 
   /// No description provided for @dsNeedsCsv.
@@ -2663,7 +2663,7 @@ abstract class AppLocalizations {
   /// No description provided for @driveSaved.
   ///
   /// In en, this message translates to:
-  /// **'Keystore and password saved on your Google Drive ✓'**
+  /// **'Keystore and password saved on your Google Drive'**
   String get driveSaved;
 
   /// No description provided for @driveOpenFolder.
@@ -2849,13 +2849,13 @@ abstract class AppLocalizations {
   /// No description provided for @ghCreated.
   ///
   /// In en, this message translates to:
-  /// **'Repository {repo} created and app uploaded ✓'**
+  /// **'Repository {repo} created and app uploaded'**
   String ghCreated(String repo);
 
   /// No description provided for @ghUpdated.
   ///
   /// In en, this message translates to:
-  /// **'App uploaded to {repo} ✓'**
+  /// **'App uploaded to {repo}'**
   String ghUpdated(String repo);
 
   /// No description provided for @acCopyForExtension.
@@ -3205,6 +3205,1218 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'APP MAKER'**
   String get brandTagline;
+
+  /// No description provided for @showSecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get showSecret;
+
+  /// No description provided for @hideSecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get hideSecret;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @details.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get details;
+
+  /// No description provided for @more.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get more;
+
+  /// No description provided for @advanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get advanced;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @madeWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Made with {engine} · Options'**
+  String madeWith(String engine);
+
+  /// No description provided for @buildOptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who builds your app'**
+  String get buildOptionsTitle;
+
+  /// No description provided for @homeMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Other ways to start'**
+  String get homeMenu;
+
+  /// No description provided for @emptyProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty project'**
+  String get emptyProject;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @hubNextSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Next steps'**
+  String get hubNextSteps;
+
+  /// No description provided for @hubTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Try it on your phone'**
+  String get hubTest;
+
+  /// No description provided for @hubTestHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Open it with a QR code or install it'**
+  String get hubTestHint;
+
+  /// No description provided for @hubImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon and pictures'**
+  String get hubImages;
+
+  /// No description provided for @hubImagesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The logo and the store screenshots'**
+  String get hubImagesHint;
+
+  /// No description provided for @hubChecks.
+  ///
+  /// In en, this message translates to:
+  /// **'Checks'**
+  String get hubChecks;
+
+  /// No description provided for @hubChecksHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What Ember and the reviewers found'**
+  String get hubChecksHint;
+
+  /// No description provided for @hubChecksCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} to fix'**
+  String hubChecksCount(int count);
+
+  /// No description provided for @hubPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play'**
+  String get hubPlay;
+
+  /// No description provided for @hubPlayHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish or update on Android'**
+  String get hubPlayHint;
+
+  /// No description provided for @hubAppStore.
+  ///
+  /// In en, this message translates to:
+  /// **'App Store'**
+  String get hubAppStore;
+
+  /// No description provided for @hubAppStoreHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish for iPhone'**
+  String get hubAppStoreHint;
+
+  /// No description provided for @hubMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get hubMore;
+
+  /// No description provided for @hubMoreHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup, ads, purchases, the code'**
+  String get hubMoreHint;
+
+  /// No description provided for @techDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Technical details'**
+  String get techDetails;
+
+  /// No description provided for @changeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What do you want to change?'**
+  String get changeHint;
+
+  /// No description provided for @installFileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'File to install (APK)'**
+  String get installFileTitle;
+
+  /// No description provided for @installFileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A file you can send to any Android phone and install.'**
+  String get installFileHint;
+
+  /// No description provided for @storeFileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'File for Google Play (AAB)'**
+  String get storeFileTitle;
+
+  /// No description provided for @storeFileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only needed if you upload to the Play Console by hand: Ember makes it for you when it publishes.'**
+  String get storeFileHint;
+
+  /// No description provided for @makeFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Make the file'**
+  String get makeFile;
+
+  /// No description provided for @openCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The code'**
+  String get openCodeTitle;
+
+  /// No description provided for @openCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the editor to read or change the files by hand.'**
+  String get openCodeHint;
+
+  /// No description provided for @backToApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the app'**
+  String get backToApp;
+
+  /// No description provided for @designChosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Design: {name}'**
+  String designChosen(String name);
+
+  /// No description provided for @reviewFixLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix from the reviewers'**
+  String get reviewFixLabel;
+
+  /// No description provided for @settingsAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsAppearance;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as the device'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @settingsAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Artificial intelligences'**
+  String get settingsAi;
+
+  /// No description provided for @settingsAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected accounts'**
+  String get settingsAccounts;
+
+  /// No description provided for @settingsAccountsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You connect them the first time you need them, from the app\'s page. Here you can see them and disconnect them.'**
+  String get settingsAccountsHint;
+
+  /// No description provided for @accountConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: connected'**
+  String accountConnected(String name);
+
+  /// No description provided for @accountNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: not connected'**
+  String accountNotConnected(String name);
+
+  /// No description provided for @disconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get disconnect;
+
+  /// No description provided for @runnerAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Where Ember runs'**
+  String get runnerAddress;
+
+  /// No description provided for @runnerAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The address of the computer that builds your apps (the Runner). Change it only if you were told to.'**
+  String get runnerAddressHint;
+
+  /// No description provided for @signedInAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in as {email}'**
+  String signedInAs(String email);
+
+  /// No description provided for @reviewersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'App reviewers'**
+  String get reviewersTitle;
+
+  /// No description provided for @reviewersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'When an app is finished, these models read it on their own and say what is fake, what is missing and what does not work; the fixes go back by themselves to whoever wrote the app. You set them once and they are used for every app.'**
+  String get reviewersHint;
+
+  /// No description provided for @aiKeysTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keys'**
+  String get aiKeysTitle;
+
+  /// No description provided for @plLanguagesOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Languages: {count} on'**
+  String plLanguagesOn(int count);
+
+  /// No description provided for @plManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage'**
+  String get plManage;
+
+  /// No description provided for @plLanguagesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn a language on to publish the store page in it. Tap a language to read or fix its text.'**
+  String get plLanguagesHint;
+
+  /// No description provided for @plSearchLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Search a language'**
+  String get plSearchLanguage;
+
+  /// No description provided for @plNoLanguageFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No language with this name.'**
+  String get plNoLanguageFound;
+
+  /// No description provided for @plEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get plEnglish;
+
+  /// No description provided for @plMainLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Main language, always on'**
+  String get plMainLanguage;
+
+  /// No description provided for @plLangReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Translated'**
+  String get plLangReady;
+
+  /// No description provided for @plLangOld.
+  ///
+  /// In en, this message translates to:
+  /// **'Old text'**
+  String get plLangOld;
+
+  /// No description provided for @plLangMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'To write'**
+  String get plLangMissing;
+
+  /// No description provided for @plLangWriting.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing…'**
+  String get plLangWriting;
+
+  /// No description provided for @plGenerating.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember is writing the store page…'**
+  String get plGenerating;
+
+  /// No description provided for @plFeeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Google asks for \$25, once'**
+  String get plFeeTitle;
+
+  /// No description provided for @plAiBadAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI gave an answer Ember could not read. Try again.'**
+  String get plAiBadAnswer;
+
+  /// No description provided for @plNoAi.
+  ///
+  /// In en, this message translates to:
+  /// **'No AI is set up yet: add one in Settings.'**
+  String get plNoAi;
+
+  /// No description provided for @plPrivacyLocalOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'The privacy policy is saved only on this computer: Google cannot open it. Connect GitHub in Ember, or paste a link of your own below.'**
+  String get plPrivacyLocalOnly;
+
+  /// No description provided for @plPrivacyNotPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy not published: {error}. The rest of the store page was saved; paste a link of your own below.'**
+  String plPrivacyNotPublished(String error);
+
+  /// No description provided for @asConnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Apple key'**
+  String get asConnTitle;
+
+  /// No description provided for @asConnHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember uses it to publish for you. You save it once and it is ready for all your apps.'**
+  String get asConnHint;
+
+  /// No description provided for @asKeySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Key saved: {file}'**
+  String asKeySaved(String file);
+
+  /// No description provided for @asChangeKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Change key'**
+  String get asChangeKey;
+
+  /// No description provided for @asTeamId.
+  ///
+  /// In en, this message translates to:
+  /// **'Team ID (optional)'**
+  String get asTeamId;
+
+  /// No description provided for @asTeamIdHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Needed to sign the iPhone app. Leave it empty and Ember reads it from Apple with your key.'**
+  String get asTeamIdHelp;
+
+  /// No description provided for @asP8KeepHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave it empty to keep the key already saved.'**
+  String get asP8KeepHelp;
+
+  /// No description provided for @asLoadP8.
+  ///
+  /// In en, this message translates to:
+  /// **'Load .p8 file'**
+  String get asLoadP8;
+
+  /// No description provided for @asSaveKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Save key'**
+  String get asSaveKey;
+
+  /// No description provided for @asP8FileType.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple key (.p8)'**
+  String get asP8FileType;
+
+  /// No description provided for @asVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the connection'**
+  String get asVerify;
+
+  /// No description provided for @asVerifyOk.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection works'**
+  String get asVerifyOk;
+
+  /// No description provided for @asVerifyOkReached.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection works: Ember reached App Store Connect'**
+  String get asVerifyOkReached;
+
+  /// No description provided for @asVerifyTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Team {team}'**
+  String asVerifyTeam(String team);
+
+  /// No description provided for @asBadKeyId.
+  ///
+  /// In en, this message translates to:
+  /// **'This Key ID is not valid. It is the short code next to the key, for example Z47GM3ZDZ6.'**
+  String get asBadKeyId;
+
+  /// No description provided for @asBadIssuerId.
+  ///
+  /// In en, this message translates to:
+  /// **'This Issuer ID is not valid. It is the long code at the top of the Keys page.'**
+  String get asBadIssuerId;
+
+  /// No description provided for @asBadP8.
+  ///
+  /// In en, this message translates to:
+  /// **'This is not the content of the key. Paste the whole AuthKey_….p8 file, from the line -----BEGIN PRIVATE KEY----- to -----END PRIVATE KEY-----. The file name alone is not enough.'**
+  String get asBadP8;
+
+  /// No description provided for @asP8ReadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember could not read the .p8 file: {error}'**
+  String asP8ReadFailed(String error);
+
+  /// No description provided for @asSaveKeyFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your Apple key first: Key ID, Issuer ID and the .p8 file.'**
+  String get asSaveKeyFirst;
+
+  /// No description provided for @asFillTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What Ember fills in for you'**
+  String get asFillTitle;
+
+  /// No description provided for @asFillHint.
+  ///
+  /// In en, this message translates to:
+  /// **'When you publish, Ember sets by itself the age rating (4+), the encryption declaration and the privacy answers. If you choose them here, also the category, the price and the screenshots.'**
+  String get asFillHint;
+
+  /// No description provided for @asCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'App Store category'**
+  String get asCategory;
+
+  /// No description provided for @asCategoryNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not set'**
+  String get asCategoryNone;
+
+  /// No description provided for @asFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Free app (in every country)'**
+  String get asFree;
+
+  /// No description provided for @asScreenshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Create and upload iPhone and iPad screenshots'**
+  String get asScreenshots;
+
+  /// No description provided for @asScreenshotsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken from the web preview. The app needs its \"screenshot mode\".'**
+  String get asScreenshotsHelp;
+
+  /// No description provided for @asReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Details for Apple\'s review (optional)'**
+  String get asReviewTitle;
+
+  /// No description provided for @asReviewEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact email'**
+  String get asReviewEmail;
+
+  /// No description provided for @asReviewEmailHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave it empty to use the email of your account.'**
+  String get asReviewEmailHelp;
+
+  /// No description provided for @asMarketingUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Your website (Marketing URL)'**
+  String get asMarketingUrl;
+
+  /// No description provided for @asMarketingUrlHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'AdMob looks for app-ads.txt here. Saved for all your apps.'**
+  String get asMarketingUrlHelp;
+
+  /// No description provided for @asReviewPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact phone'**
+  String get asReviewPhone;
+
+  /// No description provided for @asReviewPhoneHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple requires it, for example +39 333 1234567. Only the person reviewing the app sees it. Ember remembers it for your next apps.'**
+  String get asReviewPhoneHelp;
+
+  /// No description provided for @asReviewNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes for the reviewer'**
+  String get asReviewNotes;
+
+  /// No description provided for @asDemoUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo account (if the app needs a login)'**
+  String get asDemoUser;
+
+  /// No description provided for @asDemoPass.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo password'**
+  String get asDemoPass;
+
+  /// No description provided for @asChecksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Before sending'**
+  String get asChecksTitle;
+
+  /// No description provided for @asChecksNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No problems for Apple.'**
+  String get asChecksNone;
+
+  /// No description provided for @asChecksBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 problem stops the app from being sent.} other{{count} problems stop the app from being sent.}}'**
+  String asChecksBlock(int count);
+
+  /// No description provided for @asChecksWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'Only warnings: the app can be sent.'**
+  String get asChecksWarn;
+
+  /// No description provided for @asBlocks.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops sending'**
+  String get asBlocks;
+
+  /// No description provided for @asWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get asWarning;
+
+  /// No description provided for @asFixDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed: {message}'**
+  String asFixDone(String message);
+
+  /// No description provided for @asFixFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not fixed: {message}'**
+  String asFixFailed(String message);
+
+  /// No description provided for @asCanClose.
+  ///
+  /// In en, this message translates to:
+  /// **'You can close this page: Ember carries on by itself and sends the app for review as soon as Apple has finished ({minutes} min).'**
+  String asCanClose(int minutes);
+
+  /// No description provided for @asRunningFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Running for {minutes} min.'**
+  String asRunningFor(int minutes);
+
+  /// No description provided for @asDoneExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Encryption declaration set'**
+  String get asDoneExport;
+
+  /// No description provided for @asDoneAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Age rating filled in'**
+  String get asDoneAge;
+
+  /// No description provided for @asDoneCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category set'**
+  String get asDoneCategory;
+
+  /// No description provided for @asDoneReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review details saved'**
+  String get asDoneReview;
+
+  /// No description provided for @asDoneFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Price: free in every country'**
+  String get asDoneFree;
+
+  /// No description provided for @asDonePrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy answers filled in'**
+  String get asDonePrivacy;
+
+  /// No description provided for @asDoneShots.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshots uploaded: {count}'**
+  String asDoneShots(int count);
+
+  /// No description provided for @asCatUtilities.
+  ///
+  /// In en, this message translates to:
+  /// **'Utilities'**
+  String get asCatUtilities;
+
+  /// No description provided for @asCatProductivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Productivity'**
+  String get asCatProductivity;
+
+  /// No description provided for @asCatBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Business'**
+  String get asCatBusiness;
+
+  /// No description provided for @asCatEducation.
+  ///
+  /// In en, this message translates to:
+  /// **'Education'**
+  String get asCatEducation;
+
+  /// No description provided for @asCatEntertainment.
+  ///
+  /// In en, this message translates to:
+  /// **'Entertainment'**
+  String get asCatEntertainment;
+
+  /// No description provided for @asCatFinance.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance'**
+  String get asCatFinance;
+
+  /// No description provided for @asCatFoodAndDrink.
+  ///
+  /// In en, this message translates to:
+  /// **'Food & Drink'**
+  String get asCatFoodAndDrink;
+
+  /// No description provided for @asCatHealthAndFitness.
+  ///
+  /// In en, this message translates to:
+  /// **'Health & Fitness'**
+  String get asCatHealthAndFitness;
+
+  /// No description provided for @asCatLifestyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifestyle'**
+  String get asCatLifestyle;
+
+  /// No description provided for @asCatMusic.
+  ///
+  /// In en, this message translates to:
+  /// **'Music'**
+  String get asCatMusic;
+
+  /// No description provided for @asCatNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation'**
+  String get asCatNavigation;
+
+  /// No description provided for @asCatNews.
+  ///
+  /// In en, this message translates to:
+  /// **'News'**
+  String get asCatNews;
+
+  /// No description provided for @asCatPhotoAndVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo & Video'**
+  String get asCatPhotoAndVideo;
+
+  /// No description provided for @asCatReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference'**
+  String get asCatReference;
+
+  /// No description provided for @asCatShopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping'**
+  String get asCatShopping;
+
+  /// No description provided for @asCatSocial.
+  ///
+  /// In en, this message translates to:
+  /// **'Social Networking'**
+  String get asCatSocial;
+
+  /// No description provided for @asCatSports.
+  ///
+  /// In en, this message translates to:
+  /// **'Sports'**
+  String get asCatSports;
+
+  /// No description provided for @asCatTravel.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel'**
+  String get asCatTravel;
+
+  /// No description provided for @asCatWeather.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather'**
+  String get asCatWeather;
+
+  /// No description provided for @asCatBooks.
+  ///
+  /// In en, this message translates to:
+  /// **'Books'**
+  String get asCatBooks;
+
+  /// No description provided for @asCatDeveloperTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer Tools'**
+  String get asCatDeveloperTools;
+
+  /// No description provided for @asCatGraphicsAndDesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Graphics & Design'**
+  String get asCatGraphicsAndDesign;
+
+  /// No description provided for @asCatGames.
+  ///
+  /// In en, this message translates to:
+  /// **'Games'**
+  String get asCatGames;
+
+  /// No description provided for @reviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'App check'**
+  String get reviewTitle;
+
+  /// No description provided for @reviewHintNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Have the finished app checked by several AIs: each one reads it on its own and says what is fake, what is missing and what does not work. Add at least one reviewer below.'**
+  String get reviewHintNone;
+
+  /// No description provided for @reviewHintReady.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 reviewer ready} other{{count} reviewers ready}}. Each one reads the app on its own; what more than one of them sees goes to the top of the list.'**
+  String reviewHintReady(int count);
+
+  /// No description provided for @reviewReviewers.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewers'**
+  String get reviewReviewers;
+
+  /// No description provided for @reviewReading.
+  ///
+  /// In en, this message translates to:
+  /// **'The reviewers are reading the app…'**
+  String get reviewReading;
+
+  /// No description provided for @reviewNoAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: no answer'**
+  String reviewNoAnswer(String name);
+
+  /// No description provided for @reviewNothingFound.
+  ///
+  /// In en, this message translates to:
+  /// **'The reviewers found no problems.'**
+  String get reviewNothingFound;
+
+  /// No description provided for @reviewAddReviewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a reviewer'**
+  String get reviewAddReviewer;
+
+  /// No description provided for @reviewRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the app'**
+  String get reviewRun;
+
+  /// No description provided for @reviewKeySavedMask.
+  ///
+  /// In en, this message translates to:
+  /// **'•••••• (key saved)'**
+  String get reviewKeySavedMask;
+
+  /// No description provided for @reviewPasteKeyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'paste the key here'**
+  String get reviewPasteKeyHint;
+
+  /// No description provided for @reviewRemoveKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the key'**
+  String get reviewRemoveKey;
+
+  /// No description provided for @reviewFixedRecheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed: check it again'**
+  String get reviewFixedRecheck;
+
+  /// No description provided for @reviewFixing.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixing…'**
+  String get reviewFixing;
+
+  /// No description provided for @reviewFix.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix'**
+  String get reviewFix;
+
+  /// No description provided for @reviewPasteKeyFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the key first.'**
+  String get reviewPasteKeyFirst;
+
+  /// No description provided for @reviewKeySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Key saved.'**
+  String get reviewKeySaved;
+
+  /// No description provided for @reviewKeyRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Key removed.'**
+  String get reviewKeyRemoved;
+
+  /// No description provided for @needsYouTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One thing is needed from you} other{{count} things are needed from you}}'**
+  String needsYouTitle(int count);
+
+  /// No description provided for @needsYouHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember cannot do them alone (a sign-in, a key, an account). Do them and tap \"Done\": it carries on from where it stopped.'**
+  String get needsYouHint;
+
+  /// No description provided for @needsYouIgnore.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore'**
+  String get needsYouIgnore;
+
+  /// No description provided for @listAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'{first} and {last}'**
+  String listAnd(String first, String last);
+
+  /// No description provided for @panelDownOne.
+  ///
+  /// In en, this message translates to:
+  /// **'{names} is not working'**
+  String panelDownOne(String names);
+
+  /// No description provided for @panelDownMany.
+  ///
+  /// In en, this message translates to:
+  /// **'{names} are not working'**
+  String panelDownMany(String names);
+
+  /// No description provided for @panelNoneLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'No AI is left: nothing can be drawn or checked. Try again, or close.'**
+  String get panelNoneLeft;
+
+  /// No description provided for @panelOneLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Only 1 AI is left: it will draw alone and nobody will check its work.'**
+  String get panelOneLeft;
+
+  /// No description provided for @panelSomeLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} AIs are left: they work together and check each other.'**
+  String panelSomeLeft(int count);
+
+  /// No description provided for @panelProceedWithout.
+  ///
+  /// In en, this message translates to:
+  /// **'Go on without {name}'**
+  String panelProceedWithout(String name);
+
+  /// No description provided for @panelProceedWithoutMany.
+  ///
+  /// In en, this message translates to:
+  /// **'Go on without {count} AIs'**
+  String panelProceedWithoutMany(int count);
+
+  /// No description provided for @panelAllOk.
+  ///
+  /// In en, this message translates to:
+  /// **'All the AIs are working'**
+  String get panelAllOk;
+
+  /// No description provided for @panelHoldNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing starts until you decide. If it is a sign-in or key problem, fix it now and press Retry: when it turns green, everyone goes on together.'**
+  String get panelHoldNote;
+
+  /// No description provided for @panelRetryAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry all'**
+  String get panelRetryAll;
+
+  /// No description provided for @panelContinueAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with all'**
+  String get panelContinueAll;
+
+  /// No description provided for @panelTrying.
+  ///
+  /// In en, this message translates to:
+  /// **'Trying…'**
+  String get panelTrying;
+
+  /// No description provided for @pingNoAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'no answer'**
+  String get pingNoAnswer;
+
+  /// No description provided for @pingTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'not answering (25s)'**
+  String get pingTimeout;
+
+  /// No description provided for @mockupRefined.
+  ///
+  /// In en, this message translates to:
+  /// **'redrawn with the notes'**
+  String get mockupRefined;
+
+  /// No description provided for @mockupPanelNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes from the panel: {notes}'**
+  String mockupPanelNotes(String notes);
+
+  /// No description provided for @mockupAgreeing.
+  ///
+  /// In en, this message translates to:
+  /// **'The {count} AIs are choosing the 8 directions together…'**
+  String mockupAgreeing(int count);
+
+  /// No description provided for @mockupComparing.
+  ///
+  /// In en, this message translates to:
+  /// **'The {count} designers are comparing the {mockups} mockups…'**
+  String mockupComparing(int count, int mockups);
+
+  /// No description provided for @mockupRedrawing.
+  ///
+  /// In en, this message translates to:
+  /// **'Each designer is redrawing its mockup with the others\' notes…'**
+  String get mockupRedrawing;
+
+  /// No description provided for @mockupInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The model did not return a valid mockup'**
+  String get mockupInvalid;
+
+  /// No description provided for @assistantSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to use the assistant'**
+  String get assistantSignIn;
+
+  /// No description provided for @imagesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Images'**
+  String get imagesLabel;
+
+  /// No description provided for @assistantImageTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: image too large (max 3.5 MB)'**
+  String assistantImageTooLarge(String name);
+
+  /// No description provided for @assistantAddImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an image'**
+  String get assistantAddImage;
+
+  /// No description provided for @assistantFixApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix the app with this request'**
+  String get assistantFixApp;
+
+  /// No description provided for @findPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous result'**
+  String get findPrevious;
+
+  /// No description provided for @findNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next result'**
+  String get findNext;
+
+  /// No description provided for @toggleReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Show or hide replace'**
+  String get toggleReplace;
+
+  /// No description provided for @clearConsole.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the console'**
+  String get clearConsole;
+
+  /// No description provided for @stopAutoRebuild.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop rebuilding on save'**
+  String get stopAutoRebuild;
+
+  /// No description provided for @deviceTablet.
+  ///
+  /// In en, this message translates to:
+  /// **'Tablet'**
+  String get deviceTablet;
+
+  /// No description provided for @deviceDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Computer'**
+  String get deviceDesktop;
+
+  /// No description provided for @checkEmailToConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your email to confirm your registration.'**
+  String get checkEmailToConfirm;
 }
 
 class _AppLocalizationsDelegate

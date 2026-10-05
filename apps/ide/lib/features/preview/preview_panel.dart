@@ -6,6 +6,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import 'preview_controller.dart';
 
 enum DevicePreset {
@@ -18,6 +19,13 @@ enum DevicePreset {
   final String label;
   final Size size;
   final IconData icon;
+
+  /// The name shown in the menu: brand names stay, the rest is translated.
+  String title(AppLocalizations l) => switch (this) {
+    DevicePreset.tablet => l.deviceTablet,
+    DevicePreset.desktop => l.deviceDesktop,
+    _ => label,
+  };
 }
 
 class PreviewPanel extends StatefulWidget {
@@ -57,15 +65,16 @@ class _PreviewPanelState extends State<PreviewPanel> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                color: Colors.white,
-                padding: const EdgeInsets.all(12),
+                // A QR code is read on a light ground, whatever the theme.
+                color: context.ember.onCodeSurface,
+                padding: const EdgeInsets.all(Gap.md),
                 child: QrImageView(data: url, size: 240),
               ),
-              const SizedBox(height: 12),
+              Gap.vMd,
               SelectableText(url, textAlign: TextAlign.center),
               if (localOnly) ...[
-                const SizedBox(height: 8),
-                Text(l.qrLocalhostWarning, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                Gap.vSm,
+                Text(l.qrLocalhostWarning, style: TextStyle(color: context.scheme.error)),
               ],
             ],
           ),
@@ -92,15 +101,15 @@ class _PreviewPanelState extends State<PreviewPanel> {
         return Column(
           children: [
             Material(
-              color: Theme.of(context).colorScheme.surfaceContainer,
-              child: SizedBox(
-                height: 44,
-                child: ListView(
+              color: context.scheme.surfaceContainer,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  children: [
+                  padding: const EdgeInsets.symmetric(horizontal: Gap.xs),
+                  child: Row(children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: Gap.xs),
                       child: FilledButton.icon(
                         key: const Key('runWeb'),
                         onPressed: building ? null : () => c.run(),
@@ -122,7 +131,7 @@ class _PreviewPanelState extends State<PreviewPanel> {
                       onSelected: (d) => setState(() => _device = d),
                       itemBuilder: (_) => [
                         for (final d in DevicePreset.values)
-                          PopupMenuItem(value: d, child: ListTile(leading: Icon(d.icon), title: Text(d.label))),
+                          PopupMenuItem(value: d, child: ListTile(leading: Icon(d.icon), title: Text(d.title(l)))),
                       ],
                     ),
                     IconButton(
@@ -148,14 +157,15 @@ class _PreviewPanelState extends State<PreviewPanel> {
                     ),
                     if (c.info?.autoRebuild ?? false)
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: Gap.xs),
                         child: InputChip(
                           label: Text(l.autoRebuild),
                           avatar: const Icon(Icons.bolt, size: 16),
                           onDeleted: c.stopAutoRebuild,
+                          deleteButtonTooltipMessage: l.stopAutoRebuild,
                         ),
                       ),
-                  ],
+                  ]),
                 ),
               ),
             ),
@@ -172,9 +182,8 @@ class _PreviewPanelState extends State<PreviewPanel> {
       return _BuildLog(controller: c, failed: c.phase == PreviewPhase.failed);
     }
     if (url == null) {
-      return Center(
-        child: Padding(padding: const EdgeInsets.all(24), child: Text(l.previewEmpty, textAlign: TextAlign.center)),
-      );
+      // Scrolls when the console leaves it only a strip of the panel.
+      return Center(child: SingleChildScrollView(child: EmptyState(icon: Icons.phone_iphone, text: l.previewEmpty, compact: true)));
     }
     final webview = InAppWebView(
       key: ValueKey('$url#${c.revision}'),
@@ -204,8 +213,8 @@ class _PreviewPanelState extends State<PreviewPanel> {
                   child: Container(
                     width: s.width + 24,
                     height: s.height + 24,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(36)),
+                    padding: const EdgeInsets.all(Gap.md),
+                    decoration: BoxDecoration(color: context.ember.codeSurface, borderRadius: BorderRadius.circular(36)),
                     child: ClipRRect(borderRadius: BorderRadius.circular(26), child: SizedBox.fromSize(size: s, child: webview)),
                   ),
                 ),
@@ -214,7 +223,7 @@ class _PreviewPanelState extends State<PreviewPanel> {
           },
         ),
         if (c.phase == PreviewPhase.building)
-          const Positioned(top: 0, left: 0, right: 0, child: LinearProgressIndicator()),
+          const PositionedDirectional(top: 0, start: 0, end: 0, child: LinearProgressIndicator()),
       ],
     );
   }
@@ -229,38 +238,51 @@ class _BuildLog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return Container(
-      color: Colors.black,
+    return SizedBox(
       width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (failed)
-            Container(
-              color: Theme.of(context).colorScheme.errorContainer,
-              padding: const EdgeInsets.all(8),
-              child: Text(
-                controller.error != null ? l.error(controller.error.toString()) : l.buildFailed,
-                style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
-              ),
-            )
-          else
-            const LinearProgressIndicator(),
-          Expanded(
-            child: SingleChildScrollView(
-              reverse: true,
-              padding: const EdgeInsets.all(8),
-              child: SelectableText(
-                controller.buildLog.toString(),
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.white70),
+      child: LogSurface(
+        padding: EdgeInsets.zero,
+        radius: BorderRadius.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (failed)
+              Container(
+                color: context.scheme.errorContainer,
+                padding: const EdgeInsets.all(Gap.sm),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.error_outline, size: 18, color: context.scheme.onErrorContainer),
+                    Gap.hSm,
+                    Expanded(
+                      child: Text(
+                        controller.error != null ? l.error(controller.error.toString()) : l.buildFailed,
+                        style: context.text.bodyMedium?.copyWith(color: context.scheme.onErrorContainer),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              const LinearProgressIndicator(),
+            Expanded(
+              child: SingleChildScrollView(
+                reverse: true,
+                padding: const EdgeInsets.all(Gap.sm),
+                child: SelectableText(controller.buildLog.toString()),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
+
+/// An error line on the dark console: the theme's error colour, lifted enough
+/// to read on a surface that stays dark in the light theme too.
+Color _errorOnCode(BuildContext context) => Color.lerp(context.scheme.error, context.ember.onCodeSurface, 0.4)!;
 
 class _ConsoleView extends StatelessWidget {
   const _ConsoleView({required this.controller});
@@ -270,16 +292,26 @@ class _ConsoleView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return Container(
-      color: const Color(0xFF1E1E1E),
+    final ember = context.ember;
+    final errorColor = _errorOnCode(context);
+    return LogSurface(
+      padding: EdgeInsets.zero,
+      radius: BorderRadius.zero,
       child: Column(
         children: [
           Row(
             children: [
-              const SizedBox(width: 8),
-              Text(l.console, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              Gap.hSm,
+              Text(l.console, style: TextStyle(color: ember.codeMuted)),
               const Spacer(),
-              IconButton(iconSize: 16, color: Colors.white54, icon: const Icon(Icons.block), onPressed: controller.clearConsole),
+              IconButton(
+                tooltip: l.clearConsole,
+                iconSize: 16,
+                color: ember.codeMuted,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                icon: const Icon(Icons.block),
+                onPressed: controller.clearConsole,
+              ),
             ],
           ),
           Expanded(
@@ -288,15 +320,16 @@ class _ConsoleView extends StatelessWidget {
               itemCount: controller.console.length,
               itemBuilder: (_, i) {
                 final line = controller.console[controller.console.length - 1 - i];
+                final error = line.level == 'error';
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-                  child: SelectableText(
-                    line.message,
-                    style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 12,
-                      color: line.level == 'error' ? Colors.redAccent : Colors.white70,
-                    ),
+                  padding: const EdgeInsets.symmetric(horizontal: Gap.sm, vertical: 1),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Errors are marked by an icon too, not by colour alone.
+                      if (error) ...[Padding(padding: const EdgeInsets.only(top: 2), child: Icon(Icons.error_outline, size: 12, color: errorColor)), Gap.hXs],
+                      Expanded(child: SelectableText(line.message, style: error ? TextStyle(color: errorColor) : null)),
+                    ],
                   ),
                 );
               },

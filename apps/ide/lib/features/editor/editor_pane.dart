@@ -11,6 +11,7 @@ import 'package:re_highlight/styles/atom-one-dark.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import 'project_controller.dart';
 
 final _languages = {
@@ -39,7 +40,7 @@ class EditorPane extends StatelessWidget {
             if (controller.tabs.isNotEmpty) _TabBar(controller: controller),
             Expanded(
               child: file == null
-                  ? Center(child: Text(l.noFileOpen))
+                  ? EmptyState(icon: Icons.description_outlined, text: l.noFileOpen, compact: true)
                   : _Editor(key: ObjectKey(file), file: file, onSave: () => onSave(file)),
             ),
           ],
@@ -56,46 +57,23 @@ class _TabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: scheme.surfaceContainer,
-      child: SizedBox(
-        height: 38,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: controller.tabs.length,
-          itemBuilder: (context, i) {
-            final t = controller.tabs[i];
-            final selected = i == controller.active;
-            return InkWell(
-              onTap: () => controller.activate(i),
-              child: Container(
-                padding: const EdgeInsets.only(left: 12, right: 4),
-                decoration: BoxDecoration(
-                  color: selected ? scheme.surface : null,
-                  border: Border(bottom: BorderSide(color: selected ? scheme.primary : Colors.transparent, width: 2)),
-                ),
-                child: Row(
-                  children: [
-                    Text(t.name),
-                    const SizedBox(width: 4),
-                    if (t.saving)
-                      const SizedBox.square(dimension: 12, child: CircularProgressIndicator(strokeWidth: 1.5))
-                    else if (t.dirty)
-                      Icon(Icons.circle, size: 8, color: scheme.primary),
-                    IconButton(
-                      iconSize: 14,
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.close),
-                      onPressed: () => _close(context, i),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ),
+    final l = AppLocalizations.of(context);
+    return TabStrip(
+      selected: controller.active,
+      onSelect: controller.activate,
+      onClose: (i) => _close(context, i),
+      closeTooltip: l.close,
+      items: [
+        for (final t in controller.tabs)
+          TabStripItem(
+            label: t.name,
+            status: t.saving
+                ? const SizedBox.square(dimension: 12, child: CircularProgressIndicator(strokeWidth: 1.5))
+                : t.dirty
+                ? Icon(Icons.circle, size: 8, color: context.scheme.primary, semanticLabel: l.unsavedChanges)
+                : null,
+          ),
+      ],
     );
   }
 
@@ -103,18 +81,8 @@ class _TabBar extends StatelessWidget {
     final t = controller.tabs[i];
     if (t.dirty) {
       final l = AppLocalizations.of(context);
-      final discard = await showDialog<bool>(
-        context: context,
-        builder: (c) => AlertDialog(
-          title: Text(l.unsavedChanges),
-          content: Text(t.path),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(c, false), child: Text(l.cancel)),
-            FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(l.discard)),
-          ],
-        ),
-      );
-      if (discard != true) return;
+      final discard = await showConfirm(context, title: l.unsavedChanges, message: t.path, confirmLabel: l.discard, destructive: true);
+      if (!discard) return;
     }
     controller.close(controller.tabs.indexOf(t));
   }
@@ -188,10 +156,12 @@ class _FindBar extends StatelessWidget implements PreferredSizeWidget {
     final result = value.result;
     final l = AppLocalizations.of(context);
     final count = result == null ? '0/0' : '${result.index + 1}/${result.matches.length}';
+    Widget button(String tooltip, IconData icon, VoidCallback onPressed) =>
+        IconButton(tooltip: tooltip, iconSize: 18, constraints: const BoxConstraints(minWidth: 40, minHeight: 40), icon: Icon(icon), onPressed: onPressed);
     return Material(
       elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: Gap.sm),
         child: Column(
           children: [
             Row(
@@ -204,10 +174,10 @@ class _FindBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                 ),
                 Text(count),
-                IconButton(iconSize: 18, icon: const Icon(Icons.arrow_upward), onPressed: controller.previousMatch),
-                IconButton(iconSize: 18, icon: const Icon(Icons.arrow_downward), onPressed: controller.nextMatch),
-                IconButton(iconSize: 18, icon: const Icon(Icons.find_replace), onPressed: controller.toggleMode),
-                IconButton(iconSize: 18, icon: const Icon(Icons.close), onPressed: controller.close),
+                button(l.findPrevious, Icons.arrow_upward, controller.previousMatch),
+                button(l.findNext, Icons.arrow_downward, controller.nextMatch),
+                button(l.toggleReplace, Icons.find_replace, controller.toggleMode),
+                button(l.close, Icons.close, controller.close),
               ],
             ),
             if (value.replaceMode)

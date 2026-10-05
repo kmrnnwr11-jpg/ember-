@@ -7,6 +7,7 @@ import 'package:ide_core/ide_core.dart' show RunnerException;
 
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import 'app_builder.dart';
 
 /// Asks the AI to add the screenshot mode to apps built before it existed.
@@ -86,55 +87,41 @@ class _ScreenshotsCardState extends ConsumerState<ScreenshotsCard> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final working = _busy || _waitingUpgrade;
-    return Card(
-      margin: const EdgeInsets.only(top: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.phone_android),
-                const SizedBox(width: 8),
-                Expanded(child: Text(l.shotsTitle, style: theme.textTheme.titleMedium)),
-              ],
+    return SectionCard(
+      icon: Icons.phone_android_outlined,
+      title: l.shotsTitle,
+      hint: _waitingUpgrade ? l.shotsPreparing : l.shotsHint,
+      children: [
+        if (_shots.isNotEmpty) ...[
+          Gap.vMd,
+          SizedBox(
+            height: 260,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _shots.length,
+              separatorBuilder: (_, _) => Gap.hMd,
+              itemBuilder: (_, i) => ClipRRect(borderRadius: Radii.lgAll, child: Image.memory(_shots[i], fit: BoxFit.cover)),
             ),
-            const SizedBox(height: 4),
-            Text(_waitingUpgrade ? l.shotsPreparing : l.shotsHint, style: theme.textTheme.bodySmall),
-            if (_shots.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 260,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _shots.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 10),
-                  itemBuilder: (_, i) => ClipRRect(borderRadius: BorderRadius.circular(14), child: Image.memory(_shots[i], fit: BoxFit.cover)),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(l.shotsSaved(_shots.length), style: theme.textTheme.bodySmall),
-            ],
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
-            ],
-            const SizedBox(height: 10),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: FilledButton.icon(
-                key: const Key('takeScreenshots'),
-                onPressed: working || widget.builder.running ? null : _take,
-                icon: working ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.photo_camera_outlined),
-                label: Text(_shots.isEmpty ? l.shotsGenerate : l.shotsAgain),
-              ),
-            ),
-          ],
+          ),
+          Gap.vSm,
+          Text(l.shotsSaved(_shots.length), style: context.text.bodySmall),
+        ],
+        if (_error != null) ...[
+          Gap.vSm,
+          InlineMessage(_error!, error: true),
+        ],
+        Gap.vMd,
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: FilledButton.icon(
+            key: const Key('takeScreenshots'),
+            onPressed: working || widget.builder.running ? null : _take,
+            icon: working ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.photo_camera_outlined),
+            label: Text(_shots.isEmpty ? l.shotsGenerate : l.shotsAgain),
+          ),
         ),
-      ),
+      ],
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'env.dart';
+import 'locale.dart';
 import 'runner_api.dart';
 import 'runner_socket.dart';
 import 'settings_store.dart';
@@ -125,7 +126,7 @@ class SessionController extends AsyncNotifier<Session?> {
         if (signUp) {
           final res = await auth.signUp(email: email, password: password!);
           if (res.session == null) {
-            throw const AuthException('Controlla la tua email per confermare la registrazione.');
+            throw AuthException(ref.read(stringsProvider).checkEmailToConfirm);
           }
         } else {
           await auth.signInWithPassword(email: email, password: password!);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import 'app_builder.dart';
 
 /// AdMob: the app ships with Google's test ads; this card collects the real IDs and lets Ember wire them in.
@@ -110,96 +111,82 @@ class _AdsCardState extends State<AdsCard> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.only(top: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
+    return SectionCard(
+      icon: Icons.campaign_outlined,
+      title: l.adsTitle,
+      hint: widget.builder.ads == null ? l.adsAddHint : l.adsHint,
+      children: [
+        if (widget.builder.ads == null) ...[
+          Gap.vMd,
+          if (_declined)
+            Text(l.adsDeclined, style: context.text.bodySmall)
+          else
+            Wrap(
+              spacing: Gap.sm,
+              runSpacing: Gap.sm,
               children: [
-                const Icon(Icons.campaign_outlined),
-                const SizedBox(width: 8),
-                Expanded(child: Text(l.adsTitle, style: theme.textTheme.titleMedium)),
+                FilledButton.icon(
+                  onPressed: widget.builder.running ? null : _addAds,
+                  icon: const Icon(Icons.campaign_outlined),
+                  label: Text(l.adsYes),
+                ),
+                OutlinedButton(onPressed: () => setState(() => _declined = true), child: Text(l.adsNo)),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(widget.builder.ads == null ? l.adsAddHint : l.adsHint, style: theme.textTheme.bodySmall),
-            if (widget.builder.ads == null) ...[
-              const SizedBox(height: 10),
-              if (_declined)
-                Text(l.adsDeclined, style: theme.textTheme.bodySmall)
-              else
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    FilledButton.icon(
-                      onPressed: widget.builder.running ? null : _addAds,
-                      icon: const Icon(Icons.campaign),
-                      label: Text(l.adsYes),
-                    ),
-                    OutlinedButton(onPressed: () => setState(() => _declined = true), child: Text(l.adsNo)),
-                  ],
-                ),
-            ],
-            if (widget.builder.ads != null || !_declined) ...[
-              const SizedBox(height: 8),
-              Text(l.adsSteps, style: theme.textTheme.bodySmall),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: TextButton.icon(
-                  onPressed: () => launchUrl(Uri.parse('https://admob.google.com/v2/apps/list'), mode: LaunchMode.externalApplication),
-                  icon: const Icon(Icons.open_in_new, size: 16),
-                  label: Text(l.adsOpenAdmob),
-                ),
+        ],
+        if (widget.builder.ads != null || !_declined) ...[
+          Gap.vSm,
+          DefaultTextStyle.merge(style: context.text.bodySmall, child: StepsList.parse(l.adsSteps)),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              onPressed: () => launchUrl(Uri.parse('https://admob.google.com/v2/apps/list'), mode: LaunchMode.externalApplication),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: Text(l.adsOpenAdmob),
+            ),
+          ),
+          TextField(
+            controller: _appId,
+            onChanged: (v) => _sort(v, _appId),
+            decoration: InputDecoration(
+              labelText: l.adsAppId,
+              hintText: 'ca-app-pub-0000000000000000~0000000000',
+              helperText: l.adsAppIdHelp,
+              helperMaxLines: 2,
+              prefixIcon: const Icon(Icons.android, size: 20),
+              isDense: true,
+            ),
+          ),
+          for (final e in _units.entries) ...[
+            Gap.vMd,
+            TextField(
+              controller: e.value,
+              onChanged: (v) => _sort(v, e.value),
+              decoration: InputDecoration(
+                labelText: l.adsUnitId(e.key),
+                hintText: 'ca-app-pub-0000000000000000/0000000000',
+                helperText: l.adsUnitHelp,
+                helperMaxLines: 2,
+                prefixIcon: const Icon(Icons.crop_16_9_outlined, size: 20),
+                isDense: true,
               ),
-              TextField(
-                controller: _appId,
-                onChanged: (v) => _sort(v, _appId),
-                decoration: InputDecoration(
-                  labelText: l.adsAppId,
-                  hintText: 'ca-app-pub-0000000000000000~0000000000',
-                  helperText: l.adsAppIdHelp,
-                  helperMaxLines: 2,
-                  prefixIcon: const Icon(Icons.android, size: 20),
-                  isDense: true,
-                ),
-              ),
-              for (final e in _units.entries) ...[
-                const SizedBox(height: 12),
-                TextField(
-                  controller: e.value,
-                  onChanged: (v) => _sort(v, e.value),
-                  decoration: InputDecoration(
-                    labelText: l.adsUnitId(e.key),
-                    hintText: 'ca-app-pub-0000000000000000/0000000000',
-                    helperText: l.adsUnitHelp,
-                    helperMaxLines: 2,
-                    prefixIcon: const Icon(Icons.crop_16_9, size: 20),
-                    isDense: true,
-                  ),
-                ),
-              ],
-              if (_error != null) ...[
-                const SizedBox(height: 8),
-                Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
-              ],
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilledButton.icon(onPressed: widget.builder.running ? null : _apply, icon: const Icon(Icons.check), label: Text(l.adsApply)),
-                  TextButton(onPressed: widget.builder.running ? null : _removeAds, child: Text(l.adsRemove)),
-                ],
-              ),
-            ],
+            ),
           ],
-        ),
-      ),
+          if (_error != null) ...[
+            Gap.vSm,
+            InlineMessage(_error!, error: true),
+          ],
+          Gap.vMd,
+          Wrap(
+            spacing: Gap.sm,
+            runSpacing: Gap.sm,
+            children: [
+              FilledButton.icon(onPressed: widget.builder.running ? null : _apply, icon: const Icon(Icons.check), label: Text(l.adsApply)),
+              TextButton(onPressed: widget.builder.running ? null : _removeAds, child: Text(l.adsRemove)),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }

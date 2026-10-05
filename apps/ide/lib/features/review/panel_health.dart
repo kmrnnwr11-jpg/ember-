@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/locale.dart';
+import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import '../mockups/mockup_controller.dart' show PanelMember;
 import 'reviewers.dart';
 
@@ -35,7 +37,7 @@ Future<PanelCheck> checkPanel(BuildContext context, WidgetRef ref, {bool forDraw
   final all = chosen == null ? everyone : [for (final m in everyone) if (chosen.contains(m.id)) m];
   if (all.isEmpty) return (proceed: true, working: <String>{}, members: all);
 
-  final pings = await pingMembers(all);
+  final pings = await pingMembers(all, strings: ref.read(stringsProvider));
   Set<String> okIds(List<PanelPing> p) => {for (final x in p.where((x) => x.ok)) x.id};
 
   if (pings.every((p) => p.ok)) {
@@ -62,30 +64,25 @@ Future<PanelCheck> checkPanel(BuildContext context, WidgetRef ref, {bool forDraw
 /// "Groq non sta funzionando" / "Groq e Gemini non stanno funzionando" /
 /// "Groq, Gemini e OpenRouter non stanno funzionando" — every name is said,
 /// because the user asked to be told which one it is.
-String panelDownTitle(List<String> names) {
+String panelDownTitle(AppLocalizations l, List<String> names) {
   if (names.isEmpty) return '';
-  final joined = names.length == 1 ? names.first : '${names.take(names.length - 1).join(', ')} e ${names.last}';
-  return '$joined ${names.length == 1 ? 'non sta funzionando' : 'non stanno funzionando'}';
+  if (names.length == 1) return l.panelDownOne(names.first);
+  return l.panelDownMany(l.listAnd(names.take(names.length - 1).join(', '), names.last));
 }
 
 /// What is left to work with once the broken ones are out.
-String panelDownExplanation(int workingCount) => switch (workingCount) {
-      0 => 'Non resta nessun AI: non si può disegnare né controllare niente. Riprova, oppure chiudi.',
-      1 => 'Resta 1 solo AI: disegnerà da solo e nessuno controllerà il suo lavoro.',
-      _ => 'Restano $workingCount AI che lavorano insieme e si controllano a vicenda.',
+String panelDownExplanation(AppLocalizations l, int workingCount) => switch (workingCount) {
+      0 => l.panelNoneLeft,
+      1 => l.panelOneLeft,
+      _ => l.panelSomeLeft(workingCount),
     };
 
 /// The button that goes on anyway, named after who would be missing.
-String proceedWithoutLabel(List<String> missing) => switch (missing.length) {
-      0 => 'Continua',
-      1 => 'Vai avanti senza ${missing.first}',
-      _ => 'Vai avanti senza ${missing.length} AI',
+String proceedWithoutLabel(AppLocalizations l, List<String> missing) => switch (missing.length) {
+      0 => l.pubContinue,
+      1 => l.panelProceedWithout(missing.first),
+      _ => l.panelProceedWithoutMany(missing.length),
     };
-
-/// Closes Ember, as the user asked for when they choose to stop.
-Future<void> quitEmber() async {
-  await SystemNavigator.pop();
-}
 
 /// Every model with its state — green when it answers, red with the reason
 /// when it does not — and a Riprova on each one that is down.
@@ -112,8 +109,9 @@ class _PanelStatusDialogState extends State<PanelStatusDialog> {
   bool get _allOk => _down.isEmpty;
 
   Future<void> _retry(List<PanelMember> who) async {
+    final l = AppLocalizations.of(context);
     setState(() => _busy.addAll(who.map((m) => m.id)));
-    final results = await pingMembers(who);
+    final results = await pingMembers(who, strings: l);
     if (!mounted) return;
     setState(() {
       for (final r in results) {
@@ -127,19 +125,19 @@ class _PanelStatusDialogState extends State<PanelStatusDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     final down = _down;
     final workingCount = _pings.length - down.length;
 
     return AlertDialog(
       icon: Icon(
-        _allOk ? Icons.check_circle : Icons.warning_amber_rounded,
-        color: _allOk ? Colors.green : Colors.orange,
+        _allOk ? Icons.check_circle_outline : Icons.warning_amber_outlined,
+        color: _allOk ? context.ember.success : context.ember.warning,
         size: 32,
       ),
-      title: Text(_allOk ? 'Tutti gli AI funzionano' : panelDownTitle([for (final d in down) d.label])),
+      title: Text(_allOk ? l.panelAllOk : panelDownTitle(l, [for (final d in down) d.label])),
       content: SizedBox(
-        width: 460,
+        width: Widths.form,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,33 +148,29 @@ class _PanelStatusDialogState extends State<PanelStatusDialog> {
                 busy: _busy.contains(m.id),
                 onRetry: () => _retry([m]),
               ),
-            const SizedBox(height: 10),
-            Text(panelDownExplanation(workingCount), style: theme.textTheme.bodyMedium),
+            Gap.vMd,
+            Text(panelDownExplanation(l, workingCount), style: context.text.bodyMedium),
             if (!_allOk) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Niente parte finché non decidi tu. Se è un problema di login o di chiave, '
-                'sistemalo adesso e premi Riprova: quando torna verde si va avanti con tutti.',
-                style: theme.textTheme.bodySmall,
-              ),
+              Gap.vSm,
+              Text(l.panelHoldNote, style: context.text.bodySmall),
             ],
           ],
         ),
       ),
       actions: [
         if (!_allOk)
-          TextButton(onPressed: () => _close(false), child: const Text('Chiudi Ember')),
+          TextButton(onPressed: () => _close(false), child: Text(l.cancel)),
         if (!_allOk && _busy.isEmpty)
           TextButton(
             onPressed: () => _retry([for (final m in widget.members) if (!_state[m.id]!.ok) m]),
-            child: const Text('Riprova tutti'),
+            child: Text(l.panelRetryAll),
           ),
         if (!_allOk && workingCount > 0)
           OutlinedButton(
             onPressed: () => _close(true),
-            child: Text(proceedWithoutLabel([for (final d in down) d.label])),
+            child: Text(proceedWithoutLabel(l, [for (final d in down) d.label])),
           ),
-        if (_allOk) FilledButton(onPressed: () => _close(true), child: const Text('Continua con tutti')),
+        if (_allOk) FilledButton(onPressed: () => _close(true), child: Text(l.panelContinueAll)),
       ],
     );
   }
@@ -192,32 +186,37 @@ class _MemberRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
+    // Not a StatusRow: a row here has three states (answers, down, retrying),
+    // the reason it failed and its own Riprova.
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: Gap.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: 24,
             child: busy
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                  )
                 : Icon(
-                    ping.ok ? Icons.check_circle : Icons.cancel,
+                    ping.ok ? Icons.check_circle_outline : Icons.cancel_outlined,
                     size: 20,
-                    color: ping.ok ? Colors.green : theme.colorScheme.error,
+                    color: ping.ok ? context.ember.success : context.scheme.error,
                   ),
           ),
-          const SizedBox(width: 6),
+          Gap.hSm,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(ping.label, style: theme.textTheme.titleSmall),
+                Text(ping.label, style: context.text.titleSmall),
                 if (!ping.ok && !busy)
                   Text(
                     ping.error,
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
+                    style: context.text.bodySmall?.copyWith(color: context.scheme.error),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -225,7 +224,7 @@ class _MemberRow extends StatelessWidget {
             ),
           ),
           if (!ping.ok)
-            TextButton(onPressed: busy ? null : onRetry, child: Text(busy ? 'Provo…' : 'Riprova')),
+            TextButton(onPressed: busy ? null : onRetry, child: Text(busy ? l.panelTrying : l.retry)),
         ],
       ),
     );

@@ -68,3 +68,14 @@
 - Mockups (§1B step 3) shown right after the description, before any project is created: 5 clearly different styles generated in parallel as self-contained HTML (fast: ~1 min for all five) and shown full screen, swipe between them. Actions: Choose, Edit this (prompted change), New mockups (next 5 styles from a pool of 15, previous sets kept), Skip. The chosen mockup's palette/typography/HTML is appended to the build instructions. Deviation from the spec's "mockups as Flutter widgets": HTML is ~5× faster than compiling five Flutter previews; the build then implements the chosen design in Flutter.
 - Claude Code one-shot `agent.complete` (no tools, neutral cwd) used for mockups when the engine is Claude Code; API engines use `ai_connect`.
 - Verified live: "Dark premium" recipe-app mockup in 57 s, 15.7 KB HTML, 3 screens.
+
+## Simpler interface (branch `ux/semplice`, plan in `docs/UX_PIANO.md`)
+
+- One theme and one set of sizes and building blocks in `apps/ide/lib/ui`; light and dark; the horror wordmark, the code rain and the "summon" wording are gone.
+- Home: prompt box and one button; engine, model and "who draws" under "Options" (remembered); one list of apps, never shown twice; empty project and "restore from GitHub" in the menu.
+- App screen: status and "Open app", six "next steps" rows that each open a page (phone, pictures, checks, Google Play, App Store, more), the conversation, and the change box fixed at the bottom. Technical details are closed by default.
+- Play listing: languages behind "Manage" (search, on/off) instead of 83 chips. App Store: four sections on its own page.
+- Settings: one page for language, appearance, AI keys and reviewers, connected accounts, advanced, sign out.
+- Words: five complete languages, no text in code, plain names for APK/AAB/Runner, long guides as numbered steps.
+- Cancelling the "AI not available" check goes back instead of closing the app.
+- Not verified live yet: the redesign was checked with the analyzer and widget tests only; a walk through the real app with a Runner (Node 22) is still to do.

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import 'mockup_controller.dart' show CompleteText;
 
 const _namesSystem = '''
@@ -80,28 +81,27 @@ class _NamePickerSheetState extends State<NamePickerSheet> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
 
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+        padding: EdgeInsets.fromLTRB(Gap.lg, Gap.lg, Gap.lg, MediaQuery.of(context).viewInsets.bottom + Gap.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(l.nameTitle, style: theme.textTheme.titleLarge),
-            const SizedBox(height: 4),
-            Text(l.nameHint, style: theme.textTheme.bodySmall),
-            const SizedBox(height: 12),
+            Text(l.nameTitle, style: context.text.titleLarge),
+            Gap.vXs,
+            Text(l.nameHint, style: context.text.bodySmall),
+            Gap.vMd,
             if (_loading)
-              const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Center(child: CircularProgressIndicator()))
+              const Padding(padding: EdgeInsets.symmetric(vertical: Gap.xl), child: LoadingState())
             else
               ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: 260),
                 child: SingleChildScrollView(
                   child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: Gap.sm,
+                    runSpacing: Gap.sm,
                     children: [
                       for (final n in _names)
                         ChoiceChip(
@@ -116,7 +116,7 @@ class _NamePickerSheetState extends State<NamePickerSheet> {
                   ),
                 ),
               ),
-            const SizedBox(height: 12),
+            Gap.vMd,
             TextField(
               key: const Key('ownAppName'),
               controller: _own,
@@ -128,7 +128,7 @@ class _NamePickerSheetState extends State<NamePickerSheet> {
               },
               decoration: InputDecoration(labelText: l.nameYourOwn, isDense: true),
             ),
-            const SizedBox(height: 12),
+            Gap.vMd,
             Row(
               children: [
                 TextButton.icon(

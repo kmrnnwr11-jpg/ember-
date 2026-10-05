@@ -1,433 +1,31 @@
-import 'dart:convert';
-
-import 'package:ai_connect/ai_connect.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ide_core/ide_core.dart';
-import '../../core/settings_store.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/locale.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import '../ai/ai_settings.dart';
-import '../../widgets/ember_logo.dart';
-import 'access_links.dart';
-import 'logo_card.dart';
 import '../assistant/home_assistant.dart';
 import '../projects/history_panel.dart';
-import 'checkup_card.dart';
-import 'appstore_card.dart';
-import 'ios_card.dart';
-import 'phone_card.dart';
-import 'github_card.dart';
-import 'play_update_card.dart';
-import 'products_card.dart';
-import 'screenshots_card.dart';
-import 'ads_card.dart';
 import '../review/design_council.dart';
 import '../review/panel_health.dart';
-import '../review/review_card.dart';
 import '../review/review_state.dart';
-import '../review/reviewers.dart';
-import 'needs_you_card.dart';
 import 'app_builder.dart';
-import 'forge_view.dart';
+import 'app_section_screen.dart';
+import 'app_session.dart';
+import 'checkup_card.dart';
+import 'hub/hub_widgets.dart';
+import 'needs_you_card.dart';
 
-/// The chat and settings of each built app, kept on the Runner.
-class AppSessionStore {
-  static String _key(String projectId) => 'ember_session_$projectId';
+export 'app_session.dart';
+export 'engines.dart';
+export 'prompt_composer.dart';
 
-  static Future<void> save(String projectId, Map<String, dynamic> session) async {
-    try {
-      await Settings.instance.write(_key(projectId), jsonEncode(session));
-    } catch (_) {}
-  }
-
-  static Future<Map<String, dynamic>?> load(String projectId) async {
-    try {
-      final raw = await Settings.instance.read(_key(projectId));
-      return raw == null ? null : jsonDecode(raw) as Map<String, dynamic>;
-    } catch (_) {
-      return null;
-    }
-  }
-}
-
-/// Arguments passed when arriving from the home prompt.
-class CreateAppArgs {
-  const CreateAppArgs({
-    required this.prompt,
-    required this.engine,
-    this.modelKey,
-    this.quality = 'fast',
-    this.design,
-    this.designName,
-    this.reference,
-    this.referenceId,
-    this.referenceTopics = const [],
-    this.styleBrief = '',
-    this.appName,
-    this.referenceSiteUrl,
-    this.designEngine = BuildEngine.gemini,
-  });
-  final String prompt;
-  final BuildEngine engine;
-  final String? modelKey;
-  final String quality;
-
-  /// Design brief from the chosen mockup, appended to the build instructions.
-  final String? design;
-  final String? designName;
-
-  /// Brief of a Play Store app to take as a model (see [ReferenceApp.brief]).
-  final String? reference;
-
-  /// That app's Play Store id, to fetch its screens, and the subjects its
-  /// listing promises, checked off once the app is built.
-  final String? referenceId;
-  final List<String> referenceTopics;
-
-  /// Who the app is for, from the reference listing: decides how the mockups look.
-  final String styleBrief;
-
-  /// The name the user chose before the build: store listing, privacy policy
-  /// and package name all come from it.
-  final String? appName;
-
-  /// A website being turned into an app: its pages are photographed into the
-  /// project before the build, the way a Play listing's screenshots are.
-  final String? referenceSiteUrl;
-
-  /// Who draws the mockups, the logo and the screenshots: kept apart from the
-  /// engine that writes the code.
-  final BuildEngine designEngine;
-}
-
-/// One builder per project, kept alive so a build continues if the user
-/// navigates away.
-///
-/// The keepAlive is the whole of that promise. Riverpod disposes a provider as
-/// soon as nothing watches it, so leaving the build screen threw the builder
-/// away mid-build: the engine carried on writing files on the Runner, but
-/// nothing in Ember was listening any more, and to the user the app had simply
-/// stopped. Going back to the list — the one thing this screen is meant to let
-/// you do — was what broke it.
-final appBuilderProvider = ChangeNotifierProvider.family<AppBuilder, (String, String)>((ref, key) {
-  ref.keepAlive();
-  final (projectId, projectName) = key;
-  final socket = ref.watch(runnerSocketProvider);
-  final builder = AppBuilder(
-    projectId: projectId,
-    projectName: projectName,
-    strings: ref.read(stringsProvider),
-    onSession: (s) => AppSessionStore.save(projectId, s),
-    request: socket.request,
-    events: socket.events,
-    fetchJobLog: (jobId) async => (await ref.read(runnerApiProvider.future)).jobLog(jobId),
-    resolveProvider: ref.read(aiProviderFactory),
-    saveReferenceShots: (playAppId) async {
-      final res = await (await ref.read(runnerApiProvider.future)).saveReferenceShots(projectId, playAppId);
-      return (res['saved'] as num?)?.toInt() ?? 0;
-    },
-    saveSiteShots: (url) async {
-      final res = await (await ref.read(runnerApiProvider.future)).saveSiteShots(projectId, url);
-      return (res['shotsSaved'] as num?)?.toInt() ?? 0;
-    },
-    // The reviewers the user configured, asked automatically once the app is
-    // built. None configured: an empty list, and the build just carries on.
-    runReview: () async {
-      final s = await ref.read(reviewerSettingsProvider.future);
-      // Not a shortcut when the list is empty: Claude and Gemini review on the
-      // Runner's own login and key, and the Runner adds them itself.
-      // The owner's pick: GPT (ChatGPT subscription), Gemini and DeepSeek read
-      // the app — three different eyes from Claude, who fixes what they find.
-      // More reviewers only meant more "one more thing" rounds.
-      final res = await (await ref.read(runnerApiProvider.future)).reviewApp(
-        projectId,
-        [
-          for (final r in s.usable)
-            if (r.id == 'deepseek')
-              {'id': r.id, 'label': r.label, 'baseUrl': r.baseUrl, 'apiKey': s.keys[r.id]!, 'model': r.model},
-        ],
-        own: const ['gemini_runner', 'codex'],
-      );
-      return [for (final f in (res['findings'] as List? ?? const [])) (f as Map).cast<String, dynamic>()];
-    },
-    androidInfo: () async {
-      final info = await (await ref.read(runnerApiProvider.future)).androidInfo(projectId);
-      return 'ANDROID APP INFO (use for Firebase Android app and Google Sign-In):\n'
-          '- package name: ${info['applicationId']}\n'
-          '- SHA-1 release (Play/upload key): ${info['sha1Release']}\n'
-          '- SHA-1 debug: ${info['sha1Debug']}';
-    },
-  );
-  // Follow language changes without recreating the builder (a build may be running).
-  ref.listen(stringsProvider, (_, s) => builder.strings = s);
-  return builder;
-});
-
-/// Availability of each engine given keys and Runner capabilities.
-class EngineOption {
-  const EngineOption(this.engine, this.label, this.badge, this.icon, {required this.available, this.reason});
-  final BuildEngine engine;
-  final String label;
-  final String badge;
-  final IconData icon;
-  final bool available;
-  final String? reason;
-}
-
-List<EngineOption> engineOptions(AppLocalizations l, AiSettings s, bool claudeCodeAvailable,
-        {bool serverGemini = false, Map<String, dynamic>? health, Set<String> panelKeys = const {}}) =>
-    [
-  EngineOption(BuildEngine.gemini, 'Gemini', l.badgeFreeTier, Icons.auto_awesome,
-      available: serverGemini || s.isConfigured(AiProviderId.gemini), reason: l.needsKey('Gemini')),
-  EngineOption(BuildEngine.claudeCode, 'Claude Code', l.badgeSubscription, Icons.terminal,
-      available: claudeCodeAvailable, reason: l.claudeCodeUnavailable),
-  EngineOption(BuildEngine.codex, 'Codex · ChatGPT', l.badgeSubscription, Icons.terminal,
-      available: (health?['engines'] as Map?)?['codex'] == true, reason: l.subscriptionNotConnected('Codex (ChatGPT)')),
-  EngineOption(BuildEngine.geminiCli, 'Gemini CLI · Google', l.badgeSubscription, Icons.terminal,
-      available: (health?['engines'] as Map?)?['geminiCli'] == true, reason: l.subscriptionNotConnected('Gemini CLI')),
-  EngineOption(BuildEngine.claude, 'Claude', l.badgePaid, Icons.psychology_outlined,
-      available: s.isConfigured(AiProviderId.anthropic), reason: l.needsKey('Claude')),
-  EngineOption(BuildEngine.openai, 'ChatGPT', l.badgePaid, Icons.chat_bubble_outline,
-      available: s.isConfigured(AiProviderId.openai), reason: l.needsKey('ChatGPT')),
-  EngineOption(BuildEngine.xai, 'Grok', l.badgePaid, Icons.bolt,
-      available: s.isConfigured(AiProviderId.xai), reason: l.needsKey('Grok')),
-  // These two take the key already pasted for the matching panel voice, so
-  // they light up the moment that voice is configured.
-  EngineOption(BuildEngine.deepseek, 'DeepSeek', l.badgePaid, Icons.travel_explore,
-      available: panelKeys.contains('deepseek'), reason: l.needsKey('DeepSeek')),
-  EngineOption(BuildEngine.qwen, 'Qwen Coder', l.badgePaid, Icons.hub_outlined,
-      available: panelKeys.contains('qwen'), reason: l.needsKey('Qwen')),
-];
-
-/// Prompt box + engine chips + model menu, shared by home and project screens.
-class AppPromptComposer extends ConsumerStatefulWidget {
-  const AppPromptComposer({super.key, required this.onSubmit, this.initialPrompt = '', this.busy = false, this.buttonLabel, this.onChanged});
-
-  /// Called as the description is typed, so it can be kept as a draft.
-  final ValueChanged<String>? onChanged;
-
-  /// `engine` writes the code; `design` draws (mockups, logos, screenshots).
-  final void Function(String prompt, BuildEngine engine, AiModel? model, String quality, BuildEngine design) onSubmit;
-  final String initialPrompt;
-  final bool busy;
-  final String? buttonLabel;
-
-  @override
-  ConsumerState<AppPromptComposer> createState() => _AppPromptComposerState();
-}
-
-class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
-  late final _text = TextEditingController(text: widget.initialPrompt);
-  BuildEngine? _engine;
-  AiModel? _model;
-
-  /// Model picked for a subscription engine (Claude Code / Codex / Gemini CLI).
-  String? _cliModel;
-
-  /// Who draws: kept apart from who writes the code, because the best engine
-  /// for one is rarely the best for the other. Gemini draws for free.
-  BuildEngine? _design;
-
-  @override
-  void dispose() {
-    _text.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    final settings = ref.watch(aiSettingsProvider).value ?? const AiSettings();
-    final health = ref.watch(runnerHealthProvider).value;
-    final claudeCode = (health?['engines'] as Map?)?['claudeCode'] == true;
-    final catalog = ref.watch(aiCatalogProvider).value ?? builtInCatalog;
-    final panel = ref.watch(reviewerSettingsProvider).value;
-    final options = engineOptions(l, settings, claudeCode,
-        serverGemini: serverGeminiAvailable(health),
-        health: health,
-        panelKeys: {
-          for (final e in (panel?.keys.entries ?? const <MapEntry<String, String>>[]))
-            if (e.value.trim().isNotEmpty) e.key,
-        });
-
-    final engine = _engine ?? options.firstWhere((o) => o.available, orElse: () => options.first).engine;
-    final option = options.firstWhere((o) => o.engine == engine);
-    final models = engine.provider == null ? <AiModel>[] : catalog.where((m) => m.provider == engine.provider).toList();
-    final model = engine.provider == null
-        ? null
-        : (_model != null && _model!.provider == engine.provider
-            ? _model
-            : models.where((m) => m.id == engine.defaultModel).firstOrNull ?? models.firstOrNull);
-
-    final cliModels = [
-      for (final m in ((health?['cliModels'] as Map?)?[engine.cli] as List? ?? const []).cast<Map<String, dynamic>>())
-        (id: m['id'] as String, label: m['label'] as String, description: m['description'] as String?),
-    ];
-    final cliModel = cliModels.any((m) => m.id == _cliModel) ? _cliModel : cliModels.firstOrNull?.id;
-
-    // Drawing engines only: a subscription CLI has no one-shot drawing mode.
-    final designOptions = options.where((o) => !o.engine.isCli).toList();
-    final design = designOptions.any((o) => o.engine == _design && o.available)
-        ? _design!
-        : designOptions.firstWhere((o) => o.engine == BuildEngine.gemini && o.available, orElse: () => designOptions.firstWhere((o) => o.available, orElse: () => designOptions.first)).engine;
-
-    // Everyone who can draw, as the panel will call them. The user switches
-    // each on or off; mockups come two per model and logos rotate among them.
-    final drawers = <({String id, String label, IconData icon, bool available})>[
-      (id: 'gemini_runner', label: 'Gemini', icon: Icons.auto_awesome, available: serverGeminiAvailable(health) || settings.isConfigured(AiProviderId.gemini)),
-      (id: 'claude_code', label: 'Claude', icon: Icons.psychology_outlined, available: claudeCode),
-      (id: 'codex', label: 'GPT', icon: Icons.chat_bubble_outline, available: (health?['engines'] as Map?)?['codex'] == true),
-      for (final r in panel?.usable ?? const <Reviewer>[])
-        (id: r.id, label: r.label, icon: Icons.hub_outlined, available: true),
-    ];
-    final availableIds = {for (final d in drawers) if (d.available) d.id};
-    final chosen = ref.watch(chosenDesignersProvider);
-    final drawing = chosen == null ? availableIds : chosen.intersection(availableIds);
-    void toggleDrawer(String id) {
-      final next = {...drawing};
-      if (!next.remove(id)) next.add(id);
-      // Never nobody: the last one stays on.
-      if (next.isEmpty) return;
-      ref.read(chosenDesignersProvider.notifier).set(next.length == availableIds.length ? null : next);
-    }
-
-    void submit() {
-      if (_text.text.trim().isEmpty || !option.available || widget.busy) return;
-      // For subscription engines the chosen CLI model travels in `quality`.
-      widget.onSubmit(_text.text.trim(), engine, model, engine.isCli ? (cliModel ?? 'fast') : 'fast', design);
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        CallbackShortcuts(
-          bindings: {const SingleActivator(LogicalKeyboardKey.enter, control: true): submit},
-          child: TextField(
-            key: const Key('appPrompt'),
-            controller: _text,
-            minLines: 4,
-            maxLines: 12,
-            textInputAction: TextInputAction.newline,
-            decoration: InputDecoration(
-              hintText: l.appPromptHint,
-            ),
-            onChanged: (text) {
-              widget.onChanged?.call(text);
-              setState(() {});
-            },
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(l.chooseAi, style: Theme.of(context).textTheme.labelLarge),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final o in options)
-              ChoiceChip(
-                key: Key('engine_${o.engine.name}'),
-                avatar: Icon(o.icon, size: 18),
-                label: Text('${o.label} · ${o.badge}'),
-                selected: engine == o.engine,
-                onSelected: (_) => setState(() {
-                  _engine = o.engine;
-                  _model = null;
-                  _cliModel = null;
-                }),
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Text(l.chooseDesignAi, style: Theme.of(context).textTheme.labelLarge),
-        const SizedBox(height: 2),
-        Text(l.chooseDesignAiHint, style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final d in drawers)
-              FilterChip(
-                key: Key('design_${d.id}'),
-                avatar: Icon(d.icon, size: 16),
-                label: Text(d.label),
-                selected: drawing.contains(d.id),
-                onSelected: d.available ? (_) => toggleDrawer(d.id) : null,
-              ),
-          ],
-        ),
-        if (!option.available) ...[
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.info_outline, size: 16, color: Theme.of(context).colorScheme.error),
-              const SizedBox(width: 6),
-              Expanded(child: Text(option.reason ?? '', style: TextStyle(color: Theme.of(context).colorScheme.error))),
-              if (!engine.isCli)
-                TextButton(onPressed: () => context.push('/settings'), child: Text(l.aiSettings))
-              else if (engine != BuildEngine.claudeCode || !option.available)
-                TextButton(onPressed: () => showConnectSubscription(context, engine), child: Text(l.connectSubscription)),
-            ],
-          ),
-        ],
-        const SizedBox(height: 8),
-        AccessLinks(
-          engine: engine,
-          connected: option.available,
-          subscriptionReady: (e) => options.any((o) => o.engine == e && o.available),
-          onUseSubscription: (e) => setState(() {
-            _engine = e;
-            _model = null;
-          }),
-        ),
-        if (engine.isCli && cliModels.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            key: ValueKey('cliModel_${engine.name}'),
-            initialValue: cliModel,
-            isExpanded: true,
-            decoration: InputDecoration(labelText: l.selectModel, isDense: true),
-            items: [
-              for (final m in cliModels)
-                DropdownMenuItem(value: m.id, child: Text(m.description == null ? m.label : '${m.label} — ${m.description}', overflow: TextOverflow.ellipsis)),
-            ],
-            onChanged: (v) => setState(() => _cliModel = v),
-          ),
-        ],
-        if (models.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            key: ValueKey('apiModel_${engine.name}'),
-            initialValue: model?.key,
-            isDense: true,
-            decoration: InputDecoration(labelText: l.selectModel, isDense: true),
-            items: [for (final m in models) DropdownMenuItem(value: m.key, child: Text(m.label))],
-            onChanged: (k) => setState(() => _model = models.firstWhere((m) => m.key == k)),
-          ),
-        ],
-        const SizedBox(height: 12),
-        FilledButton.icon(
-          key: const Key('createAppButton'),
-          onPressed: _text.text.trim().isEmpty || !option.available || widget.busy ? null : submit,
-          icon: widget.busy
-              ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Icon(Icons.local_fire_department),
-          label: Padding(padding: const EdgeInsets.all(12), child: Text(widget.buttonLabel ?? l.createApp)),
-        ),
-      ],
-    );
-  }
-}
-
+/// The home of one app: how the build is going, the app once it is ready,
+/// where to go next, and the conversation with Ember. Everything else
+/// (phone, pictures, stores, checks) is one row away.
 class CreateAppScreen extends ConsumerStatefulWidget {
   const CreateAppScreen({super.key, required this.projectId, this.args});
 
@@ -439,14 +37,12 @@ class CreateAppScreen extends ConsumerStatefulWidget {
 }
 
 class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
+  final _scaffold = GlobalKey<ScaffoldState>();
   final _change = TextEditingController();
   final _logScroll = ScrollController();
   bool _autoStarted = false;
-  bool _showLog = true;
+  bool _showLog = false;
   bool _showAssistant = false;
-
-  /// Which store this page is working on: Android (false) or iPhone (true).
-  bool _ios = false;
 
   @override
   void dispose() {
@@ -485,7 +81,11 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
     // in so many words to go on without one.
     if (!mounted) return;
     final health = await checkPanel(context, ref);
-    if (!health.proceed) return quitEmber();
+    if (!health.proceed) {
+      // Stopping here goes back to the list; the app is not closed.
+      if (mounted) context.go('/projects');
+      return;
+    }
     // The panel says how the app should be designed before a line of it is
     // written. Reviewing at the end only ever caught what a rebuild could
     // fix; agreeing first is what stops it being built wrong.
@@ -512,42 +112,68 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
     );
   }
 
+  void _send(AppBuilder b) {
+    final text = _change.text.trim();
+    if (text.isEmpty) return;
+    _change.clear();
+    b.improve(text);
+  }
+
+  void _toggleAssistant() {
+    // Beside the app when there is room, over it on a narrow window.
+    if (Breakpoints.isMedium(context)) {
+      setState(() => _showAssistant = !_showAssistant);
+    } else {
+      _scaffold.currentState?.openEndDrawer();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final projectAsync = ref.watch(_projectByIdProvider(widget.projectId));
+    final projectAsync = ref.watch(projectByIdProvider(widget.projectId));
     return projectAsync.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(appBar: AppBar(), body: Center(child: Text(l.error(e.toString())))),
+      loading: () => const Scaffold(body: LoadingState()),
+      error: (e, _) => Scaffold(
+        appBar: AppBar(leading: BackButton(onPressed: () => context.go('/projects'))),
+        body: ErrorState(message: l.error(e is RunnerException ? e.message : e.toString()), onRetry: () => ref.invalidate(projectByIdProvider(widget.projectId))),
+      ),
       data: (project) {
         final b = ref.watch(appBuilderProvider((project.id, project.name)));
         WidgetsBinding.instance.addPostFrameCallback((_) => _autoStart(b));
-        final historyBeside = MediaQuery.sizeOf(context).width >= historyBesideWidth;
+        final historyBeside = Breakpoints.isExpanded(context);
+        final assistantBeside = Breakpoints.isMedium(context);
+        HomeAssistantPanel assistant(VoidCallback onClose) => HomeAssistantPanel(
+          app: (id: project.id, name: project.displayName),
+          onClose: onClose,
+          fixing: b.running,
+          onFixApp: (request) => b.improve(request),
+        );
         return Scaffold(
+          key: _scaffold,
           drawer: historyBeside ? null : Drawer(width: 300, child: SafeArea(child: HistoryPanel(currentProjectId: project.id, inDrawer: true))),
+          // On a narrow window the assistant takes the whole screen instead of squeezing the app.
+          endDrawer: assistantBeside ? null : Drawer(width: Widths.panel, child: SafeArea(child: assistant(() => Navigator.pop(context)))),
           appBar: AppBar(
-            leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/projects')),
+            leading: BackButton(onPressed: () => context.go('/projects')),
             title: Text(project.displayName),
             actions: [
               if (!historyBeside)
-                Builder(
-                  builder: (context) => IconButton(
-                    key: const Key('openHistory'),
-                    tooltip: l.historyTitle,
-                    icon: const Icon(Icons.history),
-                    onPressed: () => Scaffold.of(context).openDrawer(),
-                  ),
+                IconButton(
+                  key: const Key('openHistory'),
+                  tooltip: l.historyTitle,
+                  icon: const Icon(Icons.history),
+                  onPressed: () => _scaffold.currentState?.openDrawer(),
                 ),
               IconButton(
+                key: const Key('toggleAssistant'),
                 tooltip: l.acAssistant,
-                icon: Icon(_showAssistant ? Icons.forum : Icons.forum_outlined),
-                onPressed: () => setState(() => _showAssistant = !_showAssistant),
+                isSelected: _showAssistant && assistantBeside,
+                icon: const Icon(Icons.forum_outlined),
+                selectedIcon: const Icon(Icons.forum),
+                onPressed: _toggleAssistant,
               ),
-              TextButton.icon(
-                onPressed: () => context.go('/projects/${project.id}'),
-                icon: const Icon(Icons.code),
-                label: Text(l.openEditor),
-              ),
+              Gap.hSm,
             ],
           ),
           body: Row(
@@ -556,572 +182,148 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
                 SizedBox(width: historyPanelWidth, child: HistoryPanel(currentProjectId: project.id)),
                 const VerticalDivider(width: 1),
               ],
-              Expanded(child: _buildBody(context, l, b, project)),
-              if (_showAssistant && MediaQuery.sizeOf(context).width >= 900) ...[
+              Expanded(child: ListenableBuilder(listenable: b, builder: (context, _) => _body(context, l, b, project))),
+              if (_showAssistant && assistantBeside) ...[
                 const VerticalDivider(width: 1),
-                SizedBox(
-                  width: 380,
-                  child: HomeAssistantPanel(
-                    app: (id: project.id, name: project.displayName),
-                    onClose: () => setState(() => _showAssistant = false),
-                    fixing: b.running,
-                    onFixApp: (request) => b.improve(request),
-                  ),
-                ),
+                SizedBox(width: Widths.panel, child: assistant(() => setState(() => _showAssistant = false))),
               ],
             ],
           ),
-          // On a narrow window the assistant takes the whole screen instead of squeezing the app.
-          endDrawer: MediaQuery.sizeOf(context).width < 900
-              ? Drawer(
-                  width: 380,
-                  child: HomeAssistantPanel(
-                    app: (id: project.id, name: project.displayName),
-                    onClose: () => Navigator.pop(context),
-                    fixing: b.running,
-                    onFixApp: (request) => b.improve(request),
-                  ),
-                )
-              : null,
         );
       },
     );
   }
 
-  Widget _buildBody(BuildContext context, AppLocalizations l, AppBuilder b, Project project) {
-    return ListenableBuilder(
-            listenable: b,
-            builder: (context, _) => Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 820),
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    if (b.phase == BuildPhase.idle) ...[
-                      const SizedBox(height: 120),
-                      const Center(child: EmberMark(size: 96)),
-                    ] else ...[
-                      // Right at the top: what only the owner can do blocks the
-                      // rest, so it must not be scrolled to.
-                      NeedsYouCard(builder: b),
-                      _PromptCard(prompt: b.prompt, engine: b.engine, model: b.model, designName: b.designName, quality: b.quality),
-                      const SizedBox(height: 12),
-                      _Steps(builder: b),
-                      const SizedBox(height: 12),
-                      if (b.phase == BuildPhase.ready) PlatformTabs(ios: _ios, onChanged: (v) => setState(() => _ios = v)),
-                      if (b.phase == BuildPhase.ready && _ios) IosCard(builder: b),
-                      if (b.phase == BuildPhase.ready && _ios) AppStoreCard(projectId: project.id, builder: b),
-                      if (b.phase == BuildPhase.ready && !_ios)
-                        CheckupCard(
-                          projectId: project.id,
-                          builder: b,
-                          previewUrl: b.preview?.resolve(ref.read(sessionProvider).value?.runnerUrl ?? ''),
-                        ),
-                      // Several models read the finished app and say what is
-                      // fake, missing or broken; one tap sends a fix back.
-                      // Visible while a fix is running too: it is the list the
-                      // user is working through, and taking it away mid-fix is
-                      // what made every finding vanish on the first tap.
-                      if ((b.phase == BuildPhase.ready || ref.watch(reviewStatesProvider.notifier).of(project.id).findings.isNotEmpty) && !_ios)
-                        ReviewCard(
-                          projectId: project.id,
-                          onFix: (ask) => b.improve(ask, display: 'Correzione dai revisori'),
-                        ),
-                      if (b.phase == BuildPhase.ready && !_ios) _ReadyCard(builder: b, projectId: project.id),
-                      if (b.phase == BuildPhase.ready && !_ios) PhoneCard(projectId: project.id, builder: b),
-                      if (b.phase == BuildPhase.ready && !_ios) PlayUpdateCard(builder: b, projectId: project.id),
-                      if (b.phase == BuildPhase.ready) GitHubCard(projectId: project.id),
-                      if (b.phase == BuildPhase.ready) LogoCard(builder: b, projectId: project.id),
-                      if (b.phase == BuildPhase.ready || b.phase == BuildPhase.generating) ScreenshotsCard(builder: b, projectId: project.id),
-                      if (b.phase == BuildPhase.ready && b.products.isNotEmpty) ProductsCard(builder: b, projectId: project.id),
-                      if (b.phase == BuildPhase.ready) AdsCard(builder: b),
-                      if (b.phase == BuildPhase.failed || b.phase == BuildPhase.cancelled) _FailedCard(builder: b, projectId: project.id),
-                      if (b.conversation.length > 1) ...[
-                        const SizedBox(height: 12),
-                        for (final msg in b.conversation.skip(1)) _ChatBubble(role: msg.role, text: msg.text),
-                      ],
-                      if (b.running && b.conversation.length > 1 && b.conversation.last.role == 'user')
-                        const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Align(alignment: Alignment.centerLeft, child: SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-                        ),
-                      if (b.phase == BuildPhase.ready || b.phase == BuildPhase.failed) ...[
-                        const SizedBox(height: 12),
-                        Text(l.improveApp, style: Theme.of(context).textTheme.titleMedium),
-                        const SizedBox(height: 6),
-                        TextField(
-                          key: const Key('nextRequest'),
-                          controller: _change,
-                          minLines: 2,
-                          maxLines: 8,
-                          decoration: InputDecoration(hintText: l.improveAppHint),
-                        ),
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: FilledButton.icon(
-                            key: const Key('sendRequest'),
-                            onPressed: () {
-                              final text = _change.text.trim();
-                              if (text.isEmpty) return;
-                              _change.clear();
-                              b.improve(text);
-                            },
-                            icon: const Icon(Icons.send),
-                            label: Text(l.send),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Text(l.buildLog, style: Theme.of(context).textTheme.titleSmall),
-                          const Spacer(),
-                          if (b.costUsd > 0) Text('≈\$${b.costUsd.toStringAsFixed(3)}  '),
-                          IconButton(
-                            icon: Icon(_showLog ? Icons.expand_less : Icons.expand_more),
-                            onPressed: () => setState(() => _showLog = !_showLog),
-                          ),
-                        ],
-                      ),
-                      if (_showLog) _LogView(builder: b, scroll: _logScroll),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-    );
-  }
-}
+  Widget _body(BuildContext context, AppLocalizations l, AppBuilder b, Project project) {
+    if (b.phase == BuildPhase.idle) return const LoadingState();
+    final ready = b.phase == BuildPhase.ready;
+    final failed = b.phase == BuildPhase.failed || b.phase == BuildPhase.cancelled;
+    final findings = ref.watch(reviewStatesProvider.notifier).of(project.id).findings.length;
+    void open(AppSection s) => context.push('/projects/${project.id}/${s.path}');
 
-final _projectByIdProvider = FutureProvider.autoDispose.family<Project, String>((ref, id) async {
-  final api = await ref.watch(runnerApiProvider.future);
-  return api.project(id);
-});
-
-class _ChatBubble extends StatelessWidget {
-  const _ChatBubble({required this.role, required this.text});
-  final String role;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final user = role == 'user';
-    return Align(
-      alignment: user ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.all(12),
-        constraints: const BoxConstraints(maxWidth: 680),
-        decoration: BoxDecoration(
-          color: user ? scheme.surfaceContainerHighest : scheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: scheme.outlineVariant),
-        ),
-        child: user
-            ? SelectableText(text, style: const TextStyle(color: Colors.white))
-            : MarkdownBody(
-                data: text,
-                selectable: true,
-                onTapLink: (_, href, _) {
-                  if (href != null) launchUrl(Uri.parse(href), mode: LaunchMode.externalApplication);
-                },
-              ),
-      ),
-    );
-  }
-}
-
-class _PromptCard extends StatelessWidget {
-  const _PromptCard({required this.prompt, required this.engine, required this.model, this.designName, this.quality = 'fast'});
-  final String prompt;
-  final String quality;
-  final BuildEngine? engine;
-  final AiModel? model;
-  final String? designName;
-
-  @override
-  Widget build(BuildContext context) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(prompt, maxLines: 6, overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 6),
-          Text(
-            [engine != null && engine!.isCli ? engine!.cliLabel : (model?.label ?? ''), if (engine != null && engine!.isCli && quality != 'fast' && quality != 'best') quality, if (designName != null) '🎨 $designName'].join(' · '),
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class _Steps extends StatelessWidget {
-  const _Steps({required this.builder});
-  final AppBuilder builder;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    final b = builder;
-    final order = [BuildPhase.generating, BuildPhase.dependencies, BuildPhase.checking, BuildPhase.building, BuildPhase.ready];
-    final labels = {
-      BuildPhase.generating: b.engine?.isCli == true
-          ? [
-              '${b.engine == BuildEngine.claudeCode ? l.stepClaudeCode : b.engine!.cliLabel} (${b.writtenFiles.length} file)',
-              if (b.currentAction != null) b.currentAction!,
-            ].join('\n')
-          : l.stepWriting(b.writtenFiles.length),
-      BuildPhase.dependencies: l.stepDependencies,
-      BuildPhase.checking: b.fixRound > 0 ? l.stepFixing(b.fixRound) : l.stepChecking,
-      BuildPhase.building: l.stepBuilding,
-      BuildPhase.ready: l.stepReady,
-    };
-    final current = b.phase == BuildPhase.fixing ? BuildPhase.checking : b.phase;
-    final currentIndex = order.indexOf(current);
-    final terminalFail = b.phase == BuildPhase.failed || b.phase == BuildPhase.cancelled;
-    if (b.running) return ForgeView(builder: b, status: labels[current] ?? '');
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          children: [
-            for (var i = 0; i < order.length; i++)
-              ListTile(
-                dense: true,
-                leading: switch ((i < currentIndex || b.phase == BuildPhase.ready, i == currentIndex)) {
-                  (true, _) => const Icon(Icons.check_circle, color: Colors.green),
-                  (false, true) when !terminalFail => const SizedBox.square(dimension: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
-                  _ => Icon(Icons.radio_button_unchecked, color: Theme.of(context).disabledColor),
-                },
-                title: Text(labels[order[i]]!),
-              ),
-            if (b.running)
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: OutlinedButton.icon(onPressed: b.cancel, icon: const Icon(Icons.stop), label: Text(l.stop)),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ReadyCard extends StatelessWidget {
-  const _ReadyCard({required this.builder, required this.projectId});
-  final AppBuilder builder;
-  final String projectId;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    return Consumer(
-      builder: (context, ref, _) {
-        final session = ref.watch(sessionProvider).value;
-        final url = session == null ? null : builder.preview?.resolve(session.runnerUrl);
-        return Card(
-          color: Theme.of(context).colorScheme.primaryContainer,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l.appReadyTitle, style: Theme.of(context).textTheme.titleLarge),
-                
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    FilledButton.icon(
-                      key: const Key('openPreview'),
-                      onPressed: () => url == null
-                          ? context.go('/projects/$projectId?panel=preview')
-                          : context.push(Uri(path: '/run', queryParameters: {'url': url}).toString()),
-                      icon: const Icon(Icons.play_arrow),
-                      label: Text(l.openApp),
-                    ),
-                    if (url != null)
-                      OutlinedButton.icon(
-                        onPressed: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
-                        icon: const Icon(Icons.open_in_new),
-                        label: Text(l.openInBrowser),
-                      ),
-                    OutlinedButton.icon(
-                      onPressed: () => context.go('/projects/$projectId'),
-                      icon: const Icon(Icons.code),
-                      label: Text(l.viewCode),
-                    ),
-                  ],
-                ),
-                const Divider(height: 32),
-                Text(l.androidFileQuestion, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 4),
-                Text(l.androidFileHint, style: Theme.of(context).textTheme.bodySmall),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    FilledButton.tonalIcon(
-                      key: const Key('buildApk'),
-                      onPressed: builder.androidBuilding ? null : () => builder.buildAndroid('apk'),
-                      icon: const Icon(Icons.android),
-                      label: Text(l.generateApk),
-                    ),
-                    FilledButton.tonalIcon(
-                      key: const Key('buildAab'),
-                      onPressed: builder.androidBuilding ? null : () => builder.buildAndroid('aab'),
-                      icon: const Icon(Icons.shop),
-                      label: Text(l.generateAab),
-                    ),
-                  ],
-                ),
-                if (builder.androidBuilding) ...[
-                  const SizedBox(height: 12),
-                  const LinearProgressIndicator(),
-                  const SizedBox(height: 6),
-                  Text(l.androidBuilding(builder.androidKind!.toUpperCase())),
-                ],
-                if (builder.androidStatus == 'ready' && session != null && builder.androidPath != null) ...[
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    key: const Key('downloadAndroid'),
-                    onPressed: () => launchUrl(
-                      Uri.parse('${session.runnerUrl}${builder.androidPath}'),
-                      mode: LaunchMode.externalApplication,
-                    ),
-                    icon: const Icon(Icons.download),
-                    label: Text(builder.androidKind == 'apk' ? l.downloadApk : l.downloadAab),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(builder.androidKind == 'apk' ? l.apkInstallHint : l.aabHint, style: Theme.of(context).textTheme.bodySmall),
-                  if (builder.androidKind == 'aab' && !builder.playPromptDismissed) ...[
-                    const SizedBox(height: 12),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(l.playAskUpload, style: Theme.of(context).textTheme.titleMedium),
-                            const SizedBox(height: 4),
-                            Text(l.playFeeNotice, style: Theme.of(context).textTheme.bodySmall),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              children: [
-                                FilledButton.icon(
-                                  key: const Key('goPublishPlay'),
-                                  onPressed: () => context.push(
-                                    '/projects/$projectId/play',
-                                    extra: [builder.prompt, ...builder.conversation.where((m) => m.role == 'user').skip(1).map((m) => m.text)].join('\n'),
-                                  ),
-                                  icon: const Icon(Icons.shop),
-                                  label: Text(l.playYesUpload),
-                                ),
-                                TextButton(onPressed: builder.dismissPlayPrompt, child: Text(l.playNotNow)),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    key: const Key('backupKey'),
-                    onPressed: () => _showKeyBackup(context, ref, projectId, session.runnerUrl),
-                    icon: const Icon(Icons.key),
-                    label: Text(l.backupSigningKey),
-                  ),
-                ],
-                if (builder.androidStatus == 'failed') ...[
-                  const SizedBox(height: 12),
-                  Text(l.androidFailed, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                  if (builder.androidError != null)
-                    SelectableText(builder.androidError!, maxLines: 10, style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
-                ],
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-Future<void> _showKeyBackup(BuildContext context, WidgetRef ref, String projectId, String runnerUrl) async {
-  final l = AppLocalizations.of(context);
-  try {
-    final info = await (await ref.read(runnerApiProvider.future)).signingLink(projectId);
-    if (!context.mounted) return;
-    String? driveMessage;
-    String? driveFolder;
-    bool saving = false;
-    await showDialog<void>(
-      context: context,
-      builder: (d) => StatefulBuilder(
-        builder: (d, setState) => AlertDialog(
-          title: Text(l.backupSigningKey),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      children: [
+        Expanded(
+          child: PageBody(
             children: [
-              Text(l.backupSigningKeyHint),
-              const SizedBox(height: 12),
-              SelectableText('Alias: ${info['alias']}'),
-              Row(
-                children: [
-                  Expanded(child: SelectableText('Password: ${info['password']}')),
-                  IconButton(
-                    icon: const Icon(Icons.copy, size: 18),
-                    onPressed: () => Clipboard.setData(ClipboardData(text: info['password'] as String)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (saving) Row(children: [const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)), const SizedBox(width: 8), Expanded(child: Text(l.driveSaving))]),
-              if (driveMessage != null) SelectableText(driveMessage!),
-              if (driveFolder != null)
-                TextButton.icon(
-                  onPressed: () => launchUrl(Uri.parse(driveFolder!), mode: LaunchMode.externalApplication),
-                  icon: const Icon(Icons.folder_open, size: 18),
-                  label: Text(l.driveOpenFolder),
+              // Right at the top: what only the owner can do blocks the
+              // rest, so it must not be scrolled to.
+              NeedsYouCard(builder: b),
+              PromptCard(prompt: b.prompt, engine: b.engine, model: b.model, designName: b.designName, quality: b.quality),
+              Gap.vMd,
+              AnimatedSwitcher(
+                duration: Motion.of(context),
+                switchInCurve: Motion.curve,
+                child: KeyedSubtree(
+                  key: ValueKey(b.running ? 'running' : b.phase.name),
+                  child: b.running
+                      ? BuildProgress(builder: b)
+                      : ready
+                          ? ReadyHero(builder: b, projectId: project.id)
+                          : failed
+                              ? FailedCard(builder: b, projectId: project.id)
+                              : const SizedBox.shrink(),
                 ),
+              ),
+              // Shows itself only when the automatic check found something.
+              if (ready)
+                CheckupCard(
+                  projectId: project.id,
+                  builder: b,
+                  previewUrl: b.preview?.resolve(ref.read(sessionProvider).value?.runnerUrl ?? ''),
+                  onlyProblems: true,
+                ),
+              if (ready) ...[
+                Gap.vXl,
+                NextSteps(
+                  steps: [
+                    NextStep(key: 'test', icon: Icons.phone_android_outlined, title: l.hubTest, hint: l.hubTestHint, onTap: () => open(AppSection.test)),
+                    NextStep(key: 'images', icon: Icons.image_outlined, title: l.hubImages, hint: l.hubImagesHint, onTap: () => open(AppSection.images)),
+                    NextStep(
+                      key: 'checks',
+                      icon: Icons.fact_check_outlined,
+                      title: l.hubChecks,
+                      hint: l.hubChecksHint,
+                      status: findings == 0 ? null : Pill(l.hubChecksCount(findings), tone: Tone.attention),
+                      onTap: () => open(AppSection.checks),
+                    ),
+                    NextStep(key: 'play', icon: Icons.shop_outlined, title: l.hubPlay, hint: l.hubPlayHint, onTap: () => open(AppSection.googlePlay)),
+                    NextStep(key: 'appStore', icon: Icons.phone_iphone_outlined, title: l.hubAppStore, hint: l.hubAppStoreHint, onTap: () => open(AppSection.appStore)),
+                    NextStep(key: 'more', icon: Icons.more_horiz, title: l.hubMore, hint: l.hubMoreHint, onTap: () => open(AppSection.more)),
+                  ],
+                ),
+              ] else if (findings > 0) ...[
+                // A fix is running: the list being worked through stays one tap away.
+                Gap.vMd,
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(onPressed: () => open(AppSection.checks), icon: const Icon(Icons.fact_check_outlined), label: Text('${l.hubChecks} · ${l.hubChecksCount(findings)}')),
+                ),
+              ],
+              if (b.conversation.length > 1) ...[
+                Gap.vXl,
+                for (final msg in b.conversation.skip(1)) AppChatBubble(role: msg.role, text: msg.text),
+              ],
+              if (b.running && b.conversation.length > 1 && b.conversation.last.role == 'user')
+                const Padding(
+                  padding: EdgeInsets.all(Gap.sm),
+                  child: Align(alignment: AlignmentDirectional.centerStart, child: SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                ),
+              Gap.vLg,
+              InkWell(
+                key: const Key('toggleLog'),
+                borderRadius: Radii.smAll,
+                onTap: () => setState(() => _showLog = !_showLog),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: kTapTarget),
+                  child: Row(
+                    children: [
+                      Gap.hXs,
+                      Icon(_showLog ? Icons.expand_less : Icons.expand_more, size: 20, color: context.scheme.onSurfaceVariant),
+                      Gap.hSm,
+                      Expanded(child: Text(l.techDetails, style: context.text.labelLarge?.copyWith(color: context.scheme.onSurfaceVariant))),
+                      if (b.costUsd > 0) Text('≈\$${b.costUsd.toStringAsFixed(3)}', style: context.text.bodySmall),
+                      Gap.hXs,
+                    ],
+                  ),
+                ),
+              ),
+              AnimatedSize(
+                duration: Motion.of(context),
+                curve: Motion.curve,
+                alignment: Alignment.topCenter,
+                child: _showLog ? BuildLogView(builder: b, scroll: _logScroll) : const SizedBox(width: double.infinity),
+              ),
             ],
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(d), child: Text(l.close)),
-            OutlinedButton.icon(
-              onPressed: saving
-                  ? null
-                  : () async {
-                      setState(() {
-                        saving = true;
-                        driveMessage = null;
-                      });
-                      try {
-                        final res = await (await ref.read(runnerApiProvider.future)).backupSigningKey(projectId);
-                        setState(() {
-                          driveMessage = l.driveSaved;
-                          driveFolder = res['folderUrl'] as String?;
-                        });
-                      } on RunnerException catch (e) {
-                        setState(() => driveMessage = e.message);
-                      } finally {
-                        setState(() => saving = false);
-                      }
-                    },
-              icon: const Icon(Icons.cloud_upload_outlined),
-              label: Text(l.driveBackup),
-            ),
-            FilledButton.icon(
-              onPressed: () => launchUrl(Uri.parse('$runnerUrl${info['path']}'), mode: LaunchMode.externalApplication),
-              icon: const Icon(Icons.download),
-              label: Text(l.downloadKeystore),
-            ),
-          ],
         ),
-      ),
-    );
-  } on RunnerException catch (e) {
-    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.error(e.message))));
-  }
-}
-
-class _FailedCard extends StatelessWidget {
-  const _FailedCard({required this.builder, required this.projectId});
-  final AppBuilder builder;
-  final String projectId;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      color: scheme.errorContainer,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: scheme.error.withValues(alpha: 0.6))),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(builder.phase == BuildPhase.cancelled ? l.buildCancelled : l.buildFailedTitle,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: scheme.onErrorContainer)),
-            if (builder.error != null) ...[
-              const SizedBox(height: 8),
-              SelectableText(builder.error!, maxLines: 12, style: TextStyle(color: scheme.onErrorContainer)),
-            ],
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              children: [
-                // With files already on disk the first button continues the
-                // work; starting over stays available, but as the second
-                // choice, because it costs another full build.
-                if (builder.canResume)
-                  FilledButton.icon(
-                    onPressed: builder.resumeFailed,
-                    icon: const Icon(Icons.play_arrow),
-                    label: Text(l.resumeFromHere(builder.writtenFiles.length)),
+        // Always in reach: the next change is typed here, not at the end of the page.
+        if (ready || failed)
+          Material(
+            color: context.scheme.surfaceContainerLow,
+            child: SafeArea(
+              top: false,
+              child: Align(
+                alignment: Alignment.topCenter,
+                heightFactor: 1,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: Widths.page),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(Gap.lg, Gap.md, Gap.lg, Gap.md),
+                    child: ChatComposer(
+                      controller: _change,
+                      hint: l.changeHint,
+                      sendTooltip: l.send,
+                      fieldKey: const Key('nextRequest'),
+                      sendKey: const Key('sendRequest'),
+                      onSend: () => _send(b),
+                    ),
                   ),
-                (builder.canResume ? OutlinedButton.icon : FilledButton.icon)(
-                  onPressed: () => builder.build(prompt: builder.prompt, engine: builder.engine!, model: builder.model, quality: builder.quality, design: builder.design, designName: builder.designName),
-                  icon: const Icon(Icons.refresh),
-                  label: Text(builder.canResume ? l.startOver : l.retry),
-                ),
-                OutlinedButton(onPressed: () => context.go('/projects/$projectId'), child: Text(l.openEditor)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LogView extends StatelessWidget {
-  const _LogView({required this.builder, required this.scroll});
-  final AppBuilder builder;
-  final ScrollController scroll;
-
-  @override
-  Widget build(BuildContext context) {
-    final b = builder;
-    final generating = b.phase == BuildPhase.generating || b.phase == BuildPhase.fixing;
-    final live = b.liveText.toString();
-    final tail = live.length > 1500 ? live.substring(live.length - 1500) : live;
-    return Container(
-      height: 280,
-      decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(8)),
-      padding: const EdgeInsets.all(10),
-      child: ListView(
-        controller: scroll,
-        reverse: true,
-        children: [
-          if (generating && tail.isNotEmpty && b.engine?.isCli != true)
-            Text(tail, style: const TextStyle(fontFamily: 'monospace', fontSize: 11, color: Colors.white38)),
-          for (final line in b.log.reversed.take(300))
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 1),
-              child: Text(
-                '${switch (line.kind) { 'file' => '📄 ', 'tool' => '⚙️ ', 'error' => '⚠️ ', 'ai' => '💬 ', _ => '• ' }}${line.text}',
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 12,
-                  color: line.kind == 'error' ? Colors.orangeAccent : Colors.white70,
                 ),
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }

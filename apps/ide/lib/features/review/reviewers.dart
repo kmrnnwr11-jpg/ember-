@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ide_core/ide_core.dart' show MsgType;
 
 import '../../core/session.dart';
+import '../../l10n/app_localizations.dart';
 import '../../core/settings_store.dart';
 import '../ai/ai_settings.dart';
 import '../mockups/mockup_controller.dart' show PanelMember, claudeCodeCompleter;
@@ -183,13 +184,13 @@ Future<String> _readAll(AiProvider provider, String model, String system, String
 /// minutes and then silently drops out of the set; asked this way it costs a
 /// couple of seconds and the user learns its name while there is still a
 /// choice to make.
-Future<List<PanelPing>> pingMembers(List<PanelMember> members) async {
+Future<List<PanelPing>> pingMembers(List<PanelMember> members, {required AppLocalizations strings}) async {
   Future<PanelPing> ping(PanelMember m) async {
     try {
       final answer = await m.complete('', 'Reply with OK');
       // A model that answers with nothing at all is down, whatever it says.
       return answer.text.trim().isEmpty
-          ? (id: m.id, label: m.label, ok: false, error: 'nessuna risposta')
+          ? (id: m.id, label: m.label, ok: false, error: strings.pingNoAnswer)
           : (id: m.id, label: m.label, ok: true, error: '');
     } on AiException catch (e) {
       return (id: m.id, label: m.label, ok: false, error: e.message);
@@ -202,7 +203,7 @@ Future<List<PanelPing>> pingMembers(List<PanelMember> members) async {
     for (final m in members)
       ping(m).timeout(
         const Duration(seconds: 25),
-        onTimeout: () => (id: m.id, label: m.label, ok: false, error: 'non risponde (25s)'),
+        onTimeout: () => (id: m.id, label: m.label, ok: false, error: strings.pingTimeout),
       ),
   ]);
 }

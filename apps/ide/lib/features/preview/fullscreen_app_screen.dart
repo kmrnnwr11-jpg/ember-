@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 
 /// Runs the generated app edge-to-edge, like an installed app: no IDE chrome,
 /// system bars hidden (immersive). Back gesture/button returns to the IDE.
@@ -53,10 +54,9 @@ class _FullscreenAppScreenState extends State<FullscreenAppScreen> {
   /// separate browsers. The app's own email sign-in works, so say that instead
   /// of sending the user on a trip that ends where it started.
   Future<void> _signInElsewhere() async {
-    final messenger = ScaffoldMessenger.of(context);
     final text = AppLocalizations.of(context).previewLoginInBrowser;
     await _web?.loadUrl(urlRequest: URLRequest(url: WebUri(widget.url)));
-    messenger.showSnackBar(SnackBar(content: Text(text), duration: const Duration(seconds: 8)));
+    if (mounted) showEmberSnack(context, text, error: true);
   }
 
   Future<void> _back() async {
@@ -71,14 +71,15 @@ class _FullscreenAppScreenState extends State<FullscreenAppScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    if (kIsWeb) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    final ember = context.ember;
+    if (kIsWeb) return const Scaffold(body: LoadingState());
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _back();
       },
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: ember.codeSurface,
         body: Stack(
           children: [
             InAppWebView(
@@ -113,48 +114,29 @@ class _FullscreenAppScreenState extends State<FullscreenAppScreen> {
               },
             ),
             if (_progress < 1)
-              Positioned(top: 0, left: 0, right: 0, child: LinearProgressIndicator(value: _progress == 0 ? null : _progress)),
+              PositionedDirectional(top: 0, start: 0, end: 0, child: LinearProgressIndicator(value: _progress == 0 ? null : _progress)),
             // Always-visible way back to Ember (desktop has no back gesture).
             SafeArea(
               child: Align(
                 alignment: AlignmentDirectional.topEnd,
                 child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Material(
-                    color: Colors.black54,
-                    shape: const StadiumBorder(),
-                    child: InkWell(
-                      key: const Key('closeFullscreenApp'),
-                      customBorder: const StadiumBorder(),
-                      onTap: () => context.pop(),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.close, color: Colors.white, size: 18),
-                            const SizedBox(width: 6),
-                            Text(l.backToEmber, style: const TextStyle(color: Colors.white)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  padding: const EdgeInsets.all(Gap.sm),
+                  child: OverlayButton(key: const Key('closeFullscreenApp'), icon: Icons.close, tooltip: l.backToEmber, onPressed: () => context.pop()),
                 ),
               ),
             ),
             AnimatedOpacity(
               opacity: _showHint ? 1 : 0,
-              duration: const Duration(milliseconds: 400),
+              duration: Motion.of(context, Motion.slow),
               child: IgnorePointer(
                 child: SafeArea(
                   child: Align(
                     alignment: Alignment.bottomCenter,
                     child: Container(
-                      margin: const EdgeInsets.all(16),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(20)),
-                      child: Text(l.fullscreenExitHint, style: const TextStyle(color: Colors.white)),
+                      margin: const EdgeInsets.all(Gap.lg),
+                      padding: const EdgeInsets.symmetric(horizontal: Gap.lg, vertical: Gap.sm),
+                      decoration: BoxDecoration(color: ember.scrim, borderRadius: Radii.lgAll),
+                      child: Text(l.fullscreenExitHint, style: TextStyle(color: ember.onCodeSurface)),
                     ),
                   ),
                 ),

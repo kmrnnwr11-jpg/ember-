@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/session.dart';
 import '../../core/settings_store.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import '../../widgets/ember_logo.dart';
 import '../ai/chat_controller.dart';
 import 'play_links.dart';
@@ -109,7 +110,7 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
       await Settings.instance.write(_stateKey, jsonEncode({'step': next.name, 'done': _done.map((s) => s.name).toList()}));
     } catch (_) {}
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+      if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: Motion.base, curve: Motion.curve);
     });
   }
 
@@ -230,40 +231,56 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
     }
   }
 
-  Widget _bubble(BuildContext context, String text, {bool user = false, List<Widget> actions = const []}) {
-    final scheme = Theme.of(context).colorScheme;
-    return Align(
-      alignment: user ? Alignment.centerRight : Alignment.centerLeft,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+  Widget _bubble(BuildContext context, String text, {bool user = false, bool dimmed = false, bool error = false, List<Widget> actions = const []}) {
+    final body = MarkdownBody(data: text, selectable: true, onTapLink: (_, href, _) => href == null ? null : _open(href));
+    return ChatBubble(
+      isUser: user,
+      dimmed: dimmed,
+      avatar: const EmberMark(size: 30, animate: false),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!user) const Padding(padding: EdgeInsets.only(right: 8, top: 4), child: EmberMark(size: 30, animate: false)),
-          Flexible(
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 6),
-              padding: const EdgeInsets.all(14),
-              constraints: const BoxConstraints(maxWidth: 680),
-              decoration: BoxDecoration(
-                color: user ? scheme.surfaceContainerHighest : scheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: scheme.outlineVariant),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  MarkdownBody(data: text, selectable: true, onTapLink: (_, href, _) => href == null ? null : _open(href)),
-                  if (actions.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Wrap(spacing: 8, runSpacing: 8, children: actions),
-                  ],
-                ],
-              ),
-            ),
-          ),
+          if (error)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [Icon(Icons.warning_amber_outlined, size: 18, color: context.scheme.error), Gap.hSm, Flexible(child: body)],
+            )
+          else
+            body,
+          if (actions.isNotEmpty) ...[
+            Gap.vMd,
+            Wrap(spacing: Gap.sm, runSpacing: Gap.sm, children: actions),
+          ],
         ],
       ),
     );
+  }
+
+  void _send(ChatController assistant, bool waitingLink) {
+    final l = AppLocalizations.of(context);
+    final text = _input.text.trim();
+    if (text.isEmpty) return;
+    // A pasted Play Console link always updates the saved account.
+    final pasted = text.contains('play.google.com/console') ? PlayConsoleLink.parse(text) : null;
+    if (pasted != null) {
+      final link = pasted.merge(_console);
+      link.save();
+      setState(() {
+        _console = link;
+        _error = null;
+        _input.clear();
+      });
+      if (_step == _Step.invite && !_manualInvite) _invite(text);
+      return;
+    }
+    if (waitingLink && text.contains('play.google.com')) {
+      setState(() => _error = l.pubInviteBadLink);
+      return;
+    } else {
+      _input.clear();
+      assistant.send('[Publishing step: ${_step.name}] $text');
+    }
   }
 
   @override
@@ -280,16 +297,12 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
           Expanded(
             child: ListView(
               controller: _scroll,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(Gap.lg),
               children: [
-                for (final s in history) Opacity(opacity: 0.55, child: _bubble(context, _say(s, l).text)),
+                for (final s in history) _bubble(context, _say(s, l).text, dimmed: true),
                 _bubble(context, current.text, actions: current.actions),
-                if (_busyText != null)
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Row(children: [const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)), const SizedBox(width: 10), Expanded(child: Text(_busyText!))]),
-                  ),
-                if (_error != null) _bubble(context, '⚠️ $_error'),
+                if (_busyText != null) Padding(padding: const EdgeInsets.all(Gap.sm), child: BusyRow(_busyText!)),
+                if (_error != null) _bubble(context, _error!, error: true),
                 for (final e in assistant.entries)
                   _bubble(context, e.text.isEmpty && e.streaming ? '…' : e.text.replaceFirst(RegExp(r'^\[Publishing step: \w+\] '), ''), user: e.role == AiRole.user),
               ],
@@ -298,49 +311,16 @@ class _PublishChatScreenState extends ConsumerState<PublishChatScreen> {
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      key: const Key('publishInput'),
-                      controller: _input,
-                      minLines: 1,
-                      maxLines: 4,
-                      decoration: InputDecoration(hintText: waitingLink ? l.pubPasteLink : l.pubAskAnything, isDense: true),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filled(
-                    icon: const Icon(Icons.arrow_upward),
-                    onPressed: _busyText != null
-                        ? null
-                        : () {
-                            final text = _input.text.trim();
-                            if (text.isEmpty) return;
-                            // A pasted Play Console link always updates the saved account.
-                            final pasted = text.contains('play.google.com/console') ? PlayConsoleLink.parse(text) : null;
-                            if (pasted != null) {
-                              final link = pasted.merge(_console);
-                              link.save();
-                              setState(() {
-                                _console = link;
-                                _error = null;
-                                _input.clear();
-                              });
-                              if (_step == _Step.invite && !_manualInvite) _invite(text);
-                              return;
-                            }
-                            if (waitingLink && text.contains('play.google.com')) {
-                              setState(() => _error = l.pubInviteBadLink);
-                              return;
-                            } else {
-                              _input.clear();
-                              assistant.send('[Publishing step: ${_step.name}] $text');
-                            }
-                          },
-                  ),
-                ],
+              padding: const EdgeInsets.fromLTRB(Gap.md, Gap.xs, Gap.md, Gap.md),
+              // While Ember is working the field stays open and only sending waits.
+              child: ChatComposer(
+                fieldKey: const Key('publishInput'),
+                controller: _input,
+                hint: waitingLink ? l.pubPasteLink : l.pubAskAnything,
+                sendTooltip: l.send,
+                busy: _busyText != null,
+                maxLines: 4,
+                onSend: () => _send(assistant, waitingLink),
               ),
             ),
           ),

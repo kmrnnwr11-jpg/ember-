@@ -15,8 +15,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get loginTitle => 'تسجيل الدخول';
 
   @override
-  String get loginSubtitle =>
-      'أنشئ تطبيقات Flutter من أي جهاز، باستخدام الذكاء الاصطناعي.';
+  String get loginSubtitle => 'أنشئ تطبيقات من أي جهاز، بالذكاء الاصطناعي.';
 
   @override
   String get email => 'البريد الإلكتروني';
@@ -35,7 +34,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get devLoginHint =>
-      'وضع التطوير: Supabase غير مُعدّ، تسجيل الدخول بالبريد الإلكتروني فقط عبر Runner.';
+      'وضع التطوير: Supabase غير مُعدّ، لذا تسجّل الدخول بالبريد الإلكتروني فقط عبر الحاسوب الذي يعمل عليه Ember.';
 
   @override
   String get invalidEmail => 'بريد إلكتروني غير صالح';
@@ -50,7 +49,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get projects => 'تطبيقاتك';
 
   @override
-  String get noProjects => 'لم تستدعِ أي تطبيق بعد. صِف واحدًا في الأعلى.';
+  String get noProjects => 'لا توجد تطبيقات بعد. صِف واحدًا في الأعلى.';
 
   @override
   String get newProject => 'مشروع جديد';
@@ -130,7 +129,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String conflictBody(String path) {
-    return 'تغيّر $path على Runner بعد أن فتحته.';
+    return 'تغيّر $path على الحاسوب الذي يعمل عليه Ember بعد أن فتحته.';
   }
 
   @override
@@ -197,7 +196,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get qrLocalhostWarning =>
-      'هذا العنوان يعمل على هذا الكمبيوتر فقط. استخدم عنوان IP الخاص بـ Runner على الشبكة (مثال: http://192.168.1.20:8787) لفتحه من الهاتف.';
+      'هذا العنوان يعمل على هذا الحاسوب فقط. لفتحه من الهاتف استخدم عنوان الشبكة للحاسوب الذي يعمل عليه Ember (مثال: http://192.168.1.20:8787).';
 
   @override
   String get copy => 'نسخ';
@@ -222,22 +221,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get toggleAi => 'إظهار/إخفاء لوحة الذكاء الاصطناعي';
 
   @override
-  String get aiSettings => 'مفاتيح API والنماذج';
+  String get aiSettings => 'أضف مفتاحًا';
 
   @override
   String get apiKeysHint =>
-      'تبقى المفاتيح مشفّرة على هذا الجهاز (تخزين آمن). عند تفعيل الوكيل تمر عبر Runner الخاص بك لكل طلب فقط ولا تُحفظ أو تُسجّل أبدًا.';
+      'تبقى المفاتيح مشفّرة على هذا الجهاز. عندما تمر الطلبات عبر الحاسوب الذي يعمل عليه Ember، تمر المفاتيح به لذلك الطلب فقط ولا تُحفظ أبدًا.';
 
   @override
-  String get useRunnerProxy => 'المرور عبر Runner (وكيل)';
+  String get useRunnerProxy => 'المرور عبر الحاسوب الذي يعمل عليه Ember';
 
   @override
   String get useRunnerProxyHint =>
-      'موصى به. عطّله للاتصال بالمزوّدين مباشرة من هذا الجهاز.';
+      'موصى به. عطّله للاتصال بخدمات الذكاء الاصطناعي مباشرة من هذا الجهاز.';
 
   @override
   String get useRunnerProxyWeb =>
-      'إلزامي على الويب: لا تستطيع المتصفحات الاتصال بالمزوّدين مباشرة.';
+      'مفعّل دائمًا في المتصفح: صفحة الويب لا تستطيع الاتصال بخدمات الذكاء الاصطناعي مباشرة.';
 
   @override
   String get apiKey => 'مفتاح API';
@@ -256,7 +255,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String keyWorks(String model) {
-    return 'يعمل ✓ ($model)';
+    return 'يعمل ($model)';
   }
 
   @override
@@ -353,26 +352,26 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get claudeCodeUnavailable =>
-      'Claude Code غير متاح على هذا Runner (يجب أن يكون مثبّتًا ومسجّل الدخول على كمبيوتر Runner).';
+      'Claude Code غير متاح: يجب أن يكون مثبّتًا ومسجّل الدخول على الحاسوب الذي يعمل عليه Ember.';
 
   @override
   String get appPromptHint => 'مثال: تطبيق وصفات مع صور وقائمة تسوّق ومؤقّت…';
 
   @override
-  String get chooseAi => 'اختر المحرّك';
+  String get chooseAi => 'من يكتب الكود';
 
   @override
-  String get createApp => 'Ember App';
+  String get createApp => 'أنشئ التطبيق';
 
   @override
   String get openEditor => 'المحرر';
 
   @override
-  String get describeYourApp => 'استدعِ تطبيقك';
+  String get describeYourApp => 'ما التطبيق الذي تريد إنشاءه؟';
 
   @override
   String get describeYourAppHint =>
-      'صِف ما يجب أن يفعله وكيف يجب أن يبدو. يكتبه Ember ويتحقق منه ويعرضه لك. (*Gemini: حصة Google المجانية بحدود يومية)';
+      'اكتب ما يجب أن يفعله وكيف تتخيّله. Ember يبنيه ويتحقق منه ويعرضه لك.';
 
   @override
   String get improveApp => 'ماذا تريد أن تضيف أو تحسّن؟';
@@ -413,7 +412,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get stepReady => 'جاهز';
 
   @override
-  String get appReadyTitle => 'تطبيقك جاهز 🎉';
+  String get appReadyTitle => 'تطبيقك جاهز';
 
   @override
   String get openApp => 'فتح التطبيق';
@@ -437,36 +436,36 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bestQualityOff => 'سريع (موصى به): مناسب لمعظم التطبيقات';
 
   @override
-  String get androidFileQuestion => 'هل تريد ملف أندرويد؟';
+  String get androidFileQuestion => 'هل تريد ملف Android؟';
 
   @override
   String get androidFileHint =>
-      'APK: للتثبيت على الهاتف. AAB: للرفع إلى Google Play Console. كلاهما موقّع.';
+      'ملف التثبيت (APK): يُثبَّت على الهاتف. ملف Google Play (AAB): يُرفع إلى Google Play Console. كلاهما موقّع.';
 
   @override
-  String get generateApk => 'إنشاء APK';
+  String get generateApk => 'أنشئ ملف التثبيت (APK)';
 
   @override
-  String get generateAab => 'إنشاء AAB';
+  String get generateAab => 'أنشئ ملف Google Play (AAB)';
 
   @override
   String androidBuilding(String kind) {
-    return 'جارٍ إنشاء $kind… قد تستغرق المرة الأولى 3-5 دقائق.';
+    return 'جارٍ إنشاء ملف $kind… قد تستغرق المرة الأولى 3-5 دقائق.';
   }
 
   @override
-  String get downloadApk => 'تنزيل وتثبيت APK';
+  String get downloadApk => 'نزّل الملف وثبّته (APK)';
 
   @override
-  String get downloadAab => 'تنزيل AAB';
+  String get downloadAab => 'نزّل ملف Google Play (AAB)';
 
   @override
   String get apkInstallHint =>
-      'ملف APK موقّع. إذا طلب أندرويد ذلك، اسمح بالتثبيت من هذا المصدر.';
+      'ملف التثبيت (APK) موقّع. إذا طلب Android ذلك، اسمح بالتثبيت من هذا المصدر.';
 
   @override
   String get aabHint =>
-      'ملف AAB موقّع بمفتاح الرفع الخاص بهذا التطبيق: جاهز لـ Google Play Console. يزداد رقم الإصدار مع كل بناء.';
+      'ملف Google Play (AAB) موقّع بمفتاح الرفع الخاص بهذا التطبيق وجاهز لـ Google Play Console. يزداد رقم الإصدار تلقائيًا في كل مرة.';
 
   @override
   String get androidFailed => 'فشل الإنشاء:';
@@ -489,12 +488,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String cliNotInstalled(String name) {
-    return 'غير مثبّت على Runner ($name)';
+    return 'غير مثبّت على الحاسوب الذي يعمل عليه Ember ($name)';
   }
 
   @override
   String get terminalCliHint =>
-      'يستخدم Claude Code وCodex وGemini تسجيل الدخول الموجود على كمبيوتر Runner. في المرة الأولى اتبع التعليمات في الطرفية لتسجيل الدخول.';
+      'يستخدم Claude Code و Codex و Gemini تسجيل الدخول الموجود على الحاسوب الذي يعمل عليه Ember. في المرة الأولى اتبع التعليمات في الطرفية لتسجيل الدخول.';
 
   @override
   String get generatingMockups => 'جارٍ إنشاء 5 أنماط تصميم…';
@@ -576,7 +575,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get playConnectGuide =>
-      'تحتاج إلى **مفتاح حساب خدمة** (مرة واحدة لكل تطبيقاتك):\n1. افتح **Google Cloud** وفعّل **Google Play Android Developer API**\n2. **حسابات الخدمة** ← **إنشاء** ← **المفاتيح** ← **إضافة مفتاح** ← **JSON** (يتم تنزيل ملف)\n3. في **Play Console** ← **المستخدمون والأذونات** ← **دعوة مستخدمين جدد** ← الصق بريد حساب الخدمة ← امنح أذونات **النشر**\n4. افتح ملف JSON الذي تم تنزيله و**الصق محتواه بالكامل هنا**\n\nيبقى المفتاح مشفّرًا على هذا الجهاز ويُستخدم للرفع فقط.';
+      '1. افتح **Google Cloud**: ستنشئ **مفتاح حساب خدمة**، مرة واحدة لكل تطبيقاتك.\n2. فعّل **Google Play Android Developer API**.\n3. اذهب إلى **حسابات الخدمة** واضغط **إنشاء**.\n4. افتح **المفاتيح** ← **إضافة مفتاح** ← **JSON**. سيُنزَّل ملف.\n5. في **Play Console** اذهب إلى **المستخدمون والأذونات** ← **دعوة مستخدمين جدد**.\n6. الصق بريد حساب الخدمة وامنحه أذونات **النشر**.\n7. افتح ملف JSON الذي نزّلته و**الصق محتواه بالكامل هنا**.\n8. انتهيت: يبقى المفتاح مشفّرًا على هذا الجهاز ويُستخدم للرفع فقط.';
 
   @override
   String get playOpenApiLibrary => 'تفعيل Google Play API';
@@ -632,7 +631,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String playUploaded(String version, String track, String draft) {
-    return '✅ تم الرفع! الإصدار $version على مسار «$track». $draft';
+    return 'تم الرفع. الإصدار $version على مسار «$track». $draft';
   }
 
   @override
@@ -669,7 +668,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get assistantUnconfigured =>
-      'المساعد المجاني غير مفعّل بعد على هذا الخادم (مفتاح Gemini الخاص بـ Runner غير موجود).';
+      'المساعد المجاني غير مفعّل بعد: مفتاح Gemini غير موجود على الحاسوب الذي يعمل عليه Ember.';
 
   @override
   String get assistantHint => 'اسأل Ember عن أي شيء…';
@@ -807,7 +806,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bAnalyze => 'جارٍ التحقق من الأخطاء (flutter analyze)…';
 
   @override
-  String get bNoErrors => 'لا توجد أخطاء ✓';
+  String get bNoErrors => 'لا توجد أخطاء';
 
   @override
   String bErrorsFound(int count) {
@@ -822,7 +821,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String statusBuilding(String progress) {
-    return 'Creating… $progress files';
+    return 'جارٍ الإنشاء… $progress ملفات';
   }
 
   @override
@@ -830,15 +829,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String resumeFromHere(int count) {
-    return 'Carry on from here ($count files)';
+    return 'أكمل من هنا ($count ملفات)';
   }
 
   @override
-  String get startOver => 'Start over';
+  String get startOver => 'ابدأ من جديد';
 
   @override
   String bClaudeStoppedCarryOn(int count) {
-    return 'It stopped with $count files already written: carrying on and fixing what is left.';
+    return 'توقّف بعد كتابة $count ملفات: أتابع وأصلح ما تبقّى.';
   }
 
   @override
@@ -851,59 +850,59 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get bApk =>
-      'جارٍ إنشاء ملف APK (قد يستغرق بضع دقائق في المرة الأولى)…';
+      'أنشئ ملف التثبيت (APK). قد تستغرق المرة الأولى بضع دقائق…';
 
   @override
-  String get bAab => 'جارٍ إنشاء ملف AAB لمتجر Play…';
+  String get bAab => 'أنشئ ملف Google Play (AAB)…';
 
   @override
-  String get chooseDesignAi => 'Who draws (logo, mockups, screens)';
+  String get chooseDesignAi => 'من يرسم (الشعار، النماذج، الشاشات)';
 
   @override
   String get chooseDesignAiHint =>
       'اختر من يرسم: كل واحد يصنع نموذجين، والشعارات الخمسة تتوزع بينهم. المحرك أعلاه يكتب الكود.';
 
   @override
-  String get bLookingAtModel => 'Looking at the app being copied…';
+  String get bLookingAtModel => 'أتفحّص التطبيق المراد نسخه…';
 
   @override
-  String get bIpa => 'Building the iPhone app (IPA)…';
+  String get bIpa => 'أنشئ تطبيق iPhone (IPA)…';
 
   @override
-  String get nameTitle => 'What is your app called?';
+  String get nameTitle => 'ما اسم تطبيقك؟';
 
   @override
   String get nameHint =>
-      'This name goes on the Play Store, in the privacy policy and into the package name, which can never change once Google has it.';
+      'يظهر هذا الاسم في متجر Play وفي سياسة الخصوصية وداخل اسم الحزمة، ولا يمكن تغييره بعد ذلك.';
 
   @override
-  String get nameYourOwn => 'Or write your own name';
+  String get nameYourOwn => 'أو اكتب اسمك الخاص';
 
   @override
-  String get nameMore => 'Other names';
+  String get nameMore => 'أسماء أخرى';
 
   @override
-  String get nameUse => 'Use this name';
+  String get nameUse => 'استخدم هذا الاسم';
 
   @override
   String bReferenceShots(int count) {
-    return '$count screens of the app to copy saved: the engine can see it, not just read about it';
+    return 'تم حفظ $count شاشات من التطبيق المراد نسخه: المحرّك يراه ولا يكتفي بقراءة وصفه';
   }
 
   @override
   String get bReferenceShotsFailed =>
-      'Could not fetch the screens of the app to copy: working from its description only';
+      'لم أتمكن من تنزيل شاشات التطبيق المراد نسخه: أتابع اعتمادًا على الوصف فقط';
 
   @override
   String bMissingTopics(String topics) {
-    return 'Missing from the app to copy: $topics. Adding them now…';
+    return 'ينقص مقارنةً بالتطبيق المراد نسخه: $topics. أضيفه الآن…';
   }
 
   @override
-  String get bIosReady => 'iPhone app ready ✓';
+  String get bIosReady => 'تطبيق iPhone جاهز';
 
   @override
-  String get bIosFailed => 'iPhone build failed';
+  String get bIosFailed => 'تعذّر إنشاء تطبيق iPhone';
 
   @override
   String get platformAndroid => 'Android';
@@ -912,40 +911,40 @@ class AppLocalizationsAr extends AppLocalizations {
   String get platformIos => 'iPhone';
 
   @override
-  String get iosTitle => 'iPhone app';
+  String get iosTitle => 'تطبيق iPhone';
 
   @override
   String get iosHint =>
-      'The same app for iPhone and iPad: same name, same screens, same ads. The file (IPA) goes to App Store Connect.';
+      'التطبيق نفسه لـ iPhone و iPad: الاسم نفسه والشاشات نفسها والإعلانات نفسها. الملف (IPA) يُرسل إلى App Store Connect.';
 
   @override
   String get iosNeedsMac =>
-      'Only a Mac can build the iPhone app. Save this app on GitHub, open Ember on your Mac and build it there. Everything else works from here.';
+      'لا يمكن إنشاء تطبيق iPhone إلا على Mac. احفظ التطبيق على GitHub، ثم افتح Ember على Mac وأنشئه هناك. كل ما عدا ذلك تفعله من هنا.';
 
   @override
-  String get iosBuild => 'Build iPhone app';
+  String get iosBuild => 'أنشئ تطبيق iPhone';
 
   @override
-  String get iosBuilding => 'Building the iPhone app…';
+  String get iosBuilding => 'جارٍ إنشاء تطبيق iPhone…';
 
   @override
   String get iosReady =>
-      'iPhone app ready. It is signed with your Apple account and can go to App Store Connect.';
+      'تطبيق iPhone جاهز. تم توقيعه بحسابك في Apple ويمكن إرساله إلى App Store Connect.';
 
   @override
   String get iosAppleAccount =>
-      'Apple Developer account: 99 USD a year, paid to Apple.';
+      'حساب Apple Developer: ‏99 دولارًا في السنة، تُدفع لـ Apple.';
 
   @override
-  String get ascTitle => 'Send to the App Store';
+  String get ascTitle => 'أرسل إلى App Store';
 
   @override
   String get ascHint =>
-      'Ember writes on Apple what it writes on Google: title, description, what\'s new, privacy address and the privacy answers, in every language of your listing.';
+      'يكتب Ember لدى Apple ما يكتبه لدى Google: العنوان والوصف والجديد ورابط الخصوصية وإجابات الخصوصية، بكل لغات صفحة تطبيقك.';
 
   @override
   String get ascKeyHelp =>
-      'In App Store Connect: Users and Access → Integrations → App Store Connect API → + . Choose the App Manager role, then download the .p8 file (Apple lets you download it once).';
+      '1. افتح App Store Connect واذهب إلى المستخدمون والوصول ← التكاملات ← App Store Connect API.\n2. اضغط + واختر دور App Manager.\n3. نزّل ملف p8. تسمح Apple بتنزيله مرة واحدة فقط.';
 
   @override
   String get ascKeyId => 'Key ID';
@@ -954,34 +953,34 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ascIssuerId => 'Issuer ID';
 
   @override
-  String get ascPrivateKey => 'Contents of the AuthKey_….p8 file';
+  String get ascPrivateKey => 'محتوى الملف AuthKey_….p8';
 
   @override
-  String get ascUploadBuild => 'Send the iPhone file too (needs a Mac)';
+  String get ascUploadBuild => 'أرسل ملف iPhone أيضًا (يلزم Mac)';
 
   @override
-  String get ascSubmit => 'Send for Apple\'s review when everything is set';
+  String get ascSubmit => 'أرسل إلى مراجعة Apple عندما يجهز كل شيء';
 
   @override
-  String get ascPublish => 'Publish on the App Store';
+  String get ascPublish => 'انشر على App Store';
 
   @override
-  String get ascWorking => 'Talking to App Store Connect…';
+  String get ascWorking => 'جارٍ التواصل مع App Store Connect…';
 
   @override
   String ascDone(String version, String languages) {
-    return 'Done on Apple: version $version, languages: $languages';
+    return 'تم لدى Apple: الإصدار $version، اللغات: $languages';
   }
 
   @override
-  String get ascOpen => 'Open App Store Connect';
+  String get ascOpen => 'افتح App Store Connect';
 
   @override
-  String get ascForget => 'Forget the Apple key';
+  String get ascForget => 'انسَ مفتاح Apple';
 
   @override
   String get ascManual =>
-      'What stays manual on Apple: the screenshots (iPhone sizes), the age rating questions, price and countries.';
+      'يبقى عليك يدويًا لدى Apple: لقطات الشاشة (مقاسات iPhone)، وأسئلة الفئة العمرية، والسعر والبلدان.';
 
   @override
   String bAndroidFailed(String kind) {
@@ -990,14 +989,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String bAndroidReady(String kind) {
-    return '$kind جاهز ✓';
+    return 'ملف $kind جاهز';
   }
 
   @override
   String get bStopped => 'تم الإيقاف';
 
   @override
-  String get bAppReady => 'التطبيق جاهز ✓';
+  String get bAppReady => 'التطبيق جاهز';
 
   @override
   String get bReviewStart => 'ذكاءات اصطناعية أخرى تفحص التطبيق…';
@@ -1011,7 +1010,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get bAppUpdated => 'تم تحديث التطبيق ✓';
+  String get bAppUpdated => 'تم تحديث التطبيق';
 
   @override
   String actWrites(String file) {
@@ -1035,11 +1034,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get actAnalyze => 'التحقق من الأخطاء';
 
   @override
-  String get forgeTitle => 'Ember يستدعي تطبيقك';
+  String get forgeTitle => 'Ember ينشئ تطبيقك';
 
   @override
   String forgeFiles(int count) {
-    return 'تم استدعاء $count ملفات';
+    return 'تمت كتابة $count ملفات';
   }
 
   @override
@@ -1059,7 +1058,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String forgeFilesOf(int count, int total) {
-    return 'تم استدعاء $count من $total ملفات';
+    return 'تمت كتابة $count من $total ملفات';
   }
 
   @override
@@ -1099,12 +1098,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String subscriptionNotConnected(String name) {
-    return '$name غير متصل: سجّل الدخول باشتراكك على كمبيوتر Runner.';
+    return '$name غير متصل: سجّل الدخول باشتراكك على الحاسوب الذي يعمل عليه Ember.';
   }
 
   @override
   String connectHowTo(String plan, String command) {
-    return 'يستخدم Ember اشتراكك الخاص في $plan، مع تسجيل الدخول على الكمبيوتر الذي يعمل عليه Runner (بدون مفتاح API وبدون تكلفة إضافية).\n\n1. على ذلك الكمبيوتر افتح طرفية (أو طرفية Ember).\n2. نفّذ: $command\n3. أكمل تسجيل الدخول في المتصفح بحسابك.\n\nعد إلى هنا: سيتفعّل المحرّك خلال دقيقة.';
+    return '1. انتقل إلى الحاسوب الذي يعمل عليه Ember وافتح طرفية (طرفية Ember تصلح أيضًا).\n2. اكتب: $command\n3. أكمل تسجيل الدخول في المتصفح بحسابك في $plan: بلا مفتاح API وبلا تكلفة إضافية.\n4. عد إلى هنا: يصبح جاهزًا خلال دقيقة.';
   }
 
   @override
@@ -1161,16 +1160,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get productsBefore =>
-      'قبل التفعيل، مرة واحدة لكل حساب/تطبيق:\n1. Play Console ← الإعداد ← ملف الدفعات (الحساب البنكي والبيانات الضريبية)\n2. ارفع ملف AAB لهذا التطبيق إلى الاختبار الداخلي (تشترط Google نسخة تتضمن الفوترة)\n3. المستخدمون والأذونات ← امنح حساب الخدمة إذن «إدارة الطلبات والاشتراكات»';
+      '1. قبل التفعيل، افتح Play Console. تُنفَّذ هذه الخطوات مرة واحدة لكل حساب ولكل تطبيق.\n2. اذهب إلى الإعداد ← ملف الدفعات وأضف الحساب البنكي والبيانات الضريبية.\n3. ارفع ملف Google Play (AAB) لهذا التطبيق إلى الاختبار الداخلي: تشترط Google نسخة تتضمن المدفوعات.\n4. في المستخدمون والأذونات، امنح حساب الخدمة إذن «إدارة الطلبات والاشتراكات».';
 
   @override
   String get productsOpenPayments => 'ملف الدفعات';
 
   @override
-  String get productsUploadFirst => 'رفع AAB';
+  String get productsUploadFirst => 'ارفع ملف Google Play (AAB)';
 
   @override
-  String get productsActive => 'مفعّل على Google Play ✓';
+  String get productsActive => 'مفعّل على Google Play';
 
   @override
   String productPerPeriod(String price, String period) {
@@ -1264,7 +1263,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pubConnect =>
-      'الآن أربط Ember بـ Google Play لأتمكن من رفع تطبيقاتك. **سأقوم بذلك بنفسي**: أنشئ مفتاحًا خاصًا في حساب Google على هذا الكمبيوتر (مشروع Google Cloud وواجهة Play والمفتاح). يُستخدم فقط لرفع التطبيقات ويبقى على جهازك.';
+      '1. الآن أربط Ember بـ Google Play لأتمكن من رفع تطبيقاتك.\n2. **سأقوم بذلك بنفسي**: أنشئ مفتاحًا خاصًا في حسابك على Google، على هذا الكمبيوتر.\n3. لذلك أجهّز مشروع Google Cloud وواجهة Play والمفتاح.\n4. يُستخدم المفتاح لرفع التطبيقات فقط ويبقى على جهازك.';
 
   @override
   String get pubDoItEmber => 'افعلها أنت يا Ember';
@@ -1278,7 +1277,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pubInvite =>
-      'تم إنشاء المفتاح ✓\n\nآخر ربط: يجب أن يُسمح للمفتاح بالنشر في Play Console **الخاص بك**.\n1. اضغط **فتح Play Console** أدناه\n2. انسخ عنوان الصفحة التي تراها (أي صفحة) و**الصقه هنا في المحادثة**\n\nبعدها سيفتح متصفح الكمبيوتر مرة واحدة: سجّل الدخول بنفس حساب Google واضغط **سماح**. سأرسل الدعوة بنفسي.';
+      'تم إنشاء المفتاح.\n\nآخر ربط: يجب أن يُسمح للمفتاح بالنشر في Play Console **الخاص بك**.\n1. اضغط **فتح Play Console** أدناه\n2. انسخ عنوان الصفحة التي تراها (أي صفحة) و**الصقه هنا في المحادثة**\n\nبعدها سيفتح متصفح الكمبيوتر مرة واحدة: سجّل الدخول بنفس حساب Google واضغط **سماح**. سأرسل الدعوة بنفسي.';
 
   @override
   String get pubInviteBadLink =>
@@ -1295,7 +1294,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pubGraphics =>
-      'تم الربط بـ Google Play ✓\n\nتطلب Google لصفحة المتجر **أيقونة 512×512** و**بانر 1024×500** و**لقطتي شاشة** على الأقل. إن لم تنشئها بعد، عد إلى شاشة التطبيق: في **شعار التطبيق** و**لقطات شاشة لمتجر Play** ينشئها Ember بلمسة. سأرفعها تلقائيًا مع التطبيق.';
+      'تم الربط بـ Google Play.\n\nتطلب Google لصفحة المتجر **أيقونة 512×512** و**بانر 1024×500** و**لقطتي شاشة** على الأقل. إن لم تنشئها بعد، عد إلى شاشة التطبيق: في **شعار التطبيق** و**لقطات شاشة لمتجر Play** ينشئها Ember بلمسة. سأرفعها تلقائيًا مع التطبيق.';
 
   @override
   String get pubContinue => 'متابعة';
@@ -1312,7 +1311,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pubFinish =>
-      'رائع، التطبيق على Google Play ✓\n\nلا تزال Google تطلب تأكيد بعض النماذج يدويًا في Play Console (**أمان البيانات** و**تصنيف المحتوى** و**الجمهور المستهدف** و**الإعلانات** و**الوصول إلى التطبيق**): الإجابات الجاهزة في الشاشة الأخيرة. كما يجب على الحسابات الشخصية الجديدة إجراء **اختبار مغلق مع 12 مختبرًا لمدة 14 يومًا** قبل النشر العام.\n\nلديك سؤال؟ اسألني بالأسفل.';
+      '1. تطبيقك على Google Play. بقيت بعض النماذج: افتح **Play Console**.\n2. أكّد يدويًا **أمان البيانات** و**تصنيف المحتوى** و**الجمهور المستهدف** و**الإعلانات** و**الوصول إلى التطبيق**.\n3. انسخ الإجابات من الشاشة الأخيرة: إنها جاهزة.\n4. إن كان حسابك الشخصي جديدًا، أجرِ **اختبارًا مغلقًا مع 12 مختبرًا لمدة 14 يومًا** قبل النشر العام.\n5. لديك سؤال؟ اسألني بالأسفل.';
 
   @override
   String get pubReviewAnswers => 'عرض الإجابات الجاهزة';
@@ -1332,7 +1331,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adsSteps =>
-      'في AdMob (5 دقائق، مرة لكل تطبيق):\n1. التطبيقات ← إضافة تطبيق ← Android ← «هل التطبيق على Google Play؟» (لا إن لم يُنشر بعد) ← الاسم ← إضافة\n2. انسخ معرّف التطبيق (ca-app-pub-…~…)\n3. الوحدات الإعلانية ← إضافة وحدة ← اختر كل تنسيق أدناه ← إنشاء ← انسخ معرّفها (ca-app-pub-…/…)\n4. بعد النشر، اربط التطبيق بصفحته في متجر Play داخل AdMob وأضف app-ads.txt إن طُلب';
+      '1. افتح AdMob. يستغرق ذلك 5 دقائق، مرة واحدة لكل تطبيق.\n2. اذهب إلى التطبيقات ← إضافة تطبيق ← Android.\n3. عند سؤال «هل التطبيق على Google Play؟» أجب بـ «لا» إن لم يُنشر بعد.\n4. اكتب الاسم واضغط إضافة.\n5. انسخ معرّف التطبيق (ca-app-pub-…~…).\n6. اذهب إلى الوحدات الإعلانية ← إضافة وحدة واختر تنسيقًا من القائمة أدناه.\n7. اضغط إنشاء وانسخ معرّفها (ca-app-pub-…/…). كرّر ذلك لكل تنسيق.\n8. بعد النشر، اربط التطبيق بصفحته في متجر Play داخل AdMob.\n9. أضف app-ads.txt إن طلبه AdMob.';
 
   @override
   String get adsOpenAdmob => 'فتح AdMob';
@@ -1414,7 +1413,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get upNewVersion => 'إصدار جديد على Google Play';
 
   @override
-  String get upBuilding => 'جارٍ إنشاء ملف AAB الموقّع الجديد…';
+  String get upBuilding => 'أنشئ الملف الجديد لـ Google Play (AAB)…';
 
   @override
   String get upUploading => 'جارٍ الرفع إلى Google Play…';
@@ -1447,7 +1446,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String consoleLinkSaved(String id) {
-    return 'تم الحفظ ✓ حساب المطوّر $id: تفتح الأزرار الآن وحدة تحكمك مباشرةً.';
+    return 'تم حفظ حساب المطوّر $id: تفتح الأزرار الآن وحدة تحكمك مباشرةً.';
   }
 
   @override
@@ -1473,7 +1472,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dsDone =>
-      'تم إرسال أمان البيانات إلى Google Play ✓ — راجعه في Play Console ← محتوى التطبيق ← أمان البيانات واضغط إرسال.';
+      'تم إرسال أمان البيانات إلى Google Play — راجعه في Play Console ← محتوى التطبيق ← أمان البيانات واضغط إرسال.';
 
   @override
   String get dsNeedsCsv =>
@@ -1486,7 +1485,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get driveSaving => 'طلب الإذن من Google وحفظ المفتاح في Drive…';
 
   @override
-  String get driveSaved => 'تم حفظ ملف المفاتيح وكلمة المرور في Google Drive ✓';
+  String get driveSaved => 'تم حفظ ملف المفاتيح وكلمة المرور في Google Drive';
 
   @override
   String get driveOpenFolder => 'فتح المجلد في Drive';
@@ -1546,27 +1545,27 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ghGetToken => 'إنشاء رمز على GitHub';
 
   @override
-  String get ghRestoreTitle => 'Open an app saved on GitHub';
+  String get ghRestoreTitle => 'افتح تطبيقًا محفوظًا على GitHub';
 
   @override
   String get ghRestoreHint =>
-      'The apps you saved on GitHub come back onto this computer, with everything they had. This is how you work on the same app from Windows and from a Mac.';
+      'التطبيقات التي حفظتها على GitHub تعود إلى هذا الحاسوب بكل ما كان فيها. هكذا تعمل على التطبيق نفسه من Windows ومن Mac.';
 
   @override
-  String get ghRestoreLoad => 'Show my apps';
+  String get ghRestoreLoad => 'اعرض تطبيقاتي';
 
   @override
   String get ghRestoreNone =>
-      'No app saved from Ember yet on this GitHub account.';
+      'لا يوجد بعد أي تطبيق محفوظ من Ember في حساب GitHub هذا.';
 
   @override
-  String get ghRestoreHere => 'Already on this computer';
+  String get ghRestoreHere => 'موجود على هذا الحاسوب';
 
   @override
-  String get ghRestoreAction => 'From GitHub';
+  String get ghRestoreAction => 'من GitHub';
 
   @override
-  String get refresh => 'Refresh';
+  String get refresh => 'تحديث';
 
   @override
   String get ghSave => 'الحفظ على GitHub';
@@ -1585,12 +1584,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String ghCreated(String repo) {
-    return 'تم إنشاء المستودع $repo ورفع التطبيق ✓';
+    return 'تم إنشاء المستودع $repo ورفع التطبيق';
   }
 
   @override
   String ghUpdated(String repo) {
-    return 'تم رفع التطبيق إلى $repo ✓';
+    return 'تم رفع التطبيق إلى $repo';
   }
 
   @override
@@ -1791,4 +1790,716 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get brandTagline => 'صانع التطبيقات';
+
+  @override
+  String get showSecret => 'إظهار';
+
+  @override
+  String get hideSecret => 'إخفاء';
+
+  @override
+  String get ok => 'موافق';
+
+  @override
+  String get details => 'التفاصيل';
+
+  @override
+  String get more => 'المزيد';
+
+  @override
+  String get advanced => 'متقدم';
+
+  @override
+  String get done => 'تم';
+
+  @override
+  String madeWith(String engine) {
+    return 'تُنشأ بواسطة $engine · خيارات';
+  }
+
+  @override
+  String get buildOptionsTitle => 'من يبني تطبيقك';
+
+  @override
+  String get homeMenu => 'طرق أخرى للبدء';
+
+  @override
+  String get emptyProject => 'مشروع فارغ';
+
+  @override
+  String get settings => 'الإعدادات';
+
+  @override
+  String get hubNextSteps => 'الخطوات التالية';
+
+  @override
+  String get hubTest => 'جرّبه على هاتفك';
+
+  @override
+  String get hubTestHint => 'افتحه برمز QR أو ثبّته';
+
+  @override
+  String get hubImages => 'الأيقونة والصور';
+
+  @override
+  String get hubImagesHint => 'الشعار ولقطات المتجر';
+
+  @override
+  String get hubChecks => 'الفحوصات';
+
+  @override
+  String get hubChecksHint => 'ما وجده Ember والمراجعون';
+
+  @override
+  String hubChecksCount(int count) {
+    return '$count للإصلاح';
+  }
+
+  @override
+  String get hubPlay => 'Google Play';
+
+  @override
+  String get hubPlayHint => 'انشر أو حدّث على أندرويد';
+
+  @override
+  String get hubAppStore => 'App Store';
+
+  @override
+  String get hubAppStoreHint => 'انشر للآيفون';
+
+  @override
+  String get hubMore => 'المزيد';
+
+  @override
+  String get hubMoreHint => 'النسخ الاحتياطي، الإعلانات، المشتريات، الكود';
+
+  @override
+  String get techDetails => 'التفاصيل التقنية';
+
+  @override
+  String get changeHint => 'ماذا تريد أن تغيّر؟';
+
+  @override
+  String get installFileTitle => 'ملف للتثبيت (APK)';
+
+  @override
+  String get installFileHint => 'ملف يمكنك إرساله إلى أي هاتف أندرويد وتثبيته.';
+
+  @override
+  String get storeFileTitle => 'ملف لـ Google Play (AAB)';
+
+  @override
+  String get storeFileHint =>
+      'مطلوب فقط إذا كنت ترفع يدويًا إلى Play Console: يجهّزه Ember عند النشر.';
+
+  @override
+  String get makeFile => 'جهّز الملف';
+
+  @override
+  String get openCodeTitle => 'الكود';
+
+  @override
+  String get openCodeHint => 'افتح المحرر لقراءة الملفات أو تعديلها يدويًا.';
+
+  @override
+  String get backToApp => 'العودة إلى التطبيق';
+
+  @override
+  String designChosen(String name) {
+    return 'التصميم: $name';
+  }
+
+  @override
+  String get reviewFixLabel => 'تصحيح من المراجعين';
+
+  @override
+  String get settingsAppearance => 'المظهر';
+
+  @override
+  String get themeSystem => 'مثل الجهاز';
+
+  @override
+  String get themeLight => 'فاتح';
+
+  @override
+  String get themeDark => 'داكن';
+
+  @override
+  String get settingsAi => 'الذكاء الاصطناعي';
+
+  @override
+  String get settingsAccounts => 'الحسابات المرتبطة';
+
+  @override
+  String get settingsAccountsHint =>
+      'تُربط عند أول حاجة إليها من صفحة التطبيق. هنا يمكنك رؤيتها وفصلها.';
+
+  @override
+  String accountConnected(String name) {
+    return '$name: مرتبط';
+  }
+
+  @override
+  String accountNotConnected(String name) {
+    return '$name: غير مرتبط';
+  }
+
+  @override
+  String get disconnect => 'فصل';
+
+  @override
+  String get runnerAddress => 'أين يعمل Ember';
+
+  @override
+  String get runnerAddressHint =>
+      'عنوان الحاسوب الذي يبني تطبيقاتك (Runner). غيّره فقط إذا طُلب منك ذلك.';
+
+  @override
+  String signedInAs(String email) {
+    return 'تم الدخول باسم $email';
+  }
+
+  @override
+  String get reviewersTitle => 'مراجعو التطبيق';
+
+  @override
+  String get reviewersHint =>
+      'عند انتهاء التطبيق تقرؤه هذه النماذج بنفسها وتخبرك بما هو مزيّف وما ينقص وما لا يعمل؛ وتعود التصحيحات تلقائيًا إلى من كتب التطبيق. تُضبط مرة واحدة وتُستخدم لكل التطبيقات.';
+
+  @override
+  String get aiKeysTitle => 'المفاتيح';
+
+  @override
+  String plLanguagesOn(int count) {
+    return 'اللغات: $count مفعّلة';
+  }
+
+  @override
+  String get plManage => 'إدارة';
+
+  @override
+  String get plLanguagesHint =>
+      'فعّل لغة لنشر صفحة المتجر بها. اضغط على لغة لقراءة نصها أو تصحيحه.';
+
+  @override
+  String get plSearchLanguage => 'ابحث عن لغة';
+
+  @override
+  String get plNoLanguageFound => 'لا توجد لغة بهذا الاسم.';
+
+  @override
+  String get plEnglish => 'الإنجليزية';
+
+  @override
+  String get plMainLanguage => 'اللغة الرئيسية، مفعّلة دائمًا';
+
+  @override
+  String get plLangReady => 'مترجمة';
+
+  @override
+  String get plLangOld => 'نص قديم';
+
+  @override
+  String get plLangMissing => 'لم تُكتب بعد';
+
+  @override
+  String get plLangWriting => 'جارٍ الكتابة…';
+
+  @override
+  String get plGenerating => 'Ember يكتب صفحة المتجر…';
+
+  @override
+  String get plFeeTitle => 'Google يطلب 25 دولارًا مرة واحدة';
+
+  @override
+  String get plAiBadAnswer =>
+      'أعطى الذكاء الاصطناعي إجابة لم يستطع Ember قراءتها. حاول مرة أخرى.';
+
+  @override
+  String get plNoAi =>
+      'لم يتم إعداد أي ذكاء اصطناعي بعد: أضف واحدًا من الإعدادات.';
+
+  @override
+  String get plPrivacyLocalOnly =>
+      'سياسة الخصوصية محفوظة على هذا الحاسوب فقط: لا يستطيع Google فتحها. اربط GitHub في Ember، أو الصق رابطًا خاصًا بك في الأسفل.';
+
+  @override
+  String plPrivacyNotPublished(String error) {
+    return 'لم تُنشر سياسة الخصوصية: $error. تم حفظ باقي صفحة المتجر؛ الصق رابطًا خاصًا بك في الأسفل.';
+  }
+
+  @override
+  String get asConnTitle => 'مفتاح Apple الخاص بك';
+
+  @override
+  String get asConnHint =>
+      'يستخدمه Ember للنشر بدلاً منك. تحفظه مرة واحدة ويصلح لكل تطبيقاتك.';
+
+  @override
+  String asKeySaved(String file) {
+    return 'تم حفظ المفتاح: $file';
+  }
+
+  @override
+  String get asChangeKey => 'تغيير المفتاح';
+
+  @override
+  String get asTeamId => 'Team ID (اختياري)';
+
+  @override
+  String get asTeamIdHelp =>
+      'يلزم لتوقيع تطبيق iPhone. اتركه فارغاً وسيقرؤه Ember من Apple باستخدام مفتاحك.';
+
+  @override
+  String get asP8KeepHelp => 'اتركه فارغاً للاحتفاظ بالمفتاح المحفوظ.';
+
+  @override
+  String get asLoadP8 => 'تحميل ملف ‎.p8';
+
+  @override
+  String get asSaveKey => 'حفظ المفتاح';
+
+  @override
+  String get asP8FileType => 'مفتاح Apple ‏(‎.p8)';
+
+  @override
+  String get asVerify => 'التحقق من الاتصال';
+
+  @override
+  String get asVerifyOk => 'الاتصال يعمل';
+
+  @override
+  String get asVerifyOkReached =>
+      'الاتصال يعمل: وصل Ember إلى App Store Connect';
+
+  @override
+  String asVerifyTeam(String team) {
+    return 'Team $team';
+  }
+
+  @override
+  String get asBadKeyId =>
+      'هذا الـ Key ID غير صالح. هو الرمز القصير بجانب المفتاح، مثل Z47GM3ZDZ6.';
+
+  @override
+  String get asBadIssuerId =>
+      'هذا الـ Issuer ID غير صالح. هو الرمز الطويل أعلى صفحة المفاتيح.';
+
+  @override
+  String get asBadP8 =>
+      'هذا ليس محتوى المفتاح. الصق ملف AuthKey_….p8 كاملاً، من السطر -----BEGIN PRIVATE KEY----- إلى -----END PRIVATE KEY-----. اسم الملف وحده لا يكفي.';
+
+  @override
+  String asP8ReadFailed(String error) {
+    return 'تعذّر على Ember قراءة ملف ‎.p8: $error';
+  }
+
+  @override
+  String get asSaveKeyFirst =>
+      'احفظ مفتاح Apple أولاً: Key ID و Issuer ID وملف ‎.p8.';
+
+  @override
+  String get asFillTitle => 'ما يملؤه Ember عنك';
+
+  @override
+  String get asFillHint =>
+      'عند النشر يضبط Ember بنفسه الفئة العمرية (4+) وإقرار التشفير وإجابات الخصوصية. وإذا اخترتها هنا، يضبط أيضاً الفئة والسعر ولقطات الشاشة.';
+
+  @override
+  String get asCategory => 'فئة App Store';
+
+  @override
+  String get asCategoryNone => 'عدم التحديد';
+
+  @override
+  String get asFree => 'تطبيق مجاني (في كل البلدان)';
+
+  @override
+  String get asScreenshots => 'إنشاء ورفع لقطات شاشة iPhone و iPad';
+
+  @override
+  String get asScreenshotsHelp =>
+      'تؤخذ من المعاينة على الويب. يحتاج التطبيق إلى «وضع لقطات الشاشة».';
+
+  @override
+  String get asReviewTitle => 'بيانات لمراجعة Apple (اختيارية)';
+
+  @override
+  String get asReviewEmail => 'بريد التواصل';
+
+  @override
+  String get asReviewEmailHelp => 'اتركه فارغاً لاستخدام بريد حسابك.';
+
+  @override
+  String get asMarketingUrl => 'موقعك (Marketing URL)';
+
+  @override
+  String get asMarketingUrlHelp =>
+      'يبحث AdMob هنا عن ملف app-ads.txt. يُحفظ لكل تطبيقاتك.';
+
+  @override
+  String get asReviewPhone => 'هاتف التواصل';
+
+  @override
+  String get asReviewPhoneHelp =>
+      'تطلبه Apple، مثل ‎+39 333 1234567. لا يراه إلا من يراجع التطبيق. يتذكره Ember لتطبيقاتك القادمة.';
+
+  @override
+  String get asReviewNotes => 'ملاحظات للمراجع';
+
+  @override
+  String get asDemoUser => 'حساب تجريبي (إذا كان التطبيق يتطلب تسجيل الدخول)';
+
+  @override
+  String get asDemoPass => 'كلمة مرور الحساب التجريبي';
+
+  @override
+  String get asChecksTitle => 'قبل الإرسال';
+
+  @override
+  String get asChecksNone => 'لا توجد مشاكل لدى Apple.';
+
+  @override
+  String asChecksBlock(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مشكلة تمنع الإرسال.',
+      few: '$count مشاكل تمنع الإرسال.',
+      two: 'مشكلتان تمنعان الإرسال.',
+      one: 'مشكلة واحدة تمنع الإرسال.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get asChecksWarn => 'تنبيهات فقط: يمكن الإرسال.';
+
+  @override
+  String get asBlocks => 'يمنع الإرسال';
+
+  @override
+  String get asWarning => 'تنبيه';
+
+  @override
+  String asFixDone(String message) {
+    return 'تم الإصلاح: $message';
+  }
+
+  @override
+  String asFixFailed(String message) {
+    return 'لم يتم الإصلاح: $message';
+  }
+
+  @override
+  String asCanClose(int minutes) {
+    return 'يمكنك إغلاق هذه الصفحة: يواصل Ember بنفسه ويرسل التطبيق للمراجعة فور انتهاء Apple ($minutes د).';
+  }
+
+  @override
+  String asRunningFor(int minutes) {
+    return 'جارٍ منذ $minutes د.';
+  }
+
+  @override
+  String get asDoneExport => 'تم ضبط إقرار التشفير';
+
+  @override
+  String get asDoneAge => 'تم ملء الفئة العمرية';
+
+  @override
+  String get asDoneCategory => 'تم ضبط الفئة';
+
+  @override
+  String get asDoneReview => 'تم حفظ بيانات المراجعة';
+
+  @override
+  String get asDoneFree => 'السعر: مجاني في كل البلدان';
+
+  @override
+  String get asDonePrivacy => 'تم ملء إجابات الخصوصية';
+
+  @override
+  String asDoneShots(int count) {
+    return 'لقطات الشاشة المرفوعة: $count';
+  }
+
+  @override
+  String get asCatUtilities => 'أدوات مساعدة';
+
+  @override
+  String get asCatProductivity => 'الإنتاجية';
+
+  @override
+  String get asCatBusiness => 'الأعمال';
+
+  @override
+  String get asCatEducation => 'التعليم';
+
+  @override
+  String get asCatEntertainment => 'الترفيه';
+
+  @override
+  String get asCatFinance => 'المالية';
+
+  @override
+  String get asCatFoodAndDrink => 'الطعام والشراب';
+
+  @override
+  String get asCatHealthAndFitness => 'الصحة واللياقة';
+
+  @override
+  String get asCatLifestyle => 'نمط الحياة';
+
+  @override
+  String get asCatMusic => 'الموسيقى';
+
+  @override
+  String get asCatNavigation => 'الملاحة';
+
+  @override
+  String get asCatNews => 'الأخبار';
+
+  @override
+  String get asCatPhotoAndVideo => 'الصور والفيديو';
+
+  @override
+  String get asCatReference => 'المراجع';
+
+  @override
+  String get asCatShopping => 'التسوق';
+
+  @override
+  String get asCatSocial => 'التواصل الاجتماعي';
+
+  @override
+  String get asCatSports => 'الرياضة';
+
+  @override
+  String get asCatTravel => 'السفر';
+
+  @override
+  String get asCatWeather => 'الطقس';
+
+  @override
+  String get asCatBooks => 'الكتب';
+
+  @override
+  String get asCatDeveloperTools => 'أدوات المطورين';
+
+  @override
+  String get asCatGraphicsAndDesign => 'الرسومات والتصميم';
+
+  @override
+  String get asCatGames => 'الألعاب';
+
+  @override
+  String get reviewTitle => 'فحص التطبيق';
+
+  @override
+  String get reviewHintNone =>
+      'دع عدة أنظمة ذكاء اصطناعي تفحص التطبيق بعد اكتماله: كل واحد يقرؤه بمفرده ويقول ما هو زائف وما ينقص وما لا يعمل. أضف مراجعًا واحدًا على الأقل في الأسفل.';
+
+  @override
+  String reviewHintReady(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مراجعين جاهزون',
+      two: 'مراجعان جاهزان',
+      one: 'مراجع واحد جاهز',
+    );
+    return '$_temp0. كل واحد يقرأ التطبيق بمفرده؛ وما يلاحظه أكثر من واحد يظهر في أعلى القائمة.';
+  }
+
+  @override
+  String get reviewReviewers => 'المراجعون';
+
+  @override
+  String get reviewReading => 'المراجعون يقرؤون التطبيق…';
+
+  @override
+  String reviewNoAnswer(String name) {
+    return '$name: لا يستجيب';
+  }
+
+  @override
+  String get reviewNothingFound => 'لم يجد المراجعون أي مشكلة.';
+
+  @override
+  String get reviewAddReviewer => 'أضف مراجعًا';
+
+  @override
+  String get reviewRun => 'افحص التطبيق';
+
+  @override
+  String get reviewKeySavedMask => '•••••• (المفتاح محفوظ)';
+
+  @override
+  String get reviewPasteKeyHint => 'الصق المفتاح هنا';
+
+  @override
+  String get reviewRemoveKey => 'أزل المفتاح';
+
+  @override
+  String get reviewFixedRecheck => 'تم التصحيح: يحتاج إلى فحص جديد';
+
+  @override
+  String get reviewFixing => 'جارٍ التصحيح…';
+
+  @override
+  String get reviewFix => 'صحّح';
+
+  @override
+  String get reviewPasteKeyFirst => 'الصق المفتاح أولًا.';
+
+  @override
+  String get reviewKeySaved => 'تم حفظ المفتاح.';
+
+  @override
+  String get reviewKeyRemoved => 'تمت إزالة المفتاح.';
+
+  @override
+  String needsYouTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'مطلوب منك $count أمور',
+      two: 'مطلوب منك أمران',
+      one: 'مطلوب منك أمر واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get needsYouHint =>
+      'لا يستطيع Ember إنجازها وحده (تسجيل دخول، مفتاح، حساب). أنجزها واضغط «تم»: يتابع من حيث توقف.';
+
+  @override
+  String get needsYouIgnore => 'تجاهل';
+
+  @override
+  String listAnd(String first, String last) {
+    return '$first و$last';
+  }
+
+  @override
+  String panelDownOne(String names) {
+    return '$names لا يعمل';
+  }
+
+  @override
+  String panelDownMany(String names) {
+    return '$names لا تعمل';
+  }
+
+  @override
+  String get panelNoneLeft =>
+      'لم يبقَ أي ذكاء اصطناعي: لا يمكن رسم أو فحص أي شيء. أعد المحاولة أو أغلق.';
+
+  @override
+  String get panelOneLeft =>
+      'لم يبقَ إلا ذكاء اصطناعي واحد: سيرسم وحده ولن يفحص أحد عمله.';
+
+  @override
+  String panelSomeLeft(int count) {
+    return 'بقي $count من أنظمة الذكاء الاصطناعي تعمل معًا ويفحص بعضها بعضًا.';
+  }
+
+  @override
+  String panelProceedWithout(String name) {
+    return 'تابع بدون $name';
+  }
+
+  @override
+  String panelProceedWithoutMany(int count) {
+    return 'تابع بدون $count من أنظمة الذكاء الاصطناعي';
+  }
+
+  @override
+  String get panelAllOk => 'كل أنظمة الذكاء الاصطناعي تعمل';
+
+  @override
+  String get panelHoldNote =>
+      'لا يبدأ شيء قبل أن تقرر. إن كانت المشكلة في تسجيل الدخول أو في المفتاح، أصلحها الآن واضغط إعادة المحاولة: عندما يعود إلى الأخضر يتابع الجميع معًا.';
+
+  @override
+  String get panelRetryAll => 'أعد محاولة الجميع';
+
+  @override
+  String get panelContinueAll => 'تابع مع الجميع';
+
+  @override
+  String get panelTrying => 'جارٍ المحاولة…';
+
+  @override
+  String get pingNoAnswer => 'لا توجد إجابة';
+
+  @override
+  String get pingTimeout => 'لا يستجيب (25 ثانية)';
+
+  @override
+  String get mockupRefined => 'أُعيد رسمه وفق الملاحظات';
+
+  @override
+  String mockupPanelNotes(String notes) {
+    return 'ملاحظات اللجنة: $notes';
+  }
+
+  @override
+  String mockupAgreeing(int count) {
+    return 'أنظمة الذكاء الاصطناعي ($count) تختار معًا الاتجاهات الثمانية…';
+  }
+
+  @override
+  String mockupComparing(int count, int mockups) {
+    return 'المصممون ($count) يقارنون النماذج ($mockups)…';
+  }
+
+  @override
+  String get mockupRedrawing => 'كل مصمم يعيد رسم نموذجه وفق ملاحظات الآخرين…';
+
+  @override
+  String get mockupInvalid => 'لم يُرجع النموذج تصميمًا صالحًا';
+
+  @override
+  String get assistantSignIn => 'سجّل الدخول لاستخدام المساعد';
+
+  @override
+  String get imagesLabel => 'الصور';
+
+  @override
+  String assistantImageTooLarge(String name) {
+    return '$name: الصورة كبيرة جدًا (الحد الأقصى 3.5 ميغابايت)';
+  }
+
+  @override
+  String get assistantAddImage => 'أضف صورة';
+
+  @override
+  String get assistantFixApp => 'أصلح التطبيق بهذا الطلب';
+
+  @override
+  String get findPrevious => 'النتيجة السابقة';
+
+  @override
+  String get findNext => 'النتيجة التالية';
+
+  @override
+  String get toggleReplace => 'إظهار أو إخفاء الاستبدال';
+
+  @override
+  String get clearConsole => 'امسح السجل';
+
+  @override
+  String get stopAutoRebuild => 'أوقف إعادة البناء عند الحفظ';
+
+  @override
+  String get deviceTablet => 'جهاز لوحي';
+
+  @override
+  String get deviceDesktop => 'حاسوب';
+
+  @override
+  String get checkEmailToConfirm => 'تحقق من بريدك الإلكتروني لتأكيد التسجيل.';
 }

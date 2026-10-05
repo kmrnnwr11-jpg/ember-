@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/session.dart';
 import '../../core/settings_store.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import '../store/play_links.dart';
 import 'app_builder.dart';
 
@@ -90,68 +91,54 @@ class _ProductsCardState extends ConsumerState<ProductsCard> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.only(top: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return SectionCard(
+      icon: Icons.shopping_bag_outlined,
+      title: l.productsTitle,
+      hint: l.productsHint,
+      children: [
+        Gap.vSm,
+        for (final p in widget.builder.products)
+          ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: _isActive(p)
+                ? Icon(Icons.check_circle, color: context.ember.success)
+                : Icon(p['type'] == 'subscription' ? Icons.autorenew_outlined : Icons.toll_outlined),
+            title: Text('${p['title']}  ·  ${p['id']}'),
+            subtitle: Text([
+              p['type'] == 'subscription' ? l.productPerPeriod('${p['price']} ${p['currency']}', _period(p['period'] as String?)) : '${p['price']} ${p['currency']}',
+              if ((p['freeTrialDays'] as num? ?? 0) > 0) l.productTrial((p['freeTrialDays'] as num).toInt()),
+              if (_isActive(p)) l.productsActive,
+              if (!_isActive(p) && _results[p['id']]?['ok'] == false) l.error('${_results[p['id']]!['error']}'),
+            ].join('\n')),
+          ),
+        Gap.vSm,
+        DefaultTextStyle.merge(style: context.text.bodySmall, child: StepsList.parse(l.productsBefore)),
+        if (_error != null) ...[
+          Gap.vSm,
+          InlineMessage(_error!, error: true),
+        ],
+        Gap.vMd,
+        Wrap(
+          spacing: Gap.sm,
+          runSpacing: Gap.sm,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.shopping_bag_outlined),
-                const SizedBox(width: 8),
-                Expanded(child: Text(l.productsTitle, style: theme.textTheme.titleMedium)),
-              ],
+            FilledButton.icon(
+              onPressed: _busy ? null : _activate,
+              icon: _busy ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.rocket_launch_outlined),
+              label: Text(l.productsActivate),
             ),
-            const SizedBox(height: 4),
-            Text(l.productsHint, style: theme.textTheme.bodySmall),
-            const SizedBox(height: 8),
-            for (final p in widget.builder.products)
-              ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: _isActive(p)
-                    ? const Icon(Icons.check_circle, color: Color(0xFF2ECC71))
-                    : Icon(p['type'] == 'subscription' ? Icons.autorenew : Icons.toll_outlined),
-                title: Text('${p['title']}  ·  ${p['id']}'),
-                subtitle: Text([
-                  p['type'] == 'subscription' ? l.productPerPeriod('${p['price']} ${p['currency']}', _period(p['period'] as String?)) : '${p['price']} ${p['currency']}',
-                  if ((p['freeTrialDays'] as num? ?? 0) > 0) l.productTrial((p['freeTrialDays'] as num).toInt()),
-                  if (_isActive(p)) l.productsActive,
-                  if (!_isActive(p) && _results[p['id']]?['ok'] == false) '⚠️ ${_results[p['id']]!['error']}',
-                ].join('\n')),
-              ),
-            const SizedBox(height: 8),
-            Text(l.productsBefore, style: theme.textTheme.bodySmall),
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
-            ],
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                FilledButton.icon(
-                  onPressed: _busy ? null : _activate,
-                  icon: _busy ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.rocket_launch_outlined),
-                  label: Text(l.productsActivate),
-                ),
-                OutlinedButton(
-                  onPressed: () async => launchUrl(Uri.parse((await PlayConsoleLink.load()).paymentsProfile), mode: LaunchMode.externalApplication),
-                  child: Text(l.productsOpenPayments),
-                ),
-                OutlinedButton(
-                  onPressed: () => context.push('/projects/${widget.projectId}/play', extra: widget.builder.prompt),
-                  child: Text(l.productsUploadFirst),
-                ),
-              ],
+            OutlinedButton(
+              onPressed: () async => launchUrl(Uri.parse((await PlayConsoleLink.load()).paymentsProfile), mode: LaunchMode.externalApplication),
+              child: Text(l.productsOpenPayments),
+            ),
+            OutlinedButton(
+              onPressed: () => context.push('/projects/${widget.projectId}/play', extra: widget.builder.prompt),
+              child: Text(l.productsUploadFirst),
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 }

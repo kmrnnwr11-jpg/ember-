@@ -4,6 +4,7 @@ import 'package:ide_core/ide_core.dart' show RunnerException;
 
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import 'app_builder.dart';
 
 /// What Ember found wrong when the app was opened, and the offer to fix it.
@@ -12,8 +13,12 @@ import 'app_builder.dart';
 /// costs the user, and waits for a yes. The things it cannot fix alone are
 /// listed too, because knowing about them is worth more than hiding them.
 class CheckupCard extends ConsumerStatefulWidget {
-  const CheckupCard({super.key, required this.projectId, required this.builder, this.previewUrl});
+  const CheckupCard({super.key, required this.projectId, required this.builder, this.previewUrl, this.onlyProblems = false});
   final String projectId;
+
+  /// Stay out of the way when the check found nothing (the app's home); the
+  /// checks page shows the "all good" too.
+  final bool onlyProblems;
 
   /// The engine that wrote the app: it is what fixes the findings made of code.
   final AppBuilder builder;
@@ -82,80 +87,57 @@ class _CheckupCardState extends ConsumerState<CheckupCard> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     if (_findings.isEmpty && !_done && _message == null) return const SizedBox.shrink();
+    if (widget.onlyProblems && _findings.isEmpty) return const SizedBox.shrink();
     final fixable = _findings.where((f) => f['fixable'] == true).length;
 
-    return Card(
-      margin: const EdgeInsets.only(top: 12),
-      color: _findings.isEmpty ? null : theme.colorScheme.errorContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(_findings.isEmpty ? Icons.verified_outlined : Icons.report_problem_outlined),
-                const SizedBox(width: 8),
-                Expanded(child: Text(l.checkTitle, style: theme.textTheme.titleMedium)),
-                IconButton(tooltip: l.checkAgain, icon: const Icon(Icons.refresh, size: 20), onPressed: _busy ? null : _check),
-              ],
+    return SectionCard(
+      icon: _findings.isEmpty ? Icons.verified_outlined : Icons.report_problem_outlined,
+      title: l.checkTitle,
+      hint: _findings.isEmpty ? l.checkAllGood : l.checkFound(_findings.length),
+      tone: _findings.isEmpty ? Tone.neutral : Tone.error,
+      trailing: IconButton(tooltip: l.checkAgain, icon: const Icon(Icons.refresh, size: 20), onPressed: _busy ? null : _check),
+      children: [
+        for (final f in _findings) ...[
+          Gap.vMd,
+          FindingTile(
+            title: '${f['title']}',
+            detail: '${f['detail']}',
+            fixable: f['fixable'] == true,
+            action: '${f['ask'] ?? ''}'.isNotEmpty
+                ? TextButton.icon(
+                    onPressed: widget.builder.running
+                        ? null
+                        : () {
+                            widget.builder.improve('${f['ask']}', display: '${f['title']}');
+                            setState(() => _message = l.checkAsked);
+                          },
+                    icon: const Icon(Icons.auto_fix_high_outlined, size: 16),
+                    label: Text(l.checkAskEmber),
+                  )
+                : null,
+          ),
+        ],
+        if (_busy) ...[
+          Gap.vMd,
+          BusyRow(l.checkFixing),
+        ],
+        if (_message != null) ...[
+          Gap.vMd,
+          InlineMessage(_message!, error: _error),
+        ],
+        if (fixable > 0) ...[
+          Gap.vMd,
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: FilledButton.icon(
+              onPressed: _busy ? null : _fix,
+              icon: const Icon(Icons.build_outlined),
+              label: Text(l.checkFixNow(fixable)),
             ),
-            const SizedBox(height: 4),
-            Text(_findings.isEmpty ? l.checkAllGood : l.checkFound(_findings.length), style: theme.textTheme.bodySmall),
-            for (final f in _findings) ...[
-              const SizedBox(height: 10),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(f['fixable'] == true ? Icons.build_circle_outlined : Icons.info_outline, size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('${f['title']}', style: theme.textTheme.titleSmall),
-                        Text('${f['detail']}', style: theme.textTheme.bodySmall),
-                        if ('${f['ask'] ?? ''}'.isNotEmpty)
-                          TextButton.icon(
-                            onPressed: widget.builder.running
-                                ? null
-                                : () {
-                                    widget.builder.improve('${f['ask']}', display: '${f['title']}');
-                                    setState(() => _message = l.checkAsked);
-                                  },
-                            icon: const Icon(Icons.auto_fix_high, size: 16),
-                            label: Text(l.checkAskEmber),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            if (_busy) ...[
-              const SizedBox(height: 12),
-              Row(children: [const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)), const SizedBox(width: 8), Expanded(child: Text(l.checkFixing))]),
-            ],
-            if (_message != null) ...[
-              const SizedBox(height: 10),
-              SelectableText(_message!, style: TextStyle(color: _error ? theme.colorScheme.error : null)),
-            ],
-            if (fixable > 0) ...[
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FilledButton.icon(
-                  onPressed: _busy ? null : _fix,
-                  icon: const Icon(Icons.build),
-                  label: Text(l.checkFixNow(fixable)),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+          ),
+        ],
+      ],
     );
   }
 }

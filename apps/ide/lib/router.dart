@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/session.dart';
-import 'features/ai/settings_screen.dart';
 import 'features/auth/login_screen.dart';
+import 'features/create/app_section_screen.dart';
 import 'features/create/create_app_screen.dart';
 import 'features/preview/fullscreen_app_screen.dart';
 import 'features/store/play_publish_screen.dart';
@@ -12,6 +12,8 @@ import 'features/store/publish_chat_screen.dart';
 import 'features/mockups/mockup_gallery_screen.dart';
 import 'features/editor/workspace_screen.dart';
 import 'features/projects/projects_screen.dart';
+import 'features/settings/settings_screen.dart';
+import 'ui/ui.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier(0);
@@ -33,10 +35,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/splash',
-        builder: (_, _) => const Scaffold(body: Center(child: CircularProgressIndicator())),
+        builder: (_, _) => const Scaffold(body: LoadingState()),
       ),
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
-      GoRoute(path: '/settings', builder: (_, _) => const AiSettingsScreen()),
+      GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
       GoRoute(
         path: '/mockups',
         redirect: (_, state) => state.extra is CreateAppArgs ? null : '/projects',
@@ -71,6 +73,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                   ),
                 ],
               ),
+              // The pages one row away from the app's home.
+              for (final section in AppSection.values)
+                GoRoute(
+                  path: section.path,
+                  builder: (_, state) => AppSectionScreen(projectId: state.pathParameters['projectId']!, section: section),
+                ),
               GoRoute(
                 path: 'create',
                 builder: (_, state) => CreateAppScreen(

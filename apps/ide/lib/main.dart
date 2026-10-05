@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/env.dart';
 import 'core/locale.dart';
+import 'core/theme_mode.dart';
 import 'l10n/app_localizations.dart';
 import 'router.dart';
 import 'ui/theme.dart';
@@ -29,7 +30,7 @@ class FlutterCursorApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: emberTheme(Brightness.light),
       darkTheme: emberTheme(Brightness.dark),
-      themeMode: ThemeMode.dark,
+      themeMode: ref.watch(themeModeProvider),
       locale: ref.watch(localeProvider),
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [

@@ -6,6 +6,7 @@ import 'package:xterm/xterm.dart';
 
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import 'terminals_controller.dart';
 
 /// Terminal tabs + xterm view + special-key bar for touch devices.
@@ -27,27 +28,29 @@ class TerminalPanel extends StatelessWidget {
       builder: (context, _) {
         final s = controller.activeSession;
         return Container(
-          color: const Color(0xFF1E1E1E),
+          color: context.ember.codeSurface,
           child: Column(
             children: [
               _Tabs(controller: controller),
               Expanded(
                 child: s == null
-                    ? Center(child: SingleChildScrollView(padding: const EdgeInsets.all(16), child: _Launcher(controller: controller)))
+                    ? Center(child: SingleChildScrollView(padding: const EdgeInsets.all(Gap.lg), child: _Launcher(controller: controller)))
                     : Stack(
                         children: [
                           TerminalView(
                             s.terminal,
                             key: ObjectKey(s),
                             autofocus: true,
-                            padding: const EdgeInsets.all(6),
+                            padding: const EdgeInsets.all(Gap.sm),
                             textStyle: const TerminalStyle(fontSize: 13),
                             theme: TerminalThemes.defaultTheme,
+                            // The panel's own dark surface shows through.
+                            backgroundOpacity: 0,
                           ),
                           if (s.exited)
-                            Positioned(
-                              right: 12,
-                              bottom: 12,
+                            PositionedDirectional(
+                              end: Gap.md,
+                              bottom: Gap.md,
                               child: FilledButton.icon(
                                 onPressed: () => controller.restart(s),
                                 icon: const Icon(Icons.restart_alt),
@@ -74,46 +77,16 @@ class _Tabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return SizedBox(
-      height: 34,
-      child: Row(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: controller.sessions.length,
-              itemBuilder: (context, i) {
-                final s = controller.sessions[i];
-                final selected = i == controller.active;
-                return InkWell(
-                  onTap: () => controller.activate(i),
-                  child: Container(
-                    padding: const EdgeInsets.only(left: 10, right: 2),
-                    decoration: BoxDecoration(
-                      border: Border(bottom: BorderSide(color: selected ? Colors.blueAccent : Colors.transparent, width: 2)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.terminal, size: 14, color: s.exited ? Colors.grey : Colors.white70),
-                        const SizedBox(width: 4),
-                        Text('${l.terminal} ${s.title}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                        IconButton(
-                          iconSize: 14,
-                          visualDensity: VisualDensity.compact,
-                          color: Colors.white54,
-                          icon: const Icon(Icons.close),
-                          onPressed: () => controller.close(i),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          _NewTerminalMenu(controller: controller),
-        ],
-      ),
+    return TabStrip(
+      onDark: true,
+      selected: controller.active,
+      onSelect: controller.activate,
+      onClose: controller.close,
+      closeTooltip: l.close,
+      items: [
+        for (final s in controller.sessions) TabStripItem(label: '${l.terminal} ${s.title}', icon: Icons.terminal, muted: s.exited),
+      ],
+      trailing: [_NewTerminalMenu(controller: controller)],
     );
   }
 }
@@ -139,41 +112,55 @@ class _KeyBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget key(String label, VoidCallback onTap, {bool active = false}) => Padding(
+    final scheme = context.scheme;
+    final ember = context.ember;
+    final l = AppLocalizations.of(context);
+    Widget key(String label, VoidCallback onTap, {bool active = false, IconData? icon}) => Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Material(
-        color: active ? Colors.blueAccent : const Color(0xFF333333),
-        borderRadius: BorderRadius.circular(6),
+        color: active ? scheme.primary : ember.onCodeSurface.withValues(alpha: 0.14),
+        borderRadius: Radii.smAll,
         child: InkWell(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: Radii.smAll,
           onTap: onTap,
           child: Container(
-            constraints: const BoxConstraints(minWidth: 40),
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 36),
             alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 14)),
+            padding: const EdgeInsets.symmetric(horizontal: Gap.sm),
+            child: icon != null
+                ? Tooltip(message: label, child: Icon(icon, size: 18, color: ember.onCodeSurface, semanticLabel: label))
+                : Text(label, style: TextStyle(color: active ? scheme.onPrimary : ember.onCodeSurface, fontSize: 14)),
           ),
         ),
       ),
     );
 
-    return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
-      color: const Color(0xFF252526),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          key('Ctrl', controller.toggleCtrl, active: ctrl),
-          key('⏎', () => controller.send('\r')),
-          key('^C', () => controller.send('\x03')),
-          for (final (label, seq) in _keys) key(label, () => controller.send(seq)),
-          key('📋', () async {
-            final data = await Clipboard.getData(Clipboard.kTextPlain);
-            final text = data?.text;
-            if (text != null) controller.paste(text);
-          }),
-        ],
+    // Terminal keys keep their left-to-right order in every language.
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 44),
+        padding: const EdgeInsets.all(Gap.xs),
+        decoration: BoxDecoration(
+          color: ember.codeSurface,
+          border: Border(top: BorderSide(color: ember.onCodeSurface.withValues(alpha: 0.12))),
+        ),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              key('Ctrl', controller.toggleCtrl, active: ctrl),
+              key('⏎', () => controller.send('\r')),
+              key('^C', () => controller.send('\x03')),
+              for (final (label, seq) in _keys) key(label, () => controller.send(seq)),
+              key(l.paste, icon: Icons.content_paste_outlined, () async {
+                final data = await Clipboard.getData(Clipboard.kTextPlain);
+                final text = data?.text;
+                if (text != null) controller.paste(text);
+              }),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -204,7 +191,7 @@ class _NewTerminalMenu extends ConsumerWidget {
     return PopupMenuButton<TerminalProfile>(
       key: const Key('newTerminalMenu'),
       tooltip: l.newTerminal,
-      icon: const Icon(Icons.add, size: 18, color: Colors.white70),
+      icon: Icon(Icons.add, size: 18, color: context.ember.onCodeSurface),
       onSelected: controller.open,
       itemBuilder: (_) => [
         for (final (p, icon, missing) in profiles)
@@ -230,15 +217,16 @@ class _Launcher extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
+    final ember = context.ember;
     final profiles = _profiles(ref.watch(runnerHealthProvider).value);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(l.newTerminal, style: const TextStyle(color: Colors.white70, fontSize: 16)),
-        const SizedBox(height: 12),
+        Text(l.newTerminal, style: TextStyle(color: ember.onCodeSurface, fontSize: 16)),
+        Gap.vMd,
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: Gap.sm,
+          runSpacing: Gap.sm,
           alignment: WrapAlignment.center,
           children: [
             for (final (p, icon, missing) in profiles)
@@ -250,8 +238,8 @@ class _Launcher extends ConsumerWidget {
               ),
           ],
         ),
-        const SizedBox(height: 12),
-        Text(l.terminalCliHint, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+        Gap.vMd,
+        Text(l.terminalCliHint, textAlign: TextAlign.center, style: TextStyle(color: ember.codeMuted, fontSize: 12)),
       ],
     );
   }

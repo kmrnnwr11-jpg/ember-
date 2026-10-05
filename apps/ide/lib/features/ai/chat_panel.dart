@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ide_core/ide_core.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import 'ai_settings.dart';
 import 'chat_controller.dart';
 import 'model_picker.dart';
@@ -70,7 +71,8 @@ class _ChatPanelState extends ConsumerState<ChatPanel> {
 
   void _send() {
     final text = _input.text;
-    if (text.trim().isEmpty || c.busy) return;
+    // Without a model nothing can be sent: keep what was typed.
+    if (text.trim().isEmpty || c.busy || c.model == null) return;
     _input.clear();
     c.send(text, openFile: widget.openFile());
   }
@@ -87,9 +89,9 @@ class _ChatPanelState extends ConsumerState<ChatPanel> {
         return Column(
           children: [
             Material(
-              color: Theme.of(context).colorScheme.surfaceContainer,
-              child: SizedBox(
-                height: 44,
+              color: context.scheme.surfaceContainer,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: kTapTarget),
                 child: Row(
                   children: [
                     Expanded(
@@ -106,8 +108,8 @@ class _ChatPanelState extends ConsumerState<ChatPanel> {
                     ),
                     if (c.sessionCost > 0)
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Text('≈\$${c.sessionCost.toStringAsFixed(4)}', style: Theme.of(context).textTheme.labelSmall),
+                        padding: const EdgeInsets.symmetric(horizontal: Gap.xs),
+                        child: Text('≈\$${c.sessionCost.toStringAsFixed(4)}', style: context.text.labelSmall),
                       ),
                     IconButton(tooltip: l.clearChat, icon: const Icon(Icons.delete_sweep_outlined), onPressed: c.entries.isEmpty ? null : c.clear),
                   ],
@@ -116,78 +118,59 @@ class _ChatPanelState extends ConsumerState<ChatPanel> {
             ),
             Expanded(
               child: c.entries.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          settings.keys.isEmpty && settings.compatibleBaseUrl.isEmpty ? l.chatNoKeys : l.chatEmpty,
-                          textAlign: TextAlign.center,
-                        ),
+                  ? SingleChildScrollView(
+                      child: EmptyState(
+                        compact: true,
+                        text: settings.keys.isEmpty && settings.compatibleBaseUrl.isEmpty ? l.chatNoKeys : l.chatEmpty,
                       ),
                     )
                   : ListView.builder(
                       controller: _scroll,
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(Gap.sm),
                       itemCount: c.entries.length,
                       itemBuilder: (_, i) => _MessageBubble(entry: c.entries[i], onApply: widget.onApply),
                     ),
             ),
             if (settings.keys.isEmpty && settings.compatibleBaseUrl.isEmpty)
               Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(Gap.sm),
                 child: FilledButton.tonalIcon(
                   onPressed: () => context.push('/settings'),
-                  icon: const Icon(Icons.key),
+                  icon: const Icon(Icons.key_outlined),
                   label: Text(l.aiSettings),
                 ),
               ),
             const Divider(height: 1),
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (file != null)
-                    FilterChip(
-                      avatar: const Icon(Icons.description_outlined, size: 14),
-                      label: Text(ProjectPath.basename(file.path)),
-                      tooltip: l.attachOpenFile,
-                      selected: c.attachOpenFile,
-                      onSelected: (_) => c.toggleAttach(),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        child: CallbackShortcuts(
-                          bindings: {
-                            const SingleActivator(LogicalKeyboardKey.enter, control: true): _send,
-                            const SingleActivator(LogicalKeyboardKey.enter, meta: true): _send,
-                          },
-                          child: TextField(
-                            key: const Key('chatInput'),
-                            controller: _input,
-                            focusNode: _focus,
-                            minLines: 1,
-                            maxLines: 8,
-                            textInputAction: TextInputAction.newline,
-                            decoration: InputDecoration(hintText: l.askAi, isDense: true),
-                          ),
+              padding: const EdgeInsets.all(Gap.sm),
+              // The send button stays lit without a model, where it used to be
+              // greyed out: ChatComposer can only disable it together with the
+              // field, and typing must stay possible. _send does nothing then.
+              child: ChatComposer(
+                controller: _input,
+                focusNode: _focus,
+                fieldKey: const Key('chatInput'),
+                sendKey: const Key('chatSend'),
+                hint: l.askAi,
+                maxLines: 8,
+                onSend: _send,
+                sendTooltip: '${l.send} (Ctrl+Enter)',
+                busy: c.busy,
+                onStop: c.stop,
+                stopTooltip: l.stop,
+                above: file == null
+                    ? null
+                    : Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: FilterChip(
+                          avatar: const Icon(Icons.description_outlined, size: 14),
+                          label: Text(ProjectPath.basename(file.path)),
+                          tooltip: l.attachOpenFile,
+                          selected: c.attachOpenFile,
+                          onSelected: (_) => c.toggleAttach(),
+                          visualDensity: VisualDensity.compact,
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      c.busy
-                          ? IconButton.filledTonal(tooltip: l.stop, icon: const Icon(Icons.stop), onPressed: c.stop)
-                          : IconButton.filled(
-                              key: const Key('chatSend'),
-                              tooltip: '${l.send} (Ctrl+Enter)',
-                              icon: const Icon(Icons.arrow_upward),
-                              onPressed: c.model == null ? null : _send,
-                            ),
-                    ],
-                  ),
-                ],
               ),
             ),
           ],
@@ -206,55 +189,53 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
     final user = entry.role == AiRole.user;
     final segments = user ? <MessageSegment>[TextSegment(entry.text)] : CodeBlocks.parse(entry.text);
-    return Align(
-      alignment: user ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.all(10),
-        constraints: const BoxConstraints(maxWidth: 720),
-        decoration: BoxDecoration(
-          color: user ? scheme.primaryContainer : scheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (entry.contextPath != null)
-              Text('📎 ${entry.contextPath}', style: Theme.of(context).textTheme.labelSmall),
-            for (final s in segments)
-              switch (s) {
-                TextSegment(:final markdown) => user
-                    ? SelectableText(markdown)
-                    : MarkdownBody(data: markdown, selectable: true, softLineBreak: true),
-                CodeSegment() => _CodeBlock(block: s, onApply: onApply),
-              },
-            if (entry.streaming && entry.text.isEmpty)
-              const Padding(padding: EdgeInsets.all(4), child: SizedBox.square(dimension: 14, child: CircularProgressIndicator(strokeWidth: 2))),
-            if (entry.error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(l.error(entry.error!), style: TextStyle(color: scheme.error)),
+    return ChatBubble(
+      isUser: user,
+      maxWidth: Widths.page,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (entry.contextPath != null)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.attach_file_outlined, size: 14),
+                Gap.hXs,
+                Flexible(child: Text(entry.contextPath!, style: context.text.labelSmall, overflow: TextOverflow.ellipsis)),
+              ],
+            ),
+          for (final s in segments)
+            switch (s) {
+              TextSegment(:final markdown) => user
+                  ? SelectableText(markdown)
+                  : MarkdownBody(data: markdown, selectable: true, softLineBreak: true),
+              CodeSegment() => _CodeBlock(block: s, onApply: onApply),
+            },
+          if (entry.streaming && entry.text.isEmpty)
+            const Padding(padding: EdgeInsets.all(Gap.xs), child: SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2))),
+          if (entry.error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: Gap.sm),
+              child: InlineMessage(l.error(entry.error!), error: true),
+            ),
+          if (!user && !entry.streaming && entry.error == null)
+            Padding(
+              padding: const EdgeInsets.only(top: Gap.xs),
+              child: Text(
+                [
+                  if (entry.model != null) entry.model!.split(':').last,
+                  if (entry.outputTokens > 0) '${entry.inputTokens}→${entry.outputTokens} tok',
+                  if (entry.costUsd != null) '≈\$${entry.costUsd!.toStringAsFixed(4)}',
+                  if (entry.stopReason == 'max_tokens') l.truncated,
+                  if (entry.stopReason == 'refusal') l.refused,
+                  if (entry.stopReason == 'stopped') l.stopped,
+                ].join(' · '),
+                style: context.text.labelSmall,
               ),
-            if (!user && !entry.streaming && entry.error == null)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  [
-                    if (entry.model != null) entry.model!.split(':').last,
-                    if (entry.outputTokens > 0) '${entry.inputTokens}→${entry.outputTokens} tok',
-                    if (entry.costUsd != null) '≈\$${entry.costUsd!.toStringAsFixed(4)}',
-                    if (entry.stopReason == 'max_tokens') l.truncated,
-                    if (entry.stopReason == 'refusal') l.refused,
-                    if (entry.stopReason == 'stopped') l.stopped,
-                  ].join(' · '),
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-              ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -269,52 +250,56 @@ class _CodeBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(6)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            padding: const EdgeInsets.only(left: 10),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2D2D2D),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    block.path ?? block.language ?? '',
-                    style: const TextStyle(color: Colors.white60, fontSize: 12),
-                    overflow: TextOverflow.ellipsis,
+    final ember = context.ember;
+    // Readable on the always-dark surface in both themes.
+    final onDark = TextButton.styleFrom(foregroundColor: ember.onCodeSurface, disabledForegroundColor: ember.codeMuted);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: Gap.sm),
+      child: LogSurface(
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsetsDirectional.only(start: Gap.md),
+              decoration: BoxDecoration(
+                color: ember.onCodeSurface.withValues(alpha: 0.08),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(Radii.sm)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      block.path ?? block.language ?? '',
+                      style: TextStyle(color: ember.codeMuted),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: block.code));
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.copied), duration: const Duration(seconds: 1)));
-                  },
-                  icon: const Icon(Icons.copy, size: 14),
-                  label: Text(l.copy),
-                ),
-                TextButton.icon(
-                  onPressed: block.complete ? () => onApply(block) : null,
-                  icon: const Icon(Icons.playlist_add_check, size: 16),
-                  label: Text(l.apply),
-                ),
-              ],
+                  TextButton.icon(
+                    style: onDark,
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: block.code));
+                      showEmberSnack(context, l.copied);
+                    },
+                    icon: const Icon(Icons.copy_outlined, size: 16),
+                    label: Text(l.copy),
+                  ),
+                  TextButton.icon(
+                    style: onDark,
+                    onPressed: block.complete ? () => onApply(block) : null,
+                    icon: const Icon(Icons.playlist_add_check_outlined, size: 16),
+                    label: Text(l.apply),
+                  ),
+                ],
+              ),
             ),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.all(10),
-            child: SelectableText(
-              block.code,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5, color: Color(0xFFD4D4D4), height: 1.4),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.all(Gap.md),
+              child: SelectableText(block.code),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

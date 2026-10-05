@@ -10,8 +10,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/locale.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import '../ai/chat_controller.dart';
 import '../../widgets/ember_logo.dart';
 
@@ -26,7 +28,7 @@ final homeAssistantProvider = ChangeNotifierProvider<ChatController>((ref) {
     projectId: '_home_assistant',
     resolveProvider: (_) async {
       final session = ref.read(sessionProvider).value;
-      if (session == null) throw const AiException('Accedi per usare l\'assistente');
+      if (session == null) throw AiException(ref.read(stringsProvider).assistantSignIn);
       return GeminiProvider(
         AiEndpoint.proxy(apiKey: '', runnerUrl: session.runnerUrl, runnerToken: await session.token(), proxyPath: 'assistant'),
       );
@@ -43,7 +45,7 @@ final projectAssistantProvider = ChangeNotifierProvider.family<ChatController, (
     projectId: 'assistant_${app.id}',
     resolveProvider: (_) async {
       final session = ref.read(sessionProvider).value;
-      if (session == null) throw const AiException('Accedi per usare l\'assistente');
+      if (session == null) throw AiException(ref.read(stringsProvider).assistantSignIn);
       return GeminiProvider(
         AiEndpoint.proxy(apiKey: '', runnerUrl: session.runnerUrl, runnerToken: await session.token(), proxyPath: 'assistant'),
       );
@@ -129,23 +131,38 @@ class HomeAssistantPanel extends ConsumerStatefulWidget {
 class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
+  final _focus = FocusNode();
   final _images = <({String mimeType, Uint8List bytes})>[];
 
   @override
   void dispose() {
     _input.dispose();
     _scroll.dispose();
+    _focus.dispose();
     super.dispose();
   }
 
+  /// Enter sends the message; Shift+Enter goes to a new line.
+  KeyEventResult _onKey(ChatController c, KeyEvent event) {
+    if (event is! KeyDownEvent || !_focus.hasFocus) return KeyEventResult.ignored;
+    if (event.logicalKey != LogicalKeyboardKey.enter && event.logicalKey != LogicalKeyboardKey.numpadEnter) return KeyEventResult.ignored;
+    final keys = HardwareKeyboard.instance;
+    if (keys.isShiftPressed || keys.isControlPressed || keys.isMetaPressed || keys.isAltPressed) return KeyEventResult.ignored;
+    // Enter that confirms a word being composed belongs to the keyboard.
+    if (_input.value.composing.isValid) return KeyEventResult.ignored;
+    _send(c);
+    return KeyEventResult.handled;
+  }
+
   Future<void> _pickImages() async {
-    const group = XTypeGroup(label: 'Immagini', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif']);
+    final l = AppLocalizations.of(context);
+    final group = XTypeGroup(label: l.imagesLabel, extensions: const ['png', 'jpg', 'jpeg', 'webp', 'gif']);
     final files = await openFiles(acceptedTypeGroups: [group]);
     for (final f in files) {
       final bytes = await f.readAsBytes();
       // The Runner accepts about 5 MB per request.
       if (bytes.length > 3500000) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${f.name}: immagine troppo grande (max 3,5 MB)')));
+        if (mounted) showEmberSnack(context, l.assistantImageTooLarge(f.name), error: true);
         continue;
       }
       final ext = f.name.split('.').last.toLowerCase();
@@ -162,7 +179,14 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
     setState(_images.clear);
     c.send(text, images: images);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+      if (!mounted || !_scroll.hasClients) return;
+      final duration = Motion.of(context);
+      final end = _scroll.position.maxScrollExtent;
+      if (duration == Duration.zero) {
+        _scroll.jumpTo(end);
+      } else {
+        _scroll.animateTo(end, duration: duration, curve: Motion.curve);
+      }
     });
   }
 
@@ -170,7 +194,7 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final c = widget.app == null ? ref.watch(homeAssistantProvider) : ref.watch(projectAssistantProvider(widget.app!));
-    final scheme = Theme.of(context).colorScheme;
+    final scheme = context.scheme;
     final health = ref.watch(runnerHealthProvider).value;
     final enabled = (health?['engines'] as Map?)?['assistant'] != false;
     final suggestions = widget.app == null
@@ -182,21 +206,17 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
       child: Column(
         children: [
           Container(
-            height: 52,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            constraints: const BoxConstraints(minHeight: 52),
+            padding: const EdgeInsets.symmetric(horizontal: Gap.md),
             decoration: BoxDecoration(border: Border(bottom: BorderSide(color: scheme.outlineVariant))),
             child: Row(
               children: [
                 const EmberMark(size: 30),
-                const SizedBox(width: 8),
-                Expanded(child: Text(l.assistantTitle, style: Theme.of(context).textTheme.titleSmall)),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(10)),
-                  child: Text(l.assistantFree, style: const TextStyle(fontSize: 11, color: Colors.green)),
-                ),
+                Gap.hSm,
+                Expanded(child: Text(l.assistantTitle, style: context.text.titleSmall)),
+                Pill(l.assistantFree, tone: Tone.success),
                 IconButton(tooltip: l.clearChat, icon: const Icon(Icons.delete_sweep_outlined, size: 20), onPressed: c.entries.isEmpty ? null : c.clear),
-                if (widget.onClose != null) IconButton(icon: const Icon(Icons.close, size: 20), onPressed: widget.onClose),
+                if (widget.onClose != null) IconButton(tooltip: l.close, icon: const Icon(Icons.close_outlined, size: 20), onPressed: widget.onClose),
               ],
             ),
           ),
@@ -204,66 +224,60 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
             child: ListenableBuilder(
               listenable: c,
               builder: (context, _) => c.entries.isEmpty
-                  ? ListView(
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                        const SizedBox(height: 24),
-                        const Center(child: EmberMark(size: 96)),
-                        const SizedBox(height: 12),
-                        Text(enabled ? l.assistantEmpty : l.assistantUnconfigured, textAlign: TextAlign.center),
-                        const SizedBox(height: 16),
-                        if (enabled)
-                          for (final s in suggestions)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: OutlinedButton(onPressed: () => _send(c, s), child: Text(s, textAlign: TextAlign.center)),
-                            ),
-                      ],
+                  ? SingleChildScrollView(
+                      child: EmptyState(
+                        compact: true,
+                        text: enabled ? l.assistantEmpty : l.assistantUnconfigured,
+                        action: !enabled
+                            ? null
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  for (final s in suggestions)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: Gap.xs),
+                                      child: OutlinedButton(onPressed: () => _send(c, s), child: Text(s, textAlign: TextAlign.center)),
+                                    ),
+                                ],
+                              ),
+                      ),
                     )
                   : ListView.builder(
                       controller: _scroll,
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(Gap.sm),
                       itemCount: c.entries.length,
                       itemBuilder: (context, i) {
                         final e = c.entries[i];
                         final user = e.role == AiRole.user;
-                        return Align(
-                          alignment: user ? Alignment.centerRight : Alignment.centerLeft,
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            padding: const EdgeInsets.all(10),
-                            constraints: const BoxConstraints(maxWidth: 520),
-                            decoration: BoxDecoration(
-                              color: user ? scheme.primaryContainer : scheme.surfaceContainerHigh,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (e.images.isNotEmpty)
-                                  Wrap(
-                                    spacing: 4,
-                                    runSpacing: 4,
-                                    children: [
-                                      for (final b in e.images)
-                                        ClipRRect(borderRadius: BorderRadius.circular(6), child: Image.memory(b, height: 120, fit: BoxFit.contain)),
-                                    ],
-                                  ),
-                                if (user)
-                                  SelectableText(e.text)
-                                else if (e.text.isEmpty && e.streaming)
-                                  const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                                else
-                                  MarkdownBody(
-                                    data: e.text,
-                                    selectable: true,
-                                    onTapLink: (_, href, _) {
-                                      if (href != null) launchUrl(Uri.parse(href), mode: LaunchMode.externalApplication);
-                                    },
-                                  ),
-                                if (e.error != null) Text(e.error!, style: TextStyle(color: scheme.error)),
-                              ],
-                            ),
+                        return ChatBubble(
+                          isUser: user,
+                          maxWidth: 520,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (e.images.isNotEmpty)
+                                Wrap(
+                                  spacing: Gap.xs,
+                                  runSpacing: Gap.xs,
+                                  children: [
+                                    for (final b in e.images)
+                                      ClipRRect(borderRadius: Radii.smAll, child: Image.memory(b, height: 120, fit: BoxFit.contain)),
+                                  ],
+                                ),
+                              if (user)
+                                SelectableText(e.text)
+                              else if (e.text.isEmpty && e.streaming)
+                                const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                              else
+                                MarkdownBody(
+                                  data: e.text,
+                                  selectable: true,
+                                  onTapLink: (_, href, _) {
+                                    if (href != null) launchUrl(Uri.parse(href), mode: LaunchMode.externalApplication);
+                                  },
+                                ),
+                              if (e.error != null) InlineMessage(e.error!, error: true),
+                            ],
                           ),
                         );
                       },
@@ -271,84 +285,97 @@ class _HomeAssistantPanelState extends ConsumerState<HomeAssistantPanel> {
             ),
           ),
           const Divider(height: 1),
-          if (_images.isNotEmpty)
-            SizedBox(
-              height: 76,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                children: [
-                  for (var i = 0; i < _images.length; i++)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: Stack(
-                        children: [
-                          ClipRRect(borderRadius: BorderRadius.circular(6), child: Image.memory(_images[i].bytes, height: 68, width: 68, fit: BoxFit.cover)),
-                          Positioned(
-                            top: 0,
-                            right: 0,
-                            child: InkWell(
-                              onTap: () => setState(() => _images.removeAt(i)),
-                              child: const CircleAvatar(radius: 10, backgroundColor: Colors.black54, child: Icon(Icons.close, size: 14, color: Colors.white)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ),
           Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(Gap.sm),
             child: ListenableBuilder(
               listenable: c,
-              builder: (context, _) => Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  IconButton(
-                    key: const Key('assistantImage'),
-                    tooltip: 'Aggiungi immagine',
-                    icon: const Icon(Icons.add_photo_alternate_outlined),
-                    onPressed: enabled && !c.busy ? _pickImages : null,
-                  ),
-                  Expanded(
-                    // Enter sends the message; Shift+Enter goes to a new line.
-                    child: TextField(
-                      key: const Key('assistantInput'),
-                      controller: _input,
-                      enabled: enabled,
-                      minLines: 1,
-                      maxLines: 6,
-                      textInputAction: TextInputAction.send,
-                      keyboardType: TextInputType.multiline,
-                      onSubmitted: (_) => _send(c),
-                      decoration: InputDecoration(hintText: l.assistantHint, isDense: true),
+              // Enter sends the message; Shift+Enter goes to a new line.
+              builder: (context, _) => Focus(
+                canRequestFocus: false,
+                skipTraversal: true,
+                onKeyEvent: (_, event) => _onKey(c, event),
+                child: ChatComposer(
+                  controller: _input,
+                  focusNode: _focus,
+                  fieldKey: const Key('assistantInput'),
+                  sendKey: const Key('assistantSend'),
+                  hint: l.assistantHint,
+                  maxLines: 6,
+                  enabled: enabled,
+                  onSend: () => _send(c),
+                  sendTooltip: l.send,
+                  busy: c.busy,
+                  onStop: c.stop,
+                  stopTooltip: l.stop,
+                  above: _images.isEmpty
+                      ? null
+                      : SizedBox(
+                          height: 68,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              for (var i = 0; i < _images.length; i++)
+                                Padding(
+                                  padding: const EdgeInsetsDirectional.only(end: Gap.sm),
+                                  child: Stack(
+                                    children: [
+                                      ClipRRect(borderRadius: Radii.smAll, child: Image.memory(_images[i].bytes, height: 68, width: 68, fit: BoxFit.cover)),
+                                      // A small disc to look at, a full-size target to hit.
+                                      PositionedDirectional(
+                                        top: 0,
+                                        end: 0,
+                                        child: IconButton(
+                                          tooltip: l.delete,
+                                          padding: const EdgeInsets.all(2),
+                                          alignment: AlignmentDirectional.topEnd,
+                                          constraints: const BoxConstraints.tightFor(width: kTapTarget, height: kTapTarget),
+                                          onPressed: () => setState(() => _images.removeAt(i)),
+                                          icon: DecoratedBox(
+                                            decoration: BoxDecoration(color: context.ember.scrim, shape: BoxShape.circle),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(3),
+                                              child: Icon(Icons.close_outlined, size: 14, color: context.ember.onCodeSurface),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                  leading: [
+                    IconButton(
+                      key: const Key('assistantImage'),
+                      tooltip: l.assistantAddImage,
+                      icon: const Icon(Icons.add_photo_alternate_outlined),
+                      onPressed: enabled && !c.busy ? _pickImages : null,
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  // "Fix the app": send the text to the builder so it changes
-                  // the code, instead of just answering in the chat.
-                  if (widget.onFixApp != null)
-                    IconButton.filledTonal(
-                      key: const Key('assistantFixApp'),
-                      tooltip: 'Sistema l\'app con questa richiesta',
-                      icon: widget.fixing
-                          ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.auto_fix_high),
-                      onPressed: widget.fixing || !enabled
-                          ? null
-                          : () {
-                              final text = _input.text.trim();
-                              if (text.isEmpty) return;
-                              _input.clear();
-                              widget.onFixApp!(text);
-                            },
-                    ),
-                  const SizedBox(width: 6),
-                  c.busy
-                      ? IconButton.filledTonal(icon: const Icon(Icons.stop), onPressed: c.stop)
-                      : IconButton.filled(key: const Key('assistantSend'), icon: const Icon(Icons.arrow_upward), onPressed: enabled ? () => _send(c) : null),
-                ],
+                  ],
+                  trailing: [
+                    // "Fix the app": send the text to the builder so it changes
+                    // the code, instead of just answering in the chat.
+                    if (widget.onFixApp != null) ...[
+                      Gap.hSm,
+                      IconButton.filledTonal(
+                        key: const Key('assistantFixApp'),
+                        tooltip: l.assistantFixApp,
+                        icon: widget.fixing
+                            ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.auto_fix_high_outlined),
+                        onPressed: widget.fixing || !enabled
+                            ? null
+                            : () {
+                                final text = _input.text.trim();
+                                if (text.isEmpty) return;
+                                _input.clear();
+                                widget.onFixApp!(text);
+                              },
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ),

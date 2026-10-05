@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
+import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import 'reviewers.dart';
 
 /// One reviewer's key, with an explicit Save button: typing into a box and
@@ -28,8 +28,8 @@ class ReviewerKeyRow extends ConsumerStatefulWidget {
 
 class _ReviewerKeyRowState extends ConsumerState<ReviewerKeyRow> {
   final _ctrl = TextEditingController();
-  bool _obscure = true;
   String? _note;
+  bool _noteIsError = false;
 
   @override
   void dispose() {
@@ -38,95 +38,71 @@ class _ReviewerKeyRowState extends ConsumerState<ReviewerKeyRow> {
   }
 
   Future<void> _save() async {
+    final l = AppLocalizations.of(context);
     final text = _ctrl.text.trim();
     if (text.isEmpty) {
-      setState(() => _note = 'Incolla prima la chiave.');
+      setState(() {
+        _note = l.reviewPasteKeyFirst;
+        _noteIsError = true;
+      });
       return;
     }
     await ref.read(reviewerSettingsProvider.notifier).setKey(widget.reviewer.id, text);
     _ctrl.clear();
-    if (mounted) setState(() => _note = 'Chiave salvata.');
+    if (mounted) {
+      setState(() {
+        _note = l.reviewKeySaved;
+        _noteIsError = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final r = widget.reviewer;
     final saved = widget.settings.keys[r.id];
     final has = (saved ?? '').isNotEmpty;
     final url = ReviewerKeyRow.signup[r.id];
-    final theme = Theme.of(context);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return SectionCard(
+      margin: const EdgeInsets.only(bottom: Gap.md),
+      icon: has ? Icons.check_circle_outline : Icons.radio_button_unchecked,
+      title: r.label,
+      trailing: has ? Pill('•••• ${saved!.length > 4 ? saved.substring(saved.length - 4) : ''}', tone: Tone.success) : null,
+      children: [
+        Gap.vSm,
+        SecretField(
+          controller: _ctrl,
+          label: has ? l.replaceApiKey : l.apiKey,
+          getUrl: url,
+          getLabel: l.getKey,
+          onSubmitted: (_) => _save(),
+        ),
+        Gap.vSm,
+        Wrap(
+          spacing: Gap.sm,
+          runSpacing: Gap.sm,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Row(children: [
-              Icon(has ? Icons.check_circle : Icons.radio_button_unchecked,
-                  size: 18, color: has ? Colors.green : theme.disabledColor),
-              const SizedBox(width: 8),
-              Text(r.label, style: theme.textTheme.titleSmall),
-              const Spacer(),
-              if (has) Chip(label: Text('•••• ${saved!.length > 4 ? saved.substring(saved.length - 4) : ''}')),
-            ]),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _ctrl,
-              obscureText: _obscure,
-              autocorrect: false,
-              enableSuggestions: false,
-              decoration: InputDecoration(
-                isDense: true,
-                labelText: has ? 'Sostituisci la chiave' : 'Chiave API',
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      tooltip: 'Incolla',
-                      icon: const Icon(Icons.content_paste, size: 18),
-                      onPressed: () async {
-                        final data = await Clipboard.getData(Clipboard.kTextPlain);
-                        final t = data?.text?.trim() ?? '';
-                        if (t.isNotEmpty) _ctrl.text = t;
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off, size: 18),
-                      onPressed: () => setState(() => _obscure = !_obscure),
-                    ),
-                  ],
-                ),
+            FilledButton(onPressed: _save, child: Text(l.save)),
+            if (has)
+              TextButton(
+                onPressed: () async {
+                  await ref.read(reviewerSettingsProvider.notifier).setKey(r.id, '');
+                  if (mounted) {
+                    setState(() {
+                      _note = l.reviewKeyRemoved;
+                      _noteIsError = false;
+                    });
+                  }
+                },
+                child: Text(l.delete),
               ),
-              onSubmitted: (_) => _save(),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                FilledButton(onPressed: _save, child: const Text('Salva')),
-                if (has)
-                  TextButton(
-                    onPressed: () async {
-                      await ref.read(reviewerSettingsProvider.notifier).setKey(r.id, '');
-                      if (mounted) setState(() => _note = 'Chiave rimossa.');
-                    },
-                    child: const Text('Elimina'),
-                  ),
-                if (url != null)
-                  TextButton.icon(
-                    icon: const Icon(Icons.open_in_new, size: 16),
-                    label: const Text('Prendi la chiave'),
-                    onPressed: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
-                  ),
-              ],
-            ),
-            if (_note != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(_note!, style: theme.textTheme.bodySmall)),
           ],
         ),
-      ),
+        if (_note != null) ...[Gap.vSm, InlineMessage(_note!, error: _noteIsError)],
+      ],
     );
   }
 }

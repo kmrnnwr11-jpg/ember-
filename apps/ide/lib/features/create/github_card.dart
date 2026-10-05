@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ide_core/ide_core.dart' show RunnerException;
 import 'package:url_launcher/url_launcher.dart';
@@ -7,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/session.dart';
 import '../../core/settings_store.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 
 /// Keeps the app's source on GitHub: one repository per app, the user's own.
 class GitHubCard extends ConsumerStatefulWidget {
@@ -93,95 +93,69 @@ class _GitHubCardState extends ConsumerState<GitHubCard> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.only(top: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(children: [const Icon(Icons.hub_outlined), const SizedBox(width: 8), Text(l.ghTitle, style: theme.textTheme.titleMedium)]),
-            const SizedBox(height: 4),
-            Text(l.ghHint, style: theme.textTheme.bodySmall),
-            // Already linked to a repository: show its name, so it is clear the
-            // app is saved and where, without pressing anything.
-            if (_linkedRepo != null) ...[
-              const SizedBox(height: 8),
-              InkWell(
-                onTap: _repoUrl == null ? null : () => launchUrl(Uri.parse(_repoUrl!), mode: LaunchMode.externalApplication),
-                child: Row(
-                  children: [
-                    Icon(Icons.check_circle, size: 18, color: theme.colorScheme.primary),
-                    const SizedBox(width: 6),
-                    Expanded(child: Text('${l.ghSavedOn}: $_linkedRepo', style: TextStyle(color: theme.colorScheme.primary))),
-                    const Icon(Icons.open_in_new, size: 16),
-                  ],
-                ),
+    return SectionCard(
+      icon: Icons.hub_outlined,
+      title: l.ghTitle,
+      hint: l.ghHint,
+      children: [
+        // Already linked to a repository: show its name, so it is clear the
+        // app is saved and where, without pressing anything.
+        if (_linkedRepo != null) ...[
+          Gap.vSm,
+          InkWell(
+            borderRadius: Radii.smAll,
+            onTap: _repoUrl == null ? null : () => launchUrl(Uri.parse(_repoUrl!), mode: LaunchMode.externalApplication),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: kTapTarget),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                heightFactor: 1,
+                child: StatusRow(done: true, text: '${l.ghSavedOn}: $_linkedRepo', trailing: const Icon(Icons.open_in_new, size: 16)),
               ),
-            ],
-            if (!_hasToken) ...[
-              const SizedBox(height: 10),
-              TextField(
-                controller: _token,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: l.ghToken,
-                  helperText: l.ghTokenHelp,
-                  helperMaxLines: 3,
-                  suffixIcon: IconButton(
-                    tooltip: l.paste,
-                    icon: const Icon(Icons.content_paste),
-                    onPressed: () async {
-                      final data = await Clipboard.getData(Clipboard.kTextPlain);
-                      if (data?.text != null) _token.text = data!.text!.trim();
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () => launchUrl(Uri.parse('https://github.com/settings/tokens/new?scopes=repo&description=Ember'), mode: LaunchMode.externalApplication),
-                  icon: const Icon(Icons.open_in_new, size: 18),
-                  label: Text(l.ghGetToken),
-                ),
-              ),
-            ],
-            if (_busy) ...[
-              const SizedBox(height: 10),
-              Row(children: [const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)), const SizedBox(width: 8), Expanded(child: Text(l.ghSaving))]),
-            ],
-            if (_message != null) ...[
-              const SizedBox(height: 10),
-              SelectableText(_message!, style: TextStyle(color: _error ? theme.colorScheme.error : null)),
-            ],
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                FilledButton.icon(onPressed: _busy ? null : _save, icon: const Icon(Icons.cloud_upload_outlined), label: Text(l.ghSave)),
-                if (_repoUrl != null)
-                  OutlinedButton.icon(
-                    onPressed: () => launchUrl(Uri.parse(_repoUrl!), mode: LaunchMode.externalApplication),
-                    icon: const Icon(Icons.open_in_new),
-                    label: Text(l.ghOpen),
-                  ),
-                if (_hasToken)
-                  TextButton(
-                    onPressed: () async {
-                      await ref.read(settingsStoreProvider).delete(_tokenKey);
-                      if (mounted) setState(() => _hasToken = false);
-                    },
-                    child: Text(l.ghForgetToken),
-                  ),
-              ],
             ),
+          ),
+        ],
+        if (!_hasToken) ...[
+          Gap.vMd,
+          SecretField(
+            controller: _token,
+            label: l.ghToken,
+            helper: l.ghTokenHelp,
+            getUrl: 'https://github.com/settings/tokens/new?scopes=repo&description=Ember',
+            getLabel: l.ghGetToken,
+          ),
+        ],
+        if (_busy) ...[
+          Gap.vMd,
+          BusyRow(l.ghSaving),
+        ],
+        if (_message != null) ...[
+          Gap.vMd,
+          InlineMessage(_message!, error: _error),
+        ],
+        Gap.vMd,
+        Wrap(
+          spacing: Gap.sm,
+          runSpacing: Gap.sm,
+          children: [
+            FilledButton.icon(onPressed: _busy ? null : _save, icon: const Icon(Icons.cloud_upload_outlined), label: Text(l.ghSave)),
+            if (_repoUrl != null)
+              OutlinedButton.icon(
+                onPressed: () => launchUrl(Uri.parse(_repoUrl!), mode: LaunchMode.externalApplication),
+                icon: const Icon(Icons.open_in_new),
+                label: Text(l.ghOpen),
+              ),
+            if (_hasToken)
+              TextButton(
+                onPressed: () async {
+                  await ref.read(settingsStoreProvider).delete(_tokenKey);
+                  if (mounted) setState(() => _hasToken = false);
+                },
+                child: Text(l.ghForgetToken),
+              ),
           ],
         ),
-      ),
+      ],
     );
   }
 }

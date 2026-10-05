@@ -9,6 +9,7 @@ import 'package:ide_core/ide_core.dart';
 import '../../core/runner_socket.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import '../../widgets/connection_badge.dart';
 import '../ai/ai_settings.dart';
 import '../ai/apply_dialog.dart';
@@ -89,7 +90,7 @@ class WorkspaceScreen extends ConsumerStatefulWidget {
   /// `preview` or `ai` to open that side panel on arrival.
   final String? initialPanel;
 
-  static const wideBreakpoint = 840.0;
+  static const wideBreakpoint = Breakpoints.medium;
 
   @override
   ConsumerState<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -101,7 +102,7 @@ enum _SidePanel { preview, ai }
 
 class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   _MobileTab _mobileTab = _MobileTab.files;
-  double _treeWidth = 260;
+  double _treeWidth = Widths.rail;
   double _terminalHeight = 240;
   double _sideWidth = 440;
   bool _terminalOpen = false;
@@ -136,13 +137,13 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     final l = AppLocalizations.of(context);
     final c = ref.read(projectControllerProvider(widget.projectId));
     final path = block.path ?? c.activeFile?.path;
-    if (path == null) return _snack(l.applyNoTarget);
+    if (path == null) return _snack(l.applyNoTarget, error: true);
 
     var exists = true;
     try {
       await c.open(path);
     } on RunnerException catch (e) {
-      if (e.code != 'not_found') return _snack(l.error(e.message));
+      if (e.code != 'not_found') return _snack(l.error(e.message), error: true);
       exists = false;
     }
     final tab = exists ? c.tabs.firstWhere((t) => t.path == path) : null;
@@ -159,7 +160,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       if (mounted) setState(() => _mobileTab = _MobileTab.editor);
       _snack(l.applied(path));
     } on RunnerException catch (e) {
-      _snack(l.error(e.message));
+      _snack(l.error(e.message), error: true);
     }
   }
 
@@ -170,7 +171,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       await c.open(path);
       if (mounted) setState(() => _mobileTab = _MobileTab.editor);
     } on RunnerException catch (e) {
-      _snack(e.code == 'binary' || e.code == 'too_large' ? binaryMsg : e.message);
+      _snack(e.code == 'binary' || e.code == 'too_large' ? binaryMsg : e.message, error: true);
     }
   }
 
@@ -196,7 +197,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       if (choice == 'reload') await c.reload(file);
       if (choice == 'overwrite') await c.save(file, force: true);
     } on RunnerException catch (e) {
-      _snack(l.error(e.message));
+      _snack(l.error(e.message), error: true);
     }
   }
 
@@ -215,8 +216,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     ref.read(previewControllerProvider(widget.projectId)).run();
   }
 
-  void _snack(String msg) {
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  void _snack(String msg, {bool error = false}) {
+    if (mounted) showEmberSnack(context, msg, error: error);
   }
 
   @override
@@ -246,9 +247,11 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= WorkspaceScreen.wideBreakpoint;
+          // Panels are mirrored in right-to-left languages, and so is the drag that resizes them.
+          final dir = Directionality.of(context) == TextDirection.rtl ? -1 : 1;
           return Scaffold(
             appBar: AppBar(
-              leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/projects')),
+              leading: BackButton(onPressed: () => context.go('/projects')),
               title: Text(project.value?.name ?? ''),
               actions: [
                 ListenableBuilder(
@@ -297,7 +300,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     children: [
                       SizedBox(width: _treeWidth, child: tree),
                       _Splitter.vertical(
-                        onDrag: (d) => setState(() => _treeWidth = (_treeWidth + d).clamp(180, constraints.maxWidth * 0.4)),
+                        onDrag: (d) => setState(() => _treeWidth = (_treeWidth + d * dir).clamp(180, constraints.maxWidth * 0.4)),
                       ),
                       Expanded(
                         child: Column(
@@ -316,14 +319,14 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       ),
                       if (_side != null) ...[
                         _Splitter.vertical(
-                          onDrag: (d) => setState(() => _sideWidth = (_sideWidth - d).clamp(320, constraints.maxWidth * 0.6)),
+                          onDrag: (d) => setState(() => _sideWidth = (_sideWidth - d * dir).clamp(320, constraints.maxWidth * 0.6)),
                         ),
                         SizedBox(
                           width: _sideWidth,
                           child: Column(
                             children: [
                               Padding(
-                                padding: const EdgeInsets.all(6),
+                                padding: const EdgeInsets.all(Gap.sm),
                                 child: SegmentedButton<_SidePanel>(
                                   segments: [
                                     ButtonSegment(value: _SidePanel.preview, icon: const Icon(Icons.phone_iphone), label: Text(l.preview)),
@@ -387,7 +390,7 @@ class _Splitter extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onHorizontalDragUpdate: vertical ? (d) => onDrag(d.delta.dx) : null,
         onVerticalDragUpdate: vertical ? null : (d) => onDrag(d.delta.dy),
-        child: vertical ? const VerticalDivider(width: 6, thickness: 1) : const Divider(height: 6, thickness: 1),
+        child: vertical ? const VerticalDivider(width: Gap.sm, thickness: 1) : const Divider(height: Gap.sm, thickness: 1),
       ),
     );
   }

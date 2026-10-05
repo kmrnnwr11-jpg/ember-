@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ide/features/mockups/mockup_controller.dart' show PanelMember;
 import 'package:ide/features/review/panel_health.dart';
 import 'package:ide/features/review/reviewers.dart' show PanelPing;
+import 'package:ide/l10n/app_localizations.dart';
 
 /// A model that fails until [worksAfter] retries, then answers.
 PanelMember member(String id, String label, {int worksAfter = 0}) {
@@ -22,29 +23,32 @@ PanelPing ok(String id, String label) => (id: id, label: label, ok: true, error:
 PanelPing down(String id, String label, String why) => (id: id, label: label, ok: false, error: why);
 
 void main() {
+  // The app speaks Italian here: the wording is part of what is being tested.
+  final l = lookupAppLocalizations(const Locale('it'));
+
   group('the user is told which models are down, by name', () {
-    test('one model', () => expect(panelDownTitle(['Groq']), 'Groq non sta funzionando'));
-    test('two models', () => expect(panelDownTitle(['Groq', 'Gemini']), 'Groq e Gemini non stanno funzionando'));
+    test('one model', () => expect(panelDownTitle(l, ['Groq']), 'Groq non sta funzionando'));
+    test('two models', () => expect(panelDownTitle(l, ['Groq', 'Gemini']), 'Groq e Gemini non stanno funzionando'));
     test('three models: every name is said', () {
-      expect(panelDownTitle(['Groq', 'Gemini', 'DeepSeek']), 'Groq, Gemini e DeepSeek non stanno funzionando');
+      expect(panelDownTitle(l, ['Groq', 'Gemini', 'DeepSeek']), 'Groq, Gemini e DeepSeek non stanno funzionando');
     });
-    test('nothing to say when they all answered', () => expect(panelDownTitle([]), isEmpty));
+    test('nothing to say when they all answered', () => expect(panelDownTitle(l, []), isEmpty));
   });
 
   group('what is left, and what going on anyway would mean', () {
     test('several left: they still check each other', () {
-      expect(panelDownExplanation(3), contains('Restano 3 AI'));
-      expect(panelDownExplanation(2), contains('si controllano a vicenda'));
+      expect(panelDownExplanation(l, 3), contains('Restano 3 AI'));
+      expect(panelDownExplanation(l, 2), contains('si controllano a vicenda'));
     });
     test('one left: nobody checks its work, and it says so', () {
-      expect(panelDownExplanation(1), contains('nessuno controllerà'));
+      expect(panelDownExplanation(l, 1), contains('nessuno controllerà'));
     });
     test('none left: nothing can be done at all', () {
-      expect(panelDownExplanation(0), contains('Non resta nessun AI'));
+      expect(panelDownExplanation(l, 0), contains('Non resta nessun AI'));
     });
     test('the go-on button names who would be missing', () {
-      expect(proceedWithoutLabel(['Gemini']), 'Vai avanti senza Gemini');
-      expect(proceedWithoutLabel(['Gemini', 'Groq']), 'Vai avanti senza 2 AI');
+      expect(proceedWithoutLabel(l, ['Gemini']), 'Vai avanti senza Gemini');
+      expect(proceedWithoutLabel(l, ['Gemini', 'Groq']), 'Vai avanti senza 2 AI');
     });
   });
 
@@ -57,6 +61,9 @@ void main() {
     ({bool proceed, List<PanelPing> pings})? answer;
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('it'),
         home: Builder(
           builder: (context) => TextButton(
             onPressed: () async {
@@ -128,6 +135,9 @@ void main() {
     ({bool proceed, List<PanelPing> pings})? answer;
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('it'),
         home: Builder(
           builder: (context) => TextButton(
             onPressed: () async {
@@ -160,12 +170,12 @@ void main() {
     expect([for (final p in answer.pings.where((p) => p.ok)) p.id], ['claude']);
   });
 
-  testWidgets('Chiudi Ember answers no, which stops the work', (tester) async {
+  testWidgets('Annulla answers no, which stops the work', (tester) async {
     final answer = await answerOf(
       tester,
       [member('groq', 'Groq')],
       [down('groq', 'Groq', 'HTTP 403')],
-      'Chiudi Ember',
+      'Annulla',
     );
 
     expect(answer.proceed, isFalse);

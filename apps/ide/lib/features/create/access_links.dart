@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import 'app_builder.dart';
 
 /// Where to get access for an engine. Payments always happen on the provider's own site.
@@ -71,14 +72,14 @@ class AccessLinks extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final a = engineAccess[engine];
     if (a == null) return const SizedBox.shrink();
-    final muted = Theme.of(context).textTheme.bodySmall;
+    final muted = context.text.bodySmall;
     final sub = subscriptionOf[engine];
     // Subscription already logged in: nothing to buy, just say so.
     if (engine.isCli && connected) {
       return Row(
         children: [
-          const Icon(Icons.check_circle, color: Colors.green, size: 18),
-          const SizedBox(width: 6),
+          Icon(Icons.check_circle, color: context.ember.success, size: 18),
+          Gap.hSm,
           Expanded(child: Text(l.subscriptionConnected(a.planName!), style: muted)),
         ],
       );
@@ -88,27 +89,31 @@ class AccessLinks extends StatelessWidget {
       children: [
         Text('${l.accessTitle} — ${l.accessPaidOutside}', style: muted),
         if (sub != null && onUseSubscription != null) ...[
-          const SizedBox(height: 6),
-          Card(
+          Gap.vSm,
+          // The button sits under the text: beside it, a long label left the text no room on a phone.
+          SectionCard(
+            icon: Icons.workspace_premium_outlined,
+            title: l.haveSubscription(engineAccess[sub]!.planName!),
+            hint: subscriptionReady?.call(sub) == true ? l.subscriptionReadyUse(sub.cliLabel) : l.subscriptionConnectFirst(sub.cliLabel),
             margin: EdgeInsets.zero,
-            child: ListTile(
-              dense: true,
-              leading: const Icon(Icons.workspace_premium_outlined),
-              title: Text(l.haveSubscription(engineAccess[sub]!.planName!)),
-              subtitle: Text(subscriptionReady?.call(sub) == true ? l.subscriptionReadyUse(sub.cliLabel) : l.subscriptionConnectFirst(sub.cliLabel)),
-              trailing: FilledButton(
-                onPressed: () => subscriptionReady?.call(sub) == true ? onUseSubscription!(sub) : showConnectSubscription(context, sub),
-                child: Text(subscriptionReady?.call(sub) == true ? l.useSubscription : l.connectSubscription),
+            children: [
+              Gap.vSm,
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: FilledButton.tonal(
+                  onPressed: () => subscriptionReady?.call(sub) == true ? onUseSubscription!(sub) : showConnectSubscription(context, sub),
+                  child: Text(subscriptionReady?.call(sub) == true ? l.useSubscription : l.connectSubscription),
+                ),
               ),
-            ),
+            ],
           ),
         ],
-        const SizedBox(height: 4),
+        Gap.vXs,
         Wrap(
-          spacing: 8,
-          runSpacing: 4,
+          spacing: Gap.sm,
+          runSpacing: Gap.xs,
           children: [
-            if (a.apiKeys != null) OutlinedButton.icon(onPressed: () => _open(a.apiKeys!), icon: const Icon(Icons.key, size: 16), label: Text(l.getKey)),
+            if (a.apiKeys != null) OutlinedButton.icon(onPressed: () => _open(a.apiKeys!), icon: const Icon(Icons.key_outlined, size: 16), label: Text(l.getKey)),
             if (a.credits != null) OutlinedButton.icon(onPressed: () => _open(a.credits!), icon: const Icon(Icons.shopping_cart_outlined, size: 16), label: Text(l.buyCredits)),
             if (a.plan != null)
               OutlinedButton.icon(onPressed: () => _open(a.plan!), icon: const Icon(Icons.workspace_premium_outlined, size: 16), label: Text('${l.getSubscription} · ${a.planName}')),
@@ -116,7 +121,7 @@ class AccessLinks extends StatelessWidget {
               FilledButton.tonalIcon(onPressed: () => showConnectSubscription(context, engine), icon: const Icon(Icons.link, size: 16), label: Text(l.connectSubscription)),
           ],
         ),
-        if (engine == BuildEngine.xai) Padding(padding: const EdgeInsets.only(top: 4), child: Text(l.grokNoCli, style: muted)),
+        if (engine == BuildEngine.xai) Padding(padding: const EdgeInsets.only(top: Gap.xs), child: Text(l.grokNoCli, style: muted)),
       ],
     );
   }
@@ -137,16 +142,17 @@ Future<void> showConnectSubscription(BuildContext context, BuildEngine engine) {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SelectableText(l.connectHowTo(a.planName!, a.connectCommand!)),
-            const SizedBox(height: 12),
-            Text(l.connectPersonalNote, style: Theme.of(d).textTheme.bodySmall),
+            // The command must stay copyable, so the steps can be selected.
+            SelectionArea(child: StepsList.parse(l.connectHowTo(a.planName!, a.connectCommand!))),
+            Gap.vMd,
+            Text(l.connectPersonalNote, style: d.text.bodySmall),
           ],
         ),
       ),
       actions: [
         TextButton.icon(
           onPressed: () => Clipboard.setData(ClipboardData(text: command)),
-          icon: const Icon(Icons.copy, size: 16),
+          icon: const Icon(Icons.copy_outlined, size: 16),
           label: Text(l.copy),
         ),
         TextButton(onPressed: () => _open(a.plan!), child: Text(l.getSubscription)),

@@ -6,6 +6,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/ui.dart';
 import 'app_builder.dart';
 
 /// Puts the app on a phone plugged into this computer, and opens it there.
@@ -50,11 +51,12 @@ class _PhoneCardState extends ConsumerState<PhoneCard> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(color: Colors.white, padding: const EdgeInsets.all(12), child: QrImageView(data: url, size: 240)),
-              const SizedBox(height: 12),
+              // Light in both themes: a camera needs dark squares on a pale ground.
+              Container(color: d.ember.onCodeSurface, padding: const EdgeInsets.all(Gap.md), child: QrImageView(data: url, size: 240)),
+              Gap.vMd,
               SelectableText(url, textAlign: TextAlign.center),
-              const SizedBox(height: 8),
-              Text(l.phoneSameWifi, style: Theme.of(d).textTheme.bodySmall, textAlign: TextAlign.center),
+              Gap.vSm,
+              Text(l.phoneSameWifi, style: d.text.bodySmall, textAlign: TextAlign.center),
             ],
           ),
         ),
@@ -123,63 +125,49 @@ class _PhoneCardState extends ConsumerState<PhoneCard> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final phoneUrl = _phoneUrl;
     if (_devices.isEmpty && phoneUrl == null) return const SizedBox.shrink();
 
-    return Card(
-      margin: const EdgeInsets.only(top: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return SectionCard(
+      icon: Icons.smartphone_outlined,
+      title: l.phoneTitle,
+      hint: l.phoneHint,
+      trailing: IconButton(tooltip: l.phoneLookAgain, icon: const Icon(Icons.refresh, size: 20), onPressed: _busy ? null : _look),
+      children: [
+        if (_busy) ...[
+          Gap.vMd,
+          BusyRow(_message ?? ''),
+        ] else if (_message != null) ...[
+          Gap.vMd,
+          InlineMessage(_message!, error: _error),
+        ],
+        Gap.vMd,
+        Wrap(
+          spacing: Gap.sm,
+          runSpacing: Gap.sm,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.smartphone),
-                const SizedBox(width: 8),
-                Expanded(child: Text(l.phoneTitle, style: theme.textTheme.titleMedium)),
-                IconButton(tooltip: l.phoneLookAgain, icon: const Icon(Icons.refresh, size: 20), onPressed: _busy ? null : _look),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(l.phoneHint, style: theme.textTheme.bodySmall),
-            if (_busy) ...[
-              const SizedBox(height: 10),
-              Row(children: [const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)), const SizedBox(width: 8), Expanded(child: Text(_message ?? ''))]),
-            ] else if (_message != null) ...[
-              const SizedBox(height: 10),
-              SelectableText(_message!, style: TextStyle(color: _error ? theme.colorScheme.error : null)),
-            ],
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (phoneUrl != null)
-                  OutlinedButton.icon(
-                    onPressed: () => _showQr(phoneUrl),
-                    icon: const Icon(Icons.qr_code_2),
-                    label: Text(l.phoneOpenHere),
-                  ),
-                for (final d in _devices)
-                  if (d['state'] == 'device')
-                    FilledButton.icon(
-                      onPressed: _busy || widget.builder.running ? null : () => _send('${d['id']}'),
-                      icon: const Icon(Icons.play_arrow),
-                      label: Text(l.phoneRunOn('${d['name']}')),
-                    )
-                  else
-                    OutlinedButton.icon(
-                      onPressed: _busy ? null : _look,
-                      icon: const Icon(Icons.lock_outline),
-                      label: Text(l.phoneUnauthorized('${d['name']}')),
-                    ),
-              ],
-            ),
+            if (phoneUrl != null)
+              OutlinedButton.icon(
+                onPressed: () => _showQr(phoneUrl),
+                icon: const Icon(Icons.qr_code_2_outlined),
+                label: Text(l.phoneOpenHere),
+              ),
+            for (final d in _devices)
+              if (d['state'] == 'device')
+                FilledButton.icon(
+                  onPressed: _busy || widget.builder.running ? null : () => _send('${d['id']}'),
+                  icon: const Icon(Icons.play_arrow_outlined),
+                  label: Text(l.phoneRunOn('${d['name']}')),
+                )
+              else
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : _look,
+                  icon: const Icon(Icons.lock_outline),
+                  label: Text(l.phoneUnauthorized('${d['name']}')),
+                ),
           ],
         ),
-      ),
+      ],
     );
   }
 }

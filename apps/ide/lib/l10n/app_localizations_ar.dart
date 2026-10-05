@@ -1763,4 +1763,29 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get playRewriteWithAi => 'إعادة الكتابة بالذكاء الاصطناعي';
+
+  @override
+  String get historyTitle => 'السجل';
+
+  @override
+  String get historyNewApp => 'تطبيق جديد';
+
+  @override
+  String get historyDrafts => 'المسودات';
+
+  @override
+  String get historyToday => 'اليوم';
+
+  @override
+  String get historyYesterday => 'أمس';
+
+  @override
+  String get historyLast7Days => 'آخر 7 أيام';
+
+  @override
+  String get historyOlder => 'الأقدم';
+
+  @override
+  String get historyEmpty =>
+      'لا شيء هنا بعد. التطبيقات التي تبدأها والمسودات التي تكتبها تظهر هنا.';
 }

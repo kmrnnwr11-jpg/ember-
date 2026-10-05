@@ -467,5 +467,13 @@
   "playLanguageIncluded": "Publicar este idioma en Google Play",
   "playLanguageNotTranslated": "Aún no traducido: se escribe al guardar con este idioma activo.",
   "playListingSaved": "Ficha guardada: no hace falta generar. Cambia el texto solo si quieres y sube.",
-  "playRewriteWithAi": "Reescribir con IA"
+  "playRewriteWithAi": "Reescribir con IA",
+  "historyTitle": "Historial",
+  "historyNewApp": "Nueva app",
+  "historyDrafts": "Borradores",
+  "historyToday": "Hoy",
+  "historyYesterday": "Ayer",
+  "historyLast7Days": "Últimos 7 días",
+  "historyOlder": "Más antiguas",
+  "historyEmpty": "Aún no hay nada. Las apps que empiezas y los borradores que escribes aparecen aquí."
 }

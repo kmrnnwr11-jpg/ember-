@@ -467,5 +467,13 @@
   "playLanguageIncluded": "نشر هذه اللغة على Google Play",
   "playLanguageNotTranslated": "لم تُترجم بعد: تُكتب عند الحفظ مع تفعيل هذه اللغة.",
   "playListingSaved": "تم حفظ الصفحة: لا حاجة للتوليد. عدّل النص إن أردت ثم ارفع.",
-  "playRewriteWithAi": "إعادة الكتابة بالذكاء الاصطناعي"
+  "playRewriteWithAi": "إعادة الكتابة بالذكاء الاصطناعي",
+  "historyTitle": "السجل",
+  "historyNewApp": "تطبيق جديد",
+  "historyDrafts": "المسودات",
+  "historyToday": "اليوم",
+  "historyYesterday": "أمس",
+  "historyLast7Days": "آخر 7 أيام",
+  "historyOlder": "الأقدم",
+  "historyEmpty": "لا شيء هنا بعد. التطبيقات التي تبدأها والمسودات التي تكتبها تظهر هنا."
 }

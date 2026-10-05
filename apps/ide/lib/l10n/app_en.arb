@@ -1013,5 +1013,13 @@
   "playLanguageIncluded": "Publish this language on Google Play",
   "playLanguageNotTranslated": "Not translated yet: it is written when you save with this language on.",
   "playListingSaved": "Listing saved: nothing to generate. Change the text only if you want, then upload.",
-  "playRewriteWithAi": "Write it again with AI"
+  "playRewriteWithAi": "Write it again with AI",
+  "historyTitle": "History",
+  "historyNewApp": "New app",
+  "historyDrafts": "Drafts",
+  "historyToday": "Today",
+  "historyYesterday": "Yesterday",
+  "historyLast7Days": "Last 7 days",
+  "historyOlder": "Older",
+  "historyEmpty": "Nothing here yet. The apps you start and the drafts you write show up here."
 }

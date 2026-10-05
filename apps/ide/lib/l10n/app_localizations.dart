@@ -3151,6 +3151,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Write it again with AI'**
   String get playRewriteWithAi;
+
+  /// No description provided for @historyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get historyTitle;
+
+  /// No description provided for @historyNewApp.
+  ///
+  /// In en, this message translates to:
+  /// **'New app'**
+  String get historyNewApp;
+
+  /// No description provided for @historyDrafts.
+  ///
+  /// In en, this message translates to:
+  /// **'Drafts'**
+  String get historyDrafts;
+
+  /// No description provided for @historyToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get historyToday;
+
+  /// No description provided for @historyYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get historyYesterday;
+
+  /// No description provided for @historyLast7Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get historyLast7Days;
+
+  /// No description provided for @historyOlder.
+  ///
+  /// In en, this message translates to:
+  /// **'Older'**
+  String get historyOlder;
+
+  /// No description provided for @historyEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet. The apps you start and the drafts you write show up here.'**
+  String get historyEmpty;
 }
 
 class _AppLocalizationsDelegate

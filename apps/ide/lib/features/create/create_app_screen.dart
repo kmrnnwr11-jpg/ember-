@@ -19,6 +19,7 @@ import '../../widgets/ember_logo.dart';
 import 'access_links.dart';
 import 'logo_card.dart';
 import '../assistant/home_assistant.dart';
+import '../projects/history_panel.dart';
 import 'checkup_card.dart';
 import 'appstore_card.dart';
 import 'ios_card.dart';
@@ -208,7 +209,10 @@ List<EngineOption> engineOptions(AppLocalizations l, AiSettings s, bool claudeCo
 
 /// Prompt box + engine chips + model menu, shared by home and project screens.
 class AppPromptComposer extends ConsumerStatefulWidget {
-  const AppPromptComposer({super.key, required this.onSubmit, this.initialPrompt = '', this.busy = false, this.buttonLabel});
+  const AppPromptComposer({super.key, required this.onSubmit, this.initialPrompt = '', this.busy = false, this.buttonLabel, this.onChanged});
+
+  /// Called as the description is typed, so it can be kept as a draft.
+  final ValueChanged<String>? onChanged;
 
   /// `engine` writes the code; `design` draws (mockups, logos, screenshots).
   final void Function(String prompt, BuildEngine engine, AiModel? model, String quality, BuildEngine design) onSubmit;
@@ -316,7 +320,10 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
               hintText: l.appPromptHint,
               border: const OutlineInputBorder(),
             ),
-            onChanged: (_) => setState(() {}),
+            onChanged: (text) {
+              widget.onChanged?.call(text);
+              setState(() {});
+            },
           ),
         ),
         const SizedBox(height: 12),
@@ -489,6 +496,8 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
       reference: args.reference ?? '',
       onProgress: (s) => b.note(s),
     );
+    // The draft is an app now: the history lists it as one.
+    if (mounted) ref.read(draftsProvider.notifier).removeByPrompt(args.prompt);
     b.build(
       prompt: args.prompt,
       engine: args.engine,
@@ -514,11 +523,22 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
       data: (project) {
         final b = ref.watch(appBuilderProvider((project.id, project.name)));
         WidgetsBinding.instance.addPostFrameCallback((_) => _autoStart(b));
+        final historyBeside = MediaQuery.sizeOf(context).width >= historyBesideWidth;
         return Scaffold(
+          drawer: historyBeside ? null : Drawer(width: 300, child: SafeArea(child: HistoryPanel(currentProjectId: project.id, inDrawer: true))),
           appBar: AppBar(
             leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/projects')),
             title: Text(project.displayName),
             actions: [
+              if (!historyBeside)
+                Builder(
+                  builder: (context) => IconButton(
+                    key: const Key('openHistory'),
+                    tooltip: l.historyTitle,
+                    icon: const Icon(Icons.history),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                  ),
+                ),
               IconButton(
                 tooltip: l.acAssistant,
                 icon: Icon(_showAssistant ? Icons.forum : Icons.forum_outlined),
@@ -533,6 +553,10 @@ class _CreateAppScreenState extends ConsumerState<CreateAppScreen> {
           ),
           body: Row(
             children: [
+              if (historyBeside) ...[
+                SizedBox(width: historyPanelWidth, child: HistoryPanel(currentProjectId: project.id)),
+                const VerticalDivider(width: 1),
+              ],
               Expanded(child: _buildBody(context, l, b, project)),
               if (_showAssistant && MediaQuery.sizeOf(context).width >= 900) ...[
                 const VerticalDivider(width: 1),

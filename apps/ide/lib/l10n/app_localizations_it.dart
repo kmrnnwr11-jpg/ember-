@@ -1788,4 +1788,29 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get playRewriteWithAi => 'Riscrivi con l\'AI';
+
+  @override
+  String get historyTitle => 'Cronologia';
+
+  @override
+  String get historyNewApp => 'Nuova app';
+
+  @override
+  String get historyDrafts => 'Bozze';
+
+  @override
+  String get historyToday => 'Oggi';
+
+  @override
+  String get historyYesterday => 'Ieri';
+
+  @override
+  String get historyLast7Days => 'Ultimi 7 giorni';
+
+  @override
+  String get historyOlder => 'Più vecchie';
+
+  @override
+  String get historyEmpty =>
+      'Ancora niente. Le app che inizi e le bozze che scrivi compaiono qui.';
 }

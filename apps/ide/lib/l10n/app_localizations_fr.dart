@@ -1790,4 +1790,29 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get playRewriteWithAi => 'Réécrire avec l\'IA';
+
+  @override
+  String get historyTitle => 'Historique';
+
+  @override
+  String get historyNewApp => 'Nouvelle app';
+
+  @override
+  String get historyDrafts => 'Brouillons';
+
+  @override
+  String get historyToday => 'Aujourd\'hui';
+
+  @override
+  String get historyYesterday => 'Hier';
+
+  @override
+  String get historyLast7Days => '7 derniers jours';
+
+  @override
+  String get historyOlder => 'Plus anciennes';
+
+  @override
+  String get historyEmpty =>
+      'Rien pour l\'instant. Les apps que vous commencez et les brouillons que vous écrivez apparaissent ici.';
 }

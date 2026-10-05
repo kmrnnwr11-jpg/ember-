@@ -535,5 +535,13 @@
   "playLanguageIncluded": "Pubblica questa lingua su Google Play",
   "playLanguageNotTranslated": "Non ancora tradotta: viene scritta quando salvi con questa lingua attiva.",
   "playListingSaved": "Scheda salvata: non serve generare. Cambia il testo solo se vuoi, poi carica.",
-  "playRewriteWithAi": "Riscrivi con l'AI"
+  "playRewriteWithAi": "Riscrivi con l'AI",
+  "historyTitle": "Cronologia",
+  "historyNewApp": "Nuova app",
+  "historyDrafts": "Bozze",
+  "historyToday": "Oggi",
+  "historyYesterday": "Ieri",
+  "historyLast7Days": "Ultimi 7 giorni",
+  "historyOlder": "Più vecchie",
+  "historyEmpty": "Ancora niente. Le app che inizi e le bozze che scrivi compaiono qui."
 }

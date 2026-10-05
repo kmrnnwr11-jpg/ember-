@@ -12,6 +12,7 @@ import '../../widgets/connection_badge.dart';
 import '../../widgets/ember_logo.dart';
 import '../assistant/home_assistant.dart';
 import 'build_watch.dart';
+import 'history_panel.dart';
 import '../create/app_builder.dart';
 import '../create/create_app_screen.dart';
 import '../create/reference_app.dart';
@@ -50,12 +51,47 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       final s = JobStatus.fromJson(f.payload);
       if (s.kind == 'create' && s.isDone) ref.invalidate(projectsProvider);
     });
+    _drafts = ref.read(draftsProvider.notifier);
+    // A draft picked in the history of another screen, waiting to be opened here.
+    final pending = ref.read(openDraftProvider);
+    if (pending != null) {
+      _draft = pending;
+      Future.microtask(() => ref.read(openDraftProvider.notifier).set(null));
+    }
   }
 
   @override
   void dispose() {
     _jobSub?.cancel();
+    if (_draftTimer?.isActive ?? false) _saveDraft();
+    _draftTimer?.cancel();
     super.dispose();
+  }
+
+  /// What is being typed in the prompt box, saved as a draft until it is built.
+  Draft _draft = Draft.blank();
+  String? _draftText;
+  Timer? _draftTimer;
+  late final Drafts _drafts;
+
+  void _saveDraft() {
+    final text = _draftText;
+    if (text != null) _drafts.put(_draft.id, text);
+  }
+
+  void _draftChanged(String text) {
+    _draftText = text;
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 700), _saveDraft);
+  }
+
+  void _openDraft(Draft draft) {
+    if (_draftTimer?.isActive ?? false) _saveDraft();
+    _draftTimer?.cancel();
+    setState(() {
+      _draft = draft;
+      _draftText = null;
+    });
   }
 
   bool _creating = false;
@@ -100,6 +136,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
   /// Describe → see 5 style mockups full screen → choose → build (§1B).
   Future<void> _createFromPrompt(String prompt, BuildEngine engine, AiModel? model, String quality, BuildEngine design) async {
+    // Kept as a draft until the app is actually built: leaving the mockups
+    // must not lose what was asked for.
+    _draftTimer?.cancel();
+    _drafts.put(_draft.id, prompt);
     // "Make an app like X": study X first — on the Play Store, or the website
     // itself when the link is a site — then design and build the same features.
     ReferenceApp? reference;
@@ -176,8 +216,16 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final projects = ref.watch(projectsProvider);
+    ref.listen(openDraftProvider, (_, draft) {
+      if (draft == null) return;
+      _openDraft(draft);
+      Future.microtask(() => ref.read(openDraftProvider.notifier).set(null));
+    });
+    // The history sits beside the page when there is room, in a drawer otherwise.
+    final historyBeside = MediaQuery.sizeOf(context).width >= historyBesideWidth;
 
     final scaffold = Scaffold(
+      drawer: historyBeside ? null : Drawer(width: 300, child: SafeArea(child: HistoryPanel(currentDraftId: _draft.id, inDrawer: true))),
       appBar: AppBar(
         title: const EmberLockup(size: 18, subtitle: false),
         actions: [
@@ -249,7 +297,13 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                   const SizedBox(height: 4),
                                   Text(l.describeYourAppHint, style: Theme.of(context).textTheme.bodySmall),
                                   const SizedBox(height: 12),
-                                  AppPromptComposer(busy: _creating, onSubmit: _createFromPrompt),
+                                  AppPromptComposer(
+                                    key: ValueKey('composer_${_draft.id}'),
+                                    initialPrompt: _draft.prompt,
+                                    busy: _creating,
+                                    onChanged: _draftChanged,
+                                    onSubmit: _createFromPrompt,
+                                  ),
                                   const SizedBox(height: 16),
                                   if (list.isNotEmpty)
                                     Text(l.projects, style: Theme.of(context).textTheme.titleMedium)
@@ -327,12 +381,19 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     return LayoutBuilder(
       builder: (context, box) {
         final wide = box.maxWidth >= 1000;
-        if (!wide || !_assistantOpen) return scaffold;
+        final assistant = wide && _assistantOpen;
+        if (!assistant && !historyBeside) return scaffold;
         return Row(
           children: [
+            if (historyBeside) ...[
+              SizedBox(width: historyPanelWidth, child: SafeArea(child: HistoryPanel(currentDraftId: _draft.id))),
+              const VerticalDivider(width: 1),
+            ],
             Expanded(child: scaffold),
-            const VerticalDivider(width: 1),
-            SizedBox(width: (box.maxWidth * 0.3).clamp(340.0, 460.0), child: const HomeAssistantPanel()),
+            if (assistant) ...[
+              const VerticalDivider(width: 1),
+              SizedBox(width: (box.maxWidth * 0.3).clamp(340.0, 460.0), child: const HomeAssistantPanel()),
+            ],
           ],
         );
       },

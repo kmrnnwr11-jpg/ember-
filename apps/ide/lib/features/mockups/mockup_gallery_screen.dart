@@ -8,6 +8,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ide_core/ide_core.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
@@ -117,7 +118,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
     final change = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      builder: (d) => Padding(
+      builder: (d) => _OverPage(child: Padding(
         padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(d).viewInsets.bottom + 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -136,7 +137,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
             FilledButton(onPressed: () => Navigator.pop(d, ctrl.text.trim()), child: Text(l.applyChange)),
           ],
         ),
-      ),
+      )),
     );
     ctrl.dispose();
     if (change != null && change.isNotEmpty) await _c?.edit(m, change);
@@ -151,9 +152,9 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      builder: (d) => NamePickerSheet(
+      builder: (d) => _OverPage(child: NamePickerSheet(
         load: () => suggestNames(complete, '${widget.args.prompt}${widget.args.reference ?? ''}'),
-      ),
+      )),
     );
   }
 
@@ -172,7 +173,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
       final ok = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
-        builder: (_) => JobLogDialog(title: l.creatingProject(project.name), jobId: job.jobId),
+        builder: (_) => _OverPage(child: JobLogDialog(title: l.creatingProject(project.name), jobId: job.jobId)),
       );
       // The name is saved before the build: from here on the package name, the
       // privacy policy and the store listing all read it from the same place.
@@ -234,13 +235,13 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
                 alignment: AlignmentDirectional.centerStart,
                 child: Padding(
                   padding: const EdgeInsets.all(8),
-                  child: IconButton.filled(
+                  child: _OverPage(child: IconButton.filled(
                     key: const Key('mockupPrev'),
                     style: IconButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, fixedSize: const Size(52, 52)),
                     tooltip: '$_page / ${mockups.length}',
                     onPressed: () => _slide(_page - 1),
                     icon: const Icon(Icons.chevron_left, size: 32),
-                  ),
+                  )),
                 ),
               ),
             if (_page < mockups.length - 1)
@@ -248,13 +249,13 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
                 alignment: AlignmentDirectional.centerEnd,
                 child: Padding(
                   padding: const EdgeInsets.all(8),
-                  child: IconButton.filled(
+                  child: _OverPage(child: IconButton.filled(
                     key: const Key('mockupNext'),
                     style: IconButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, fixedSize: const Size(52, 52)),
                     tooltip: '${_page + 2} / ${mockups.length}',
                     onPressed: () => _slide(_page + 1),
                     icon: const Icon(Icons.chevron_right, size: 32),
-                  ),
+                  )),
                 ),
               ),
           ],
@@ -262,7 +263,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Row(
+              child: _OverPage(child: Row(
                 children: [
                   _RoundButton(icon: Icons.close, onTap: () => context.pop()),
                   const SizedBox(width: 8),
@@ -303,14 +304,14 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
                   const SizedBox(width: 4),
                   Text('$readyCount/${mockups.length}', style: const TextStyle(color: Colors.white70)),
                 ],
-              ),
+              )),
             ),
           ),
           // Bottom panel: style info + actions.
           Align(
             alignment: Alignment.bottomCenter,
             child: SafeArea(
-              child: Container(
+              child: _OverPage(child: Container(
                 margin: const EdgeInsets.all(10),
                 padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                 decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.82), borderRadius: BorderRadius.circular(18)),
@@ -421,7 +422,7 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
                     ),
                   ],
                 ),
-              ),
+              )),
             ),
           ),
         ],
@@ -434,6 +435,19 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
     final n = int.tryParse(v.length == 6 ? 'FF$v' : v, radix: 16);
     return n == null ? Colors.grey : Color(n);
   }
+}
+
+/// Controls drawn over a mockup.
+///
+/// In the browser the mockup is an iframe, and an iframe takes every click
+/// made over it: the arrows, the choose button and the sheets above the page
+/// were all on screen and none of them answered. Elsewhere this does nothing.
+class _OverPage extends StatelessWidget {
+  const _OverPage({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => PointerInterceptor(child: child);
 }
 
 /// A quiet label on the dark panel: it names a fact, it is not a button.

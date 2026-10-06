@@ -64,6 +64,11 @@ const schema = z.object({
   CLAUDE_CODE_MODEL_FAST: z.string().default('sonnet'),
   CLAUDE_CODE_MODEL_BEST: z.string().default('opus'),
   VAULT_MASTER_KEY: z.string().default(''),
+
+  /** Fake Factory operations (a few seconds each, no engine used), to try the interface with a hundred apps. */
+  EMBER_FACTORY_SIMULATE: bool,
+  /** How fast pretend Factory stages go: 1 is a few seconds each, 0.05 is twenty times quicker. */
+  EMBER_FACTORY_SIM_SPEED: z.coerce.number().min(0.001).max(10).default(1),
 });
 
 export type Config = z.infer<typeof schema> & { supabaseEnabled: boolean };

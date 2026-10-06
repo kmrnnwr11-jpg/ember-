@@ -54,6 +54,7 @@ export class JobManager extends EventEmitter<JobEvents> {
   private readonly jobs = new Map<string, Job>();
   private readonly controllers = new Map<string, AbortController>();
   private readonly running = new Map<string, number>();
+  private readonly limits = new Map<string, number>();
   private readonly queue: string[] = [];
   private readonly completion = new Map<string, Promise<Job>>();
   private readonly resolvers = new Map<string, (j: Job) => void>();
@@ -69,6 +70,16 @@ export class JobManager extends EventEmitter<JobEvents> {
    * native-build allowance is respected: it was set deliberately. */
   timeoutFor(kind: JobKind): number {
     return NATIVE_BUILDS.has(kind) ? Math.max(this.timeoutSeconds, NATIVE_BUILD_TIMEOUT_SECONDS) : this.timeoutSeconds;
+  }
+
+  /**
+   * How many jobs of one workspace may run together (default one). The Factory
+   * works on many apps of the same workspace at once and sets this higher; its
+   * own lanes decide how much really runs.
+   */
+  setWorkspaceLimit(workspaceId: string, n: number): void {
+    this.limits.set(workspaceId, Math.max(1, Math.floor(n)));
+    this.pump();
   }
 
   enqueue(spec: JobSpec): Job {
@@ -127,7 +138,7 @@ export class JobManager extends EventEmitter<JobEvents> {
       const id = this.queue[i]!;
       const job = this.jobs.get(id)!;
       const n = this.running.get(job.workspaceId) ?? 0;
-      if (n >= MAX_CONCURRENT_PER_WORKSPACE) {
+      if (n >= (this.limits.get(job.workspaceId) ?? MAX_CONCURRENT_PER_WORKSPACE)) {
         i++;
         continue;
       }

@@ -58,6 +58,13 @@ class RunnerApi {
     } catch (_) {}
   }
 
+  /// Opens a sign-in window on the computer where the Runner is, for a subscription
+  /// (`claude-code`, `codex` or `gemini-cli`).
+  Future<void> startSubscriptionLogin(String engine) => _call(
+    () => _dio.post('/v1/subscriptions/$engine/login'),
+    (_) {},
+  );
+
   /// Returns `(token, userId)`.
   Future<(String, String)> devLogin(String email) => _call(
     () => _dio.post('/v1/auth/dev-login', data: {'email': email}),

@@ -210,7 +210,17 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
       style: TextButton.styleFrom(foregroundColor: context.scheme.onSurfaceVariant),
     );
 
-    return Column(
+    final scheme = context.scheme;
+    // One soft card: the words on top, who builds it and the button under them.
+    return Container(
+      padding: const EdgeInsets.fromLTRB(Gap.sm, Gap.sm, Gap.sm, Gap.md),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: const BorderRadius.all(Radius.circular(Radii.lg + Gap.xs)),
+        border: Border.all(color: scheme.outlineVariant),
+        boxShadow: [BoxShadow(color: scheme.shadow.withValues(alpha: 0.08), blurRadius: 32, offset: const Offset(0, 12))],
+      ),
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         CallbackShortcuts(
@@ -221,7 +231,8 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
             minLines: 4,
             maxLines: 12,
             textInputAction: TextInputAction.newline,
-            decoration: InputDecoration(hintText: l.appPromptHint),
+            style: context.text.bodyLarge,
+            decoration: InputDecoration(hintText: l.appPromptHint, border: InputBorder.none, enabledBorder: InputBorder.none, focusedBorder: InputBorder.none),
             onChanged: (text) {
               widget.onChanged?.call(text);
               setState(() {});
@@ -259,9 +270,10 @@ class _AppPromptComposerState extends ConsumerState<AppPromptComposer> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [create, Gap.vXs, Align(alignment: AlignmentDirectional.centerStart, child: options)],
                 )
-              : Row(children: [Flexible(child: options), const Spacer(), create]),
+              : Row(children: [Flexible(child: options), const Spacer(), create, Gap.hXs]),
         ),
       ],
+      ),
     );
   }
 }

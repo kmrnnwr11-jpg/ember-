@@ -14,6 +14,7 @@ import '../../widgets/ember_logo.dart';
 import '../assistant/home_assistant.dart';
 import '../create/app_builder.dart';
 import '../create/create_app_screen.dart';
+import '../create/creation_steps.dart';
 import '../create/reference_app.dart';
 import 'history_panel.dart';
 import 'job_log_dialog.dart';
@@ -255,13 +256,31 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(projectsProvider.future),
-        child: PageBody(
+        // A faint warm light behind the prompt box, so the page is not a flat sheet.
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: const Alignment(0, -0.9),
+              radius: 1.1,
+              colors: [context.scheme.primary.withValues(alpha: 0.07), context.scheme.primary.withValues(alpha: 0)],
+            ),
+          ),
+          child: PageBody(
           padding: EdgeInsets.fromLTRB(Gap.lg, historyBeside ? Gap.xxl * 2 : Gap.xl, Gap.lg, Gap.xxl),
           children: [
-            Text(l.describeYourApp, style: context.text.headlineSmall, textAlign: historyBeside ? TextAlign.center : null),
+            Text(
+              l.homeEyebrow.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: context.text.labelMedium?.copyWith(color: context.scheme.primary, letterSpacing: 2, fontWeight: FontWeight.w700),
+            ),
             Gap.vSm,
-            Text(l.describeYourAppHint, style: context.text.bodySmall, textAlign: historyBeside ? TextAlign.center : null),
-            Gap.vLg,
+            Text(l.describeYourApp, style: (historyBeside ? context.text.headlineMedium : context.text.headlineSmall), textAlign: TextAlign.center),
+            Gap.vSm,
+            Text(l.describeYourAppHint, style: context.text.bodyMedium?.copyWith(color: context.scheme.onSurfaceVariant), textAlign: TextAlign.center),
+            Gap.vXl,
+            // The whole way, in four steps: this screen is the first.
+            const CreationSteps(current: 0),
+            Gap.vXl,
             AppPromptComposer(
               key: ValueKey('composer_${_draft.id}'),
               initialPrompt: _draft.prompt,
@@ -283,6 +302,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
               ),
             ],
           ],
+          ),
         ),
       ),
     );

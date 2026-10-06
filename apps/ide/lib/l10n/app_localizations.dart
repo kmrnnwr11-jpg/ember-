@@ -4429,6 +4429,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start Ember on your computer, then press Retry. You do not need to sign in.'**
   String get offlineHint;
+
+  /// No description provided for @flowDescribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe'**
+  String get flowDescribe;
+
+  /// No description provided for @flowStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the style'**
+  String get flowStyle;
+
+  /// No description provided for @flowName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name it'**
+  String get flowName;
+
+  /// No description provided for @flowBuild.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember builds it'**
+  String get flowBuild;
+
+  /// No description provided for @homeEyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'From an idea to an app'**
+  String get homeEyebrow;
+
+  /// No description provided for @subsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Claude, ChatGPT and Gemini plans'**
+  String get subsTitle;
+
+  /// No description provided for @subsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember builds with the plans you already pay for. You sign in once on this computer and it stays signed in: no keys, no extra cost.'**
+  String get subsHint;
+
+  /// No description provided for @subsConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get subsConnect;
+
+  /// No description provided for @subsOpenWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the sign-in window'**
+  String get subsOpenWindow;
+
+  /// No description provided for @subsLoginOpened.
+  ///
+  /// In en, this message translates to:
+  /// **'A window opened on this computer: sign in to {name} there, then come back. Ember notices by itself.'**
+  String subsLoginOpened(String name);
 }
 
 class _AppLocalizationsDelegate

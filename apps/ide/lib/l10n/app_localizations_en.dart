@@ -2517,4 +2517,37 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get offlineHint =>
       'Start Ember on your computer, then press Retry. You do not need to sign in.';
+
+  @override
+  String get flowDescribe => 'Describe';
+
+  @override
+  String get flowStyle => 'Choose the style';
+
+  @override
+  String get flowName => 'Name it';
+
+  @override
+  String get flowBuild => 'Ember builds it';
+
+  @override
+  String get homeEyebrow => 'From an idea to an app';
+
+  @override
+  String get subsTitle => 'Your Claude, ChatGPT and Gemini plans';
+
+  @override
+  String get subsHint =>
+      'Ember builds with the plans you already pay for. You sign in once on this computer and it stays signed in: no keys, no extra cost.';
+
+  @override
+  String get subsConnect => 'Connect';
+
+  @override
+  String get subsOpenWindow => 'Open the sign-in window';
+
+  @override
+  String subsLoginOpened(String name) {
+    return 'A window opened on this computer: sign in to $name there, then come back. Ember notices by itself.';
+  }
 }

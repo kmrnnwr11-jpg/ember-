@@ -727,5 +727,15 @@
   "deviceDesktop": "حاسوب",
   "checkEmailToConfirm": "تحقق من بريدك الإلكتروني لتأكيد التسجيل.",
   "offlineTitle": "Ember غير مُشغَّل",
-  "offlineHint": "شغّل Ember على حاسوبك ثم اضغط إعادة المحاولة. لا حاجة لتسجيل الدخول."
+  "offlineHint": "شغّل Ember على حاسوبك ثم اضغط إعادة المحاولة. لا حاجة لتسجيل الدخول.",
+  "flowDescribe": "صِف",
+  "flowStyle": "اختر الشكل",
+  "flowName": "سمِّه",
+  "flowBuild": "Ember يبنيه",
+  "homeEyebrow": "من فكرة إلى تطبيق",
+  "subsTitle": "اشتراكاتك في Claude وChatGPT وGemini",
+  "subsHint": "يبني Ember بالاشتراكات التي تدفعها بالفعل. تسجّل الدخول مرة واحدة على هذا الحاسوب ويبقى مسجّلًا: بلا مفاتيح وبلا تكلفة إضافية.",
+  "subsConnect": "ربط",
+  "subsOpenWindow": "افتح نافذة تسجيل الدخول",
+  "subsLoginOpened": "انفتحت نافذة على هذا الحاسوب: سجّل الدخول إلى {name} هناك ثم عُد. سيلاحظ Ember ذلك تلقائيًا."
 }

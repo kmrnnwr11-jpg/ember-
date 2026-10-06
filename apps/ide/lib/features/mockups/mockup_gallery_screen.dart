@@ -15,6 +15,7 @@ import '../../ui/ui.dart';
 import '../ai/ai_settings.dart';
 import '../create/app_builder.dart';
 import '../create/create_app_screen.dart';
+import '../create/creation_steps.dart';
 import '../projects/projects_screen.dart';
 import '../review/panel_health.dart';
 import 'mockup_controller.dart';
@@ -343,6 +344,8 @@ class _MockupGalleryScreenState extends ConsumerState<MockupGalleryScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const CreationSteps(current: 1, onDark: true),
+                    Gap.vMd,
                     Row(
                       children: [
                         Expanded(

@@ -2509,4 +2509,37 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get offlineHint =>
       'شغّل Ember على حاسوبك ثم اضغط إعادة المحاولة. لا حاجة لتسجيل الدخول.';
+
+  @override
+  String get flowDescribe => 'صِف';
+
+  @override
+  String get flowStyle => 'اختر الشكل';
+
+  @override
+  String get flowName => 'سمِّه';
+
+  @override
+  String get flowBuild => 'Ember يبنيه';
+
+  @override
+  String get homeEyebrow => 'من فكرة إلى تطبيق';
+
+  @override
+  String get subsTitle => 'اشتراكاتك في Claude وChatGPT وGemini';
+
+  @override
+  String get subsHint =>
+      'يبني Ember بالاشتراكات التي تدفعها بالفعل. تسجّل الدخول مرة واحدة على هذا الحاسوب ويبقى مسجّلًا: بلا مفاتيح وبلا تكلفة إضافية.';
+
+  @override
+  String get subsConnect => 'ربط';
+
+  @override
+  String get subsOpenWindow => 'افتح نافذة تسجيل الدخول';
+
+  @override
+  String subsLoginOpened(String name) {
+    return 'انفتحت نافذة على هذا الحاسوب: سجّل الدخول إلى $name هناك ثم عُد. سيلاحظ Ember ذلك تلقائيًا.';
+  }
 }

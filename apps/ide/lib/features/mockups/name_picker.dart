@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../ui/ui.dart';
+import '../create/creation_steps.dart';
 import 'mockup_controller.dart' show CompleteText;
 
 const _namesSystem = '''
@@ -89,6 +90,8 @@ class _NamePickerSheetState extends State<NamePickerSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const CreationSteps(current: 2),
+            Gap.vLg,
             Text(l.nameTitle, style: context.text.titleLarge),
             Gap.vXs,
             Text(l.nameHint, style: context.text.bodySmall),

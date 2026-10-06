@@ -185,3 +185,79 @@ export function cliModels(): Record<CliEngine, Array<{ id: string; label: string
 export function safeModel(v: unknown): string | undefined {
   return typeof v === 'string' && /^[A-Za-z0-9][\w.-]{0,59}$/.test(v) && v !== 'fast' && v !== 'best' ? v : undefined;
 }
+
+/** Forget what was learned about the logins, so the next health check looks again. */
+export function forgetLoginCache(): void {
+  loginCache = null;
+  claudeLoginCache = null;
+}
+
+let claudeLoginCache: { at: number; value: boolean } | null = null;
+
+/** Whether Claude Code is signed in on this machine (`claude auth status`, cached 60 s). */
+export async function claudeLoggedIn(claudeBin: string): Promise<boolean> {
+  if (claudeLoginCache && Date.now() - claudeLoginCache.at < 60_000) return claudeLoginCache.value;
+  const value = await new Promise<boolean>((resolve) => {
+    const p = spawn(claudeBin, ['auth', 'status'], { windowsHide: true });
+    let out = '';
+    p.stdout?.on('data', (d) => (out += d));
+    const t = setTimeout(() => (p.kill(), resolve(false)), 15000);
+    p.on('error', () => (clearTimeout(t), resolve(false)));
+    p.on('close', () => {
+      clearTimeout(t);
+      try {
+        resolve((JSON.parse(out) as { loggedIn?: boolean }).loggedIn === true);
+      } catch {
+        resolve(false);
+      }
+    });
+  });
+  claudeLoginCache = { at: Date.now(), value };
+  return value;
+}
+
+const q = (s: string) => `"${s.replace(/"/g, '')}"`;
+
+/**
+ * The lines of a small script that signs one subscription CLI in. Installing
+ * the CLI comes first when it is missing. The person finishes the sign-in in
+ * the browser that opens; nothing is typed for them and no password passes here.
+ */
+export function loginLines(engine: CliEngine, claudeBin: string, windows: boolean): string[] {
+  const npm = windows ? q(path.join(path.dirname(process.execPath), 'npm.cmd')) : 'npm';
+  const call = windows ? 'call ' : '';
+  if (engine === 'claude-code') return [`${q(claudeBin)} auth login`];
+  if (engine === 'codex') {
+    const cmd = cliCommand('codex');
+    return cmd ? [`${q(cmd.bin)} ${cmd.pre.map(q).join(' ')} login`] : [`${call}${npm} install -g @openai/codex`, 'codex login'];
+  }
+  const installed = cliCommand('gemini-cli');
+  return [
+    ...(installed ? [] : [`${call}${npm} install -g @google/gemini-cli`]),
+    'echo Scegli "Login with Google", accedi nel browser, poi scrivi /quit',
+    'gemini',
+  ];
+}
+
+/** Opens a terminal window on this computer that signs a subscription CLI in. */
+export async function openLoginWindow(engine: CliEngine, claudeBin: string): Promise<'opened' | 'unsupported'> {
+  const windows = process.platform === 'win32';
+  if (!windows && process.platform !== 'darwin') return 'unsupported';
+  const lines = loginLines(engine, claudeBin, windows);
+  const done = 'Fatto. Puoi chiudere questa finestra e tornare in Ember.';
+  const dir = path.join(os.tmpdir(), 'ember-login');
+  const { mkdirSync, writeFileSync } = await import('node:fs');
+  mkdirSync(dir, { recursive: true });
+  if (windows) {
+    const file = path.join(dir, `${engine}.cmd`);
+    const text = ['@echo off', 'title Ember - accesso', 'echo Accedi con il tuo abbonamento. Ember non vede la tua password.', 'echo.', ...lines, 'echo.', `echo ${done}`, 'pause >nul'];
+    writeFileSync(file, text.join('\r\n') + '\r\n');
+    spawn('cmd.exe', ['/d', '/c', 'start', 'Ember', 'cmd.exe', '/k', file], { detached: true, stdio: 'ignore' }).unref();
+  } else {
+    const file = path.join(dir, `${engine}.command`);
+    writeFileSync(file, ['#!/bin/bash', 'echo "Accedi con il tuo abbonamento. Ember non vede la tua password."', ...lines, `echo "${done}"`, 'read -n 1 -s'].join('\n') + '\n', { mode: 0o755 });
+    spawn('open', [file], { detached: true, stdio: 'ignore' }).unref();
+  }
+  forgetLoginCache();
+  return 'opened';
+}

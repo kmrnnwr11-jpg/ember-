@@ -9,6 +9,7 @@ import '../../core/theme_mode.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/ui.dart';
 import '../ai/settings_screen.dart';
+import 'subscription_login.dart';
 
 /// Accounts the user connects once and every app then uses. The value is the
 /// settings key the connection is saved under.
@@ -82,6 +83,7 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ],
           ),
+          const SubscriptionsSection(),
           SectionCard(
             icon: Icons.auto_awesome_outlined,
             title: l.settingsAi,

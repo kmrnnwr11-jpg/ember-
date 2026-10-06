@@ -2546,4 +2546,37 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get offlineHint =>
       'Démarre Ember sur ton ordinateur, puis appuie sur Réessayer. Pas besoin de te connecter.';
+
+  @override
+  String get flowDescribe => 'Décris';
+
+  @override
+  String get flowStyle => 'Choisis le style';
+
+  @override
+  String get flowName => 'Donne un nom';
+
+  @override
+  String get flowBuild => 'Ember la crée';
+
+  @override
+  String get homeEyebrow => 'D\'une idée à une app';
+
+  @override
+  String get subsTitle => 'Tes abonnements Claude, ChatGPT et Gemini';
+
+  @override
+  String get subsHint =>
+      'Ember crée avec les abonnements que tu paies déjà. Tu te connectes une fois sur cet ordinateur et ça reste connecté : pas de clés, pas de coût en plus.';
+
+  @override
+  String get subsConnect => 'Connecter';
+
+  @override
+  String get subsOpenWindow => 'Ouvrir la fenêtre de connexion';
+
+  @override
+  String subsLoginOpened(String name) {
+    return 'Une fenêtre s\'est ouverte sur cet ordinateur : connecte-toi à $name là-bas, puis reviens. Ember le remarque tout seul.';
+  }
 }

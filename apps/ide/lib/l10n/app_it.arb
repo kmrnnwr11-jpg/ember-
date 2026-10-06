@@ -748,5 +748,15 @@
   "deviceDesktop": "Computer",
   "checkEmailToConfirm": "Controlla la tua email per confermare la registrazione.",
   "offlineTitle": "Ember non è acceso",
-  "offlineHint": "Avvia Ember sul tuo computer, poi premi Riprova. Non serve accedere."
+  "offlineHint": "Avvia Ember sul tuo computer, poi premi Riprova. Non serve accedere.",
+  "flowDescribe": "Descrivi",
+  "flowStyle": "Scegli lo stile",
+  "flowName": "Dai un nome",
+  "flowBuild": "Ember la crea",
+  "homeEyebrow": "Da un'idea a un'app",
+  "subsTitle": "I tuoi abbonamenti Claude, ChatGPT e Gemini",
+  "subsHint": "Ember costruisce con gli abbonamenti che già paghi. Accedi una volta su questo computer e resta collegato: niente chiavi, nessun costo in più.",
+  "subsConnect": "Collega",
+  "subsOpenWindow": "Apri la finestra di accesso",
+  "subsLoginOpened": "Si è aperta una finestra su questo computer: accedi a {name} lì, poi torna qui. Ember se ne accorge da solo."
 }

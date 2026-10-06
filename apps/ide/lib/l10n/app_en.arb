@@ -1256,5 +1256,16 @@
   "deviceDesktop": "Computer",
   "checkEmailToConfirm": "Check your email to confirm your registration.",
   "offlineTitle": "Ember is not switched on",
-  "offlineHint": "Start Ember on your computer, then press Retry. You do not need to sign in."
+  "offlineHint": "Start Ember on your computer, then press Retry. You do not need to sign in.",
+  "flowDescribe": "Describe",
+  "flowStyle": "Choose the style",
+  "flowName": "Name it",
+  "flowBuild": "Ember builds it",
+  "homeEyebrow": "From an idea to an app",
+  "subsTitle": "Your Claude, ChatGPT and Gemini plans",
+  "subsHint": "Ember builds with the plans you already pay for. You sign in once on this computer and it stays signed in: no keys, no extra cost.",
+  "subsConnect": "Connect",
+  "subsOpenWindow": "Open the sign-in window",
+  "subsLoginOpened": "A window opened on this computer: sign in to {name} there, then come back. Ember notices by itself.",
+  "@subsLoginOpened": {"placeholders":{"name":{"type":"String"}}}
 }

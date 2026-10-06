@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../ui/ui.dart';
 import 'app_builder.dart';
+import 'subscription_login.dart';
 
 /// Where to get access for an engine. Payments always happen on the provider's own site.
 class EngineAccess {
@@ -150,13 +152,24 @@ Future<void> showConnectSubscription(BuildContext context, BuildEngine engine) {
         ),
       ),
       actions: [
+        // The easy way: a window opens on this computer and the person signs in there once.
+        Consumer(
+          builder: (_, ref, _) => FilledButton.icon(
+            key: const Key('openLoginWindow'),
+            onPressed: () async {
+              if (await startSubscriptionLogin(d, ref, engine) && d.mounted) Navigator.pop(d);
+            },
+            icon: const Icon(Icons.login),
+            label: Text(l.subsOpenWindow),
+          ),
+        ),
         TextButton.icon(
           onPressed: () => Clipboard.setData(ClipboardData(text: command)),
           icon: const Icon(Icons.copy_outlined, size: 16),
           label: Text(l.copy),
         ),
         TextButton(onPressed: () => _open(a.plan!), child: Text(l.getSubscription)),
-        FilledButton(onPressed: () => Navigator.pop(d), child: Text(l.close)),
+        TextButton(onPressed: () => Navigator.pop(d), child: Text(l.close)),
       ],
     ),
   );

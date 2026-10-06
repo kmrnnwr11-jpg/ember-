@@ -7,6 +7,7 @@ import '../../l10n/app_localizations.dart';
 import '../../ui/ui.dart';
 import '../../widgets/ember_logo.dart';
 import 'app_builder.dart';
+import 'creation_steps.dart';
 
 /// One line of the build checklist.
 typedef ForgeStep = ({String label, bool done, bool current});
@@ -76,6 +77,8 @@ class _ForgeViewState extends State<ForgeView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // The first build is the last step of making an app; later changes are not.
+            if (b.conversation.length <= 1) ...[const CreationSteps(current: 3), Gap.vXl],
             Row(
               children: [
                 const ExcludeSemantics(child: EmberMark(size: 48)),

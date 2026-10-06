@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cliBuildArgs, parseCodexLine, parseGeminiLine } from './subscription_clis.js';
+import { cliBuildArgs, loginLines, parseCodexLine, parseGeminiLine } from './subscription_clis.js';
 
 describe('subscription CLIs', () => {
   it('maps codex exec --json events to agent events', () => {
@@ -51,5 +51,23 @@ describe('files Codex writes through PowerShell', () => {
     const ev = parseCodexLine(line, { lastText: '' });
     expect(ev).toHaveLength(1);
     expect(ev[0]).toMatchObject({ kind: 'tool', name: 'Write' });
+  });
+});
+
+describe('loginLines', () => {
+  it('signs Claude Code in with its own command, never with a password typed here', () => {
+    const bin = 'C:\\Users\\me\\.local\\bin\\claude.exe';
+    expect(loginLines('claude-code', bin, true)).toEqual([`"${bin}" auth login`]);
+  });
+
+  it('installs Gemini CLI first when it is missing, then lets the person choose how to sign in', () => {
+    const lines = loginLines('gemini-cli', 'claude', true);
+    expect(lines[lines.length - 1]).toBe('gemini');
+    expect(lines.join('\n')).not.toMatch(/password|token|apikey/i);
+  });
+
+  it('quotes paths with spaces', () => {
+    const spaced = 'C:\\Program Files\\x\\claude.exe';
+    expect(loginLines('claude-code', spaced, true)[0]).toBe(`"${spaced}" auth login`);
   });
 });

@@ -201,15 +201,19 @@ describe('real operations', () => {
           const langs = /into these languages: ([^.]+)\./.exec(prompt)![1]!.split(', ');
           return JSON.stringify(Object.fromEntries(langs.map((l) => [l, { shortDescription: `short ${l}`, fullDescription: `full ${l}` }])));
         }
-        return JSON.stringify({ title: 'Wrong', shortDescription: 'Drink water on time', fullDescription: 'Never forget to drink.', releaseNotes: 'First', privacyPolicyMarkdown: 'p'.repeat(80), dataSafetyGuide: 'd', contentRatingGuide: 'c', otherDeclarationsGuide: 'o' });
+        return JSON.stringify({ title: 'Wrong', shortDescription: 'Drink water on time', fullDescription: 'Never forget to drink.', releaseNotes: 'First', privacyPolicyMarkdown: 'Owner [NOME TITOLARE], contact [EMAIL]. '.concat('p'.repeat(80)), dataSafetyGuide: 'd', contentRatingGuide: 'c', otherDeclarationsGuide: 'o' });
       },
     });
-    scripted.routes['/store/privacy'] = () => ({ status: 200, json: { publicUrl: 'https://example.org/p' } });
     const ctx = ctxFor();
     await realOps(host, 'u', 'me@x.dev').stages.listing!(ctx);
     const put = scripted.calls.find((c) => c.url.endsWith('/store/listing'))!.body as Record<string, string>;
     // The owner's name is kept whatever the writer proposed.
-    expect(put).toMatchObject({ title: 'Water Today', shortDescription: 'Drink water on time', contactEmail: 'me@x.dev', privacyUrl: 'https://example.org/p' });
+    expect(put).toMatchObject({ title: 'Water Today', shortDescription: 'Drink water on time', contactEmail: 'me@x.dev', privacyUrl: '' });
+    // The policy is only written in the project: nothing was made public while writing the texts.
+    expect(scripted.calls.some((c) => c.url.endsWith('/store/privacy'))).toBe(false);
+    const policy = await readFile(path.join(dir, 'store', 'privacy_policy.md'), 'utf8');
+    expect(policy).toContain('Water Today');
+    expect(policy).toContain('me@x.dev');
     const t = JSON.parse(put.translations!) as { languages: string[]; pages: Record<string, { title: string; shortDescription: string }>; from: string };
     expect(t.languages).toEqual(['it-IT', 'es-ES', 'fr-FR', 'de-DE']);
     expect(t.pages['it-IT']).toMatchObject({ title: 'Water Today', shortDescription: 'short it-IT' });
@@ -298,6 +302,18 @@ describe('real operations', () => {
       const body = scripted.calls.find((c) => c.method === 'POST')!.body as Record<string, any>;
       expect(body).toMatchObject({ uploadBuild: true, submit: false, free: true, category: 'HEALTH_AND_FITNESS' });
     }, 30_000);
+
+    it('makes the privacy policy public only now, and gives its address to Apple', async () => {
+      await mkdir(path.join(dir, 'store'), { recursive: true });
+      await writeFile(path.join(dir, 'store', 'privacy_policy.md'), 'We keep everything on your phone. '.repeat(4));
+      await writeFile(path.join(dir, 'store', 'listing.json'), JSON.stringify({ title: 'Water Today', shortDescription: 'Short', fullDescription: 'Full', translations: '{}' }));
+      const { host, scripted } = fake();
+      scripted.routes['/store/privacy'] = () => ({ status: 200, json: { publicUrl: 'https://gist.github.com/x/1' } });
+      scripted.routes['/appstore/autopublish'] = (body: unknown) => ({ status: 200, json: body ? {} : { phase: 'done' } });
+      await realOps(host, 'u', 'me@x.dev').stages.appstore!(ctxFor());
+      const start = scripted.calls.find((c) => c.method === 'POST' && c.url.endsWith('/autopublish'))!.body as Record<string, unknown>;
+      expect(start.privacyPolicyUrl).toBe('https://gist.github.com/x/1');
+    });
 
     it('says to create the app record when Apple does not know the app', async () => {
       const { host, scripted } = fake();

@@ -1,9 +1,9 @@
-import { readFile, rm, stat } from 'node:fs/promises';
+import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { AgentEvent, AgentRun, ClaudeCodeEngine } from '../agent_cli.js';
 import type { Config } from '../config.js';
 import type { Job } from '../jobs.js';
-import { packageName as derivePackage } from '../publish_prep.js';
+import { fillPolicy, packageName as derivePackage } from '../publish_prep.js';
 import type { PreviewService } from '../preview.js';
 import type { Services } from '../services.js';
 import type { StageContext, StageOp, StageOutcome, Ops } from './engine.js';
@@ -253,12 +253,14 @@ export function realOps(host: OpsHost, ownerId: string, email = ''): Ops {
     ctx.doing(`translating into ${ctx.recipe.languages.length - 1} languages`);
     const { pages, failed } = await translate({ complete, kit, languages: ctx.recipe.languages });
     if (failed.length) ctx.log(`no translation for: ${failed.join(', ')}`);
-    let privacyUrl = '';
+    // The policy is kept in the project. It is made public (a gist on the owner's GitHub) only when an
+    // upload to Apple needs an address for it, never as a side effect of writing the texts.
     if (kit.privacyPolicyMarkdown.length >= 50) {
-      const p = await host.call(ownerId, 'PUT', `/v1/projects/${row.id}/store/privacy`, { markdown: kit.privacyPolicyMarkdown, appName: ctx.app.name, email });
-      privacyUrl = typeof p.json.publicUrl === 'string' ? p.json.publicUrl : '';
+      const dir = path.join(services.projectRoot(row), 'store');
+      await mkdir(dir, { recursive: true });
+      await writeFile(path.join(dir, 'privacy_policy.md'), `<!-- ${ctx.app.name} -->\n${fillPolicy(kit.privacyPolicyMarkdown, { name: host.cfg.STUDIO_NAME || ctx.app.name, email })}`);
     }
-    const body = listingBody({ kit, pages, languages: ctx.recipe.languages, email, privacyUrl });
+    const body = listingBody({ kit, pages, languages: ctx.recipe.languages, email, privacyUrl: '' });
     const saved = await host.call(ownerId, 'PUT', `/v1/projects/${row.id}/store/listing`, body);
     if (saved.status !== 200) throw new Error(`the listing could not be saved: ${String(saved.json.message ?? saved.status)}`);
     return { message: `${Object.keys(pages).length + 1} languages` };
@@ -352,6 +354,16 @@ export function realOps(host: OpsHost, ownerId: string, email = ''): Ops {
       throw new NeedsOwner({ kind: 'apple_key', title: 'Connect App Store Connect', detail: 'Save the App Store Connect key (Key ID, Issuer ID and the .p8 file) once; every app then uses it.', data: {} });
     }
     const { listing: l, pages } = await savedListing(ctx);
+    let privacyUrl = l.privacyUrl ?? '';
+    if (!privacyUrl) {
+      const md = await readFile(path.join(await rootOf(ctx), 'store', 'privacy_policy.md'), 'utf8').catch(() => '');
+      if (md.length >= 50) {
+        ctx.doing('publishing the privacy policy');
+        const p = await host.call(ownerId, 'PUT', `/v1/projects/${id}/store/privacy`, { markdown: md, appName: ctx.app.name, email });
+        privacyUrl = typeof p.json.publicUrl === 'string' ? p.json.publicUrl : '';
+        if (!privacyUrl) ctx.log('no public address for the privacy policy (GitHub is not signed in): TestFlight does not need it, a review does');
+      }
+    }
     const apple = (language: string, p: { title?: string; shortDescription?: string; fullDescription?: string; releaseNotes?: string }) => ({
       language,
       title: p.title,
@@ -367,7 +379,7 @@ export function realOps(host: OpsHost, ownerId: string, email = ''): Ops {
       free: true,
       screenshots: true,
       ...(category ? { category } : {}),
-      ...(l.privacyUrl ? { privacyPolicyUrl: l.privacyUrl } : {}),
+      ...(privacyUrl ? { privacyPolicyUrl: privacyUrl } : {}),
       listing: apple('en-US', l),
       translations: Object.entries(pages).map(([language, p]) => apple(language, p)),
     });

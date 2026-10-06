@@ -60,6 +60,8 @@ export class FactoryService {
     const factory = new Factory({
       store: FileStateStore.forOwner(this.deps.cfg.DATA_DIR, `${ownerId}${this.deps.simulated ? '_sim' : ''}`),
       ops,
+      // Pretend failures are retried as fast as pretend work goes.
+      ...(this.deps.simulated ? { retryBackoffMs: Math.max(5, 5000 * this.deps.cfg.EMBER_FACTORY_SIM_SPEED) } : {}),
     });
     await factory.init();
     // A Factory seen for the first time starts from what this computer can carry.

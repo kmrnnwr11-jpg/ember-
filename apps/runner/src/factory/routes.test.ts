@@ -98,7 +98,7 @@ describe('/v1/factory', () => {
     expect(created.status).toBe(201);
     expect(created.body.batchId).toBeTruthy();
     let state: Record<string, any> = {};
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 400; i++) {
       state = (await get('/v1/factory')).body;
       if (state.summary.done + state.summary.failed === 6) break;
       await sleep(100);

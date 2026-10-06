@@ -1,0 +1,477 @@
+{
+ "apps": [
+  {
+   "name": "Garden Planner",
+   "summary": "garden soil helper number 1 that keeps everything on the phone",
+   "brief": "Build a polished garden soil app with a home screen, a detail screen and a settings screen. Data stays on the phone.",
+   "size": "big",
+   "category": "tools",
+   "engine": "codex"
+  },
+  {
+   "name": "Guitar Helper",
+   "summary": "guitar chords helper number 2 that keeps everything on the phone",
+   "brief": "Build a polished guitar chords app with a home screen, a detail screen and a settings screen. Data stays on the phone.",
+   "size": "small",
+   "category": "tools",
+   "engine": "codex"
+  },
+  {
+   "name": "Language Guide",
+   "summary": "language idioms helper number 16 that keeps everything on the phone",
+   "brief": "Build a polished language idioms app with a home screen, a detail screen and a settings screen. Data stays on the phone.",
+   "size": "small",
+   "category": "tools",
+   "engine": "codex"
+  },
+  {
+   "name": "Tea Journal",
+   "summary": "tea brewing helper number 17 that keeps everything on the phone",
+   "brief": "Build a polished tea brewing app with a home screen, a detail screen and a settings screen. Data stays on the phone.",
+   "size": "small",
+   "category": "tools",
+   "engine": "codex"
+  },
+  {
+   "name": "Budget Journal 2",
+   "summary": "budget envelopes helper number 29 that keeps everything on the phone",
+   "brief": "Build a polished budget envelopes app with a home screen, a detail screen and a settings screen. Data stays on the phone.",
+   "size": "small",
+   "category": "tools",
+   "engine": "codex"
+  },
+  {
+   "name": "Coin Guide 2",
+   "summary": "coin collecting helper number 40 that keeps everything on the phone",
+   "brief": "Build a polished coin collecting app with a home screen, a detail screen and a settings screen. Data stays on the phone.",
+   "size": "small",
+   "category": "tools",
+   "engine": "codex"
+  },
+  {
+   "name": "Star Log 3",
+   "summary": "star gazing helper number 59 that keeps everything on the phone",
+   "brief": "Build a polished star gazing app with a home screen, a detail screen and a settings screen. Data stays on the phone.",
+   "size": "small",
+   "category": "tools",
+   "engine": "codex"
+  },
+  {
+   "name": "Bird Tracker 4",
+   "summary": "bird sightings helper number 68 that keeps everything on the phone",
+   "brief": "Build a polished bird sightings app with a home screen, a detail screen and a settings screen. Data stays on the phone.",
+   "size": "small",
+   "category": "tools",
+   "engine": "codex"
+  }
+ ],
+ "dropped": [
+  {
+   "name": "Receipts Coach",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Sleep Guide",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Coach"
+  },
+  {
+   "name": "Running Journal",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Coach"
+  },
+  {
+   "name": "Pantry Buddy",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Coach"
+  },
+  {
+   "name": "Flashcards Scanner",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Bird Tracker",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Coach"
+  },
+  {
+   "name": "Budget Mixer",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Coach"
+  },
+  {
+   "name": "Breathing Timer",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Chess Log",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Coach"
+  },
+  {
+   "name": "Plant Quiz",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Coach"
+  },
+  {
+   "name": "Train Planner",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Coach"
+  },
+  {
+   "name": "Pet Helper",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Coach"
+  },
+  {
+   "name": "Cycling Coach",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Coach"
+  },
+  {
+   "name": "Stretching Buddy",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Star Scanner",
+   "reason": "similar_idea",
+   "keptInstead": "Stretching Buddy"
+  },
+  {
+   "name": "Coin Tracker",
+   "reason": "similar_idea",
+   "keptInstead": "Stretching Buddy"
+  },
+  {
+   "name": "Garden Mixer 2",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Guitar Timer 2",
+   "reason": "similar_idea",
+   "keptInstead": "Guitar Helper"
+  },
+  {
+   "name": "Receipts Log 2",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Sleep Quiz 2",
+   "reason": "similar_idea",
+   "keptInstead": "Stretching Buddy"
+  },
+  {
+   "name": "Running Planner 2",
+   "reason": "similar_idea",
+   "keptInstead": "Stretching Buddy"
+  },
+  {
+   "name": "Pantry Helper 2",
+   "reason": "similar_idea",
+   "keptInstead": "Stretching Buddy"
+  },
+  {
+   "name": "Flashcards Coach 2",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Bird Guide 2",
+   "reason": "similar_idea",
+   "keptInstead": "Stretching Buddy"
+  },
+  {
+   "name": "Breathing Buddy 2",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Chess Scanner 2",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Buddy 2"
+  },
+  {
+   "name": "Plant Tracker 2",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Buddy 2"
+  },
+  {
+   "name": "Train Mixer 2",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Buddy 2"
+  },
+  {
+   "name": "Pet Timer 2",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Buddy 2"
+  },
+  {
+   "name": "Cycling Log 2",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Buddy 2"
+  },
+  {
+   "name": "Language Quiz 2",
+   "reason": "similar_idea",
+   "keptInstead": "Language Guide"
+  },
+  {
+   "name": "Tea Planner 2",
+   "reason": "similar_idea",
+   "keptInstead": "Tea Journal"
+  },
+  {
+   "name": "Stretching Helper 2",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Star Coach 2",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Buddy 2"
+  },
+  {
+   "name": "Garden Journal 3",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Guitar Buddy 3",
+   "reason": "similar_idea",
+   "keptInstead": "Guitar Helper"
+  },
+  {
+   "name": "Receipts Scanner 3",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Sleep Tracker 3",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Scanner 3"
+  },
+  {
+   "name": "Running Mixer 3",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Scanner 3"
+  },
+  {
+   "name": "Pantry Timer 3",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Scanner 3"
+  },
+  {
+   "name": "Flashcards Log 3",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Bird Quiz 3",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Scanner 3"
+  },
+  {
+   "name": "Budget Planner 3",
+   "reason": "similar_idea",
+   "keptInstead": "Budget Journal 2"
+  },
+  {
+   "name": "Breathing Helper 3",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Chess Coach 3",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Helper 3"
+  },
+  {
+   "name": "Plant Guide 3",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Helper 3"
+  },
+  {
+   "name": "Train Journal 3",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Helper 3"
+  },
+  {
+   "name": "Pet Buddy 3",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Helper 3"
+  },
+  {
+   "name": "Cycling Scanner 3",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Helper 3"
+  },
+  {
+   "name": "Language Tracker 3",
+   "reason": "similar_idea",
+   "keptInstead": "Language Guide"
+  },
+  {
+   "name": "Tea Mixer 3",
+   "reason": "similar_idea",
+   "keptInstead": "Tea Journal"
+  },
+  {
+   "name": "Stretching Timer 3",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Coin Quiz 3",
+   "reason": "similar_idea",
+   "keptInstead": "Coin Guide 2"
+  },
+  {
+   "name": "Garden Planner 4",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Guitar Helper 4",
+   "reason": "similar_idea",
+   "keptInstead": "Guitar Helper"
+  },
+  {
+   "name": "Receipts Coach 4",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Sleep Guide 4",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Coach 4"
+  },
+  {
+   "name": "Running Journal 4",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Coach 4"
+  },
+  {
+   "name": "Pantry Buddy 4",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Coach 4"
+  },
+  {
+   "name": "Flashcards Scanner 4",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Budget Mixer 4",
+   "reason": "similar_idea",
+   "keptInstead": "Budget Journal 2"
+  },
+  {
+   "name": "Breathing Timer 4",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Chess Log 4",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Timer 4"
+  },
+  {
+   "name": "Plant Quiz 4",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Timer 4"
+  },
+  {
+   "name": "Train Planner 4",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Timer 4"
+  },
+  {
+   "name": "Pet Helper 4",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Timer 4"
+  },
+  {
+   "name": "Cycling Coach 4",
+   "reason": "similar_idea",
+   "keptInstead": "Breathing Timer 4"
+  },
+  {
+   "name": "Language Guide 4",
+   "reason": "similar_idea",
+   "keptInstead": "Language Guide"
+  },
+  {
+   "name": "Tea Journal 4",
+   "reason": "similar_idea",
+   "keptInstead": "Tea Journal"
+  },
+  {
+   "name": "Stretching Buddy 4",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Star Scanner 4",
+   "reason": "similar_idea",
+   "keptInstead": "Star Log 3"
+  },
+  {
+   "name": "Coin Tracker 4",
+   "reason": "similar_idea",
+   "keptInstead": "Coin Guide 2"
+  },
+  {
+   "name": "Garden Mixer 5",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Guitar Timer 5",
+   "reason": "similar_idea",
+   "keptInstead": "Guitar Helper"
+  },
+  {
+   "name": "Receipts Log 5",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Sleep Quiz 5",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Log 5"
+  },
+  {
+   "name": "Running Planner 5",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Log 5"
+  },
+  {
+   "name": "Pantry Helper 5",
+   "reason": "similar_idea",
+   "keptInstead": "Receipts Log 5"
+  },
+  {
+   "name": "Flashcards Coach 5",
+   "reason": "similar_idea",
+   "keptInstead": "Garden Planner"
+  },
+  {
+   "name": "Bird Guide 5",
+   "reason": "similar_idea",
+   "keptInstead": "Bird Tracker 4"
+  },
+  {
+   "name": "Budget Journal 5",
+   "reason": "similar_idea",
+   "keptInstead": "Budget Journal 2"
+  }
+ ],
+ "warnings": [],
+ "source": "supervisor"
+}

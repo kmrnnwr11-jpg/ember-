@@ -365,4 +365,62 @@ class RunnerApi {
 
   Future<String> jobLog(String jobId) =>
       _call(() => _dio.get('/v1/jobs/$jobId'), (d) => d['log'] as String? ?? '');
+
+  // ---- Fabbrica: many apps at once ----
+
+  /// The whole state of the Fabbrica, or `{unchanged: true}` when nothing is newer than [rev].
+  Future<Map<String, dynamic>> factoryState({int? rev}) =>
+      _call(() => _dio.get('/v1/factory', queryParameters: {'rev': ?rev}), (d) => d as Map<String, dynamic>);
+
+  /// The supervisor reads everything the owner wrote (a list, a plan, whole
+  /// documents) or, when [count] is given, invents that many ideas on the theme
+  /// in [text]. [engines] are the weights that decide who writes which app.
+  /// Slow (tens of seconds). Nothing is started.
+  Future<Map<String, dynamic>> factoryPlan({required String text, int? count, Map<String, int>? engines}) => _call(
+    () => _dio.post(
+      '/v1/factory/plan',
+      data: {'text': text, 'count': ?count, 'engines': ?engines},
+      options: Options(receiveTimeout: const Duration(minutes: 5), sendTimeout: const Duration(minutes: 1)),
+    ),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Starts a batch from the apps the owner approved.
+  Future<Map<String, dynamic>> factoryStartBatch(Map<String, dynamic> body) =>
+      _call(() => _dio.post('/v1/factory/batches', data: {...body, 'start': true}), (d) => d as Map<String, dynamic>);
+
+  Future<void> factorySetPaused(bool paused) async {
+    await _call<void>(() => _dio.post(paused ? '/v1/factory/pause' : '/v1/factory/resume'), (_) {});
+  }
+
+  /// [action] is `retry` (optionally with `{from: stage}`), `cancel` or `resolve` (optionally with `{needId, skip}`).
+  Future<void> factoryAppAction(String appId, String action, {Map<String, dynamic>? body}) async {
+    await _call<void>(() => _dio.post('/v1/factory/apps/$appId/$action', data: body ?? const <String, dynamic>{}), (_) {});
+  }
+
+  /// Takes the app out of the Fabbrica; its project stays unless [deleteProject].
+  Future<void> factoryRemoveApp(String appId, {bool deleteProject = false}) async {
+    await _call<void>(() => _dio.delete('/v1/factory/apps/$appId', queryParameters: {if (deleteProject) 'project': 'true'}), (_) {});
+  }
+
+  /// One action on many apps at once: `retry`, `cancel` or `delete`.
+  Future<void> factoryBulk(List<String> ids, String action) async {
+    await _call<void>(() => _dio.post('/v1/factory/apps/bulk', data: {'ids': ids, 'action': action}), (_) {});
+  }
+
+  Future<void> factoryRetryBatchFailed(String batchId) async {
+    await _call<void>(() => _dio.post('/v1/factory/batches/$batchId/retry-failed'), (_) {});
+  }
+
+  Future<void> factoryCancelBatch(String batchId) async {
+    await _call<void>(() => _dio.post('/v1/factory/batches/$batchId/cancel'), (_) {});
+  }
+
+  Future<void> factoryPatchSettings(Map<String, dynamic> patch) async {
+    await _call<void>(() => _dio.patch('/v1/factory/settings', data: patch), (_) {});
+  }
+
+  /// What is ready to work with (accounts, tools) and what this computer can carry.
+  Future<Map<String, dynamic>> factoryConnections() =>
+      _call(() => _dio.get('/v1/factory/connections'), (d) => d as Map<String, dynamic>);
 }

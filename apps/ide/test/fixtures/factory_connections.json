@@ -1,0 +1,68 @@
+{
+ "links": {
+  "claude": {
+   "ready": false,
+   "detail": "not_installed"
+  },
+  "qwen": {
+   "ready": false,
+   "detail": "not_installed"
+  },
+  "gemini": {
+   "ready": false,
+   "detail": "not_installed"
+  },
+  "codex": {
+   "ready": true,
+   "detail": ""
+  },
+  "flutter": {
+   "ready": false,
+   "detail": "not_installed"
+  },
+  "android": {
+   "ready": false,
+   "detail": "not_installed"
+  },
+  "chrome": {
+   "ready": true,
+   "detail": ""
+  },
+  "playKey": {
+   "ready": false,
+   "detail": "missing"
+  },
+  "appleKey": {
+   "ready": false,
+   "detail": "missing"
+  },
+  "mac": {
+   "ready": false,
+   "detail": "windows"
+  }
+ },
+ "capacity": {
+  "cpus": 16,
+  "totalRamMb": 8137,
+  "freeRamMb": 562,
+  "freeDiskGb": 108.1,
+  "buildSlots": 1,
+  "agentSlots": 8,
+  "suggested": {
+   "lanes": {
+    "light": 5,
+    "text": 4,
+    "build": 1,
+    "image": 2,
+    "shots": 1,
+    "store": 2,
+    "agent:claude-code": 4,
+    "agent:codex": 3,
+    "agent:gemini-cli": 4,
+    "agent:qwen-code": 4
+   },
+   "maxInFlight": 12
+  }
+ },
+ "simulated": true
+}

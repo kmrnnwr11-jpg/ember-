@@ -2542,4 +2542,672 @@ class AppLocalizationsAr extends AppLocalizations {
   String subsLoginOpened(String name) {
     return 'انفتحت نافذة على هذا الحاسوب: سجّل الدخول إلى $name هناك ثم عُد. سيلاحظ Ember ذلك تلقائيًا.';
   }
+
+  @override
+  String get fxTitle => 'المصنع';
+
+  @override
+  String get fxNavOverview => 'نظرة عامة';
+
+  @override
+  String get fxNavNew => 'دفعة جديدة';
+
+  @override
+  String get fxNavNeeds => 'يحتاجك';
+
+  @override
+  String get fxNavLinks => 'الاتصالات';
+
+  @override
+  String get fxPause => 'إيقاف مؤقت';
+
+  @override
+  String get fxResume => 'استئناف';
+
+  @override
+  String get fxLoading => 'جارٍ تحميل المصنع…';
+
+  @override
+  String get fxLess => 'أقل';
+
+  @override
+  String get fxMore => 'أكثر';
+
+  @override
+  String get fxStageCreate => 'إنشاء المشروع';
+
+  @override
+  String get fxStageCode => 'كتابة التطبيق';
+
+  @override
+  String get fxStageVerify => 'فحص الكود';
+
+  @override
+  String get fxStagePreview => 'إعداد المعاينة';
+
+  @override
+  String get fxStageLogo => 'رسم الشعار';
+
+  @override
+  String get fxStageListing => 'كتابة نصوص المتجر';
+
+  @override
+  String get fxStageShots => 'التقاط لقطات الشاشة';
+
+  @override
+  String get fxStageAndroid => 'بناء ملف أندرويد';
+
+  @override
+  String get fxStagePlay => 'الرفع إلى Google Play (مسودة، اختبار)';
+
+  @override
+  String get fxStageIos => 'بناء تطبيق آيفون';
+
+  @override
+  String get fxStageAppStore => 'الرفع إلى App Store (TestFlight)';
+
+  @override
+  String get fxStagePending => 'لم يبدأ';
+
+  @override
+  String get fxStageSkipped => 'تم التخطي';
+
+  @override
+  String get fxStatusQueued => 'في الانتظار';
+
+  @override
+  String get fxStatusRunning => 'قيد العمل';
+
+  @override
+  String get fxStatusNeedsYou => 'يحتاجك';
+
+  @override
+  String get fxStatusDone => 'جاهز';
+
+  @override
+  String get fxStatusFailed => 'فشل';
+
+  @override
+  String get fxStatusCancelled => 'أُلغي';
+
+  @override
+  String fxStagesDone(int done, int total) {
+    return 'اكتملت $done من $total خطوات';
+  }
+
+  @override
+  String get fxHeadDone => 'جاهز';
+
+  @override
+  String get fxHeadNeedsYou => 'ينتظرك';
+
+  @override
+  String fxHeadFailed(String stage) {
+    return 'فشل: $stage';
+  }
+
+  @override
+  String fxHeadRunning(String stage) {
+    return 'الآن: $stage';
+  }
+
+  @override
+  String fxHeadQueued(String stage) {
+    return 'تنتظر دورها: $stage';
+  }
+
+  @override
+  String fxHeadWaitingTomorrow(String stage) {
+    return 'جاهزة، تنتظر الحد اليومي: $stage';
+  }
+
+  @override
+  String fxWaitsUntil(String when) {
+    return 'تنتظر حتى $when';
+  }
+
+  @override
+  String get fxNeedPlayAppTitle => 'أنشئ التطبيق في Google Play Console';
+
+  @override
+  String get fxNeedPlayAppDetail =>
+      '1. افتح Google Play Console واضغط «إنشاء تطبيق».\n2. الصق الاسم واختر اللغة و«تطبيق» و«مجاني».\n3. وافق على الإقرارات واضغط «إنشاء تطبيق».\n4. ارجع إلى هنا واضغط «تم، تابع»: يبدأ الرفع تلقائياً.';
+
+  @override
+  String get fxNeedAppleAppTitle => 'أنشئ التطبيق في App Store Connect';
+
+  @override
+  String get fxNeedAppleAppDetail =>
+      '1. افتح App Store Connect وانتقل إلى «Apps» واضغط «+» ثم «New App».\n2. الصق الاسم ومعرّف الحزمة (Bundle ID) ورمز SKU أدناه.\n3. اضغط «Create».\n4. ارجع إلى هنا واضغط «تم، تابع».';
+
+  @override
+  String get fxNeedMacTitle => 'تطبيق آيفون يحتاج إلى جهاز Mac';
+
+  @override
+  String get fxNeedMacDetail =>
+      'تسمح Apple ببناء تطبيق آيفون على جهاز Mac فقط. الكود محفوظ: افتح Ember على جهاز Mac واستعد التطبيق من GitHub وسيتم جزء آيفون هناك.';
+
+  @override
+  String get fxNeedPlayKeyTitle => 'اربط مفتاح Google Play';
+
+  @override
+  String get fxNeedPlayKeyDetail =>
+      '1. افتح إعدادات Ember.\n2. تحت Google Play الصق مفتاح حساب الخدمة.\n3. ارجع إلى هنا واضغط «تم، تابع».';
+
+  @override
+  String get fxNeedAppleKeyTitle => 'اربط مفتاح App Store Connect';
+
+  @override
+  String get fxNeedAppleKeyDetail =>
+      '1. افتح إعدادات Ember.\n2. تحت App Store الصق مفتاح App Store Connect.\n3. ارجع إلى هنا واضغط «تم، تابع».';
+
+  @override
+  String fxNeedLoginTitle(String engine) {
+    return 'سجّل الدخول مجدداً إلى $engine';
+  }
+
+  @override
+  String get fxNeedLoginDetail =>
+      'انتهت صلاحية تسجيل الدخول. افتح صفحة الاتصالات واضغط «اتصال» بجانب المحرك وسجّل الدخول. ثم اضغط «تم، تابع».';
+
+  @override
+  String get fxDataName => 'الاسم';
+
+  @override
+  String get fxDataPackage => 'اسم الحزمة';
+
+  @override
+  String get fxDataShort => 'وصف قصير';
+
+  @override
+  String get fxDataCategory => 'الفئة';
+
+  @override
+  String get fxDataBundleId => 'معرّف الحزمة (Bundle ID)';
+
+  @override
+  String get fxDataSku => 'SKU';
+
+  @override
+  String get fxDataEngine => 'المحرك';
+
+  @override
+  String get fxNeedsDone => 'تم، تابع';
+
+  @override
+  String get fxNeedsSkip => 'تخطَّ هذه الخطوة';
+
+  @override
+  String get fxNeedsEmpty => 'لا شيء يحتاجك الآن.';
+
+  @override
+  String get fxNeedsIntro =>
+      'هذه أمور لا يستطيع فعلها سواك. عندما تنهي أحدها اضغط «تم، تابع» ويتابع المصنع عمله.';
+
+  @override
+  String get fxEmpty =>
+      'لا توجد تطبيقات في المصنع بعد. ابدأ دفعة وصِف حتى 100 تطبيق دفعة واحدة.';
+
+  @override
+  String get fxNoMatch => 'لا يوجد تطبيق مطابق.';
+
+  @override
+  String get fxSearch => 'ابحث في التطبيقات';
+
+  @override
+  String get fxFilterAll => 'الكل';
+
+  @override
+  String get fxStatTotal => 'التطبيقات';
+
+  @override
+  String get fxOnPlay => 'على Google Play';
+
+  @override
+  String get fxOnAppStore => 'على App Store';
+
+  @override
+  String get fxPausedTitle => 'المصنع متوقف مؤقتاً';
+
+  @override
+  String get fxPausedHint => 'لن يبدأ شيء جديد حتى تستأنف.';
+
+  @override
+  String get fxPausedRestart =>
+      'أُغلق Ember أو أُعيد تشغيله أثناء صنع التطبيقات. لا يُستأنف شيء تلقائياً، فلا يُستهلك أي اشتراك دون علمك.';
+
+  @override
+  String get fxLowDiskTitle => 'القرص شبه ممتلئ';
+
+  @override
+  String get fxLowDiskHint =>
+      'لن يبدأ أي تطبيق جديد حتى تتوفر مساحة. التطبيقات المنتهية تحرر مجلدات البناء الخاصة بها تلقائياً.';
+
+  @override
+  String get fxSimulatedTitle => 'وضع التجربة: التطبيقات وهمية';
+
+  @override
+  String get fxSimulatedHint =>
+      'لا يُبنى أو يُرفع أو يُدفع شيء فعلياً. هذا فقط لتجربة هذه الشاشة.';
+
+  @override
+  String fxProgress(int percent) {
+    return 'اكتمل $percent%';
+  }
+
+  @override
+  String fxProgressEta(int percent, String eta) {
+    return 'اكتمل $percent% · المتبقي نحو $eta';
+  }
+
+  @override
+  String fxMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count دقيقة',
+      few: '$count دقائق',
+      two: 'دقيقتين',
+      one: 'دقيقة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fxHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ساعة',
+      few: '$count ساعات',
+      two: 'ساعتين',
+      one: 'ساعة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fxDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count يوماً',
+      few: '$count أيام',
+      two: 'يومين',
+      one: 'يوم',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fxDailyLine(int playUsed, int playCap, int storeUsed, int storeCap) {
+    return 'عمليات الرفع اليوم: Google Play $playUsed من $playCap، App Store $storeUsed من $storeCap. يتابع الباقي غداً.';
+  }
+
+  @override
+  String get fxRetryFailed => 'أعد محاولة كل ما فشل';
+
+  @override
+  String fxCancelBatch(String name) {
+    return 'إلغاء الدفعة «$name»';
+  }
+
+  @override
+  String fxSelected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'تم تحديد $count تطبيقاً',
+      few: 'تم تحديد $count تطبيقات',
+      two: 'تم تحديد تطبيقين',
+      one: 'تم تحديد تطبيق',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fxRemoveTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'إزالة $count تطبيقاً من المصنع؟',
+      few: 'إزالة $count تطبيقات من المصنع؟',
+      two: 'إزالة هذين التطبيقين من المصنع؟',
+      one: 'إزالة هذا التطبيق من المصنع؟',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fxRemoveBody =>
+      'تختفي من هذه القائمة. تبقى ملفات التطبيقات على حاسوبك.';
+
+  @override
+  String get fxAppGone => 'لم يعد هذا التطبيق في المصنع.';
+
+  @override
+  String get fxSteps => 'الخطوات';
+
+  @override
+  String get fxLog => 'ما الذي حدث';
+
+  @override
+  String fxCost(String amount) {
+    return 'التكلفة حتى الآن: $amount دولار';
+  }
+
+  @override
+  String fxRetryFrom(String stage) {
+    return 'أعد المحاولة من «$stage»';
+  }
+
+  @override
+  String get fxStepIdeas => 'الأفكار';
+
+  @override
+  String get fxStepRecipe => 'الطريقة';
+
+  @override
+  String get fxStepReview => 'المراجعة';
+
+  @override
+  String get fxBack => 'رجوع';
+
+  @override
+  String get fxContinue => 'متابعة';
+
+  @override
+  String get fxBoxTitle => 'أخبر المصنع بكل شيء';
+
+  @override
+  String get fxBoxHint =>
+      'الصق أفكاراً أو قوائم أو خططاً أو تعليمات أو مستندات كاملة، أو أضف ملفات. يقرأ مشرف كل شيء ويستخرج منه حتى 100 تطبيق مختلف ويعرضها عليك قبل أن يبدأ أي شيء.';
+
+  @override
+  String get fxModeMine => 'لدي أفكار';
+
+  @override
+  String get fxModeInvent => 'اخترعها لي';
+
+  @override
+  String get fxBoxPlaceholder =>
+      'الصق هنا: فكرة في كل سطر، أو خطة، أو وصفاً طويلاً، أو أي شيء…';
+
+  @override
+  String get fxAttach => 'إضافة ملفات';
+
+  @override
+  String get fxFilesLabel => 'ملفات نصية';
+
+  @override
+  String get fxFileTooBig =>
+      'ملف كبير جداً (أكثر من 400 كيلوبايت) ولم تتم إضافته.';
+
+  @override
+  String get fxThemeLabel => 'الموضوع';
+
+  @override
+  String get fxThemeHint =>
+      'مثلاً: أدوات بسيطة للياقة البدنية، ألعاب للأطفال، مشاريع صغيرة…';
+
+  @override
+  String get fxHowMany => 'عدد التطبيقات';
+
+  @override
+  String get fxBoxFootnote =>
+      'لم يُبنَ شيء بعد. سترى التطبيقات أولاً وتختار ما تريد بدءه.';
+
+  @override
+  String get fxRecipeTitle => 'كيف تُصنع؟';
+
+  @override
+  String get fxEnginesTitle => 'من يكتب التطبيقات';
+
+  @override
+  String get fxEnginesHint =>
+      'تُوزَّع التطبيقات بهذه النسبة. تذهب التطبيقات الكبيرة أولاً إلى المحرك الأقوى.';
+
+  @override
+  String get fxNotConnected => 'غير متصل بعد';
+
+  @override
+  String fxSharePercent(int percent) {
+    return '$percent% من التطبيقات';
+  }
+
+  @override
+  String get fxLogoTitle => 'من يرسم الشعارات';
+
+  @override
+  String get fxLogoAuto => 'تلقائي';
+
+  @override
+  String get fxGoalTitle => 'إلى أي مدى';
+
+  @override
+  String get fxGoalApp => 'التطبيق فقط';
+
+  @override
+  String get fxGoalAssets => 'التطبيق والشعار ولقطات الشاشة ونصوص المتجر';
+
+  @override
+  String get fxGoalAndroid => 'مع ملف أندرويد و Google Play (مسودة، اختبار)';
+
+  @override
+  String get fxGoalIos => 'مع تطبيق آيفون و App Store (TestFlight)';
+
+  @override
+  String get fxDailyTitle => 'موزَّع على الأيام';
+
+  @override
+  String get fxDailyHint =>
+      'يمكن بناء كل التطبيقات اليوم، لكن المتاجر تمتلئ ببطء: يبقى الباقي جاهزاً حتى الغد.';
+
+  @override
+  String get fxDailyLabel => 'عمليات الرفع لكل متجر يومياً';
+
+  @override
+  String get fxSafeTitle => 'دائماً مسودة ودائماً في الاختبار';
+
+  @override
+  String get fxSafeBody =>
+      'تستلم Google Play التطبيق كمسودة في الاختبار الداخلي و App Store عبر TestFlight. لا ينشر Ember أي تطبيق ولا يرسله للمراجعة أبداً: يبقى هذا قرارك أنت، تطبيقاً تلو الآخر.';
+
+  @override
+  String get fxSupervisorReading => 'المشرف يقرأ ويختار التطبيقات…';
+
+  @override
+  String get fxNoIdeas =>
+      'لم يجد المشرف أي تطبيق ليصنعه. أضف مزيداً من التفاصيل وحاول مجدداً.';
+
+  @override
+  String fxReviewTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count تطبيقاً مقترحاً',
+      few: '$count تطبيقات مقترحة',
+      two: 'تطبيقان مقترحان',
+      one: 'تطبيق واحد مقترح',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fxReviewHint =>
+      'ألغِ تحديد ما لا تريده. اضغط على اسم لتغييره. اضغط على الحجم للتبديل بين صغير وكبير.';
+
+  @override
+  String get fxBatchName => 'اسم الدفعة';
+
+  @override
+  String fxBatchDefaultName(String date) {
+    return 'دفعة $date';
+  }
+
+  @override
+  String fxDroppedTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count فكرة مستبعدة',
+      few: '$count أفكار مستبعدة',
+      two: 'فكرتان مستبعدتان',
+      one: 'فكرة واحدة مستبعدة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fxDropDuplicate(String name) {
+    return '$name: الاسم نفسه لتطبيق آخر';
+  }
+
+  @override
+  String fxDropSimilar(String name, String kept) {
+    return '$name: يشبه «$kept» كثيراً وقد أُبقي عليه';
+  }
+
+  @override
+  String fxDropTooMany(String name) {
+    return '$name: تتسع الدفعة لـ 100 تطبيق كحد أقصى';
+  }
+
+  @override
+  String get fxWarnNoAi =>
+      'لا يوجد محرك ذكاء اصطناعي متصل، لذلك قُرئت القائمة سطراً سطراً: تطبيق في كل سطر.';
+
+  @override
+  String get fxSizeSmall => 'صغير';
+
+  @override
+  String get fxSizeBig => 'كبير';
+
+  @override
+  String get fxSizeTooltip => 'التبديل بين صغير وكبير';
+
+  @override
+  String fxEstimateStores(int limit, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days يوماً',
+      few: '$days أيام',
+      two: 'يومين',
+      one: 'يوم',
+    );
+    return 'تُبنى الآن وتذهب إلى المتاجر $limit يومياً: نحو $_temp0 لملئها.';
+  }
+
+  @override
+  String fxStartTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'بدء $count تطبيقاً؟',
+      few: 'بدء $count تطبيقات؟',
+      two: 'بدء تطبيقين؟',
+      one: 'بدء تطبيق واحد؟',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fxStartBody => 'تُصنع التطبيقات الآن. لا يُنشر شيء.';
+
+  @override
+  String fxStartBodyStores(int limit) {
+    return 'تُصنع التطبيقات الآن وتُرسل إلى Google Play و App Store كمسودات اختبار، $limit يومياً. لا يُنشر شيء ولا يُرسل شيء للمراجعة.';
+  }
+
+  @override
+  String get fxStart => 'ابدأ';
+
+  @override
+  String fxStartCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ابدأ $count تطبيقاً',
+      few: 'ابدأ $count تطبيقات',
+      two: 'ابدأ تطبيقين',
+      one: 'ابدأ تطبيقاً واحداً',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fxStarted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'بدأ $count تطبيقاً',
+      few: 'بدأت $count تطبيقات',
+      two: 'بدأ تطبيقان',
+      one: 'بدأ تطبيق واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fxLinksTitle => 'الاتصالات والقدرة';
+
+  @override
+  String get fxLinksEngines => 'محركات الذكاء الاصطناعي';
+
+  @override
+  String get fxLinksTools => 'الأدوات والحسابات';
+
+  @override
+  String get fxConnect => 'اتصال';
+
+  @override
+  String get fxSignInOpened =>
+      'فُتحت نافذة تسجيل دخول على الحاسوب الذي يعمل عليه Ember.';
+
+  @override
+  String get fxLinkAndroid => 'أدوات أندرويد';
+
+  @override
+  String get fxLinkChrome => 'Chrome (للقطات الشاشة)';
+
+  @override
+  String get fxLinkPlayKey => 'مفتاح Google Play';
+
+  @override
+  String get fxLinkAppleKey => 'مفتاح App Store Connect';
+
+  @override
+  String get fxLinkMac => 'جهاز Mac لتطبيق آيفون';
+
+  @override
+  String get fxWhyNotInstalled => 'غير مثبّت';
+
+  @override
+  String get fxWhyNotSignedIn => 'لم يتم تسجيل الدخول';
+
+  @override
+  String get fxWhyMissing => 'غير موجود';
+
+  @override
+  String get fxWhyOnlyMac => 'على جهاز Mac فقط';
+
+  @override
+  String get fxCapacityTitle => 'هذا الحاسوب';
+
+  @override
+  String fxCapacityBody(int cpus, String ram, int disk) {
+    return '$cpus أنوية، $ram غيغابايت من الذاكرة الحرة، $disk غيغابايت حرة على القرص.';
+  }
+
+  @override
+  String fxCapacitySlots(int agents, int builds) {
+    return 'في الوقت نفسه: حتى $agents وكلاء ذكاء اصطناعي و$builds عمليات بناء.';
+  }
+
+  @override
+  String get fxLimitsTitle => 'الحدود';
+
+  @override
+  String get fxLimitInFlight => 'التطبيقات قيد الصنع في الوقت نفسه';
 }

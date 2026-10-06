@@ -36,7 +36,7 @@ final projectsProvider = FutureProvider<List<Project>>((ref) async {
   return list..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 });
 
-enum _Menu { emptyProject, restore }
+enum _Menu { factory, emptyProject, restore }
 
 /// Home: say what app you want. The apps already started are listed beside
 /// the prompt box when there is room, under it when there is not.
@@ -235,10 +235,16 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             tooltip: l.homeMenu,
             icon: const Icon(Icons.more_vert),
             onSelected: (m) => switch (m) {
+              _Menu.factory => context.push('/factory'),
               _Menu.emptyProject => _create(),
               _Menu.restore => _restoreFromGitHub(),
             },
             itemBuilder: (_) => [
+              PopupMenuItem(
+                key: const Key('openFactory'),
+                value: _Menu.factory,
+                child: ListTile(leading: const Icon(Icons.factory_outlined), title: Text(l.fxTitle), contentPadding: EdgeInsets.zero),
+              ),
               PopupMenuItem(
                 key: const Key('newProject'),
                 value: _Menu.emptyProject,

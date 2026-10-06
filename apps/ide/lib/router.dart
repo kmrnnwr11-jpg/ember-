@@ -6,6 +6,11 @@ import 'core/session.dart';
 import 'features/auth/login_screen.dart';
 import 'features/create/app_section_screen.dart';
 import 'features/create/create_app_screen.dart';
+import 'features/factory/factory_links_screen.dart';
+import 'features/factory/factory_needs_screen.dart';
+import 'features/factory/factory_new_screen.dart';
+import 'features/factory/factory_screen.dart';
+import 'features/factory/factory_shell.dart';
 import 'features/preview/fullscreen_app_screen.dart';
 import 'features/store/play_publish_screen.dart';
 import 'features/store/publish_chat_screen.dart';
@@ -39,6 +44,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
       GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
+      // Many apps at once, from the idea to the stores.
+      ShellRoute(
+        builder: (_, state, child) => FactoryShell(location: state.uri.path, child: child),
+        routes: [
+          GoRoute(path: '/factory', builder: (_, _) => const FactoryScreen()),
+          GoRoute(path: '/factory/new', builder: (_, _) => const FactoryNewScreen()),
+          GoRoute(path: '/factory/needs', builder: (_, _) => const FactoryNeedsScreen()),
+          GoRoute(path: '/factory/links', builder: (_, _) => const FactoryLinksScreen()),
+        ],
+      ),
       GoRoute(
         path: '/mockups',
         redirect: (_, state) => state.extra is CreateAppArgs ? null : '/projects',

@@ -1,0 +1,952 @@
+{
+ "rev": 347,
+ "paused": false,
+ "interrupted": false,
+ "lowDisk": false,
+ "simulated": true,
+ "summary": {
+  "total": 8,
+  "queued": 0,
+  "running": 7,
+  "needsYou": 1,
+  "done": 0,
+  "failed": 0,
+  "cancelled": 0,
+  "onPlay": 1,
+  "onAppStore": 0,
+  "progress": 0.5681818181818182,
+  "etaSeconds": 46
+ },
+ "settings": {
+  "lanes": {
+   "light": 5,
+   "text": 4,
+   "build": 4,
+   "image": 3,
+   "shots": 3,
+   "store": 3,
+   "agent:claude-code": 6,
+   "agent:qwen-code": 6,
+   "agent:gemini-cli": 6,
+   "agent:codex": 6
+  },
+  "maxInFlight": 24,
+  "dailyStoreCap": {
+   "play": 10,
+   "appstore": 10
+  },
+  "minFreeDiskGb": 10
+ },
+ "uploads": {
+  "date": "2026-10-06",
+  "play": 2,
+  "appstore": 0,
+  "cap": {
+   "play": 10,
+   "appstore": 10
+  },
+  "resetsAt": "2026-10-06T22:00:00.000Z"
+ },
+ "lanes": {
+  "agent:claude-code": {
+   "limit": 6,
+   "running": 0,
+   "waiting": 0
+  },
+  "agent:codex": {
+   "limit": 6,
+   "running": 0,
+   "waiting": 0
+  },
+  "agent:gemini-cli": {
+   "limit": 6,
+   "running": 0,
+   "waiting": 0
+  },
+  "agent:qwen-code": {
+   "limit": 6,
+   "running": 0,
+   "waiting": 0
+  },
+  "build": {
+   "limit": 4,
+   "running": 4,
+   "waiting": 7
+  },
+  "image": {
+   "limit": 3,
+   "running": 0,
+   "waiting": 0
+  },
+  "light": {
+   "limit": 5,
+   "running": 1,
+   "waiting": 0
+  },
+  "shots": {
+   "limit": 3,
+   "running": 0,
+   "waiting": 0
+  },
+  "store": {
+   "limit": 3,
+   "running": 1,
+   "waiting": 0
+  },
+  "text": {
+   "limit": 4,
+   "running": 0,
+   "waiting": 0
+  }
+ },
+ "batches": [
+  {
+   "id": "L2WEqNv7v0",
+   "name": "UI contract",
+   "createdAt": "2026-10-06T20:03:47.429Z",
+   "recipe": {
+    "engines": {
+     "claude-code": 2,
+     "qwen-code": 1
+    },
+    "quality": "fast",
+    "logoBy": "auto",
+    "goal": "ios",
+    "languages": [
+     "en-US",
+     "it-IT",
+     "es-ES",
+     "fr-FR",
+     "de-DE",
+     "pt-BR",
+     "hi-IN",
+     "ar",
+     "id",
+     "ru-RU"
+    ],
+    "maxAttempts": 2,
+    "extra": ""
+   },
+   "appIds": [
+    "15kO-rarRU",
+    "qNLB78jXb0",
+    "77wnbaPEPu",
+    "N95I19h3G8",
+    "vN27oC2AQH",
+    "TPOhj8n7Hv",
+    "uAFxXnFK2I",
+    "D5ikEEJMUD"
+   ]
+  }
+ ],
+ "apps": [
+  {
+   "id": "15kO-rarRU",
+   "batchId": "L2WEqNv7v0",
+   "order": 0,
+   "name": "Garden Planner",
+   "summary": "garden soil helper number 1 that keeps everything on the phone",
+   "size": "big",
+   "category": "tools",
+   "folder": "garden_planner",
+   "engine": "codex",
+   "state": "running",
+   "stages": {
+    "create": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:47.438Z",
+     "finishedAt": "2026-10-06T20:03:47.788Z",
+     "message": "create ok (simulated)"
+    },
+    "code": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:47.788Z",
+     "finishedAt": "2026-10-06T20:03:52.911Z",
+     "message": "code ok (simulated)"
+    },
+    "verify": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:52.911Z",
+     "finishedAt": "2026-10-06T20:03:54.112Z",
+     "message": "verify ok (simulated)"
+    },
+    "preview": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:54.344Z",
+     "finishedAt": "2026-10-06T20:03:56.050Z",
+     "message": "preview ok (simulated)"
+    },
+    "logo": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:54.113Z",
+     "finishedAt": "2026-10-06T20:03:56.148Z",
+     "message": "logo ok (simulated)"
+    },
+    "listing": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:54.113Z",
+     "finishedAt": "2026-10-06T20:03:56.218Z",
+     "message": "listing ok (simulated)"
+    },
+    "shots": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:56.050Z",
+     "finishedAt": "2026-10-06T20:03:57.572Z",
+     "message": "shots ok (simulated)"
+    },
+    "android": {
+     "state": "running",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:58.444Z"
+    },
+    "play": {
+     "state": "pending",
+     "attempts": 0
+    },
+    "ios": {
+     "state": "blocked",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:56.432Z",
+     "finishedAt": "2026-10-06T20:03:58.444Z",
+     "message": "A Mac is needed for the iPhone file"
+    },
+    "appstore": {
+     "state": "pending",
+     "attempts": 0
+    }
+   },
+   "needs": [
+    {
+     "kind": "mac",
+     "title": "A Mac is needed for the iPhone file",
+     "detail": "Apple only allows building the iPhone app on a Mac.",
+     "data": {},
+     "stage": "ios",
+     "id": "cbHB4CWO",
+     "createdAt": "2026-10-06T20:03:58.444Z"
+    }
+   ],
+   "costUsd": 0.659280626103282,
+   "createdAt": "2026-10-06T20:03:47.430Z",
+   "updatedAt": "2026-10-06T20:03:47.433Z",
+   "doing": "gradle bundleRelease",
+   "packageName": "com.emberapps.garden_planner",
+   "log": [
+    "create ok",
+    "code ok",
+    "verify ok",
+    "preview ok",
+    "logo ok",
+    "listing ok",
+    "shots ok",
+    "⏸ A Mac is needed for the iPhone file"
+   ]
+  },
+  {
+   "id": "qNLB78jXb0",
+   "batchId": "L2WEqNv7v0",
+   "order": 1,
+   "name": "Guitar Helper",
+   "summary": "guitar chords helper number 2 that keeps everything on the phone",
+   "size": "small",
+   "category": "tools",
+   "folder": "guitar_helper",
+   "engine": "codex",
+   "state": "running",
+   "stages": {
+    "create": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:47.438Z",
+     "finishedAt": "2026-10-06T20:03:47.854Z",
+     "message": "create ok (simulated)"
+    },
+    "code": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:47.854Z",
+     "finishedAt": "2026-10-06T20:03:51.726Z",
+     "message": "code ok (simulated)"
+    },
+    "verify": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:51.727Z",
+     "finishedAt": "2026-10-06T20:03:52.861Z",
+     "message": "verify ok (simulated)"
+    },
+    "preview": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:52.861Z",
+     "finishedAt": "2026-10-06T20:03:54.939Z",
+     "message": "preview ok (simulated)"
+    },
+    "logo": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:52.862Z",
+     "finishedAt": "2026-10-06T20:03:55.096Z",
+     "message": "logo ok (simulated)"
+    },
+    "listing": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:52.862Z",
+     "finishedAt": "2026-10-06T20:03:54.729Z",
+     "message": "listing ok (simulated)"
+    },
+    "shots": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:54.939Z",
+     "finishedAt": "2026-10-06T20:03:55.961Z",
+     "message": "shots ok (simulated)"
+    },
+    "android": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:56.050Z",
+     "finishedAt": "2026-10-06T20:03:58.413Z",
+     "message": "android ok (simulated)"
+    },
+    "play": {
+     "state": "running",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:58.413Z"
+    },
+    "ios": {
+     "state": "blocked",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:55.902Z",
+     "finishedAt": "2026-10-06T20:03:58.398Z",
+     "message": "A Mac is needed for the iPhone file"
+    },
+    "appstore": {
+     "state": "pending",
+     "attempts": 0
+    }
+   },
+   "needs": [
+    {
+     "kind": "mac",
+     "title": "A Mac is needed for the iPhone file",
+     "detail": "Apple only allows building the iPhone app on a Mac.",
+     "data": {},
+     "stage": "ios",
+     "id": "7XVN0Tiv",
+     "createdAt": "2026-10-06T20:03:58.397Z"
+    }
+   ],
+   "costUsd": 0.42725082351826127,
+   "createdAt": "2026-10-06T20:03:47.430Z",
+   "updatedAt": "2026-10-06T20:03:47.436Z",
+   "doing": "play",
+   "packageName": "com.emberapps.guitar_helper",
+   "log": [
+    "code ok",
+    "verify ok",
+    "listing ok",
+    "preview ok",
+    "logo ok",
+    "shots ok",
+    "⏸ A Mac is needed for the iPhone file",
+    "android ok"
+   ]
+  },
+  {
+   "id": "77wnbaPEPu",
+   "batchId": "L2WEqNv7v0",
+   "order": 2,
+   "name": "Language Guide",
+   "summary": "language idioms helper number 16 that keeps everything on the phone",
+   "size": "small",
+   "category": "tools",
+   "folder": "language_guide",
+   "engine": "codex",
+   "state": "running",
+   "stages": {
+    "create": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:47.438Z",
+     "finishedAt": "2026-10-06T20:03:48.022Z",
+     "message": "create ok (simulated)"
+    },
+    "code": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:48.022Z",
+     "finishedAt": "2026-10-06T20:03:52.592Z",
+     "message": "code ok (simulated)"
+    },
+    "verify": {
+     "state": "running",
+     "attempts": 2,
+     "startedAt": "2026-10-06T20:03:59.376Z",
+     "message": "verify: simulated error, the second attempt works"
+    },
+    "preview": {
+     "state": "pending",
+     "attempts": 0
+    },
+    "logo": {
+     "state": "pending",
+     "attempts": 0
+    },
+    "listing": {
+     "state": "pending",
+     "attempts": 0
+    },
+    "shots": {
+     "state": "pending",
+     "attempts": 0
+    },
+    "android": {
+     "state": "pending",
+     "attempts": 0
+    },
+    "play": {
+     "state": "pending",
+     "attempts": 0
+    },
+    "ios": {
+     "state": "pending",
+     "attempts": 0
+    },
+    "appstore": {
+     "state": "pending",
+     "attempts": 0
+    }
+   },
+   "needs": [],
+   "costUsd": 0.5828242990653961,
+   "createdAt": "2026-10-06T20:03:47.430Z",
+   "updatedAt": "2026-10-06T20:03:47.437Z",
+   "doing": "flutter pub get",
+   "packageName": "com.emberapps.language_guide",
+   "log": [
+    "create ok",
+    "code ok",
+    "✗ verify: verify: simulated error, the second attempt works"
+   ]
+  },
+  {
+   "id": "N95I19h3G8",
+   "batchId": "L2WEqNv7v0",
+   "order": 3,
+   "name": "Tea Journal",
+   "summary": "tea brewing helper number 17 that keeps everything on the phone",
+   "size": "small",
+   "category": "tools",
+   "folder": "tea_journal",
+   "engine": "codex",
+   "state": "running",
+   "stages": {
+    "create": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:47.438Z",
+     "finishedAt": "2026-10-06T20:03:47.772Z",
+     "message": "create ok (simulated)"
+    },
+    "code": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:47.773Z",
+     "finishedAt": "2026-10-06T20:03:53.177Z",
+     "message": "code ok (simulated)"
+    },
+    "verify": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:53.177Z",
+     "finishedAt": "2026-10-06T20:03:54.695Z",
+     "message": "verify ok (simulated)"
+    },
+    "preview": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:54.939Z",
+     "finishedAt": "2026-10-06T20:03:56.432Z",
+     "message": "preview ok (simulated)"
+    },
+    "logo": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:54.878Z",
+     "finishedAt": "2026-10-06T20:03:56.515Z",
+     "message": "logo ok (simulated)"
+    },
+    "listing": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:54.696Z",
+     "finishedAt": "2026-10-06T20:03:56.121Z",
+     "message": "listing ok (simulated)"
+    },
+    "shots": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:56.432Z",
+     "finishedAt": "2026-10-06T20:03:57.827Z",
+     "message": "shots ok (simulated)"
+    },
+    "android": {
+     "state": "queued",
+     "attempts": 0
+    },
+    "play": {
+     "state": "pending",
+     "attempts": 0
+    },
+    "ios": {
+     "state": "running",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:58.398Z"
+    },
+    "appstore": {
+     "state": "pending",
+     "attempts": 0
+    }
+   },
+   "needs": [],
+   "costUsd": 0.6482345559634268,
+   "createdAt": "2026-10-06T20:03:47.430Z",
+   "updatedAt": "2026-10-06T20:03:47.437Z",
+   "doing": "xcodebuild archive",
+   "packageName": "com.emberapps.tea_journal",
+   "log": [
+    "create ok",
+    "code ok",
+    "verify ok",
+    "listing ok",
+    "preview ok",
+    "logo ok",
+    "shots ok"
+   ]
+  },
+  {
+   "id": "vN27oC2AQH",
+   "batchId": "L2WEqNv7v0",
+   "order": 4,
+   "name": "Budget Journal 2",
+   "summary": "budget envelopes helper number 29 that keeps everything on the phone",
+   "size": "small",
+   "category": "tools",
+   "folder": "budget_journal_2",
+   "engine": "codex",
+   "state": "running",
+   "stages": {
+    "create": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:47.438Z",
+     "finishedAt": "2026-10-06T20:03:47.940Z",
+     "message": "create ok (simulated)"
+    },
+    "code": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:47.940Z",
+     "finishedAt": "2026-10-06T20:03:51.483Z",
+     "message": "code ok (simulated)"
+    },
+    "verify": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:51.483Z",
+     "finishedAt": "2026-10-06T20:03:53.045Z",
+     "message": "verify ok (simulated)"
+    },
+    "preview": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:53.045Z",
+     "finishedAt": "2026-10-06T20:03:54.344Z",
+     "message": "preview ok (simulated)"
+    },
+    "logo": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:53.045Z",
+     "finishedAt": "2026-10-06T20:03:54.878Z",
+     "message": "logo ok (simulated)"
+    },
+    "listing": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:53.045Z",
+     "finishedAt": "2026-10-06T20:03:55.279Z",
+     "message": "listing ok (simulated)"
+    },
+    "shots": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:54.345Z",
+     "finishedAt": "2026-10-06T20:03:55.724Z",
+     "message": "shots ok (simulated)"
+    },
+    "android": {
+     "state": "queued",
+     "attempts": 0
+    },
+    "play": {
+     "state": "pending",
+     "attempts": 0
+    },
+    "ios": {
+     "state": "running",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:56.050Z"
+    },
+    "appstore": {
+     "state": "pending",
+     "attempts": 0
+    }
+   },
+   "needs": [],
+   "costUsd": 0.28812641371041536,
+   "createdAt": "2026-10-06T20:03:47.430Z",
+   "updatedAt": "2026-10-06T20:03:47.437Z",
+   "doing": "xcodebuild archive",
+   "packageName": "com.emberapps.budget_journal_2",
+   "log": [
+    "create ok",
+    "code ok",
+    "verify ok",
+    "preview ok",
+    "logo ok",
+    "listing ok",
+    "shots ok"
+   ]
+  },
+  {
+   "id": "TPOhj8n7Hv",
+   "batchId": "L2WEqNv7v0",
+   "order": 5,
+   "name": "Coin Guide 2",
+   "summary": "coin collecting helper number 40 that keeps everything on the phone",
+   "size": "small",
+   "category": "tools",
+   "folder": "coin_guide_2",
+   "engine": "codex",
+   "state": "needs_you",
+   "stages": {
+    "create": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:47.772Z",
+     "finishedAt": "2026-10-06T20:03:48.170Z",
+     "message": "create ok (simulated)"
+    },
+    "code": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:48.170Z",
+     "finishedAt": "2026-10-06T20:03:51.203Z",
+     "message": "code ok (simulated)"
+    },
+    "verify": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:51.203Z",
+     "finishedAt": "2026-10-06T20:03:52.591Z",
+     "message": "verify ok (simulated)"
+    },
+    "preview": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:52.591Z",
+     "finishedAt": "2026-10-06T20:03:53.861Z",
+     "message": "preview ok (simulated)"
+    },
+    "logo": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:52.591Z",
+     "finishedAt": "2026-10-06T20:03:53.829Z",
+     "message": "logo ok (simulated)"
+    },
+    "listing": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:52.592Z",
+     "finishedAt": "2026-10-06T20:03:54.044Z",
+     "message": "listing ok (simulated)"
+    },
+    "shots": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:53.861Z",
+     "finishedAt": "2026-10-06T20:03:55.046Z",
+     "message": "shots ok (simulated)"
+    },
+    "android": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:54.044Z",
+     "finishedAt": "2026-10-06T20:03:55.902Z",
+     "message": "android ok (simulated)"
+    },
+    "play": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:55.903Z",
+     "finishedAt": "2026-10-06T20:03:57.502Z",
+     "message": "play ok (simulated)"
+    },
+    "ios": {
+     "state": "blocked",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:54.044Z",
+     "finishedAt": "2026-10-06T20:03:56.049Z",
+     "message": "A Mac is needed for the iPhone file"
+    },
+    "appstore": {
+     "state": "pending",
+     "attempts": 0
+    }
+   },
+   "needs": [
+    {
+     "kind": "mac",
+     "title": "A Mac is needed for the iPhone file",
+     "detail": "Apple only allows building the iPhone app on a Mac.",
+     "data": {},
+     "stage": "ios",
+     "id": "UHu_PIKy",
+     "createdAt": "2026-10-06T20:03:56.049Z"
+    }
+   ],
+   "costUsd": 0.2454274643678218,
+   "createdAt": "2026-10-06T20:03:47.430Z",
+   "updatedAt": "2026-10-06T20:03:57.506Z",
+   "packageName": "com.emberapps.coin_guide_2",
+   "log": [
+    "verify ok",
+    "logo ok",
+    "preview ok",
+    "listing ok",
+    "shots ok",
+    "android ok",
+    "⏸ A Mac is needed for the iPhone file",
+    "play ok"
+   ]
+  },
+  {
+   "id": "uAFxXnFK2I",
+   "batchId": "L2WEqNv7v0",
+   "order": 6,
+   "name": "Star Log 3",
+   "summary": "star gazing helper number 59 that keeps everything on the phone",
+   "size": "small",
+   "category": "tools",
+   "folder": "star_log_3",
+   "engine": "codex",
+   "state": "running",
+   "stages": {
+    "create": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:47.788Z",
+     "finishedAt": "2026-10-06T20:03:48.257Z",
+     "message": "create ok (simulated)"
+    },
+    "code": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:51.203Z",
+     "finishedAt": "2026-10-06T20:03:54.954Z",
+     "message": "code ok (simulated)"
+    },
+    "verify": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:54.954Z",
+     "finishedAt": "2026-10-06T20:03:56.726Z",
+     "message": "verify ok (simulated)"
+    },
+    "preview": {
+     "state": "queued",
+     "attempts": 0
+    },
+    "logo": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:56.726Z",
+     "finishedAt": "2026-10-06T20:03:58.277Z",
+     "message": "logo ok (simulated)"
+    },
+    "listing": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:56.726Z",
+     "finishedAt": "2026-10-06T20:03:58.319Z",
+     "message": "listing ok (simulated)"
+    },
+    "shots": {
+     "state": "pending",
+     "attempts": 0
+    },
+    "android": {
+     "state": "queued",
+     "attempts": 0
+    },
+    "play": {
+     "state": "pending",
+     "attempts": 0
+    },
+    "ios": {
+     "state": "running",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:58.413Z"
+    },
+    "appstore": {
+     "state": "pending",
+     "attempts": 0
+    }
+   },
+   "needs": [],
+   "costUsd": 0.407391311833635,
+   "createdAt": "2026-10-06T20:03:47.430Z",
+   "updatedAt": "2026-10-06T20:03:47.437Z",
+   "doing": "xcodebuild archive",
+   "packageName": "com.emberapps.star_log_3",
+   "log": [
+    "create ok",
+    "code ok",
+    "verify ok",
+    "logo ok",
+    "listing ok"
+   ]
+  },
+  {
+   "id": "D5ikEEJMUD",
+   "batchId": "L2WEqNv7v0",
+   "order": 7,
+   "name": "Bird Tracker 4",
+   "summary": "bird sightings helper number 68 that keeps everything on the phone",
+   "size": "small",
+   "category": "tools",
+   "folder": "bird_tracker_4",
+   "engine": "codex",
+   "state": "running",
+   "stages": {
+    "create": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:47.854Z",
+     "finishedAt": "2026-10-06T20:03:48.410Z",
+     "message": "create ok (simulated)"
+    },
+    "code": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:51.483Z",
+     "finishedAt": "2026-10-06T20:03:55.568Z",
+     "message": "code ok (simulated)"
+    },
+    "verify": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:55.568Z",
+     "finishedAt": "2026-10-06T20:03:56.913Z",
+     "message": "verify ok (simulated)"
+    },
+    "preview": {
+     "state": "queued",
+     "attempts": 0
+    },
+    "logo": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:56.913Z",
+     "finishedAt": "2026-10-06T20:03:58.208Z",
+     "message": "logo ok (simulated)"
+    },
+    "listing": {
+     "state": "done",
+     "attempts": 1,
+     "startedAt": "2026-10-06T20:03:56.913Z",
+     "finishedAt": "2026-10-06T20:03:58.820Z",
+     "message": "listing ok (simulated)"
+    },
+    "shots": {
+     "state": "pending",
+     "attempts": 0
+    },
+    "android": {
+     "state": "queued",
+     "attempts": 0
+    },
+    "play": {
+     "state": "pending",
+     "attempts": 0
+    },
+    "ios": {
+     "state": "queued",
+     "attempts": 0
+    },
+    "appstore": {
+     "state": "pending",
+     "attempts": 0
+    }
+   },
+   "needs": [],
+   "costUsd": 0.47545420471578836,
+   "createdAt": "2026-10-06T20:03:47.430Z",
+   "updatedAt": "2026-10-06T20:03:47.438Z",
+   "packageName": "com.emberapps.bird_tracker_4",
+   "log": [
+    "create ok",
+    "code ok",
+    "verify ok",
+    "logo ok",
+    "listing ok"
+   ]
+  }
+ ],
+ "needsYou": [
+  {
+   "kind": "mac",
+   "title": "A Mac is needed for the iPhone file",
+   "detail": "Apple only allows building the iPhone app on a Mac.",
+   "data": {},
+   "stage": "ios",
+   "id": "cbHB4CWO",
+   "createdAt": "2026-10-06T20:03:58.444Z",
+   "appId": "15kO-rarRU",
+   "appName": "Garden Planner"
+  },
+  {
+   "kind": "mac",
+   "title": "A Mac is needed for the iPhone file",
+   "detail": "Apple only allows building the iPhone app on a Mac.",
+   "data": {},
+   "stage": "ios",
+   "id": "7XVN0Tiv",
+   "createdAt": "2026-10-06T20:03:58.397Z",
+   "appId": "qNLB78jXb0",
+   "appName": "Guitar Helper"
+  },
+  {
+   "kind": "mac",
+   "title": "A Mac is needed for the iPhone file",
+   "detail": "Apple only allows building the iPhone app on a Mac.",
+   "data": {},
+   "stage": "ios",
+   "id": "UHu_PIKy",
+   "createdAt": "2026-10-06T20:03:56.049Z",
+   "appId": "TPOhj8n7Hv",
+   "appName": "Coin Guide 2"
+  }
+ ]
+}

@@ -2569,4 +2569,653 @@ class AppLocalizationsIt extends AppLocalizations {
   String subsLoginOpened(String name) {
     return 'Si è aperta una finestra su questo computer: accedi a $name lì, poi torna qui. Ember se ne accorge da solo.';
   }
+
+  @override
+  String get fxTitle => 'Fabbrica';
+
+  @override
+  String get fxNavOverview => 'Panoramica';
+
+  @override
+  String get fxNavNew => 'Nuovo lotto';
+
+  @override
+  String get fxNavNeeds => 'Serve te';
+
+  @override
+  String get fxNavLinks => 'Collegamenti';
+
+  @override
+  String get fxPause => 'Pausa';
+
+  @override
+  String get fxResume => 'Riprendi';
+
+  @override
+  String get fxLoading => 'Carico la fabbrica…';
+
+  @override
+  String get fxLess => 'Meno';
+
+  @override
+  String get fxMore => 'Di più';
+
+  @override
+  String get fxStageCreate => 'Creo il progetto';
+
+  @override
+  String get fxStageCode => 'Scrivo l’app';
+
+  @override
+  String get fxStageVerify => 'Controllo il codice';
+
+  @override
+  String get fxStagePreview => 'Preparo l’anteprima';
+
+  @override
+  String get fxStageLogo => 'Disegno il logo';
+
+  @override
+  String get fxStageListing => 'Scrivo i testi dello store';
+
+  @override
+  String get fxStageShots => 'Faccio gli screenshot';
+
+  @override
+  String get fxStageAndroid => 'Costruisco il file Android';
+
+  @override
+  String get fxStagePlay => 'Carico su Google Play (bozza, test)';
+
+  @override
+  String get fxStageIos => 'Costruisco l’app per iPhone';
+
+  @override
+  String get fxStageAppStore => 'Carico su App Store (TestFlight)';
+
+  @override
+  String get fxStagePending => 'Non iniziato';
+
+  @override
+  String get fxStageSkipped => 'Saltato';
+
+  @override
+  String get fxStatusQueued => 'In attesa';
+
+  @override
+  String get fxStatusRunning => 'In lavorazione';
+
+  @override
+  String get fxStatusNeedsYou => 'Serve te';
+
+  @override
+  String get fxStatusDone => 'Pronta';
+
+  @override
+  String get fxStatusFailed => 'Fallita';
+
+  @override
+  String get fxStatusCancelled => 'Annullata';
+
+  @override
+  String fxStagesDone(int done, int total) {
+    return '$done passi su $total fatti';
+  }
+
+  @override
+  String get fxHeadDone => 'Pronta';
+
+  @override
+  String get fxHeadNeedsYou => 'Aspetta te';
+
+  @override
+  String fxHeadFailed(String stage) {
+    return 'Fallita: $stage';
+  }
+
+  @override
+  String fxHeadRunning(String stage) {
+    return 'Ora: $stage';
+  }
+
+  @override
+  String fxHeadQueued(String stage) {
+    return 'Aspetta il suo turno: $stage';
+  }
+
+  @override
+  String fxHeadWaitingTomorrow(String stage) {
+    return 'Pronta, aspetta il limite del giorno: $stage';
+  }
+
+  @override
+  String fxWaitsUntil(String when) {
+    return 'Aspetta fino a $when';
+  }
+
+  @override
+  String get fxNeedPlayAppTitle => 'Crea l’app in Google Play Console';
+
+  @override
+  String get fxNeedPlayAppDetail =>
+      '1. Apri Google Play Console e premi “Crea app”.\n2. Incolla il nome e scegli la lingua, “App” e “Gratuita”.\n3. Accetta le dichiarazioni e premi “Crea app”.\n4. Torna qui e premi “Fatto, continua”: il caricamento riparte da solo.';
+
+  @override
+  String get fxNeedAppleAppTitle => 'Crea l’app in App Store Connect';
+
+  @override
+  String get fxNeedAppleAppDetail =>
+      '1. Apri App Store Connect, vai su “App” e premi “+”, poi “Nuova app”.\n2. Incolla il nome, il Bundle ID e lo SKU qui sotto.\n3. Premi “Crea”.\n4. Torna qui e premi “Fatto, continua”.';
+
+  @override
+  String get fxNeedMacTitle => 'L’app per iPhone ha bisogno di un Mac';
+
+  @override
+  String get fxNeedMacDetail =>
+      'Apple permette di costruire l’app per iPhone solo su un Mac. Il codice è salvato: apri Ember su un Mac, riprendi l’app da GitHub e la parte iPhone gira lì.';
+
+  @override
+  String get fxNeedPlayKeyTitle => 'Collega la chiave di Google Play';
+
+  @override
+  String get fxNeedPlayKeyDetail =>
+      '1. Apri le Impostazioni di Ember.\n2. Sotto Google Play, incolla la chiave dell’account di servizio.\n3. Torna qui e premi “Fatto, continua”.';
+
+  @override
+  String get fxNeedAppleKeyTitle => 'Collega la chiave di App Store Connect';
+
+  @override
+  String get fxNeedAppleKeyDetail =>
+      '1. Apri le Impostazioni di Ember.\n2. Sotto App Store, incolla la chiave di App Store Connect.\n3. Torna qui e premi “Fatto, continua”.';
+
+  @override
+  String fxNeedLoginTitle(String engine) {
+    return 'Accedi di nuovo a $engine';
+  }
+
+  @override
+  String get fxNeedLoginDetail =>
+      'L’accesso è scaduto. Apri la pagina Collegamenti, premi “Collega” accanto al motore e accedi. Poi premi “Fatto, continua”.';
+
+  @override
+  String get fxDataName => 'Nome';
+
+  @override
+  String get fxDataPackage => 'Nome del pacchetto';
+
+  @override
+  String get fxDataShort => 'Descrizione breve';
+
+  @override
+  String get fxDataCategory => 'Categoria';
+
+  @override
+  String get fxDataBundleId => 'Bundle ID';
+
+  @override
+  String get fxDataSku => 'SKU';
+
+  @override
+  String get fxDataEngine => 'Motore';
+
+  @override
+  String get fxNeedsDone => 'Fatto, continua';
+
+  @override
+  String get fxNeedsSkip => 'Salta questo passo';
+
+  @override
+  String get fxNeedsEmpty => 'Al momento non serve niente da te.';
+
+  @override
+  String get fxNeedsIntro =>
+      'Queste sono cose che solo tu puoi fare. Quando ne hai fatta una, premi “Fatto, continua” e la fabbrica va avanti.';
+
+  @override
+  String get fxEmpty =>
+      'Nessuna app nella fabbrica. Avvia un lotto e descrivi fino a 100 app insieme.';
+
+  @override
+  String get fxNoMatch => 'Nessuna app corrisponde.';
+
+  @override
+  String get fxSearch => 'Cerca tra le app';
+
+  @override
+  String get fxFilterAll => 'Tutte';
+
+  @override
+  String get fxStatTotal => 'App';
+
+  @override
+  String get fxOnPlay => 'Su Google Play';
+
+  @override
+  String get fxOnAppStore => 'Su App Store';
+
+  @override
+  String get fxPausedTitle => 'La fabbrica è in pausa';
+
+  @override
+  String get fxPausedHint => 'Non parte niente di nuovo finché non riprendi.';
+
+  @override
+  String get fxPausedRestart =>
+      'Ember è stato chiuso o riavviato mentre le app erano in lavorazione. Niente riparte da solo, così nessun abbonamento viene usato di nascosto.';
+
+  @override
+  String get fxLowDiskTitle => 'Il disco è quasi pieno';
+
+  @override
+  String get fxLowDiskHint =>
+      'Non parte nessuna app nuova finché non c’è di nuovo spazio. Le app finite liberano da sole le cartelle di costruzione.';
+
+  @override
+  String get fxSimulatedTitle => 'Modalità di prova: le app sono finte';
+
+  @override
+  String get fxSimulatedHint =>
+      'Non si costruisce, carica o paga niente davvero. Serve solo a provare questa schermata.';
+
+  @override
+  String fxProgress(int percent) {
+    return '$percent% completato';
+  }
+
+  @override
+  String fxProgressEta(int percent, String eta) {
+    return '$percent% completato · mancano circa $eta';
+  }
+
+  @override
+  String fxMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count minuti',
+      one: '1 minuto',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fxHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ore',
+      one: '1 ora',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fxDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count giorni',
+      one: '1 giorno',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fxDailyLine(int playUsed, int playCap, int storeUsed, int storeCap) {
+    return 'Caricamenti di oggi: Google Play $playUsed su $playCap, App Store $storeUsed su $storeCap. Il resto continua domani.';
+  }
+
+  @override
+  String get fxRetryFailed => 'Riprova tutte le fallite';
+
+  @override
+  String fxCancelBatch(String name) {
+    return 'Annulla il lotto “$name”';
+  }
+
+  @override
+  String fxSelected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count selezionate',
+      one: '1 selezionata',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fxRemoveTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Togliere $count app dalla fabbrica?',
+      one: 'Togliere questa app dalla fabbrica?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fxRemoveBody =>
+      'Spariscono da questa lista. I file delle app restano sul tuo computer.';
+
+  @override
+  String get fxAppGone => 'Questa app non è più nella fabbrica.';
+
+  @override
+  String get fxSteps => 'Passi';
+
+  @override
+  String get fxLog => 'Cosa è successo';
+
+  @override
+  String fxCost(String amount) {
+    return 'Costo finora: $amount USD';
+  }
+
+  @override
+  String fxRetryFrom(String stage) {
+    return 'Riprova da “$stage”';
+  }
+
+  @override
+  String get fxStepIdeas => 'Idee';
+
+  @override
+  String get fxStepRecipe => 'Come';
+
+  @override
+  String get fxStepReview => 'Verifica';
+
+  @override
+  String get fxBack => 'Indietro';
+
+  @override
+  String get fxContinue => 'Continua';
+
+  @override
+  String get fxBoxTitle => 'Racconta tutto alla fabbrica';
+
+  @override
+  String get fxBoxHint =>
+      'Incolla idee, elenchi, piani, prompt o interi documenti, oppure aggiungi file. Un supervisore legge tutto, ne ricava fino a 100 app diverse e te le mostra prima che parta qualsiasi cosa.';
+
+  @override
+  String get fxModeMine => 'Ho le mie idee';
+
+  @override
+  String get fxModeInvent => 'Inventale tu';
+
+  @override
+  String get fxBoxPlaceholder =>
+      'Incolla qui: un’idea per riga, un piano, una descrizione lunga, qualsiasi cosa…';
+
+  @override
+  String get fxAttach => 'Aggiungi file';
+
+  @override
+  String get fxFilesLabel => 'File di testo';
+
+  @override
+  String get fxFileTooBig =>
+      'Un file è troppo grande (oltre 400 KB) e non è stato aggiunto.';
+
+  @override
+  String get fxThemeLabel => 'Tema';
+
+  @override
+  String get fxThemeHint =>
+      'Per esempio: strumenti semplici per il fitness, giochi per bambini, piccole attività…';
+
+  @override
+  String get fxHowMany => 'Quante app';
+
+  @override
+  String get fxBoxFootnote =>
+      'Non si costruisce ancora niente. Vedrai prima le app e sceglierai quali avviare.';
+
+  @override
+  String get fxRecipeTitle => 'Come vanno fatte?';
+
+  @override
+  String get fxEnginesTitle => 'Chi scrive le app';
+
+  @override
+  String get fxEnginesHint =>
+      'Le app si dividono in questa proporzione. Le app grandi vanno prima al motore più forte.';
+
+  @override
+  String get fxNotConnected => 'Non ancora collegato';
+
+  @override
+  String fxSharePercent(int percent) {
+    return '$percent% delle app';
+  }
+
+  @override
+  String get fxLogoTitle => 'Chi disegna i loghi';
+
+  @override
+  String get fxLogoAuto => 'Automatico';
+
+  @override
+  String get fxGoalTitle => 'Fin dove arrivare';
+
+  @override
+  String get fxGoalApp => 'Solo l’app';
+
+  @override
+  String get fxGoalAssets =>
+      'L’app, il logo, gli screenshot e i testi dello store';
+
+  @override
+  String get fxGoalAndroid =>
+      'Anche il file Android e Google Play (bozza, test)';
+
+  @override
+  String get fxGoalIos => 'Anche l’app per iPhone e App Store (TestFlight)';
+
+  @override
+  String get fxDailyTitle => 'Distribuito nei giorni';
+
+  @override
+  String get fxDailyHint =>
+      'Tutte le app si possono costruire oggi, ma gli store si riempiono piano: il resto aspetta, pronto, fino a domani.';
+
+  @override
+  String get fxDailyLabel => 'Caricamenti per store al giorno';
+
+  @override
+  String get fxSafeTitle => 'Sempre in bozza, sempre in test';
+
+  @override
+  String get fxSafeBody =>
+      'Google Play riceve l’app come bozza nel test interno e App Store come TestFlight. Ember non pubblica mai e non invia mai un’app in revisione: resta una tua decisione, app per app.';
+
+  @override
+  String get fxSupervisorReading =>
+      'Il supervisore sta leggendo e scegliendo le app…';
+
+  @override
+  String get fxNoIdeas =>
+      'Il supervisore non ha trovato nessuna app da fare. Aggiungi più dettagli e riprova.';
+
+  @override
+  String fxReviewTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count app proposte',
+      one: '1 app proposta',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fxReviewHint =>
+      'Togli la spunta a quelle che non vuoi. Tocca un nome per cambiarlo. Tocca la dimensione per passare da piccola a grande.';
+
+  @override
+  String get fxBatchName => 'Nome del lotto';
+
+  @override
+  String fxBatchDefaultName(String date) {
+    return 'Lotto $date';
+  }
+
+  @override
+  String fxDroppedTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count idee lasciate fuori',
+      one: '1 idea lasciata fuori',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fxDropDuplicate(String name) {
+    return '$name: stesso nome di un’altra app';
+  }
+
+  @override
+  String fxDropSimilar(String name, String kept) {
+    return '$name: troppo simile a “$kept”, che è stata tenuta';
+  }
+
+  @override
+  String fxDropTooMany(String name) {
+    return '$name: un lotto contiene al massimo 100 app';
+  }
+
+  @override
+  String get fxWarnNoAi =>
+      'Nessun motore AI è collegato, quindi la lista è stata letta riga per riga: un’app per riga.';
+
+  @override
+  String get fxSizeSmall => 'Piccola';
+
+  @override
+  String get fxSizeBig => 'Grande';
+
+  @override
+  String get fxSizeTooltip => 'Passa da piccola a grande';
+
+  @override
+  String fxEstimateStores(int limit, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days giorni',
+      one: '1 giorno',
+    );
+    return 'Si costruiscono ora e vanno sugli store $limit al giorno: servono circa $_temp0 per riempirli.';
+  }
+
+  @override
+  String fxStartTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Avviare $count app?',
+      one: 'Avviare 1 app?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fxStartBody => 'Le app si fanno ora. Non si pubblica niente.';
+
+  @override
+  String fxStartBodyStores(int limit) {
+    return 'Le app si fanno ora e vanno su Google Play e App Store come bozze in test, $limit al giorno. Non si pubblica niente e niente va in revisione.';
+  }
+
+  @override
+  String get fxStart => 'Avvia';
+
+  @override
+  String fxStartCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Avvia $count app',
+      one: 'Avvia 1 app',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fxStarted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count app avviate',
+      one: '1 app avviata',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fxLinksTitle => 'Collegamenti e capacità';
+
+  @override
+  String get fxLinksEngines => 'Motori AI';
+
+  @override
+  String get fxLinksTools => 'Strumenti e account';
+
+  @override
+  String get fxConnect => 'Collega';
+
+  @override
+  String get fxSignInOpened =>
+      'Si è aperta una finestra di accesso sul computer dove gira Ember.';
+
+  @override
+  String get fxLinkAndroid => 'Strumenti Android';
+
+  @override
+  String get fxLinkChrome => 'Chrome (per gli screenshot)';
+
+  @override
+  String get fxLinkPlayKey => 'Chiave di Google Play';
+
+  @override
+  String get fxLinkAppleKey => 'Chiave di App Store Connect';
+
+  @override
+  String get fxLinkMac => 'Un Mac per l’app iPhone';
+
+  @override
+  String get fxWhyNotInstalled => 'non installato';
+
+  @override
+  String get fxWhyNotSignedIn => 'accesso mancante';
+
+  @override
+  String get fxWhyMissing => 'manca';
+
+  @override
+  String get fxWhyOnlyMac => 'solo su un Mac';
+
+  @override
+  String get fxCapacityTitle => 'Questo computer';
+
+  @override
+  String fxCapacityBody(int cpus, String ram, int disk) {
+    return '$cpus core, $ram GB di memoria libera, $disk GB liberi su disco.';
+  }
+
+  @override
+  String fxCapacitySlots(int agents, int builds) {
+    return 'Nello stesso momento: fino a $agents agenti AI e $builds costruzioni.';
+  }
+
+  @override
+  String get fxLimitsTitle => 'Limiti';
+
+  @override
+  String get fxLimitInFlight => 'App in lavorazione nello stesso momento';
 }

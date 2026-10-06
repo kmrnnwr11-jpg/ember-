@@ -4489,6 +4489,990 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A window opened on this computer: sign in to {name} there, then come back. Ember notices by itself.'**
   String subsLoginOpened(String name);
+
+  /// No description provided for @fxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Factory'**
+  String get fxTitle;
+
+  /// No description provided for @fxNavOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get fxNavOverview;
+
+  /// No description provided for @fxNavNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New batch'**
+  String get fxNavNew;
+
+  /// No description provided for @fxNavNeeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs you'**
+  String get fxNavNeeds;
+
+  /// No description provided for @fxNavLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Connections'**
+  String get fxNavLinks;
+
+  /// No description provided for @fxPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get fxPause;
+
+  /// No description provided for @fxResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get fxResume;
+
+  /// No description provided for @fxLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading the factory…'**
+  String get fxLoading;
+
+  /// No description provided for @fxLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Less'**
+  String get fxLess;
+
+  /// No description provided for @fxMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get fxMore;
+
+  /// No description provided for @fxStageCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create the project'**
+  String get fxStageCreate;
+
+  /// No description provided for @fxStageCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Write the app'**
+  String get fxStageCode;
+
+  /// No description provided for @fxStageVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the code'**
+  String get fxStageVerify;
+
+  /// No description provided for @fxStagePreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Build the preview'**
+  String get fxStagePreview;
+
+  /// No description provided for @fxStageLogo.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw the logo'**
+  String get fxStageLogo;
+
+  /// No description provided for @fxStageListing.
+  ///
+  /// In en, this message translates to:
+  /// **'Write the store texts'**
+  String get fxStageListing;
+
+  /// No description provided for @fxStageShots.
+  ///
+  /// In en, this message translates to:
+  /// **'Take the screenshots'**
+  String get fxStageShots;
+
+  /// No description provided for @fxStageAndroid.
+  ///
+  /// In en, this message translates to:
+  /// **'Build the Android file'**
+  String get fxStageAndroid;
+
+  /// No description provided for @fxStagePlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload to Google Play (draft, testing)'**
+  String get fxStagePlay;
+
+  /// No description provided for @fxStageIos.
+  ///
+  /// In en, this message translates to:
+  /// **'Build the iPhone app'**
+  String get fxStageIos;
+
+  /// No description provided for @fxStageAppStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload to App Store (TestFlight)'**
+  String get fxStageAppStore;
+
+  /// No description provided for @fxStagePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Not started'**
+  String get fxStagePending;
+
+  /// No description provided for @fxStageSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get fxStageSkipped;
+
+  /// No description provided for @fxStatusQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get fxStatusQueued;
+
+  /// No description provided for @fxStatusRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Working'**
+  String get fxStatusRunning;
+
+  /// No description provided for @fxStatusNeedsYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs you'**
+  String get fxStatusNeedsYou;
+
+  /// No description provided for @fxStatusDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get fxStatusDone;
+
+  /// No description provided for @fxStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get fxStatusFailed;
+
+  /// No description provided for @fxStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get fxStatusCancelled;
+
+  /// No description provided for @fxStagesDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} steps done'**
+  String fxStagesDone(int done, int total);
+
+  /// No description provided for @fxHeadDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get fxHeadDone;
+
+  /// No description provided for @fxHeadNeedsYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for you'**
+  String get fxHeadNeedsYou;
+
+  /// No description provided for @fxHeadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed: {stage}'**
+  String fxHeadFailed(String stage);
+
+  /// No description provided for @fxHeadRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Now: {stage}'**
+  String fxHeadRunning(String stage);
+
+  /// No description provided for @fxHeadQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting its turn: {stage}'**
+  String fxHeadQueued(String stage);
+
+  /// No description provided for @fxHeadWaitingTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready, waiting for the daily limit: {stage}'**
+  String fxHeadWaitingTomorrow(String stage);
+
+  /// No description provided for @fxWaitsUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Waits until {when}'**
+  String fxWaitsUntil(String when);
+
+  /// No description provided for @fxNeedPlayAppTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create the app in Google Play Console'**
+  String get fxNeedPlayAppTitle;
+
+  /// No description provided for @fxNeedPlayAppDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Open Google Play Console and press “Create app”.\n2. Paste the name and choose the language, “App” and “Free”.\n3. Accept the declarations and press “Create app”.\n4. Come back here and press “Done, continue”: the upload starts by itself.'**
+  String get fxNeedPlayAppDetail;
+
+  /// No description provided for @fxNeedAppleAppTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create the app in App Store Connect'**
+  String get fxNeedAppleAppTitle;
+
+  /// No description provided for @fxNeedAppleAppDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Open App Store Connect, go to “Apps” and press “+”, then “New App”.\n2. Paste the name, the Bundle ID and the SKU below.\n3. Press “Create”.\n4. Come back here and press “Done, continue”.'**
+  String get fxNeedAppleAppDetail;
+
+  /// No description provided for @fxNeedMacTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The iPhone app needs a Mac'**
+  String get fxNeedMacTitle;
+
+  /// No description provided for @fxNeedMacDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple only lets a Mac build the iPhone app. The code is saved: open Ember on a Mac, take the app back from GitHub and the iPhone part runs there.'**
+  String get fxNeedMacDetail;
+
+  /// No description provided for @fxNeedPlayKeyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your Google Play key'**
+  String get fxNeedPlayKeyTitle;
+
+  /// No description provided for @fxNeedPlayKeyDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Open Settings in Ember.\n2. Under Google Play, paste the service account key.\n3. Come back here and press “Done, continue”.'**
+  String get fxNeedPlayKeyDetail;
+
+  /// No description provided for @fxNeedAppleKeyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your App Store Connect key'**
+  String get fxNeedAppleKeyTitle;
+
+  /// No description provided for @fxNeedAppleKeyDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Open Settings in Ember.\n2. Under App Store, paste the App Store Connect key.\n3. Come back here and press “Done, continue”.'**
+  String get fxNeedAppleKeyDetail;
+
+  /// No description provided for @fxNeedLoginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again to {engine}'**
+  String fxNeedLoginTitle(String engine);
+
+  /// No description provided for @fxNeedLoginDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The sign-in expired. Open the Connections page, press “Connect” next to it and sign in. Then press “Done, continue”.'**
+  String get fxNeedLoginDetail;
+
+  /// No description provided for @fxDataName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get fxDataName;
+
+  /// No description provided for @fxDataPackage.
+  ///
+  /// In en, this message translates to:
+  /// **'Package name'**
+  String get fxDataPackage;
+
+  /// No description provided for @fxDataShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Short description'**
+  String get fxDataShort;
+
+  /// No description provided for @fxDataCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get fxDataCategory;
+
+  /// No description provided for @fxDataBundleId.
+  ///
+  /// In en, this message translates to:
+  /// **'Bundle ID'**
+  String get fxDataBundleId;
+
+  /// No description provided for @fxDataSku.
+  ///
+  /// In en, this message translates to:
+  /// **'SKU'**
+  String get fxDataSku;
+
+  /// No description provided for @fxDataEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine'**
+  String get fxDataEngine;
+
+  /// No description provided for @fxNeedsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done, continue'**
+  String get fxNeedsDone;
+
+  /// No description provided for @fxNeedsSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip this'**
+  String get fxNeedsSkip;
+
+  /// No description provided for @fxNeedsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing needs you right now.'**
+  String get fxNeedsEmpty;
+
+  /// No description provided for @fxNeedsIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'These are things only you can do. When you have done one, press “Done, continue” and the factory goes on.'**
+  String get fxNeedsIntro;
+
+  /// No description provided for @fxEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No apps in the factory yet. Start a batch and describe up to 100 apps at once.'**
+  String get fxEmpty;
+
+  /// No description provided for @fxNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No app matches.'**
+  String get fxNoMatch;
+
+  /// No description provided for @fxSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search apps'**
+  String get fxSearch;
+
+  /// No description provided for @fxFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get fxFilterAll;
+
+  /// No description provided for @fxStatTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Apps'**
+  String get fxStatTotal;
+
+  /// No description provided for @fxOnPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'On Google Play'**
+  String get fxOnPlay;
+
+  /// No description provided for @fxOnAppStore.
+  ///
+  /// In en, this message translates to:
+  /// **'On App Store'**
+  String get fxOnAppStore;
+
+  /// No description provided for @fxPausedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The factory is paused'**
+  String get fxPausedTitle;
+
+  /// No description provided for @fxPausedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing new starts until you resume.'**
+  String get fxPausedHint;
+
+  /// No description provided for @fxPausedRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember was closed or restarted while apps were being made. Nothing resumes by itself, so no subscription is used behind your back.'**
+  String get fxPausedRestart;
+
+  /// No description provided for @fxLowDiskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The disk is almost full'**
+  String get fxLowDiskTitle;
+
+  /// No description provided for @fxLowDiskHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No new app starts until there is room again. Finished apps free their build folders on their own.'**
+  String get fxLowDiskHint;
+
+  /// No description provided for @fxSimulatedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Test mode: the apps are pretend'**
+  String get fxSimulatedTitle;
+
+  /// No description provided for @fxSimulatedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is really built, uploaded or paid. It is only to try this screen.'**
+  String get fxSimulatedHint;
+
+  /// No description provided for @fxProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% done'**
+  String fxProgress(int percent);
+
+  /// No description provided for @fxProgressEta.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% done · about {eta} left'**
+  String fxProgressEta(int percent, String eta);
+
+  /// No description provided for @fxMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 minute} other{{count} minutes}}'**
+  String fxMinutes(int count);
+
+  /// No description provided for @fxHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 hour} other{{count} hours}}'**
+  String fxHours(int count);
+
+  /// No description provided for @fxDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String fxDays(int count);
+
+  /// No description provided for @fxDailyLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploads today: Google Play {playUsed} of {playCap}, App Store {storeUsed} of {storeCap}. The rest continues tomorrow.'**
+  String fxDailyLine(int playUsed, int playCap, int storeUsed, int storeCap);
+
+  /// No description provided for @fxRetryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry all failed'**
+  String get fxRetryFailed;
+
+  /// No description provided for @fxCancelBatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel batch “{name}”'**
+  String fxCancelBatch(String name);
+
+  /// No description provided for @fxSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 selected} other{{count} selected}}'**
+  String fxSelected(int count);
+
+  /// No description provided for @fxRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Remove this app from the factory?} other{Remove {count} apps from the factory?}}'**
+  String fxRemoveTitle(int count);
+
+  /// No description provided for @fxRemoveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'They disappear from this list. The app files stay on your computer.'**
+  String get fxRemoveBody;
+
+  /// No description provided for @fxAppGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This app is no longer in the factory.'**
+  String get fxAppGone;
+
+  /// No description provided for @fxSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Steps'**
+  String get fxSteps;
+
+  /// No description provided for @fxLog.
+  ///
+  /// In en, this message translates to:
+  /// **'What happened'**
+  String get fxLog;
+
+  /// No description provided for @fxCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost so far: {amount} USD'**
+  String fxCost(String amount);
+
+  /// No description provided for @fxRetryFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry from “{stage}”'**
+  String fxRetryFrom(String stage);
+
+  /// No description provided for @fxStepIdeas.
+  ///
+  /// In en, this message translates to:
+  /// **'Ideas'**
+  String get fxStepIdeas;
+
+  /// No description provided for @fxStepRecipe.
+  ///
+  /// In en, this message translates to:
+  /// **'How'**
+  String get fxStepRecipe;
+
+  /// No description provided for @fxStepReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Check'**
+  String get fxStepReview;
+
+  /// No description provided for @fxBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get fxBack;
+
+  /// No description provided for @fxContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get fxContinue;
+
+  /// No description provided for @fxBoxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell the factory everything'**
+  String get fxBoxTitle;
+
+  /// No description provided for @fxBoxHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste ideas, lists, plans, prompts or whole documents, or add files. A supervisor reads it all, makes up to 100 different apps out of it, and shows them to you before anything starts.'**
+  String get fxBoxHint;
+
+  /// No description provided for @fxModeMine.
+  ///
+  /// In en, this message translates to:
+  /// **'I have ideas'**
+  String get fxModeMine;
+
+  /// No description provided for @fxModeInvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Invent for me'**
+  String get fxModeInvent;
+
+  /// No description provided for @fxBoxPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste here: one idea per line, a plan, a long brief, anything…'**
+  String get fxBoxPlaceholder;
+
+  /// No description provided for @fxAttach.
+  ///
+  /// In en, this message translates to:
+  /// **'Add files'**
+  String get fxAttach;
+
+  /// No description provided for @fxFilesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Text files'**
+  String get fxFilesLabel;
+
+  /// No description provided for @fxFileTooBig.
+  ///
+  /// In en, this message translates to:
+  /// **'A file is too big (over 400 KB) and was not added.'**
+  String get fxFileTooBig;
+
+  /// No description provided for @fxThemeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get fxThemeLabel;
+
+  /// No description provided for @fxThemeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For example: simple tools for fitness, games for kids, small business…'**
+  String get fxThemeHint;
+
+  /// No description provided for @fxHowMany.
+  ///
+  /// In en, this message translates to:
+  /// **'How many apps'**
+  String get fxHowMany;
+
+  /// No description provided for @fxBoxFootnote.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is built yet. You will see the apps first and choose which ones to start.'**
+  String get fxBoxFootnote;
+
+  /// No description provided for @fxRecipeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How should they be made?'**
+  String get fxRecipeTitle;
+
+  /// No description provided for @fxEnginesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who writes the apps'**
+  String get fxEnginesTitle;
+
+  /// No description provided for @fxEnginesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Apps are shared out in this proportion. Big apps go to the strongest engine first.'**
+  String get fxEnginesHint;
+
+  /// No description provided for @fxNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected yet'**
+  String get fxNotConnected;
+
+  /// No description provided for @fxSharePercent.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of the apps'**
+  String fxSharePercent(int percent);
+
+  /// No description provided for @fxLogoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who draws the logos'**
+  String get fxLogoTitle;
+
+  /// No description provided for @fxLogoAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get fxLogoAuto;
+
+  /// No description provided for @fxGoalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How far to go'**
+  String get fxGoalTitle;
+
+  /// No description provided for @fxGoalApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the app'**
+  String get fxGoalApp;
+
+  /// No description provided for @fxGoalAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'The app, logo, screenshots and store texts'**
+  String get fxGoalAssets;
+
+  /// No description provided for @fxGoalAndroid.
+  ///
+  /// In en, this message translates to:
+  /// **'Also the Android file and Google Play (draft, testing)'**
+  String get fxGoalAndroid;
+
+  /// No description provided for @fxGoalIos.
+  ///
+  /// In en, this message translates to:
+  /// **'Also the iPhone app and App Store (TestFlight)'**
+  String get fxGoalIos;
+
+  /// No description provided for @fxDailyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Spread over the days'**
+  String get fxDailyTitle;
+
+  /// No description provided for @fxDailyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'All the apps can be built today, but the stores fill slowly: the rest waits, ready, for tomorrow.'**
+  String get fxDailyHint;
+
+  /// No description provided for @fxDailyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploads per store per day'**
+  String get fxDailyLabel;
+
+  /// No description provided for @fxSafeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Always a draft, always in testing'**
+  String get fxSafeTitle;
+
+  /// No description provided for @fxSafeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play gets the app as a draft in internal testing and the App Store as TestFlight. Ember never publishes and never sends an app for review: that stays your decision, app by app.'**
+  String get fxSafeBody;
+
+  /// No description provided for @fxSupervisorReading.
+  ///
+  /// In en, this message translates to:
+  /// **'The supervisor is reading and choosing the apps…'**
+  String get fxSupervisorReading;
+
+  /// No description provided for @fxNoIdeas.
+  ///
+  /// In en, this message translates to:
+  /// **'The supervisor found no app to make. Add more detail and try again.'**
+  String get fxNoIdeas;
+
+  /// No description provided for @fxReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 app proposed} other{{count} apps proposed}}'**
+  String fxReviewTitle(int count);
+
+  /// No description provided for @fxReviewHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Untick the ones you do not want. Tap a name to rename it. Tap the size to switch between small and big.'**
+  String get fxReviewHint;
+
+  /// No description provided for @fxBatchName.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch name'**
+  String get fxBatchName;
+
+  /// No description provided for @fxBatchDefaultName.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch {date}'**
+  String fxBatchDefaultName(String date);
+
+  /// No description provided for @fxDroppedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 idea left out} other{{count} ideas left out}}'**
+  String fxDroppedTitle(int count);
+
+  /// No description provided for @fxDropDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: same name as another app'**
+  String fxDropDuplicate(String name);
+
+  /// No description provided for @fxDropSimilar.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: too similar to “{kept}”, which was kept'**
+  String fxDropSimilar(String name, String kept);
+
+  /// No description provided for @fxDropTooMany.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: a batch holds at most 100 apps'**
+  String fxDropTooMany(String name);
+
+  /// No description provided for @fxWarnNoAi.
+  ///
+  /// In en, this message translates to:
+  /// **'No AI engine is connected, so the list was read line by line: one app per line.'**
+  String get fxWarnNoAi;
+
+  /// No description provided for @fxSizeSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Small'**
+  String get fxSizeSmall;
+
+  /// No description provided for @fxSizeBig.
+  ///
+  /// In en, this message translates to:
+  /// **'Big'**
+  String get fxSizeBig;
+
+  /// No description provided for @fxSizeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch between small and big'**
+  String get fxSizeTooltip;
+
+  /// No description provided for @fxEstimateStores.
+  ///
+  /// In en, this message translates to:
+  /// **'They are built now and go to the stores {limit} a day: about {days, plural, =1{1 day} other{{days} days}} to fill them.'**
+  String fxEstimateStores(int limit, int days);
+
+  /// No description provided for @fxStartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Start 1 app?} other{Start {count} apps?}}'**
+  String fxStartTitle(int count);
+
+  /// No description provided for @fxStartBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The apps are made now. Nothing is published.'**
+  String get fxStartBody;
+
+  /// No description provided for @fxStartBodyStores.
+  ///
+  /// In en, this message translates to:
+  /// **'The apps are made now and sent to Google Play and the App Store as drafts in testing, {limit} a day. Nothing is published and nothing is sent for review.'**
+  String fxStartBodyStores(int limit);
+
+  /// No description provided for @fxStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get fxStart;
+
+  /// No description provided for @fxStartCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Start 1 app} other{Start {count} apps}}'**
+  String fxStartCount(int count);
+
+  /// No description provided for @fxStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 app started} other{{count} apps started}}'**
+  String fxStarted(int count);
+
+  /// No description provided for @fxLinksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connections and capacity'**
+  String get fxLinksTitle;
+
+  /// No description provided for @fxLinksEngines.
+  ///
+  /// In en, this message translates to:
+  /// **'AI engines'**
+  String get fxLinksEngines;
+
+  /// No description provided for @fxLinksTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools and accounts'**
+  String get fxLinksTools;
+
+  /// No description provided for @fxConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get fxConnect;
+
+  /// No description provided for @fxSignInOpened.
+  ///
+  /// In en, this message translates to:
+  /// **'A sign-in window opened on the computer where Ember runs.'**
+  String get fxSignInOpened;
+
+  /// No description provided for @fxLinkAndroid.
+  ///
+  /// In en, this message translates to:
+  /// **'Android tools'**
+  String get fxLinkAndroid;
+
+  /// No description provided for @fxLinkChrome.
+  ///
+  /// In en, this message translates to:
+  /// **'Chrome (for the screenshots)'**
+  String get fxLinkChrome;
+
+  /// No description provided for @fxLinkPlayKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play key'**
+  String get fxLinkPlayKey;
+
+  /// No description provided for @fxLinkAppleKey.
+  ///
+  /// In en, this message translates to:
+  /// **'App Store Connect key'**
+  String get fxLinkAppleKey;
+
+  /// No description provided for @fxLinkMac.
+  ///
+  /// In en, this message translates to:
+  /// **'A Mac for the iPhone app'**
+  String get fxLinkMac;
+
+  /// No description provided for @fxWhyNotInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'not installed'**
+  String get fxWhyNotInstalled;
+
+  /// No description provided for @fxWhyNotSignedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'not signed in'**
+  String get fxWhyNotSignedIn;
+
+  /// No description provided for @fxWhyMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'missing'**
+  String get fxWhyMissing;
+
+  /// No description provided for @fxWhyOnlyMac.
+  ///
+  /// In en, this message translates to:
+  /// **'only on a Mac'**
+  String get fxWhyOnlyMac;
+
+  /// No description provided for @fxCapacityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This computer'**
+  String get fxCapacityTitle;
+
+  /// No description provided for @fxCapacityBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{cpus} cores, {ram} GB of free memory, {disk} GB free on disk.'**
+  String fxCapacityBody(int cpus, String ram, int disk);
+
+  /// No description provided for @fxCapacitySlots.
+  ///
+  /// In en, this message translates to:
+  /// **'At the same time: up to {agents} AI agents and {builds} builds.'**
+  String fxCapacitySlots(int agents, int builds);
+
+  /// No description provided for @fxLimitsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Limits'**
+  String get fxLimitsTitle;
+
+  /// No description provided for @fxLimitInFlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Apps being made at the same time'**
+  String get fxLimitInFlight;
 }
 
 class _AppLocalizationsDelegate

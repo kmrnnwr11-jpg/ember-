@@ -7,13 +7,13 @@ export function defaultSettings(): FactorySettings {
   return {
     lanes: { light: 3, text: 3, build: 2, image: 2, shots: 1, store: 2, 'agent:claude-code': 3, 'agent:qwen-code': 3, 'agent:gemini-cli': 3, 'agent:codex': 2 },
     maxInFlight: 12,
-    dailySubmitLimit: 5,
+    dailyStoreCap: { play: 10, appstore: 10 },
     minFreeDiskGb: 10,
   };
 }
 
 export function emptyState(settings: FactorySettings = defaultSettings()): FactoryState {
-  return { rev: 0, paused: false, interrupted: false, batches: [], apps: {}, settings, submitLog: [] };
+  return { rev: 0, paused: false, interrupted: false, batches: [], apps: {}, settings, storeDay: { date: '', play: 0, appstore: 0 } };
 }
 
 /** Where the Factory keeps its state between runs. */
@@ -37,7 +37,7 @@ export class FileStateStore implements StateStore {
     try {
       const raw = JSON.parse(await readFile(this.file, 'utf8')) as Partial<FactoryState>;
       if (!raw || typeof raw !== 'object' || !raw.apps || !Array.isArray(raw.batches)) return null;
-      return { ...emptyState(), ...raw, settings: { ...defaultSettings(), ...(raw.settings ?? {}), lanes: { ...defaultSettings().lanes, ...(raw.settings?.lanes ?? {}) } } } as FactoryState;
+      return { ...emptyState(), ...raw, settings: { ...defaultSettings(), ...(raw.settings ?? {}), lanes: { ...defaultSettings().lanes, ...(raw.settings?.lanes ?? {}) }, dailyStoreCap: { ...defaultSettings().dailyStoreCap, ...(raw.settings?.dailyStoreCap ?? {}) } } } as FactoryState;
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code === 'ENOENT') return null;
       // A damaged file must not stop the Runner: keep it for inspection and start clean.

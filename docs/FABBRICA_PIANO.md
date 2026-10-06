@@ -102,3 +102,71 @@ Cinque lingue complete (en, it, es, fr, ar), nessun testo nel codice, nessun col
 Runner (solo file di test mirati, mai tutta la suite: scrive in `~/.ember`): `npx vitest run src/factory/...` con Node 22 (`C:\Users\kmrnn\tools\node-v22.23.3-win-x64`) e `tsc --noEmit`.
 App: `C:\Users\kmrnn\tools\flutter\bin\flutter.bat analyze` e `test` da `apps/ide`.
 Prova a mano: Runner con `EMBER_FACTORY_SIMULATE=1`, 100 app finte, cruscotto a 390, 900 e 1280 px, italiano e arabo.
+
+## API del Runner (`/v1/factory`, tutte autenticate come le altre rotte `/v1`)
+
+Stadi (ordine di visualizzazione): `create, code, verify, preview, logo, listing, shots, android, play, ios, appstore`.
+Motori: `claude-code, codex, gemini-cli, qwen-code`. Stato app: `queued | running | needs_you | done | failed | cancelled`.
+Stato stadio: `pending | queued | running | done | skipped | blocked | failed` (uno stadio fuori dall'obiettivo del lotto è `skipped` con `message: "outside"`).
+Obiettivo (`recipe.goal`): `app | assets | android | ios` (ognuno include i precedenti; `ios` = tutto). Play sempre canale interno in bozza, App Store sempre TestFlight: non c'è nessuna opzione.
+I testi che il Runner scrive (`title`, `detail`, `message`, righe di log) sono in inglese e vanno mostrati solo come ripiego: l'interfaccia deve usare le proprie parole in base a `kind`, `stage`, `state`.
+
+### Stato — `GET /v1/factory?rev=N`
+Con `rev=N` uguale a quello corrente risponde `{ "unchanged": true, "rev": N }`; altrimenti:
+```json
+{
+  "rev": 482, "paused": false, "interrupted": false, "lowDisk": false, "simulated": false,
+  "summary": { "total": 100, "queued": 61, "running": 12, "needsYou": 3, "done": 20, "failed": 4, "cancelled": 0,
+               "onPlay": 18, "onAppStore": 0, "progress": 0.31, "etaSeconds": 5400 },
+  "settings": { "lanes": { "light": 3, "text": 3, "build": 2, "image": 2, "shots": 1, "store": 2, "agent:claude-code": 3, "agent:qwen-code": 3, "agent:gemini-cli": 3, "agent:codex": 2 },
+                "maxInFlight": 12, "dailyStoreCap": { "play": 10, "appstore": 10 }, "minFreeDiskGb": 10 },
+  "uploads": { "date": "2026-10-06", "play": 4, "appstore": 0, "cap": { "play": 10, "appstore": 10 }, "resetsAt": "2026-10-07T00:00:00.000+02:00" },
+  "lanes": { "build": { "limit": 2, "running": 2, "waiting": 9 }, "agent:claude-code": { "limit": 3, "running": 3, "waiting": 20, "pausedUntil": "ISO (solo se il motore ha raggiunto il limite)" } },
+  "batches": [ { "id": "b1", "name": "Lotto giardino", "createdAt": "ISO", "appIds": ["a1"], "recipe": { "engines": { "claude-code": 2, "qwen-code": 1 }, "quality": "fast", "logoBy": "codex", "goal": "android", "languages": ["en-US","it-IT"], "maxAttempts": 2, "extra": "" } } ],
+  "apps": [ {
+    "id": "a1", "batchId": "b1", "order": 0, "name": "Acqua di Oggi", "summary": "…", "size": "small", "category": "health",
+    "engine": "claude-code", "folder": "acqua_di_oggi", "projectId": "p1 (assente finché `create` non è fatto; serve per aprire l'app)", "workspaceId": "w1", "packageName": "com.emberapps.acqua",
+    "state": "running", "doing": "Scrive lib/home.dart",
+    "stages": { "create": { "state": "done", "attempts": 1, "startedAt": "ISO", "finishedAt": "ISO", "message": "…" }, "play": { "state": "pending", "attempts": 0, "until": "ISO (attesa del tetto giornaliero)" } },
+    "needs": [ { "id": "n1", "kind": "play_console_app", "stage": "play", "title": "…", "detail": "…", "data": { "name": "…", "package": "…" }, "createdAt": "ISO" } ],
+    "error": "…", "errorStage": "code", "notBefore": "ISO (l'app aspetta questo momento)", "costUsd": 0.42,
+    "log": ["ultime 8 righe"], "createdAt": "ISO", "updatedAt": "ISO"
+  } ],
+  "needsYou": [ { "id": "n1", "appId": "a1", "appName": "Acqua di Oggi", "kind": "play_console_app", "stage": "play", "title": "…", "detail": "…", "data": {}, "createdAt": "ISO" } ]
+}
+```
+`needs[].kind`: `play_console_app` (data: name, package, shortDescription, category), `apple_app_record` (data: name, bundleId, sku), `mac`, `play_key`, `apple_key`, `login` (data: engine), `other`.
+
+### Dettaglio — `GET /v1/factory/apps/:id`
+Come un elemento di `apps` ma con `brief` e `log` completo (fino a 80 righe).
+
+### Piano dal testo — `POST /v1/factory/plan`
+Corpo: `{ "text": "tutto quello incollato nella casella grande", "count": 30, "engines": { "claude-code": 2, "qwen-code": 1 } }` (`count` solo se il testo è un tema; `engines` sono i pesi per assegnare un motore a ogni scheda, i grandi ai più forti; se manca si usano i motori collegati). Lento (decine di secondi): usare un timeout lungo (5 minuti).
+Risposta: `{ "apps": [ { "name", "summary", "brief", "size": "small|big", "category", "engine" } ], "dropped": [ { "name", "reason": "duplicate_name|similar_idea|too_many", "keptInstead": "nome" } ], "warnings": ["no_ai"], "source": "supervisor|list" }`. Errore `502 { code: "no_ai" }` se non c'è nessun motore AI per un testo libero. Massimo 100 schede.
+
+### Nuovo lotto — `POST /v1/factory/batches`
+Corpo: `{ "name": "Lotto giardino", "apps": [ { "name", "summary", "brief?", "size?", "category?", "engine?" } ], "recipe": { "engines": {…}, "quality": "fast|best", "logoBy": "codex|claude_code|gemini_runner|auto", "goal": "app|assets|android|ios", "languages": ["en-US","it-IT"], "maxAttempts": 2, "extra": "" }, "start": true }` → `201 { "batchId", "rev" }`. Con `"start": false` il lotto nasce e il Factory resta in pausa se lo era. Da 1 a 100 app.
+
+### Comandi
+| Rotta | Corpo | Risposta |
+|---|---|---|
+| `POST /v1/factory/pause` · `/resume` | – | `{ paused, rev }` |
+| `POST /v1/factory/apps/:id/retry` | `{ from?: stage }` | `{ ok, rev }` (riparte dallo stadio fallito, o da `from` e da ciò che ne dipende) |
+| `POST /v1/factory/apps/:id/cancel` | – | `{ ok, rev }` |
+| `POST /v1/factory/apps/:id/resolve` | `{ needId?, skip?: bool }` | `{ ok, rev }` («Fatto, continua» oppure «Salta questo passo») |
+| `DELETE /v1/factory/apps/:id?project=true` | – | `{ ok, rev }` (con `project=true` toglie anche il progetto) |
+| `POST /v1/factory/apps/bulk` | `{ ids: [], action: "retry\|cancel\|delete" }` | `{ done: n, rev }` |
+| `POST /v1/factory/batches/:id/retry-failed` · `/cancel` | – | `{ done: n, rev }` |
+| `PATCH /v1/factory/settings` | `{ lanes?: {…}, maxInFlight?, dailyStoreCap?: { play?, appstore? }, minFreeDiskGb? }` | stato come `GET` |
+
+### Collegamenti e capacità — `GET /v1/factory/connections`
+```json
+{ "links": { "claude": { "ready": true, "detail": "" }, "qwen": { "ready": false, "detail": "not_installed" }, "gemini": {…}, "codex": {…},
+             "flutter": {…}, "android": {…}, "chrome": {…}, "playKey": {…}, "appleKey": {…}, "mac": { "ready": false, "detail": "windows" } },
+  "capacity": { "cpus": 16, "totalRamMb": 8100, "freeRamMb": 3200, "freeDiskGb": 108, "buildSlots": 1, "agentSlots": 6,
+                "suggested": { "lanes": { "build": 1, "agent:claude-code": 3 }, "maxInFlight": 8 } } }
+```
+`detail` per un collegamento non pronto: `not_installed | not_signed_in | missing | windows | …` (codice, non frase). Per accedere a un motore: `POST /v1/subscriptions/:engine/login` con `claude-code | codex | gemini-cli | qwen-code` (funziona uguale per Qwen).
+
+### Modalità simulata
+Con `EMBER_FACTORY_SIMULATE=1` il Runner usa operazioni finte (tempi di pochi secondi, qualche errore e qualche «serve te» a caso, nessun progetto vero, nessun abbonamento usato): `simulated: true` in `GET /v1/factory`. Serve per provare l'interfaccia con 100 app.

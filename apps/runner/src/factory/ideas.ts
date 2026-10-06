@@ -10,9 +10,11 @@ import type { Idea } from './types.js';
 
 export const MAX_IDEAS = 100;
 
-/** A project folder name: lower-case ascii, digits and `_`, starting with a letter. */
+const DART_RESERVED = new Set(['flutter', 'test', 'async', 'class', 'import', 'void', 'dart']);
+
+/** A project folder name: lower-case ascii, digits and `_`, starting with a letter, not a Dart keyword. */
 export function slugFolder(name: string, max = 40): string {
-  const ascii = name
+  let slug = name
     .normalize('NFKD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
@@ -20,8 +22,10 @@ export function slugFolder(name: string, max = 40): string {
     .replace(/^_+|_+$/g, '')
     .slice(0, max)
     .replace(/_+$/g, '');
-  if (!ascii) return 'app';
-  return /^[a-z]/.test(ascii) ? ascii : `app_${ascii}`.slice(0, max);
+  if (!slug) return 'app';
+  if (!/^[a-z]/.test(slug)) slug = `app_${slug}`.slice(0, max);
+  if (DART_RESERVED.has(slug)) slug = `${slug}_app`;
+  return slug;
 }
 
 /** [slug], or [slug]_2, _3… until it is not in [taken]. */
@@ -57,8 +61,8 @@ export function parseIdeas(text: string): Idea[] {
     const line = raw.replace(/^\s*(?:[-*•]|\d{1,3}[.)])\s+/, '').trim();
     if (!line || line.startsWith('#')) continue;
     const m = /^(.{2,40}?)\s*(?:—|–|\s-\s|\s\|\s|:\s)\s*(.{4,})$/.exec(line);
-    if (m) out.push({ name: m[1]!.trim(), idea: m[2]!.trim() });
-    else out.push({ name: nameFromDescription(line), idea: line });
+    if (m) out.push({ name: m[1]!.trim(), summary: m[2]!.trim() });
+    else out.push({ name: nameFromDescription(line), summary: line });
   }
   return out;
 }
@@ -88,13 +92,16 @@ export function analyzeIdeas(ideas: readonly Idea[], max = MAX_IDEAS): IdeaIssue
   const seen = new Map<string, number>();
   ideas.forEach((idea, i) => {
     if (i >= max) issues.push({ index: i, kind: 'too_many' });
-    if (idea.idea.trim().length < 8) issues.push({ index: i, kind: 'too_short' });
+    if (idea.summary.trim().length < 8) issues.push({ index: i, kind: 'too_short' });
     const key = slugFolder(idea.name);
     const first = seen.get(key);
-    if (first !== undefined) issues.push({ index: i, kind: 'duplicate_name', other: first });
-    else seen.set(key, i);
+    if (first !== undefined) {
+      issues.push({ index: i, kind: 'duplicate_name', other: first });
+      return;
+    }
+    seen.set(key, i);
     for (let j = 0; j < i; j++) {
-      if (similarity(idea.idea, ideas[j]!.idea) >= 0.8 && idea.idea.split(/\s+/).length >= 4) {
+      if (similarity(idea.summary, ideas[j]!.summary) >= 0.8 && idea.summary.split(/\s+/).length >= 4) {
         issues.push({ index: i, kind: 'similar_idea', other: j });
         break;
       }
@@ -103,70 +110,23 @@ export function analyzeIdeas(ideas: readonly Idea[], max = MAX_IDEAS): IdeaIssue
   return issues;
 }
 
-/** Drops what [analyzeIdeas] calls a duplicate or a near-copy, keeping the first of each. */
+export interface DroppedIdea {
+  name: string;
+  reason: 'duplicate_name' | 'similar_idea' | 'too_many';
+  /** Name of the idea kept instead. */
+  keptInstead?: string;
+}
+
+/** Drops what [analyzeIdeas] calls a duplicate or a near-copy, keeping the first of each, and says what went. */
+export function dedupeReport(ideas: readonly Idea[], max = MAX_IDEAS): { kept: Idea[]; dropped: DroppedIdea[] } {
+  const issues = analyzeIdeas(ideas, max).filter((i) => i.kind !== 'too_short');
+  const bad = new Set(issues.map((i) => i.index));
+  return {
+    kept: ideas.filter((_, i) => !bad.has(i)),
+    dropped: issues.map((i) => ({ name: ideas[i.index]!.name, reason: i.kind as DroppedIdea['reason'], ...(i.other !== undefined ? { keptInstead: ideas[i.other]!.name } : {}) })),
+  };
+}
+
 export function dedupeIdeas(ideas: readonly Idea[], max = MAX_IDEAS): Idea[] {
-  const bad = new Set(analyzeIdeas(ideas, max).filter((i) => i.kind !== 'too_short').map((i) => i.index));
-  return ideas.filter((_, i) => !bad.has(i));
-}
-
-export const IDEAS_SYSTEM = `You invent app ideas for a studio that publishes many small, useful, DIFFERENT mobile apps.
-Reply with ONE JSON array only (no markdown fences). Each item: {"name": "...", "idea": "..."}.
-- "name": a short, memorable, original store name (max 24 characters), not an existing famous brand.
-- "idea": 1-2 sentences in English: who it is for, what it does, and what makes it useful. Concrete features, no vague words.
-- Every idea must be clearly different from the others: a different problem, audience or mechanic. Never reword the same app.
-- Real, buildable apps: no hardware the phone does not have, no backend that needs a team, no copyrighted characters.`;
-
-export function ideasPrompt(opts: { theme: string; count: number; avoid: readonly string[]; language?: string }): string {
-  return [
-    `Theme: ${opts.theme.trim()}`,
-    `Invent ${opts.count} different app ideas for this theme.`,
-    opts.language ? `Write the "idea" text in ${opts.language}.` : '',
-    opts.avoid.length ? `Names and ideas already taken, do not repeat or imitate them: ${opts.avoid.slice(-120).join(' | ')}` : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
-}
-
-/** The JSON array an AI answer carries, whatever it wrote around it. */
-export function ideasFromAnswer(answer: string): Idea[] {
-  const start = answer.indexOf('[');
-  const end = answer.lastIndexOf(']');
-  if (start < 0 || end <= start) return [];
-  try {
-    const arr = JSON.parse(answer.slice(start, end + 1)) as unknown;
-    if (!Array.isArray(arr)) return [];
-    const out: Idea[] = [];
-    for (const item of arr) {
-      if (!item || typeof item !== 'object') continue;
-      const { name, idea } = item as { name?: unknown; idea?: unknown };
-      if (typeof name === 'string' && typeof idea === 'string' && name.trim() && idea.trim()) {
-        out.push({ name: name.trim().slice(0, 30), idea: idea.trim().slice(0, 600) });
-      }
-    }
-    return out;
-  } catch {
-    return [];
-  }
-}
-
-export type Complete = (system: string, prompt: string) => Promise<string>;
-
-/**
- * Asks an AI for [count] different ideas on a theme, in groups so that no single
- * answer is too long, telling each group what the earlier ones already used.
- * Stops early when the AI stops producing new ideas.
- */
-export async function generateIdeas(opts: { theme: string; count: number; complete: Complete; language?: string; group?: number }): Promise<Idea[]> {
-  const want = Math.min(Math.max(1, Math.floor(opts.count)), MAX_IDEAS);
-  const group = opts.group ?? 20;
-  let have: Idea[] = [];
-  let empty = 0;
-  while (have.length < want && empty < 2) {
-    const ask = Math.min(group, want - have.length + 3);
-    const answer = await opts.complete(IDEAS_SYSTEM, ideasPrompt({ theme: opts.theme, count: ask, avoid: have.map((i) => `${i.name}: ${i.idea.slice(0, 60)}`), language: opts.language }));
-    const next = dedupeIdeas([...have, ...ideasFromAnswer(answer)], want);
-    empty = next.length === have.length ? empty + 1 : 0;
-    have = next;
-  }
-  return have.slice(0, want);
+  return dedupeReport(ideas, max).kept;
 }

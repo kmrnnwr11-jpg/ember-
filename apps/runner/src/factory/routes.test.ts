@@ -146,3 +146,27 @@ describe('/v1/factory', () => {
     await send('POST', '/v1/factory/resume');
   });
 });
+
+describe('the Runner calling its own routes', () => {
+  it('sends a body only when there is one (Fastify refuses a JSON content type without a body)', async () => {
+    const { default: Fastify } = await import('fastify');
+    const { internalCall, INTERNAL_HEADERS } = await import('./wire.js');
+    const inner = Fastify();
+    const seen: Array<{ url: string; user?: string; body: unknown }> = [];
+    for (const url of ['/nobody', '/withbody']) {
+      inner.post(url, async (req) => {
+        if (req.headers[INTERNAL_HEADERS.secret] !== 's3cret') return { code: 'denied' };
+        seen.push({ url, user: req.headers[INTERNAL_HEADERS.user] as string, body: req.body });
+        return { ok: true };
+      });
+    }
+    const call = internalCall(inner, 's3cret');
+    expect(await call('owner1', 'POST', '/nobody')).toEqual({ status: 200, json: { ok: true } });
+    expect(await call('owner1', 'POST', '/withbody', { a: 1 })).toEqual({ status: 200, json: { ok: true } });
+    expect(seen).toEqual([
+      { url: '/nobody', user: 'owner1', body: undefined },
+      { url: '/withbody', user: 'owner1', body: { a: 1 } },
+    ]);
+    await inner.close();
+  });
+});

@@ -30,6 +30,26 @@ export interface FactoryHost {
   local: boolean;
 }
 
+/** Calls this Runner's own routes in-process, as [ownerId], with the secret only this process knows. */
+export function internalCall(app: FastifyInstance, secret: string): OpsHost['call'] {
+  return async (ownerId, method, url, body) => {
+    const res = await app.inject({
+      method,
+      url,
+      // A content type without a body is refused: send one only with a body.
+      headers: { [INTERNAL_HEADERS.secret]: secret, [INTERNAL_HEADERS.user]: ownerId, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
+      ...(body === undefined ? {} : { payload: JSON.stringify(body) }),
+    });
+    let json: Record<string, unknown> = {};
+    try {
+      json = JSON.parse(res.body || '{}') as Record<string, unknown>;
+    } catch {
+      json = { message: res.body.slice(0, 300) };
+    }
+    return { status: res.statusCode, json };
+  };
+}
+
 /** Builds the Factory service for this Runner: real operations, or pretend ones with EMBER_FACTORY_SIMULATE=1. */
 export function createFactoryService(host: FactoryHost): FactoryService {
   const { cfg, claudeCode } = host;
@@ -45,21 +65,7 @@ export function createFactoryService(host: FactoryHost): FactoryService {
     throw new NoAi();
   };
 
-  const call: OpsHost['call'] = async (ownerId, method, url, body) => {
-    const res = await host.app.inject({
-      method,
-      url,
-      headers: { [INTERNAL_HEADERS.secret]: host.internalSecret, [INTERNAL_HEADERS.user]: ownerId, 'content-type': 'application/json' },
-      ...(body === undefined ? {} : { payload: JSON.stringify(body) }),
-    });
-    let json: Record<string, unknown> = {};
-    try {
-      json = JSON.parse(res.body || '{}') as Record<string, unknown>;
-    } catch {
-      json = { message: res.body.slice(0, 300) };
-    }
-    return { status: res.statusCode, json };
-  };
+  const call = internalCall(host.app, host.internalSecret);
 
   const opsHost: OpsHost = {
     cfg,

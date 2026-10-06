@@ -9,7 +9,7 @@ import type { Services } from '../services.js';
 import { readSettings, writeSettings } from '../settings_store.js';
 import { cliLogins } from '../subscription_clis.js';
 import { freeDiskGb } from './capacity.js';
-import { readLinks } from './links.js';
+import { androidLink, readLinks } from './links.js';
 import { realOps, type OpsHost } from './ops.js';
 import { FactoryService, NoAi } from './service.js';
 import { simulatedComplete, simulatedOps } from './simulate.js';
@@ -72,6 +72,7 @@ export function createFactoryService(host: FactoryHost): FactoryService {
     writeSettings,
     hasAppleKey: async () => !!(await readAppleKey().catch(() => null)),
     findBrowser: () => findBrowser(),
+    androidReady: () => androidLink().ready,
     hasScreenshotMode,
     freeDiskGb: () => freeDiskGb(cfg.WORKSPACES_ROOT),
     platform: process.platform,

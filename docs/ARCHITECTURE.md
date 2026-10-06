@@ -75,3 +75,33 @@ Screens do not style themselves. Sizes, colours and the common pieces live in on
 - `inputs.dart` — `SecretField` (keys and tokens). `chat.dart` — `ChatBubble`, `ChatComposer`, `LogSurface`, `OverlayButton`. `tab_strip.dart` — `TabStrip`.
 
 Rules, checked by `test/tokens_test.dart` and `test/l10n_complete_test.dart`: no colour literal and no hand-drawn field border outside `lib/ui`; no screen file over 500 lines; every string in all five `.arb` files. One primary action per screen; everything else is one tap away. Start/end, never left/right (Arabic).
+
+## The Factory (`apps/runner/src/factory`)
+
+Takes up to 100 apps at once from an idea to Google Play (internal testing, draft) and TestFlight, in
+the background, whatever screen is open. Plan and decisions: [FABBRICA_PIANO.md](FABBRICA_PIANO.md).
+
+```
+supervisor.ts  free text / theme / list  →  up to 100 app cards (name, summary, brief, small|big)
+engines.ts     cards + engine weights    →  one engine per app, big apps to the strongest
+engine.ts      Factory: state machine per app, 11 stages in a dependency graph, retries, pause,
+               restart-safe, daily cap on store uploads, "needs you" list, in-flight limit
+scheduler.ts   Lanes: pools with a limit and an ordered waiting line (agent:<engine>, build, light…)
+ops.ts         the real stage operations: they drive the same services the IDE uses
+               (Services.createProject/startJob, ClaudeCodeEngine, PreviewService, and the
+               Runner's own routes for logos, screenshots, listing, Play and App Store)
+simulate.ts    pretend operations (EMBER_FACTORY_SIMULATE=1) to try the interface without engines
+listing.ts     store page + translations, saved in the format the IDE's publish screen reads
+links.ts       what is connected (engines, Flutter, Android SDK, keys, Mac); capacity.ts what it can carry
+routes.ts      /v1/factory REST; service.ts one Factory per user, state in DATA_DIR/factory/<user>.json
+```
+
+- **Stages** `create → code → verify → (preview, logo, listing in parallel) → shots → android → play`, and
+  `ios → appstore` independent of the Android side. A stage starts when everything it needs is done.
+- **Lanes** keep the machine inside what it can carry: AI agents per engine, builds (RAM-based), screenshots, stores.
+  Stages deeper in the pipeline are served first, so apps get finished rather than a hundred started.
+- **Never production**: Play = internal track + draft release, App Store = TestFlight; nothing is sent for review.
+  Uploads per store per local day are capped (default 10 each); the rest wait ready and go the next day.
+- **Needs you**: what no program can do (create the app in Play Console / App Store Connect, a Mac, keys, an SDK,
+  an expired engine login) parks that stage and the app (it holds no slot) in a list with the values to copy.
+- The Runner calls its own routes in-process with a per-process secret (`x-ember-internal`), as the owner.

@@ -26,6 +26,8 @@ export interface OpsHost {
   writeSettings(ownerId: string, patch: Record<string, string | null>): Promise<unknown>;
   hasAppleKey(): Promise<boolean>;
   findBrowser(): string | null;
+  /** Whether the Android SDK is installed on this computer. */
+  androidReady(): boolean;
   hasScreenshotMode(root: string): Promise<boolean>;
   freeDiskGb(): Promise<number | null>;
   platform: NodeJS.Platform;
@@ -279,6 +281,10 @@ export function realOps(host: OpsHost, ownerId: string, email = ''): Ops {
   };
 
   const android: StageOp = async (ctx) => {
+    // Without the SDK every build would fail deep inside Gradle: say what is missing, once, in plain words.
+    if (!host.androidReady()) {
+      throw new NeedsOwner({ kind: 'android_sdk', title: 'The Android SDK is not installed', detail: 'Install Android Studio (or the Android command-line tools) on this computer, accept the licences, then continue.', data: {} });
+    }
     ctx.doing('building the signed bundle');
     const job = await runJob(ctx, 'build_aab');
     if (job.status !== 'succeeded') throw new Error(`android build failed:\n${tail(job)}`);

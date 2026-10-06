@@ -33,7 +33,7 @@ interface Scripted {
   prompts: string[];
 }
 
-function fake(over: Partial<{ platform: NodeJS.Platform; appleKey: boolean; engineOk: boolean; complete: (s: string, p: string) => string }> = {}) {
+function fake(over: Partial<{ platform: NodeJS.Platform; androidReady: boolean; appleKey: boolean; engineOk: boolean; complete: (s: string, p: string) => string }> = {}) {
   const scripted: Scripted = { analyze: [], agentRuns: [], calls: [], routes: {}, jobsStarted: [], settings: {}, written: {}, createCalls: [], existing: new Set(), prompts: [] };
   const claudeCode = Object.assign(new EventEmitter(), {
     isEngineAvailable: async () => over.engineOk ?? true,
@@ -92,6 +92,7 @@ function fake(over: Partial<{ platform: NodeJS.Platform; appleKey: boolean; engi
     writeSettings: async (_o, patch) => void Object.assign(scripted.written, patch),
     hasAppleKey: async () => over.appleKey ?? true,
     findBrowser: () => 'chrome',
+    androidReady: () => over.androidReady ?? true,
     hasScreenshotMode: async () => true,
     freeDiskGb: async () => 100,
     platform: over.platform ?? 'win32',
@@ -213,6 +214,10 @@ describe('real operations', () => {
     expect(t.languages).toEqual(['it-IT', 'es-ES', 'fr-FR', 'de-DE']);
     expect(t.pages['it-IT']).toMatchObject({ title: 'Water Today', shortDescription: 'short it-IT' });
     expect(t.from).toBe('Water Today\u0001Drink water on time\u0001Never forget to drink.');
+  });
+
+  it('android: without the SDK the owner is told once, in words, instead of a Gradle failure', async () => {
+    await expect(realOps(fake({ androidReady: false }).host, 'u').stages.android!(ctxFor())).rejects.toMatchObject({ need: { kind: 'android_sdk' } });
   });
 
   it('android: builds the bundle and checks the file exists', async () => {

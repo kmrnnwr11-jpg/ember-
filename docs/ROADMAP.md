@@ -79,3 +79,10 @@
 - Words: five complete languages, no text in code, plain names for APK/AAB/Runner, long guides as numbered steps.
 - Cancelling the "AI not available" check goes back instead of closing the app.
 - Verified: analyzer clean, 209 tests (screens at phone/tablet/desktop width, English and Arabic, light and dark), web release build, and a walk through the real web app against a local Runner (home, options, settings, an existing app and its six pages; screenshots in `docs/ux/dopo`). Not walked live: a new build from prompt to ready, the mockup gallery, publishing to the stores, the Windows and phone builds, the light theme.
+
+## Factory: many apps at once (branch `feature/fabbrica`, plan in `docs/FABBRICA_PIANO.md`)
+
+- Runner: `factory/` (lanes, 11-stage dependency graph, supervisor, real operations, simulation, routes), Qwen Code as a fourth subscription engine, per-workspace job limit.
+- Always drafts and tests (Play internal + draft, TestFlight), daily cap on uploads per store, "needs you" list, restart-safe (comes back paused).
+- Verified: unit tests for lanes, the engine of the Factory, ideas, supervisor, operations (with fakes) and the routes (simulated Runner); one real app run through create, code, verify, web preview, logo and store texts on this PC.
+- Not possible on this PC today, so not exercised live: Android bundle (no Android SDK), Google Play and App Store uploads (no keys, and no Mac for the iPhone file). Each of those stages stops with a "needs you" that says what is missing.

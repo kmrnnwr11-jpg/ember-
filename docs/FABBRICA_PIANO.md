@@ -135,7 +135,7 @@ Con `rev=N` uguale a quello corrente risponde `{ "unchanged": true, "rev": N }`;
   "needsYou": [ { "id": "n1", "appId": "a1", "appName": "Acqua di Oggi", "kind": "play_console_app", "stage": "play", "title": "…", "detail": "…", "data": {}, "createdAt": "ISO" } ]
 }
 ```
-`needs[].kind`: `play_console_app` (data: name, package, shortDescription, category), `apple_app_record` (data: name, bundleId, sku), `mac`, `play_key`, `apple_key`, `login` (data: engine), `other`.
+`needs[].kind`: `play_console_app` (data: name, package, shortDescription, category), `apple_app_record` (data: name, bundleId, sku), `mac`, `android_sdk`, `play_key`, `apple_key`, `login` (data: engine), `other`.
 
 ### Dettaglio — `GET /v1/factory/apps/:id`
 Come un elemento di `apps` ma con `brief` e `log` completo (fino a 80 righe).

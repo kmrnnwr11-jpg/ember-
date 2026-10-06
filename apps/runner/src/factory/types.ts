@@ -105,7 +105,7 @@ export interface StageRun {
   until?: string;
 }
 
-export type NeedsKind = 'play_console_app' | 'apple_app_record' | 'mac' | 'play_key' | 'apple_key' | 'login' | 'other';
+export type NeedsKind = 'play_console_app' | 'apple_app_record' | 'mac' | 'android_sdk' | 'play_key' | 'apple_key' | 'login' | 'other';
 
 /** Something only the owner can do, with what is needed to do it. */
 export interface NeedsYou {

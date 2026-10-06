@@ -160,3 +160,12 @@ if needed.
 One running job per workspace, FIFO queue, timeout `JOB_TIMEOUT_SECONDS`
 (default 900 s), log ring buffer (4000 chunks) replayable via `GET /v1/jobs/:id`.
 Clients never send raw commands; each `kind` maps to a fixed command line.
+
+## Factory (`/v1/factory`)
+
+Many apps at once, from idea to the stores. The routes, the JSON of the state, the plan made by the
+supervisor, the commands and the connections are written in
+[FABBRICA_PIANO.md](FABBRICA_PIANO.md#api-del-runner-v1factory-tutte-autenticate-come-le-altre-rotte-v1).
+The Runner also accepts `qwen-code` in `POST /v1/subscriptions/:engine/login` and reports
+`engines.qwenCode` in `GET /v1/health`. `JobManager.setWorkspaceLimit(workspaceId, n)` lets one
+workspace run several jobs together (the Factory uses it; every other workspace keeps one).

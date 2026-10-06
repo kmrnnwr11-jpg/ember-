@@ -68,6 +68,8 @@ export function fitStoreText(text: string, max: number): string {
 }
 const fitted = (max: number) => z.string().transform((s) => fitStoreText(s, max));
 import { Session } from './ws.js';
+import { registerFactoryRoutes } from './factory/routes.js';
+import { createFactoryService, INTERNAL_HEADERS } from './factory/wire.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -204,12 +206,21 @@ export async function buildApp(
   });
 
   const authenticate = async (req: FastifyRequest) => {
+    // The Factory calls this Runner's own routes in-process, as the owner, with a secret only this process knows.
+    const asUser = req.headers[INTERNAL_HEADERS.user];
+    if (typeof asUser === 'string' && asUser && req.headers[INTERNAL_HEADERS.secret] === internalSecret) {
+      req.user = { id: asUser };
+      return;
+    }
     req.user = await auth.verify(bearer(req.headers.authorization));
   };
+  const internalSecret = randomBytes(32).toString('hex');
+  const factoryService = createFactoryService({ cfg, app, services, claudeCode, preview, internalSecret, geminiComplete, local: driver.kind === 'local' });
 
   app.addHook('onClose', async () => {
     preview.stopAll();
     claudeCode.cancelAll();
+    await factoryService.shutdown();
     await hub.closeAll();
   });
 
@@ -1525,6 +1536,8 @@ export async function buildApp(
       const { project } = await services.ownedProject(req.user.id, projectId);
       return (deps.androidInfo ?? androidAppInfo)(cfg, project.id, services.projectRoot(project), project.name);
     });
+
+    registerFactoryRoutes(r, factoryService);
 
     r.get('/v1/jobs/:jobId', async (req) => {
       const { jobId } = req.params as { jobId: string };

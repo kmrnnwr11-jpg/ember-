@@ -1,4 +1,4 @@
-/// Shared models and wire protocol between the FlutterCursor IDE and Runner.
+/// Shared models and wire protocol between the Ember app and Runner.
 library;
 
 export 'src/build_support.dart';

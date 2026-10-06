@@ -15,7 +15,7 @@ import { fix as fixFinding, inspectCloud, inspectProject, inspectRunning } from 
 import { openAiComplete, reviewApp } from './ai_review.js';
 import { GitHubError, listEmberApps, restoreFromGitHub, saveToGitHub } from './github.js';
 import { fillAppContent } from './play_console.js';
-import { fillPolicy, publishPolicy } from './publish_prep.js';
+import { fillPolicy, isPlaceholderId, publishPolicy } from './publish_prep.js';
 import { detectDataFacts, fillCsv, findExportedCsv, uploadDataSafety, validateFilledCsv } from './data_safety.js';
 import { createServiceAccountKey, gcloudStatus, invitePlayUser, storeImages } from './play_setup.js';
 import { claudeLoggedIn, cliLogins, cliModels, forgetLoginCache, openLoginWindow } from './subscription_clis.js';
@@ -269,7 +269,7 @@ export async function buildApp(
     }
     // A provisional Bundle ID can never go on the App Store: the plan was made
     // before the app got its real one, so it is stale.
-    if (`${plan.bundleId ?? ''}`.startsWith('dev.fluttercursor.app.')) {
+    if (isPlaceholderId(`${plan.bundleId ?? ''}`)) {
       return reply.status(409).send({
         code: 'stale_plan',
         message: 'Questi dati sono vecchi (Bundle ID provvisorio): apri l’app in Ember, scheda iPhone, e riprova.',
@@ -817,7 +817,7 @@ export async function buildApp(
         at: new Date().toISOString(),
       };
       const key = await readAppleKey().catch(() => null);
-      if (key && bundleId && !bundleId.startsWith('dev.fluttercursor.app.')) {
+      if (key && bundleId && !isPlaceholderId(bundleId)) {
         plan.bundleRegistered = await (await AppStore.open(key)).ensureBundleId(bundleId, name).then(() => true, () => false);
       }
       await saveAppleHelper(plan).catch(() => {});
@@ -1563,7 +1563,7 @@ export async function buildApp(
 
 function previewPlaceholder(message: string): string {
   const safe = message.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]!);
-  return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>FlutterCursor preview</title><body style="font-family:system-ui;display:grid;place-items:center;height:100vh;margin:0;background:#111;color:#ddd"><p>${safe}</p></body>`;
+  return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Ember preview</title><body style="font-family:system-ui;display:grid;place-items:center;height:100vh;margin:0;background:#111;color:#ddd"><p>${safe}</p></body>`;
 }
 
 function publicWorkspace(w: { id: string; name: string; status: string; createdAt: string }) {

@@ -1,4 +1,4 @@
--- FlutterCursor data model (§5C). RLS enabled everywhere; the Runner uses the
+-- Ember data model (§5C). RLS enabled everywhere; the Runner uses the
 -- service role, clients may read their own rows directly.
 create extension if not exists vector;
 

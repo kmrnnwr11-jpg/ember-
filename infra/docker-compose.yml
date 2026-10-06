@@ -1,6 +1,6 @@
 # Local/prod stack: Runner + Redis + Caddy. Workspace containers are created by the Runner.
 # Usage: cp .env.example .env && docker compose -f infra/docker-compose.yml up -d --build
-name: fluttercursor
+name: ember
 
 services:
   runner:
@@ -10,12 +10,12 @@ services:
       WORKSPACE_DRIVER: docker
       # Must be the same absolute path on host and in the container: the Runner
       # passes it to the Docker daemon as a bind-mount source.
-      WORKSPACES_ROOT: ${HOST_WORKSPACES_ROOT:-/srv/fluttercursor/workspaces}
+      WORKSPACES_ROOT: ${HOST_WORKSPACES_ROOT:-/srv/ember/workspaces}
       DATA_DIR: /data
       REDIS_URL: redis://redis:6379
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${HOST_WORKSPACES_ROOT:-/srv/fluttercursor/workspaces}:${HOST_WORKSPACES_ROOT:-/srv/fluttercursor/workspaces}
+      - ${HOST_WORKSPACES_ROOT:-/srv/ember/workspaces}:${HOST_WORKSPACES_ROOT:-/srv/ember/workspaces}
       - runner-data:/data
     networks: [edge, workspaces]
     restart: unless-stopped
@@ -42,7 +42,7 @@ services:
   # Build-only service so `docker compose build` also produces the workspace image.
   workspace-image:
     build: ./workspace
-    image: fluttercursor/workspace:latest
+    image: ember/workspace:latest
     profiles: [build]
 
 networks:

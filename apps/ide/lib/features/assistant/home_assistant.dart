@@ -86,7 +86,7 @@ Future<String?> appFacts(Ref ref, String projectId) async {
       final id = info['applicationId'] as String? ?? '';
       return {
         ...info,
-        if (id.startsWith('dev.fluttercursor.app.'))
+        if (id.startsWith('dev.ember.app.') || id.startsWith('dev.fluttercursor.app.'))
           'note': 'Temporary placeholder: Ember replaces it with the final name (com.dreamcodestudio.<appname>) at the first release build (APK/AAB). After Play has it, it never changes.',
       };
     }),

@@ -10,7 +10,7 @@ import 'types.dart';
 ///
 /// - [AiEndpoint.direct]: straight to the provider with the user's key.
 ///   Not usable from browsers for most providers (CORS, key exposure).
-/// - [AiEndpoint.proxy]: through the FlutterCursor Runner
+/// - [AiEndpoint.proxy]: through the Ember Runner
 ///   (`/v1/ai/proxy/<provider>`), which injects the key server-side per request.
 class AiEndpoint {
   const AiEndpoint.direct({required this.apiKey, String? baseUrl})

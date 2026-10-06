@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { claimBundleId, claimPackageName, fillPolicy, packageName } from './publish_prep.js';
+import { claimBundleId, claimPackageName, fillPolicy, isPlaceholderId, packageName } from './publish_prep.js';
 
 async function project(applicationId: string, withFirebase = false): Promise<string> {
   const root = await mkdtemp(path.join(os.tmpdir(), 'ember-prep-'));
@@ -15,6 +15,19 @@ async function project(applicationId: string, withFirebase = false): Promise<str
 const idOf = async (root: string) => /applicationId = "([^"]+)"/.exec(await readFile(path.join(root, 'android', 'app', 'build.gradle.kts'), 'utf8'))?.[1];
 
 describe('package name', () => {
+  it('knows the provisional names, under the Ember name and under the one before it', () => {
+    expect(isPlaceholderId('dev.ember.app.my_app_12')).toBe(true);
+    expect(isPlaceholderId('dev.fluttercursor.app.old_app')).toBe(true);
+    expect(isPlaceholderId('com.studio.doodledino')).toBe(false);
+    expect(isPlaceholderId(undefined)).toBe(false);
+  });
+
+  it('replaces a new Ember placeholder too', async () => {
+    const root = await project('dev.ember.app.nuova_app_7');
+    expect(await claimPackageName(root, { appName: 'Nuova App', prefix: 'com.studio', alreadyPublished: false })).toBe('com.studio.nuovaapp');
+    await rm(root, { recursive: true, force: true });
+  });
+
   it('comes from the app name, the way a store expects it', () => {
     expect(packageName('Doodle Dino: Kids Coloring', 'com.dreamcodestudio')).toBe('com.dreamcodestudio.doodledino');
     expect(packageName('Città Perù', 'com.studio.')).toBe('com.studio.cittaperu');

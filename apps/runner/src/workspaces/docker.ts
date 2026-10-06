@@ -42,7 +42,7 @@ export class DockerDriver implements WorkspaceDriver {
       Cmd: ['sleep', 'infinity'],
       User: '1000:1000',
       WorkingDir: CONTAINER_ROOT,
-      Labels: { 'fluttercursor.workspace': workspaceId },
+      Labels: { 'ember.workspace': workspaceId },
       HostConfig: {
         Binds: [`${this.hostRoot(workspaceId)}:${CONTAINER_ROOT}`],
         NanoCpus: Math.round(this.cfg.WORKSPACE_CPU * 1e9),

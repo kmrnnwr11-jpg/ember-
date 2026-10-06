@@ -17,11 +17,11 @@ Future<void> main() async {
   if (Env.supabaseEnabled) {
     await Supabase.initialize(url: Env.supabaseUrl, publishableKey: Env.supabaseAnonKey);
   }
-  runApp(const ProviderScope(child: FlutterCursorApp()));
+  runApp(const ProviderScope(child: EmberApp()));
 }
 
-class FlutterCursorApp extends ConsumerWidget {
-  const FlutterCursorApp({super.key});
+class EmberApp extends ConsumerWidget {
+  const EmberApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

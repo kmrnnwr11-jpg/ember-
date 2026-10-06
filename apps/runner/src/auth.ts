@@ -31,7 +31,7 @@ export class Authenticator {
     if (!token) throw new AuthError('missing token');
     const attempts: Array<() => Promise<JWTPayload>> = [];
     if (this.cfg.DEV_AUTH) {
-      attempts.push(async () => (await jwtVerify(token, this.devSecret, { issuer: 'fluttercursor-dev' })).payload);
+      attempts.push(async () => (await jwtVerify(token, this.devSecret, { issuer: ['ember-dev', 'fluttercursor-dev'] })).payload);
     }
     if (this.legacySecret) {
       const s = this.legacySecret;
@@ -59,7 +59,7 @@ export class Authenticator {
     const token = await new SignJWT({ email })
       .setProtectedHeader({ alg: 'HS256' })
       .setSubject(id)
-      .setIssuer('fluttercursor-dev')
+      .setIssuer('ember-dev')
       .setIssuedAt()
       .setExpirationTime('7d')
       .sign(this.devSecret);

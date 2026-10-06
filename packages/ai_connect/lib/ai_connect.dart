@@ -1,4 +1,4 @@
-/// AI provider layer for FlutterCursor and the apps it generates:
+/// AI provider layer for Ember and the apps it generates:
 /// Claude (Anthropic), ChatGPT (OpenAI), Gemini (Google) and any
 /// OpenAI-compatible server, with one streaming/tool-calling interface.
 library;

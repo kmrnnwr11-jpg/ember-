@@ -17,7 +17,7 @@ const schema = z.object({
   WORKSPACES_ROOT: z.string().default('./data/workspaces'),
   /** Where the JSON store lives when Supabase is not configured. */
   DATA_DIR: z.string().default('./data'),
-  WORKSPACE_IMAGE: z.string().default('fluttercursor/workspace:latest'),
+  WORKSPACE_IMAGE: z.string().default('ember/workspace:latest'),
   WORKSPACE_CPU: z.coerce.number().default(2),
   WORKSPACE_RAM_MB: z.coerce.number().int().default(4096),
   WORKSPACE_IDLE_MINUTES: z.coerce.number().int().default(30),

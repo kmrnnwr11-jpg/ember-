@@ -1,5 +1,5 @@
 name: ai_connect
-description: Reusable AI provider layer (Claude, ChatGPT, Gemini, OpenAI-compatible) for FlutterCursor and the apps it generates.
+description: Reusable AI provider layer (Claude, ChatGPT, Gemini, OpenAI-compatible) for Ember and the apps it generates.
 version: 0.1.0
 publish_to: none
 

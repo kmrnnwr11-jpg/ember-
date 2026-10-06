@@ -5,7 +5,10 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Config } from './config.js';
 
-export const SIGNING_MARKER = '// fluttercursor-signing';
+export const SIGNING_MARKER = '// ember-signing';
+
+/** Projects patched before the rename carry this marker: they are already patched. */
+const LEGACY_SIGNING_MARKER = '// fluttercursor-signing';
 
 export interface SigningInfo {
   alias: string;
@@ -105,7 +108,7 @@ export async function ensureUploadKey(cfg: Config, projectId: string, appName: s
     '-keyalg', 'RSA', '-keysize', '2048', '-validity', '10000',
     '-alias', 'upload',
     '-storepass', password, '-keypass', password,
-    '-dname', `CN=${cn}, O=FlutterCursor`,
+    '-dname', `CN=${cn}, O=Ember`,
   ]);
   if (res.code !== 0) throw new Error(`keytool failed: ${res.output.slice(-500)}`);
   const sealed = sealSecret(cfg, password);
@@ -120,7 +123,7 @@ export async function ensureUploadKey(cfg: Config, projectId: string, appName: s
  * the project). Without those variables it keeps using debug keys. Idempotent.
  */
 export function patchGradleKts(src: string): string {
-  if (src.includes(SIGNING_MARKER)) return src;
+  if (src.includes(SIGNING_MARKER) || src.includes(LEGACY_SIGNING_MARKER)) return src;
   const debugLine = /signingConfig\s*=\s*signingConfigs\.getByName\("debug"\)/;
   const buildTypes = /\n(\s*)buildTypes\s*\{/;
   const m = buildTypes.exec(src);

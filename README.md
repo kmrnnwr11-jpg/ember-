@@ -1,8 +1,10 @@
-# FlutterCursor
+# Ember
 
-A Cursor-style IDE for building Flutter apps from phone, tablet, web and desktop.
-The IDE (`apps/ide`) talks to a Runner (`apps/runner`) that hosts one isolated
-container per workspace with the Flutter and Android SDKs.
+Ember builds an app from a description and publishes it to Google Play and the App Store,
+from phone, tablet, web and desktop. The app (`apps/ide`) talks to a Runner (`apps/runner`)
+that holds the Flutter and Android SDKs and does the building.
+
+On Windows, double-click `avvia-ember.cmd` to start everything.
 
 ```
 apps/ide/            Flutter client

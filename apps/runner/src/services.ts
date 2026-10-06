@@ -6,7 +6,7 @@ import type { Config } from './config.js';
 import { FsError, ProjectFs } from './fs.js';
 import type { Job, JobKind, JobManager } from './jobs.js';
 import { validateProjectName, parseJson } from './paths.js';
-import { claimBundleId, claimPackageName } from './publish_prep.js';
+import { claimBundleId, claimPackageName, isPlaceholderId } from './publish_prep.js';
 import { readAppleSettings } from './apple_settings.js';
 import { readAppleCreds, readAppleKey, rememberTeamId } from './apple_creds.js';
 import { ensureDevelopmentTeam } from './ios_signing.js';
@@ -196,7 +196,7 @@ export class Services {
       projectId: project.id,
       cwd: PROJECTS_DIR,
       cmd: 'flutter',
-      args: ['create', '--org', 'dev.fluttercursor.app', '--project-name', name, '--platforms', 'web,android,ios', name],
+      args: ['create', '--org', 'dev.ember.app', '--project-name', name, '--platforms', 'web,android,ios', name],
     });
     return { project, job };
   }
@@ -285,7 +285,7 @@ export class Services {
       const applicationId = /applicationId\s*=\s*"([^"]+)"/.exec(gradle)?.[1] ?? '';
       // An app Apple already knows under another Bundle ID keeps that one.
       const ownBundleId = (await readAppleSettings(root)).bundleId;
-      if (!ownBundleId && applicationId && !applicationId.startsWith('dev.fluttercursor.app.')) {
+      if (!ownBundleId && applicationId && !isPlaceholderId(applicationId)) {
         // Only Apple fixes the Bundle ID for good: a version already on Google
         // Play must not keep the placeholder on the iPhone.
         await claimBundleId(root, applicationId, (await lastAppStoreBuildNumber(root)) > 0).catch(() => null);

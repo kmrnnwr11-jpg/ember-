@@ -1,4 +1,4 @@
-package dev.fluttercursor.ide
+package dev.ember.ide
 
 import io.flutter.embedding.android.FlutterActivity
 

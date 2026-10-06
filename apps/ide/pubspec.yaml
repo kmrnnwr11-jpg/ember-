@@ -1,5 +1,5 @@
 name: ide
-description: FlutterCursor — a Cursor-style IDE for building Flutter apps from phone, tablet and desktop.
+description: Ember — describe an app, Ember builds it and publishes it. For phone, tablet, web and desktop.
 publish_to: none
 version: 0.1.0+1
 

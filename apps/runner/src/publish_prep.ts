@@ -11,7 +11,16 @@ import path from 'node:path';
  */
 
 /** The prefix every new project starts with, before it has a real name. */
-export const PLACEHOLDER_PREFIX = 'dev.fluttercursor.app.';
+export const PLACEHOLDER_PREFIX = 'dev.ember.app.';
+
+/** Projects made before Ember had its name start with this one: still placeholders. */
+export const LEGACY_PLACEHOLDER_PREFIX = 'dev.fluttercursor.app.';
+
+/** Whether a package name / Bundle ID is still the provisional one. */
+export function isPlaceholderId(id: string | undefined | null): boolean {
+  const s = id ?? '';
+  return s.startsWith(PLACEHOLDER_PREFIX) || s.startsWith(LEGACY_PLACEHOLDER_PREFIX);
+}
 
 /** A package name from the app's own name: `com.studio.doodledino`. */
 export function packageName(appName: string, prefix: string): string {
@@ -42,7 +51,7 @@ export async function claimPackageName(
   const text = await readFile(gradle, 'utf8').catch(() => null);
   if (!text) return null;
   const current = /applicationId\s*=\s*"([^"]+)"/.exec(text)?.[1];
-  if (!current?.startsWith(PLACEHOLDER_PREFIX)) return null;
+  if (!isPlaceholderId(current)) return null;
   const next = packageName(input.appName, input.prefix);
   await writeFile(gradle, text.replace(/applicationId\s*=\s*"[^"]+"/, `applicationId = "${next}"`));
   return next;

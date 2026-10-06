@@ -62,10 +62,10 @@ log('tree', tree.entries.map((e) => e.name).join(', '));
 const main = await req('fs.read', { projectId: project.id, path: 'lib/main.dart' });
 log('main.dart bytes', main.content.length);
 await req('fs.watch', { projectId: project.id });
-const edited = main.content.replace('Flutter Demo', 'FlutterCursor Smoke');
+const edited = main.content.replace('Flutter Demo', 'Ember Smoke');
 await req('fs.write', { projectId: project.id, path: 'lib/main.dart', content: edited, expectedMtimeMs: main.mtimeMs });
 const again = await req('fs.read', { projectId: project.id, path: 'lib/main.dart' });
-if (!again.content.includes('FlutterCursor Smoke')) throw new Error('write did not persist');
+if (!again.content.includes('Ember Smoke')) throw new Error('write did not persist');
 await new Promise((r) => setTimeout(r, 800));
 log('persisted ✓, fs.changed events:', events.filter((e) => e.type === 'fs.changed').length);
 
@@ -108,7 +108,7 @@ log(`preview ✓ ${previewUrl} (index ${html.length}B, bootstrap ${boot.status})
 // rebuild on save
 events.length = 0;
 const cur = await req('fs.read', { projectId: project.id, path: 'lib/main.dart' });
-await req('fs.write', { projectId: project.id, path: 'lib/main.dart', content: cur.content.replace('FlutterCursor Smoke', 'Rebuilt On Save') });
+await req('fs.write', { projectId: project.id, path: 'lib/main.dart', content: cur.content.replace('Ember Smoke', 'Rebuilt On Save') });
 const building = await waitFor((e) => e.type === 'preview.building' && e.payload.projectId === project.id, 20000);
 log('auto-rebuild triggered by save ✓ job', building.payload.jobId);
 const rebuilt = await waitFor((e) => (e.type === 'preview.ready' || e.type === 'preview.failed') && e.payload.projectId === project.id, 600000);

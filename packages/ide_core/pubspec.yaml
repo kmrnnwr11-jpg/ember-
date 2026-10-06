@@ -1,5 +1,5 @@
 name: ide_core
-description: Shared models, WebSocket protocol and palette commands for FlutterCursor.
+description: Shared models, WebSocket protocol and palette commands for Ember.
 version: 0.1.0
 publish_to: none
 

@@ -41,7 +41,7 @@ npm run smoke                            # e2e against a running Runner (real fl
 
 ```bash
 docker compose -f infra/docker-compose.yml --profile build build   # runner + workspace image (~6 GB)
-sudo mkdir -p /srv/fluttercursor/workspaces && sudo chown 1000:1000 /srv/fluttercursor/workspaces
+sudo mkdir -p /srv/ember/workspaces && sudo chown 1000:1000 /srv/ember/workspaces
 docker compose -f infra/docker-compose.yml up -d                   # add --profile prod for Caddy HTTPS
 ```
 

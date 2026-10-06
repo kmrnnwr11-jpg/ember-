@@ -1,6 +1,7 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
 import { EventEmitter } from 'node:events';
+import os from 'node:os';
 import path from 'node:path';
 import { nanoid } from 'nanoid';
 import type { Config } from './config.js';
@@ -75,6 +76,9 @@ export function resolveClaudeBin(cfg: Config): string {
     const exe = path.join(process.env.APPDATA, 'npm', 'node_modules', '@anthropic-ai', 'claude-code', 'bin', 'claude.exe');
     if (existsSync(exe)) return exe;
   }
+  // The native installer puts it in ~/.local/bin, which is often not on PATH.
+  const native = path.join(os.homedir(), '.local', 'bin', process.platform === 'win32' ? 'claude.exe' : 'claude');
+  if (existsSync(native)) return native;
   return 'claude';
 }
 

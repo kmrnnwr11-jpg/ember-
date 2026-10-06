@@ -725,5 +725,7 @@
   "stopAutoRebuild": "أوقف إعادة البناء عند الحفظ",
   "deviceTablet": "جهاز لوحي",
   "deviceDesktop": "حاسوب",
-  "checkEmailToConfirm": "تحقق من بريدك الإلكتروني لتأكيد التسجيل."
+  "checkEmailToConfirm": "تحقق من بريدك الإلكتروني لتأكيد التسجيل.",
+  "offlineTitle": "Ember غير مُشغَّل",
+  "offlineHint": "شغّل Ember على حاسوبك ثم اضغط إعادة المحاولة. لا حاجة لتسجيل الدخول."
 }

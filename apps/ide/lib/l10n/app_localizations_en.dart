@@ -2510,4 +2510,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get checkEmailToConfirm =>
       'Check your email to confirm your registration.';
+
+  @override
+  String get offlineTitle => 'Ember is not switched on';
+
+  @override
+  String get offlineHint =>
+      'Start Ember on your computer, then press Retry. You do not need to sign in.';
 }

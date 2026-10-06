@@ -746,5 +746,7 @@
   "stopAutoRebuild": "Non ricompilare più al salvataggio",
   "deviceTablet": "Tablet",
   "deviceDesktop": "Computer",
-  "checkEmailToConfirm": "Controlla la tua email per confermare la registrazione."
+  "checkEmailToConfirm": "Controlla la tua email per confermare la registrazione.",
+  "offlineTitle": "Ember non è acceso",
+  "offlineHint": "Avvia Ember sul tuo computer, poi premi Riprova. Non serve accedere."
 }

@@ -4,13 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _kThemeMode = 'app_theme_mode';
 
-/// Light, dark or the device's own setting: dark by default, the user's
+/// Light, dark or the device's own setting: light by default, the user's
 /// choice is saved.
 class ThemeModeController extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {
     _load();
-    return ThemeMode.dark;
+    return ThemeMode.light;
   }
 
   Future<void> _load() async {

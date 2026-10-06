@@ -579,11 +579,12 @@ void main() {
     expect(find.byKey(const Key('language_it')), findsOneWidget, reason: s.where);
     expect(find.byKey(const Key('theme_light')), findsOneWidget, reason: s.where);
 
-    expect(container.read(themeModeProvider), ThemeMode.dark, reason: s.where);
-    await tester.tap(find.byKey(const Key('theme_light')));
-    await tester.pump();
+    // Light is the default; the choice is the user's.
     expect(container.read(themeModeProvider), ThemeMode.light, reason: s.where);
-    expect(tester.widget<ChoiceChip>(find.byKey(const Key('theme_light'))).selected, isTrue, reason: s.where);
+    await tester.tap(find.byKey(const Key('theme_dark')));
+    await tester.pump();
+    expect(container.read(themeModeProvider), ThemeMode.dark, reason: s.where);
+    expect(tester.widget<ChoiceChip>(find.byKey(const Key('theme_dark'))).selected, isTrue, reason: s.where);
     s.expectClean(tester, 'theme chosen');
 
     final seen = await s.sweep(tester, pageScroll(), keys: const ['language_it', 'theme_light', 'key_gemini', 'settingsAdvanced', 'signOut'], step: 'page');

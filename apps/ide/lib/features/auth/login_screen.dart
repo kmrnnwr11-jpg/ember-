@@ -81,6 +81,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const Center(child: EmberWordmark(size: 34, center: true)),
                     Gap.vSm,
                     Text(l.loginSubtitle, textAlign: TextAlign.center, style: context.text.bodyMedium?.copyWith(color: context.scheme.onSurfaceVariant)),
+                    // Ember signs in by itself when it can reach its computer:
+                    // being here without an account system means it could not.
+                    if (!Env.supabaseEnabled && !busy) ...[
+                      Gap.vLg,
+                      SectionCard(
+                        icon: Icons.power_settings_new,
+                        title: l.offlineTitle,
+                        hint: l.offlineHint,
+                        tone: Tone.attention,
+                        margin: EdgeInsets.zero,
+                        children: [
+                          Gap.vMd,
+                          Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: FilledButton.icon(key: const Key('retryConnect'), onPressed: () => ref.invalidate(sessionProvider), icon: const Icon(Icons.refresh), label: Text(l.retry)),
+                          ),
+                        ],
+                      ),
+                    ],
                     Gap.vXl,
                     TextFormField(
                       key: const Key('email'),

@@ -2502,4 +2502,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get checkEmailToConfirm => 'تحقق من بريدك الإلكتروني لتأكيد التسجيل.';
+
+  @override
+  String get offlineTitle => 'Ember غير مُشغَّل';
+
+  @override
+  String get offlineHint =>
+      'شغّل Ember على حاسوبك ثم اضغط إعادة المحاولة. لا حاجة لتسجيل الدخول.';
 }

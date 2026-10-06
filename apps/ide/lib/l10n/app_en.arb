@@ -1254,5 +1254,7 @@
   "stopAutoRebuild": "Stop rebuilding on save",
   "deviceTablet": "Tablet",
   "deviceDesktop": "Computer",
-  "checkEmailToConfirm": "Check your email to confirm your registration."
+  "checkEmailToConfirm": "Check your email to confirm your registration.",
+  "offlineTitle": "Ember is not switched on",
+  "offlineHint": "Start Ember on your computer, then press Retry. You do not need to sign in."
 }

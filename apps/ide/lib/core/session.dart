@@ -49,6 +49,9 @@ const _kRunner = 'runner_url';
 const _kEmail = 'email';
 const _kDevToken = 'dev_token';
 
+/// Who Ember signs in as on its own computer when nobody has signed in before.
+const _kLocalEmail = 'me@ember.local';
+
 class SessionController extends AsyncNotifier<Session?> {
   KeyValueStore get _store => ref.read(keyValueStoreProvider);
 
@@ -81,8 +84,9 @@ class SessionController extends AsyncNotifier<Session?> {
     // The browser opened by `flutter run` starts empty every time: sign in again
     // as whoever signed in last on this Mac, instead of asking each restart.
     final api = RunnerApi(runner);
-    final last = await api.devLastEmail();
-    if (last == null) return null;
+    // Nobody has signed in here yet: Ember on your own computer needs no
+    // account, so it opens as the local user instead of asking for an email.
+    final last = await api.devLastEmail() ?? _kLocalEmail;
     try {
       final (fresh, _) = await api.devLogin(last);
       await _store.write(_kEmail, last);

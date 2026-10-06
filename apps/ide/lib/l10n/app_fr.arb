@@ -725,5 +725,7 @@
   "stopAutoRebuild": "Ne plus recompiler à l'enregistrement",
   "deviceTablet": "Tablette",
   "deviceDesktop": "Ordinateur",
-  "checkEmailToConfirm": "Vérifie ta boîte mail pour confirmer ton inscription."
+  "checkEmailToConfirm": "Vérifie ta boîte mail pour confirmer ton inscription.",
+  "offlineTitle": "Ember n'est pas allumé",
+  "offlineHint": "Démarre Ember sur ton ordinateur, puis appuie sur Réessayer. Pas besoin de te connecter."
 }

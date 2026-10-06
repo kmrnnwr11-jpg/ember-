@@ -4417,6 +4417,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Check your email to confirm your registration.'**
   String get checkEmailToConfirm;
+
+  /// No description provided for @offlineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ember is not switched on'**
+  String get offlineTitle;
+
+  /// No description provided for @offlineHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Ember on your computer, then press Retry. You do not need to sign in.'**
+  String get offlineHint;
 }
 
 class _AppLocalizationsDelegate

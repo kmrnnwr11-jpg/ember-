@@ -112,6 +112,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('EMBER'), findsOneWidget);
     expect(find.text('Accedi'), findsWidgets);
+    await tester.ensureVisible(find.byKey(const Key('signIn')));
+    await tester.pump();
     await tester.tap(find.byKey(const Key('signIn')));
     await tester.pump();
     expect(find.text('Email non valida'), findsOneWidget);

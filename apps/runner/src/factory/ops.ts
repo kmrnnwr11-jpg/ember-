@@ -29,6 +29,8 @@ export interface OpsHost {
   hasScreenshotMode(root: string): Promise<boolean>;
   freeDiskGb(): Promise<number | null>;
   platform: NodeJS.Platform;
+  /** How often a background publish is looked at (tests make it short). */
+  pollMs?: number;
 }
 
 /** The name the IDE's session record uses for each engine. */
@@ -365,9 +367,10 @@ export function realOps(host: OpsHost, ownerId: string, email = ''): Ops {
     });
     if (start.status !== 200) throw new Error(`App Store Connect: ${String(start.json.message ?? start.status)}`);
     // The one-press publish runs in the background on the Runner; follow it until it is done.
-    for (let waited = 0; waited < 120 * 60_000; waited += 15_000) {
+    const pollMs = host.pollMs ?? 15_000;
+    for (let waited = 0; waited < 120 * 60_000; waited += pollMs) {
       if (ctx.signal.aborted) throw new AbortedError();
-      await new Promise((r) => setTimeout(r, 15_000));
+      await new Promise((r) => setTimeout(r, pollMs));
       const st = (await host.call(ownerId, 'GET', `/v1/projects/${id}/appstore/autopublish`)).json as { phase?: string; message?: string; error?: string };
       if (st.message) ctx.doing(st.message.slice(0, 120));
       if (st.phase === 'done' || st.phase === 'submitted') return { message: 'in TestFlight' };

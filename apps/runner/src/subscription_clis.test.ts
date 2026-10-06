@@ -71,3 +71,35 @@ describe('loginLines', () => {
     expect(loginLines('claude-code', spaced, true)[0]).toBe(`"${spaced}" auth login`);
   });
 });
+
+describe('Qwen Code', () => {
+  it('reads Claude-style events and falls back to Gemini-style ones', async () => {
+    const { parseQwenLine } = await import('./subscription_clis.js');
+    const s = { lastText: '' };
+    const wrote = JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'PLAN_FILES: 4' }, { type: 'tool_use', name: 'write_file', input: { file_path: '/x/app/lib/main.dart' } }] } });
+    expect(parseQwenLine(wrote, s)).toEqual([
+      { kind: 'text', text: 'PLAN_FILES: 4' },
+      { kind: 'tool', name: 'Write', summary: 'app/lib/main.dart' },
+    ]);
+    expect(parseQwenLine(JSON.stringify({ type: 'result', subtype: 'success', result: '## Fatto', num_turns: 3 }), s)).toEqual([
+      { kind: 'result', ok: true, costUsd: null, turns: 3, message: '## Fatto' },
+    ]);
+    expect(parseQwenLine('{"type":"message","role":"assistant","content":"Hi"}', s)).toEqual([{ kind: 'text', text: 'Hi' }]);
+    expect(parseQwenLine('garbage', s)).toEqual([]);
+  });
+
+  it('runs headless like Gemini CLI and knows when it is set up', async () => {
+    const { cliBuildArgs, qwenConfigured, loginLines } = await import('./subscription_clis.js');
+    expect(cliBuildArgs('qwen-code', 'C:/w/p')).toEqual(['-p', 'Follow the instructions and the user request above.', '--approval-mode', 'yolo', '-o', 'stream-json']);
+    const { mkdtempSync, writeFileSync } = await import('node:fs');
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'qwen-'));
+    expect(qwenConfigured(dir, {})).toBe(false);
+    writeFileSync(path.join(dir, 'settings.json'), JSON.stringify({ security: { auth: { selectedType: 'qwen-oauth' } } }));
+    expect(qwenConfigured(dir, {})).toBe(true);
+    const other = mkdtempSync(path.join(os.tmpdir(), 'qwen-'));
+    expect(qwenConfigured(other, { DASHSCOPE_API_KEY: 'sk-x' })).toBe(true);
+    expect(loginLines('qwen-code', 'claude', false).at(-1)).toBe('qwen');
+  });
+});

@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { nanoid } from 'nanoid';
 import type { Config } from './config.js';
-import { cliBuildArgs, cliCommand, cliLogins, parseCodexLine, parseGeminiLine, type CliEngine } from './subscription_clis.js';
+import { cliBuildArgs, cliCommand, cliLogins, parseCodexLine, parseGeminiLine, parseQwenLine, type CliEngine } from './subscription_clis.js';
 
 /** Normalized agent progress event sent to the IDE as `agent.event`. */
 export type AgentEvent =
@@ -100,8 +100,8 @@ export async function detectClis(): Promise<Record<string, boolean>> {
       p.on('error', () => resolve(false));
       p.on('close', (code) => resolve(code === 0));
     });
-  const [claude, codex, gemini] = await Promise.all([check('claude'), check('codex'), check('gemini')]);
-  cliCache = { at: Date.now(), value: { claude, codex, gemini } };
+  const [claude, codex, gemini, qwen] = await Promise.all([check('claude'), check('codex'), check('gemini'), check('qwen')]);
+  cliCache = { at: Date.now(), value: { claude, codex, gemini, qwen } };
   return cliCache.value;
 }
 
@@ -277,7 +277,7 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
     const env = { ...process.env, CI: '1' };
     const spawnCli = () =>
       other
-        ? this.spawnImpl(other.bin, [...other.pre, ...cliBuildArgs(engine as 'codex' | 'gemini-cli', opts.cwd, opts.model)], { cwd: opts.cwd, windowsHide: true, env })
+        ? this.spawnImpl(other.bin, [...other.pre, ...cliBuildArgs(engine as Exclude<CliEngine, 'claude-code'>, opts.cwd, opts.model)], { cwd: opts.cwd, windowsHide: true, env })
         : this.spawnImpl(resolveClaudeBin(this.cfg), args, { cwd: opts.cwd, windowsHide: true, env });
     const request = `USER REQUEST (work in the current directory; keep what already works):\n${opts.prompt}`;
     // Codex works in a sandbox that, on Windows, has no internet: `flutter pub
@@ -291,7 +291,14 @@ export class ClaudeCodeEngine extends EventEmitter<{ event: [run: AgentRun, even
           ? `${CLAUDE_CODE_BUILD_PROMPT}\n\n${request}`
           : opts.prompt;
     const state = { lastText: '' };
-    const parse = (line: string) => (engine === 'codex' ? parseCodexLine(line, state) : engine === 'gemini-cli' ? parseGeminiLine(line, state) : parseClaudeLine(line));
+    const parse = (line: string) =>
+      engine === 'codex'
+        ? parseCodexLine(line, state)
+        : engine === 'gemini-cli'
+          ? parseGeminiLine(line, state)
+          : engine === 'qwen-code'
+            ? parseQwenLine(line, state)
+            : parseClaudeLine(line);
     const emitEv = (ev: AgentEvent) => {
       run.events = [...(run.events ?? []), ev].slice(-300);
       this.emit('event', run, ev);

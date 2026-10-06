@@ -397,7 +397,7 @@ export async function buildApp(
     store: cfg.supabaseEnabled ? 'supabase' : 'json',
     devAuth: cfg.DEV_AUTH,
     version: '0.2.0',
-    engines: { claudeCode: await claudeCode.isAvailable(), claudeLogin: driver.kind === 'local' ? await claudeLoggedIn(resolveClaudeBin(cfg)) : false, ...(driver.kind === 'local' ? await cliLogins().then((l) => ({ codex: l.codex, geminiCli: l['gemini-cli'] })) : { codex: false, geminiCli: false }), assistant: cfg.GEMINI_API_KEY !== '' || (await claudeCode.isAvailable()), serverGemini: cfg.GEMINI_API_KEY !== '' },
+    engines: { claudeCode: await claudeCode.isAvailable(), claudeLogin: driver.kind === 'local' ? await claudeLoggedIn(resolveClaudeBin(cfg)) : false, ...(driver.kind === 'local' ? await cliLogins().then((l) => ({ codex: l.codex, geminiCli: l['gemini-cli'], qwenCode: l['qwen-code'] })) : { codex: false, geminiCli: false, qwenCode: false }), assistant: cfg.GEMINI_API_KEY !== '' || (await claudeCode.isAvailable()), serverGemini: cfg.GEMINI_API_KEY !== '' },
     // AI CLIs usable from the integrated terminal (local driver: host PATH).
     cli: driver.kind === 'local' ? await detectClis() : {},
     cliModels: driver.kind === 'local' ? cliModels() : {},
@@ -441,7 +441,7 @@ export async function buildApp(
     // Opens a window on this computer that signs a subscription CLI in (Claude,
     // ChatGPT, Gemini). Only from this computer: it shows a window on its screen.
     r.post('/v1/subscriptions/:engine/login', async (req, reply) => {
-      const { engine } = z.object({ engine: z.enum(['claude-code', 'codex', 'gemini-cli']) }).parse(req.params);
+      const { engine } = z.object({ engine: z.enum(['claude-code', 'codex', 'gemini-cli', 'qwen-code']) }).parse(req.params);
       if (driver.kind !== 'local' || !fromThisMac(req.ip)) return reply.status(403).send({ code: 'not_local', message: 'The sign-in window opens only on the computer where Ember runs.' });
       if ((await openLoginWindow(engine, resolveClaudeBin(cfg))) === 'unsupported') return reply.status(501).send({ code: 'unsupported', message: 'Not supported on this system.' });
       forgetLoginCache();

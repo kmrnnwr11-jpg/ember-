@@ -5,9 +5,9 @@ import path from 'node:path';
 import type { AgentEvent } from './agent_cli.js';
 
 /** Coding CLIs that run on the user's own subscription (logged in on the Runner machine). */
-export type CliEngine = 'claude-code' | 'codex' | 'gemini-cli';
+export type CliEngine = 'claude-code' | 'codex' | 'gemini-cli' | 'qwen-code';
 
-export const CLI_ENGINES: CliEngine[] = ['claude-code', 'codex', 'gemini-cli'];
+export const CLI_ENGINES: CliEngine[] = ['claude-code', 'codex', 'gemini-cli', 'qwen-code'];
 
 /** Node entry points of npm-installed CLIs, so they can be spawned without a shell. */
 function npmScript(pkg: string, file: string): string | null {
@@ -22,7 +22,12 @@ function npmScript(pkg: string, file: string): string | null {
 
 /** Command + leading args to run a subscription CLI. */
 export function cliCommand(engine: Exclude<CliEngine, 'claude-code'>): { bin: string; pre: string[] } | null {
-  const script = engine === 'codex' ? npmScript('@openai/codex', 'bin/codex.js') : npmScript('@google/gemini-cli', 'bundle/gemini.js');
+  const script =
+    engine === 'codex'
+      ? npmScript('@openai/codex', 'bin/codex.js')
+      : engine === 'qwen-code'
+        ? npmScript('@qwen-code/qwen-code', 'cli-entry.js')
+        : npmScript('@google/gemini-cli', 'bundle/gemini.js');
   return script ? { bin: process.execPath, pre: [script] } : null;
 }
 
@@ -31,6 +36,7 @@ export function cliBuildArgs(engine: Exclude<CliEngine, 'claude-code'>, cwd: str
   if (engine === 'codex') {
     return ['exec', '--json', '--skip-git-repo-check', '--full-auto', '-C', cwd, ...(model ? ['-m', model] : []), '-'];
   }
+  // Qwen Code is a fork of Gemini CLI: the same headless flags.
   return ['-p', 'Follow the instructions and the user request above.', '--approval-mode', 'yolo', '-o', 'stream-json', ...(model ? ['-m', model] : [])];
 }
 
@@ -121,10 +127,79 @@ export function parseGeminiLine(line: string, state: { lastText: string }): Agen
   return [];
 }
 
-/** Whether each subscription CLI is installed and logged in on this machine (cached 60 s). */
-let loginCache: { at: number; value: Record<'codex' | 'gemini-cli', boolean> } | null = null;
+/**
+ * Parses one `qwen -o stream-json` line. Recent Qwen Code versions speak Claude
+ * Code's event language (assistant / result with content blocks), older ones
+ * Gemini CLI's (message / tool_use / result): both are read, the first that
+ * recognises the line wins.
+ */
+export function parseQwenLine(line: string, state: { lastText: string }): AgentEvent[] {
+  let j: Record<string, unknown>;
+  try {
+    j = JSON.parse(line) as Record<string, unknown>;
+  } catch {
+    return [];
+  }
+  if (j.type === 'assistant' || j.type === 'result') {
+    const events = parseClaudeStyle(j);
+    for (const ev of events) if (ev.kind === 'text') state.lastText = ev.text;
+    return events;
+  }
+  return parseGeminiLine(line, state);
+}
 
-export async function cliLogins(): Promise<Record<'codex' | 'gemini-cli', boolean>> {
+/** Claude-style content blocks, which Qwen Code also emits. */
+function parseClaudeStyle(j: Record<string, unknown>): AgentEvent[] {
+  if (j.type === 'assistant') {
+    const content = ((j.message as { content?: unknown[] } | undefined)?.content ?? []) as Array<Record<string, unknown>>;
+    const out: AgentEvent[] = [];
+    for (const block of content) {
+      if (block.type === 'text' && typeof block.text === 'string' && block.text.trim()) out.push({ kind: 'text', text: block.text });
+      if (block.type === 'tool_use') {
+        const raw = String(block.name);
+        const input = (block.input ?? {}) as Record<string, unknown>;
+        const name = /write/i.test(raw) ? 'Write' : /edit|replace/i.test(raw) ? 'Edit' : /shell|bash|command/i.test(raw) ? 'Bash' : raw;
+        const file = String(input.file_path ?? input.path ?? input.absolute_path ?? '');
+        out.push({ kind: 'tool', name, summary: file ? base(file) : String(input.command ?? '').slice(0, 160) });
+      }
+    }
+    return out;
+  }
+  const ok = j.subtype === 'success' && j.is_error !== true;
+  return [
+    {
+      kind: 'result',
+      ok,
+      costUsd: typeof j.total_cost_usd === 'number' ? j.total_cost_usd : null,
+      turns: typeof j.num_turns === 'number' ? j.num_turns : null,
+      message: typeof j.result === 'string' ? j.result : String(j.subtype ?? ''),
+    },
+  ];
+}
+
+/**
+ * Qwen Code keeps its sign-in in ~/.qwen/settings.json (the provider chosen
+ * with /auth) and, for a Qwen account, in ~/.qwen/oauth_creds.json. It counts as
+ * signed in when either says a way to reach a model was set up.
+ */
+export function qwenConfigured(dir = path.join(os.homedir(), '.qwen'), env: NodeJS.ProcessEnv = process.env): boolean {
+  if (existsSync(path.join(dir, 'oauth_creds.json'))) return true;
+  try {
+    const settings = JSON.parse(readFileSync(path.join(dir, 'settings.json'), 'utf8')) as Record<string, unknown>;
+    const auth = (settings.security as { auth?: { selectedType?: string } } | undefined)?.auth?.selectedType;
+    const providers = settings.modelProviders as Record<string, unknown> | undefined;
+    if (typeof auth === 'string' && auth) return true;
+    if (providers && Object.keys(providers).length > 0) return true;
+  } catch {
+    // no settings file yet
+  }
+  return !!(env.DASHSCOPE_API_KEY || env.QWEN_API_KEY || env.OPENAI_API_KEY);
+}
+
+/** Whether each subscription CLI is installed and logged in on this machine (cached 60 s). */
+let loginCache: { at: number; value: Record<'codex' | 'gemini-cli' | 'qwen-code', boolean> } | null = null;
+
+export async function cliLogins(): Promise<Record<'codex' | 'gemini-cli' | 'qwen-code', boolean>> {
   if (loginCache && Date.now() - loginCache.at < 60_000) return loginCache.value;
   const codex = await new Promise<boolean>((resolve) => {
     const cmd = cliCommand('codex');
@@ -148,7 +223,7 @@ export async function cliLogins(): Promise<Record<'codex' | 'gemini-cli', boolea
       gemini = false;
     }
   }
-  loginCache = { at: Date.now(), value: { codex, 'gemini-cli': gemini } };
+  loginCache = { at: Date.now(), value: { codex, 'gemini-cli': gemini, 'qwen-code': !!cliCommand('qwen-code') && qwenConfigured() } };
   return loginCache.value;
 }
 
@@ -172,6 +247,8 @@ export function cliModels(): Record<CliEngine, Array<{ id: string; label: string
       { id: 'haiku', label: 'Claude Haiku', description: 'Fastest, simple apps' },
     ],
     codex,
+    // No fixed list: Qwen Code uses the model of the provider chosen with /auth.
+    'qwen-code': [],
     'gemini-cli': [
       { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', description: 'Fast' },
       { id: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro (preview)', description: 'Most capable' },
@@ -230,6 +307,13 @@ export function loginLines(engine: CliEngine, claudeBin: string, windows: boolea
   if (engine === 'codex') {
     const cmd = cliCommand('codex');
     return cmd ? [`${q(cmd.bin)} ${cmd.pre.map(q).join(' ')} login`] : [`${call}${npm} install -g @openai/codex`, 'codex login'];
+  }
+  if (engine === 'qwen-code') {
+    return [
+      ...(cliCommand('qwen-code') ? [] : [`${call}${npm} install -g @qwen-code/qwen-code`]),
+      'echo Scrivi /auth, scegli il tuo accesso Qwen, poi scrivi /quit',
+      'qwen',
+    ];
   }
   const installed = cliCommand('gemini-cli');
   return [

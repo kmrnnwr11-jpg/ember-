@@ -102,6 +102,8 @@ function wait(ms: number, signal: AbortSignal): Promise<void> {
 export function simulatedComplete(): (system: string, prompt: string) => Promise<string> {
   const nouns = ['Planner', 'Tracker', 'Coach', 'Timer', 'Journal', 'Quiz', 'Scanner', 'Helper', 'Mixer', 'Guide', 'Log', 'Buddy'];
   const topics = ['garden soil', 'guitar chords', 'receipts', 'sleep sounds', 'running pace', 'pantry recipes', 'flashcards', 'bird sightings', 'budget envelopes', 'breathing', 'chess openings', 'plant health', 'train alerts', 'pet vaccines', 'cycling routes', 'language idioms', 'tea brewing', 'stretching', 'star gazing', 'coin collecting'];
+  const audiences = ['beginners', 'busy families', 'frequent travellers', 'keen athletes', 'university students'];
+  const features = ['weekly charts', 'gentle reminders', 'a shareable summary', 'a dark theme', 'a streak counter', 'quick notes', 'offline backups'];
   let n = 0;
   return async (_system, prompt) => {
     const asked = Number(/Invent (\d+)/.exec(prompt)?.[1] ?? 0);
@@ -110,10 +112,13 @@ export function simulatedComplete(): (system: string, prompt: string) => Promise
       const i = n++;
       const topic = topics[i % topics.length]!;
       const name = `${topic.split(' ')[0]!.replace(/^./, (c) => c.toUpperCase())} ${nouns[(i * 7) % nouns.length]}${i >= topics.length ? ` ${Math.floor(i / topics.length) + 1}` : ''}`;
+      const noun = nouns[(i * 7) % nouns.length]!;
+      const audience = audiences[i % audiences.length]!;
+      const feature = features[Math.floor(i / topics.length) % features.length]!;
       return {
         name,
-        summary: `${topic} helper number ${i + 1} that keeps everything on the phone`,
-        brief: `Build a polished ${topic} app with a home screen, a detail screen and a settings screen. Data stays on the phone.`,
+        summary: `A ${noun.toLowerCase()} for ${topic} aimed at ${audience}, with ${feature}`,
+        brief: `Build a polished ${topic} app for ${audience} with a home screen, a detail screen and a settings screen, featuring ${feature}. Data stays on the phone.`,
         size: i % 6 === 0 ? 'big' : 'small',
         category: 'tools',
       };

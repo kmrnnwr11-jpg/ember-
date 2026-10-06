@@ -22,9 +22,10 @@ enum BuildEngine {
   // is a shared pool that answers 429 most of the day.
   qwen(AiProviderId.openaiCompatible, 'qwen/qwen3-coder-next', 64000, reviewerId: 'qwen'),
   claudeCode(null, null, 0, cli: 'claude-code'),
-  // Subscriptions logged in on the Runner machine: ChatGPT plan (Codex CLI), Google account (Gemini CLI).
+  // Subscriptions logged in on the Runner machine: ChatGPT plan (Codex CLI), Google account (Gemini CLI), Qwen account (Qwen Code).
   codex(null, null, 0, cli: 'codex'),
-  geminiCli(null, null, 0, cli: 'gemini-cli');
+  geminiCli(null, null, 0, cli: 'gemini-cli'),
+  qwenCode(null, null, 0, cli: 'qwen-code');
 
   const BuildEngine(this.provider, this.defaultModel, this.maxTokens, {this.cli, this.reviewerId});
 
@@ -44,6 +45,7 @@ enum BuildEngine {
   String get cliLabel => switch (this) {
     codex => 'Codex (ChatGPT)',
     geminiCli => 'Gemini CLI',
+    qwenCode => 'Qwen Code',
     _ => 'Claude Code',
   };
 }

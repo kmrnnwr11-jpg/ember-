@@ -4463,7 +4463,7 @@ abstract class AppLocalizations {
   /// No description provided for @subsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Your Claude, ChatGPT and Gemini plans'**
+  /// **'Your Claude, ChatGPT, Gemini and Qwen plans'**
   String get subsTitle;
 
   /// No description provided for @subsHint.
@@ -5473,6 +5473,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Apps being made at the same time'**
   String get fxLimitInFlight;
+
+  /// No description provided for @fxNeedAndroidSdkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Install the Android tools'**
+  String get fxNeedAndroidSdkTitle;
+
+  /// No description provided for @fxNeedAndroidSdkDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Install Android Studio (it brings the Android tools).\n2. Open it once and accept the licences.\n3. Come back here and press “Done, continue”.'**
+  String get fxNeedAndroidSdkDetail;
 }
 
 class _AppLocalizationsDelegate

@@ -754,7 +754,7 @@
   "flowName": "Dai un nome",
   "flowBuild": "Ember la crea",
   "homeEyebrow": "Da un'idea a un'app",
-  "subsTitle": "I tuoi abbonamenti Claude, ChatGPT e Gemini",
+  "subsTitle": "I tuoi abbonamenti Claude, ChatGPT, Gemini e Qwen",
   "subsHint": "Ember costruisce con gli abbonamenti che già paghi. Accedi una volta su questo computer e resta collegato: niente chiavi, nessun costo in più.",
   "subsConnect": "Collega",
   "subsOpenWindow": "Apri la finestra di accesso",
@@ -922,5 +922,7 @@
   "fxCapacityBody": "{cpus} core, {ram} GB di memoria libera, {disk} GB liberi su disco.",
   "fxCapacitySlots": "Nello stesso momento: fino a {agents} agenti AI e {builds} costruzioni.",
   "fxLimitsTitle": "Limiti",
-  "fxLimitInFlight": "App in lavorazione nello stesso momento"
+  "fxLimitInFlight": "App in lavorazione nello stesso momento",
+  "fxNeedAndroidSdkTitle": "Installa gli strumenti Android",
+  "fxNeedAndroidSdkDetail": "1. Installa Android Studio (porta con sé gli strumenti Android).\n2. Aprilo una volta e accetta le licenze.\n3. Torna qui e premi “Fatto, continua”."
 }

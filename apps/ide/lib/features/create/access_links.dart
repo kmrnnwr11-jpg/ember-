@@ -48,6 +48,7 @@ const engineAccess = <BuildEngine, EngineAccess>{
   BuildEngine.claudeCode: EngineAccess(plan: 'https://claude.ai/upgrade', planName: 'Claude Pro / Max', connectCommand: 'claude   (then type /login)'),
   BuildEngine.codex: EngineAccess(plan: 'https://chatgpt.com/pricing', planName: 'ChatGPT Plus / Pro', connectCommand: 'codex login'),
   BuildEngine.geminiCli: EngineAccess(plan: 'https://one.google.com/about/google-ai-plans/', planName: 'Google account / Google AI', connectCommand: 'gemini   (choose "Login with Google")'),
+  BuildEngine.qwenCode: EngineAccess(plan: 'https://qwen.ai', planName: 'Qwen', connectCommand: 'qwen   (then type /auth)'),
 };
 
 void _open(String url) => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
@@ -67,7 +68,7 @@ class AccessLinks extends StatelessWidget {
   final void Function(BuildEngine engine)? onUseSubscription;
 
   /// API engine → the engine that runs on the same company's subscription.
-  static const subscriptionOf = {BuildEngine.openai: BuildEngine.codex, BuildEngine.claude: BuildEngine.claudeCode, BuildEngine.gemini: BuildEngine.geminiCli};
+  static const subscriptionOf = {BuildEngine.openai: BuildEngine.codex, BuildEngine.claude: BuildEngine.claudeCode, BuildEngine.gemini: BuildEngine.geminiCli, BuildEngine.qwen: BuildEngine.qwenCode};
 
   @override
   Widget build(BuildContext context) {

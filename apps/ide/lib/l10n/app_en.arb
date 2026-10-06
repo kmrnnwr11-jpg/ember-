@@ -1262,7 +1262,7 @@
   "flowName": "Name it",
   "flowBuild": "Ember builds it",
   "homeEyebrow": "From an idea to an app",
-  "subsTitle": "Your Claude, ChatGPT and Gemini plans",
+  "subsTitle": "Your Claude, ChatGPT, Gemini and Qwen plans",
   "subsHint": "Ember builds with the plans you already pay for. You sign in once on this computer and it stays signed in: no keys, no extra cost.",
   "subsConnect": "Connect",
   "subsOpenWindow": "Open the sign-in window",
@@ -1463,5 +1463,7 @@
   "fxCapacitySlots": "At the same time: up to {agents} AI agents and {builds} builds.",
   "@fxCapacitySlots": {"placeholders": {"agents": {"type": "int"}, "builds": {"type": "int"}}},
   "fxLimitsTitle": "Limits",
-  "fxLimitInFlight": "Apps being made at the same time"
+  "fxLimitInFlight": "Apps being made at the same time",
+  "fxNeedAndroidSdkTitle": "Install the Android tools",
+  "fxNeedAndroidSdkDetail": "1. Install Android Studio (it brings the Android tools).\n2. Open it once and accept the licences.\n3. Come back here and press “Done, continue”."
 }

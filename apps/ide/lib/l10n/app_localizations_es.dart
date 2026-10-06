@@ -2553,7 +2553,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeEyebrow => 'De una idea a una app';
 
   @override
-  String get subsTitle => 'Tus suscripciones de Claude, ChatGPT y Gemini';
+  String get subsTitle => 'Tus suscripciones de Claude, ChatGPT, Gemini y Qwen';
 
   @override
   String get subsHint =>
@@ -3218,4 +3218,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get fxLimitInFlight => 'Apps en marcha a la vez';
+
+  @override
+  String get fxNeedAndroidSdkTitle => 'Instala las herramientas de Android';
+
+  @override
+  String get fxNeedAndroidSdkDetail =>
+      '1. Instala Android Studio (trae las herramientas de Android).\n2. Ábrelo una vez y acepta las licencias.\n3. Vuelve aquí y pulsa “Hecho, continuar”.';
 }

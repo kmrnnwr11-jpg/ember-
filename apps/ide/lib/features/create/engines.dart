@@ -27,6 +27,8 @@ List<EngineOption> engineOptions(AppLocalizations l, AiSettings s, bool claudeCo
       available: (health?['engines'] as Map?)?['codex'] == true, reason: l.subscriptionNotConnected('Codex (ChatGPT)')),
   EngineOption(BuildEngine.geminiCli, 'Gemini CLI · Google', l.badgeSubscription, Icons.terminal,
       available: (health?['engines'] as Map?)?['geminiCli'] == true, reason: l.subscriptionNotConnected('Gemini CLI')),
+  EngineOption(BuildEngine.qwenCode, 'Qwen Code · Qwen', l.badgeSubscription, Icons.terminal,
+      available: (health?['engines'] as Map?)?['qwenCode'] == true, reason: l.subscriptionNotConnected('Qwen Code')),
   EngineOption(BuildEngine.claude, 'Claude', l.badgePaid, Icons.psychology_outlined,
       available: s.isConfigured(AiProviderId.anthropic), reason: l.needsKey('Claude')),
   EngineOption(BuildEngine.openai, 'ChatGPT', l.badgePaid, Icons.chat_bubble_outline,

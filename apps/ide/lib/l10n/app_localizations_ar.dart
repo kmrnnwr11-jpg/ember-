@@ -2526,7 +2526,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeEyebrow => 'من فكرة إلى تطبيق';
 
   @override
-  String get subsTitle => 'اشتراكاتك في Claude وChatGPT وGemini';
+  String get subsTitle => 'اشتراكاتك في Claude وChatGPT وGemini وQwen';
 
   @override
   String get subsHint =>
@@ -3210,4 +3210,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get fxLimitInFlight => 'التطبيقات قيد الصنع في الوقت نفسه';
+
+  @override
+  String get fxNeedAndroidSdkTitle => 'ثبّت أدوات أندرويد';
+
+  @override
+  String get fxNeedAndroidSdkDetail =>
+      '1. ثبّت Android Studio (يأتي معه أدوات أندرويد).\n2. افتحه مرة واحدة ووافق على التراخيص.\n3. ارجع إلى هنا واضغط «تم، تابع».';
 }

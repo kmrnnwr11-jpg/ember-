@@ -733,7 +733,7 @@
   "flowName": "سمِّه",
   "flowBuild": "Ember يبنيه",
   "homeEyebrow": "من فكرة إلى تطبيق",
-  "subsTitle": "اشتراكاتك في Claude وChatGPT وGemini",
+  "subsTitle": "اشتراكاتك في Claude وChatGPT وGemini وQwen",
   "subsHint": "يبني Ember بالاشتراكات التي تدفعها بالفعل. تسجّل الدخول مرة واحدة على هذا الحاسوب ويبقى مسجّلًا: بلا مفاتيح وبلا تكلفة إضافية.",
   "subsConnect": "ربط",
   "subsOpenWindow": "افتح نافذة تسجيل الدخول",
@@ -901,5 +901,7 @@
   "fxCapacityBody": "{cpus} أنوية، {ram} غيغابايت من الذاكرة الحرة، {disk} غيغابايت حرة على القرص.",
   "fxCapacitySlots": "في الوقت نفسه: حتى {agents} وكلاء ذكاء اصطناعي و{builds} عمليات بناء.",
   "fxLimitsTitle": "الحدود",
-  "fxLimitInFlight": "التطبيقات قيد الصنع في الوقت نفسه"
+  "fxLimitInFlight": "التطبيقات قيد الصنع في الوقت نفسه",
+  "fxNeedAndroidSdkTitle": "ثبّت أدوات أندرويد",
+  "fxNeedAndroidSdkDetail": "1. ثبّت Android Studio (يأتي معه أدوات أندرويد).\n2. افتحه مرة واحدة ووافق على التراخيص.\n3. ارجع إلى هنا واضغط «تم، تابع»."
 }

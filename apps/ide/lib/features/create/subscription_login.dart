@@ -8,8 +8,8 @@ import '../../l10n/app_localizations.dart';
 import '../../ui/ui.dart';
 import 'app_builder.dart';
 
-/// The subscription engines: Claude, ChatGPT and Gemini, on the user's own plan.
-const subscriptionEngines = [BuildEngine.claudeCode, BuildEngine.codex, BuildEngine.geminiCli];
+/// The subscription engines: Claude, ChatGPT, Gemini and Qwen, on the user's own plan.
+const subscriptionEngines = [BuildEngine.claudeCode, BuildEngine.codex, BuildEngine.geminiCli, BuildEngine.qwenCode];
 
 /// Whether this computer is signed in to that subscription right now.
 bool subscriptionConnected(Map<String, dynamic>? health, BuildEngine e) {
@@ -19,6 +19,7 @@ bool subscriptionConnected(Map<String, dynamic>? health, BuildEngine e) {
     BuildEngine.claudeCode => (engines?['claudeLogin'] ?? engines?['claudeCode']) == true,
     BuildEngine.codex => engines?['codex'] == true,
     BuildEngine.geminiCli => engines?['geminiCli'] == true,
+    BuildEngine.qwenCode => engines?['qwenCode'] == true,
     _ => false,
   };
 }

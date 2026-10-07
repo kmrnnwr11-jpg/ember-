@@ -46,3 +46,18 @@ docker compose -f infra/docker-compose.yml up -d                   # add --profi
 ```
 
 DNS for prod: `runner.<domain>` and `preview.<domain>` → VPS IP.
+
+## Android tools on Windows (for the Android bundle and the Factory)
+
+The Android bundle (`.aab`) needs a JDK 17 and the Android SDK. Without Android Studio:
+
+1. JDK 17 (Temurin zip) unpacked to `C:\Users\<you>\tools\jdk-17`.
+2. Android command-line tools unpacked so that `sdkmanager.bat` is at
+   `%LOCALAPPDATA%\Android\Sdk\cmdline-tools\latest\bin` (the folder Flutter and the Factory look at first).
+3. With `JAVA_HOME` pointing at that JDK: `sdkmanager --licenses`, then
+   `sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"`.
+4. `flutter config --android-sdk "%LOCALAPPDATA%\Android\Sdk" --jdk-dir "C:\Users\<you>\tools\jdk-17"`.
+
+The Runner finds the JDK for the signing key from Flutter's own settings (`%APPDATA%\.flutter_settings`),
+so no `JAVA_HOME` is needed. The first Android build downloads Gradle and the Android dependencies
+(a few minutes and about 1 GB); the next ones are much faster.

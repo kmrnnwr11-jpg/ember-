@@ -561,3 +561,32 @@ describe('daily cap on store uploads', () => {
     await factory.shutdown();
   });
 });
+
+describe('what an app is doing', () => {
+  it('keeps the line of a stage that is still running when another one finishes', async () => {
+    const seen: Array<string | undefined> = [];
+    let release!: () => void;
+    const slow = new Promise<void>((r) => (release = r));
+    const { ops } = fakeOps({
+      preview: async (ctx) => {
+        ctx.doing('flutter build web');
+        await slow;
+      },
+      logo: async (ctx) => {
+        await tick(5);
+        seen.push(ctx.app.doing);
+      },
+    });
+    const factory = new Factory({ store: new MemoryStateStore(), ops, retryBackoffMs: 1, saveDelayMs: 1, sleep: tick });
+    await factory.init();
+    factory.addBatch({ name: 'B', ideas: ideas(1), recipe: { goal: 'assets' } });
+    for (let i = 0; i < 100 && factory.apps()[0]!.stages.logo.state !== 'done'; i++) await tick(5);
+    // The logo finished while the preview was still going: its line is still there.
+    expect(factory.apps()[0]!.stages.logo.state).toBe('done');
+    expect(factory.apps()[0]!.doing).toBe('flutter build web');
+    release();
+    await factory.idle();
+    expect(factory.apps()[0]!.doing).toBeUndefined();
+    expect(factory.apps()[0]!.state).toBe('done');
+  });
+});

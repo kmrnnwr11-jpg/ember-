@@ -644,7 +644,8 @@ export class Factory extends EventEmitter<{ change: [rev: number] }> {
         run.finishedAt = new Date(this.now()).toISOString();
         this.finishedAt.push(this.now());
         if (this.finishedAt.length > 200) this.finishedAt.splice(0, this.finishedAt.length - 200);
-        app.doing = undefined;
+        // Stages go side by side: the card keeps what the others are doing and only goes quiet when none is left.
+        if (!STAGES.some((s) => s !== stage && app.stages[s].state === 'running')) app.doing = undefined;
         this.touch();
         return;
       } catch (e) {

@@ -535,6 +535,34 @@ export class Factory extends EventEmitter<{ change: [rev: number] }> {
     this.touch();
   }
 
+  /**
+   * A place in today's cap came back (an upload failed, or needed the owner). Apps that were sent to
+   * wait for tomorrow because the cap was full may try now: as many as there are free places, in
+   * their usual order. Without this the place would be wasted on a day with ready apps waiting.
+   */
+  private wakeCapWaiters(store: StoreStage): void {
+    let free = this.state.settings.dailyStoreCap[store] - this.state.storeDay[store];
+    if (free <= 0) return;
+    const now = this.now();
+    let woke = false;
+    for (const app of this.orderedApps()) {
+      if (free <= 0) break;
+      const run = app.stages[store];
+      if (app.state !== 'queued' || this.drivers.has(app.id) || run.state !== 'pending' || !run.until || Date.parse(run.until) <= now) continue;
+      run.until = undefined;
+      run.message = undefined;
+      // The app's own wait came from this stage alone, unless another stage is still told to wait.
+      const others = STAGES.map((s) => app.stages[s].until).filter((u): u is string => !!u && Date.parse(u) > now);
+      app.notBefore = others.sort()[0];
+      free -= 1;
+      woke = true;
+    }
+    if (woke) {
+      this.touch();
+      this.dispatch();
+    }
+  }
+
   private rollDay(): void {
     const day = dayKey(this.now());
     if (this.state.storeDay.date !== day) this.state.storeDay = { date: day, play: 0, appstore: 0 };
@@ -579,6 +607,7 @@ export class Factory extends EventEmitter<{ change: [rev: number] }> {
       if (reserved && store) {
         this.rollDay();
         this.state.storeDay[store] = Math.max(0, this.state.storeDay[store] - 1);
+        this.wakeCapWaiters(store);
       }
       reserved = false;
     };

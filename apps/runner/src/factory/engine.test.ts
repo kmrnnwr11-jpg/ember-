@@ -507,4 +507,57 @@ describe('daily cap on store uploads', () => {
     expect(factory.uploadsToday().play).toBe(1);
     await factory.shutdown();
   });
+
+  it('wakes the apps sent to wait for tomorrow when a place comes back the same day', async () => {
+    // Four apps reach Google Play together, the cap is two: the first two take the places and the
+    // others are sent to wait for tomorrow. Then the first one turns out to need the owner, and
+    // its place must not be wasted on a day when two ready apps are waiting.
+    let calls = 0;
+    const uploaded: string[] = [];
+    const { ops } = fakeOps({
+      play: async (ctx) => {
+        const call = ++calls;
+        await tick(40);
+        if (call === 1) throw new NeedsOwner({ kind: 'play_console_app', title: 'Create it', detail: '', data: {} });
+        uploaded.push(ctx.app.name);
+      },
+    });
+    const factory = new Factory({ store: new MemoryStateStore(), ops, retryBackoffMs: 1, saveDelayMs: 1, sleep: tick, now: () => noon });
+    await factory.init();
+    factory.updateSettings({ dailyStoreCap: { play: 2 }, lanes: { store: 10 } });
+    factory.addBatch({ name: 'B', ideas: ideas(4), recipe: { goal: 'android' } });
+    await factory.idle();
+    // One needs the owner, two uploaded today (the cap), one waits for tomorrow.
+    expect(uploaded).toHaveLength(2);
+    expect(factory.uploadsToday().play).toBe(2);
+    const states = factory.apps().map((a) => a.state);
+    expect(states.filter((s) => s === 'needs_you')).toHaveLength(1);
+    expect(states.filter((s) => s === 'done')).toHaveLength(2);
+    const waiting = factory.apps().filter((a) => a.state === 'queued');
+    expect(waiting).toHaveLength(1);
+    expect(Date.parse(waiting[0]!.notBefore!)).toBe(new Date(2026, 9, 7).getTime());
+    await factory.shutdown();
+  });
+
+  it('does not wake more apps than there are free places', async () => {
+    let calls = 0;
+    const uploaded: string[] = [];
+    const { ops } = fakeOps({
+      play: async (ctx) => {
+        const call = ++calls;
+        await tick(40);
+        if (call === 1) throw new NeedsOwner({ kind: 'play_console_app', title: 'Create it', detail: '', data: {} });
+        uploaded.push(ctx.app.name);
+      },
+    });
+    const factory = new Factory({ store: new MemoryStateStore(), ops, retryBackoffMs: 1, saveDelayMs: 1, sleep: tick, now: () => noon });
+    await factory.init();
+    factory.updateSettings({ dailyStoreCap: { play: 2 }, lanes: { store: 10 } });
+    factory.addBatch({ name: 'B', ideas: ideas(6), recipe: { goal: 'android' } });
+    await factory.idle();
+    expect(uploaded).toHaveLength(2);
+    expect(factory.uploadsToday().play).toBe(2);
+    expect(factory.apps().filter((a) => a.state === 'queued')).toHaveLength(3);
+    await factory.shutdown();
+  });
 });

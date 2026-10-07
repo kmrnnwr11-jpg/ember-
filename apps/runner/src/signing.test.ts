@@ -115,3 +115,22 @@ describe('ensureUploadKey (real keytool)', () => {
     expect(b.storePassword).toBe(a.storePassword);
   }, 60000);
 });
+
+describe('flutterSettingsJdk', () => {
+  it('reads the JDK Flutter was told to use, from its settings file', async () => {
+    const { flutterSettingsJdk } = await import('./signing.js');
+    const { mkdtemp, writeFile, rm } = await import('node:fs/promises');
+    const { tmpdir } = await import('node:os');
+    const dir = await mkdtemp(path.join(tmpdir(), 'fc-flutter-'));
+    try {
+      await writeFile(path.join(dir, '.flutter_settings'), JSON.stringify({ 'android-sdk': 'C:\sdk', 'jdk-dir': 'C:\tools\jdk-17' }));
+      expect(flutterSettingsJdk({ APPDATA: dir }, path.join(dir, 'nohome'))).toBe('C:\tools\jdk-17');
+      // Nothing saved, or something that is not JSON: no answer, never an error.
+      expect(flutterSettingsJdk({ APPDATA: path.join(dir, 'missing') }, path.join(dir, 'nohome'))).toBeNull();
+      await writeFile(path.join(dir, '.flutter_settings'), 'not json');
+      expect(flutterSettingsJdk({ APPDATA: dir }, path.join(dir, 'nohome'))).toBeNull();
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+});

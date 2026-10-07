@@ -1,7 +1,8 @@
 import { spawn } from 'node:child_process';
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import type { Config } from './config.js';
 
@@ -51,12 +52,35 @@ export function openSecret(cfg: Config, value: string, encrypted: boolean): stri
   return Buffer.concat([d.update(buf.subarray(28)), d.final()]).toString('utf8');
 }
 
-/** Finds keytool: KEYTOOL_BIN, JAVA_HOME, common Windows JDK installs, then PATH. */
+/**
+ * The JDK Flutter was told to use (`flutter config --jdk-dir`), from its saved settings.
+ * The build already runs on it, so the signing key is made with the same Java.
+ */
+export function flutterSettingsJdk(env: NodeJS.ProcessEnv = process.env, home: string = os.homedir()): string | null {
+  const files = [env.APPDATA && path.join(env.APPDATA, '.flutter_settings'), path.join(home, '.config', 'flutter', 'settings'), path.join(home, '.flutter_settings')];
+  for (const file of files) {
+    if (!file) continue;
+    try {
+      const dir = (JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>)['jdk-dir'];
+      if (typeof dir === 'string' && dir) return dir;
+    } catch {
+      // no such file, or not JSON: try the next place
+    }
+  }
+  return null;
+}
+
+/** Finds keytool: KEYTOOL_BIN, JAVA_HOME, the JDK Flutter uses, common Windows JDK installs, then PATH. */
 export function resolveKeytool(cfg: Config): string {
   if (cfg.KEYTOOL_BIN) return cfg.KEYTOOL_BIN;
   const exe = process.platform === 'win32' ? 'keytool.exe' : 'keytool';
   if (process.env.JAVA_HOME) {
     const p = path.join(process.env.JAVA_HOME, 'bin', exe);
+    if (existsSync(p)) return p;
+  }
+  const flutterJdk = flutterSettingsJdk();
+  if (flutterJdk) {
+    const p = path.join(flutterJdk, 'bin', exe);
     if (existsSync(p)) return p;
   }
   if (process.platform === 'win32') {

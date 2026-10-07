@@ -58,6 +58,7 @@ class StoreAccounts {
     this.googlePlay = const StoreAccount(provider: 'google_play'),
     this.apple = const StoreAccount(provider: 'apple'),
     this.gcloudInstalled = false,
+    this.gcloudAccount = '',
     this.developerId = '',
     this.links = const {},
   });
@@ -67,6 +68,9 @@ class StoreAccounts {
 
   /// The Google Cloud tools are on this computer: the Google Play connection can be made hands-free.
   final bool gcloudInstalled;
+
+  /// The Google account those tools are signed in with, empty when nobody is.
+  final String gcloudAccount;
 
   /// The Play Console developer account number saved with the key.
   final String developerId;
@@ -83,6 +87,7 @@ class StoreAccounts {
       googlePlay: StoreAccount.fromJson('google_play', j['googlePlay']),
       apple: StoreAccount.fromJson('apple', j['apple']),
       gcloudInstalled: gcloud is Map && gcloud['installed'] == true,
+      gcloudAccount: gcloud is Map && gcloud['account'] is String ? gcloud['account'] as String : '',
       developerId: j['developerId'] is String ? j['developerId'] as String : '',
       links: links is Map ? {for (final e in links.entries) '${e.key}': '${e.value}'} : const {},
     );

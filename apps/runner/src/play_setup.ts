@@ -50,7 +50,37 @@ function gcloud(args: string[], timeoutMs = 120_000): Promise<{ code: number; ou
   });
 }
 
+/**
+ * Whether a program is on the PATH. Asking the shell is not enough on Windows: it
+ * answers "not recognised" with an ordinary exit code, so a missing gcloud looked installed.
+ */
+export function onPath(name: string, env: NodeJS.ProcessEnv = process.env, platform: NodeJS.Platform = process.platform): boolean {
+  const dirs = (env.PATH ?? env.Path ?? '').split(platform === 'win32' ? ';' : ':').filter(Boolean);
+  const exts = platform === 'win32' ? ['', ...(env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD').toLowerCase().split(';')] : [''];
+  return dirs.some((d) => exts.some((e) => existsSync(path.join(d, name + e))));
+}
+
+/** Opens a window on this computer that signs gcloud in to Google (the owner finishes it in the browser). */
+export async function openGcloudLogin(): Promise<'opened' | 'unsupported'> {
+  const windows = process.platform === 'win32';
+  if (!windows && process.platform !== 'darwin') return 'unsupported';
+  const dir = path.join(os.tmpdir(), 'ember-login');
+  await mkdir(dir, { recursive: true });
+  const done = 'Fatto. Puoi chiudere questa finestra e tornare in Ember.';
+  if (windows) {
+    const file = path.join(dir, 'gcloud.cmd');
+    await writeFile(file, ['@echo off', 'title Ember - accesso a Google', 'echo Accedi con il tuo account Google. Ember non vede la tua password.', 'echo.', 'call gcloud auth login', 'echo.', `echo ${done}`, 'pause >nul'].join('\r\n') + '\r\n');
+    spawn('cmd.exe', ['/d', '/c', 'start', 'Ember', 'cmd.exe', '/k', file], { detached: true, stdio: 'ignore' }).unref();
+  } else {
+    const file = path.join(dir, 'gcloud.command');
+    await writeFile(file, ['#!/bin/bash', 'echo "Accedi con il tuo account Google. Ember non vede la tua password."', 'gcloud auth login', `echo "${done}"`, 'read -n 1 -s'].join('\n') + '\n', { mode: 0o755 });
+    spawn('open', [file], { detached: true, stdio: 'ignore' }).unref();
+  }
+  return 'opened';
+}
+
 export async function gcloudStatus(): Promise<{ installed: boolean; account: string | null }> {
+  if (!onPath('gcloud')) return { installed: false, account: null };
   const r = await gcloud(['auth', 'list', '--filter=status:ACTIVE', '--format=value(account)'], 30_000);
   if (r.code === -1) return { installed: false, account: null };
   return { installed: true, account: r.out.split(/\r?\n/)[0] || null };

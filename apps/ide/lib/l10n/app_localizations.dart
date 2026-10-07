@@ -5827,6 +5827,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ten characters. Ember finds it by itself when it can.'**
   String get fxcTeamIdHelp;
+
+  /// No description provided for @fxcGcloudSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get fxcGcloudSignIn;
+
+  /// No description provided for @fxcGcloudWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for you to sign in, in the window that opened…'**
+  String get fxcGcloudWaiting;
+
+  /// No description provided for @fxcGcloudSignedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Cloud tools signed in as {account}. “Connect automatically” does it all, with the developer ID.'**
+  String fxcGcloudSignedIn(String account);
+
+  /// No description provided for @fxcWhyGcloudLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google first (the button above), then try again.'**
+  String get fxcWhyGcloudLogin;
 }
 
 class _AppLocalizationsDelegate

@@ -28,8 +28,8 @@ List<Override> _overrides(FakeFactoryApi api, {int count = 3}) => [
   factoryProvider.overrideWith(() => FakeFactory(FactoryData.fromJson(fakeFactoryJson(count: count)))),
 ];
 
-FakeFactoryApi _api({String google = 'missing', String apple = 'missing', bool gcloud = false}) =>
-    FakeFactoryApi(connections: fakeConnectionsJson, stores: fakeStoresJson(google: google, apple: apple, gcloud: gcloud));
+FakeFactoryApi _api({String google = 'missing', String apple = 'missing', bool gcloud = false, bool gcloudSignedIn = true}) =>
+    FakeFactoryApi(connections: fakeConnectionsJson, stores: fakeStoresJson(google: google, apple: apple, gcloud: gcloud, gcloudSignedIn: gcloudSignedIn));
 
 /// The windows are taller than a phone: bring the button into view, as a finger would by scrolling.
 Future<void> _tapKey(WidgetTester tester, String key) async {
@@ -156,6 +156,25 @@ void main() {
       await _settle(tester);
       expect(find.textContaining(s.v.l.fxcWhyRefused), findsOneWidget, reason: s.where);
       expect(find.byKey(const Key('saveGoogle')), findsOneWidget, reason: '${s.where}: still open, to try again');
+    }, only: [_english]);
+
+    smoke('the Google Cloud tools not signed in: sign in first, and the window waits for it', (tester, s) async {
+      final api = _api(gcloud: true, gcloudSignedIn: false);
+      await s.show(tester, const Scaffold(body: FactoryLinksScreen()), overrides: _overrides(api), at: '/factory/links');
+      await _settle(tester);
+      await tester.tap(find.byKey(const Key('connectGooglePlay')));
+      await _settle(tester);
+      expect(find.byKey(const Key('autoGoogle')), findsNothing, reason: '${s.where}: nobody is signed in yet');
+      await _tapKey(tester, 'gcloudSignIn');
+      await tester.pump();
+      expect(api.storeCalls, ['gcloud-login']);
+      expect(find.text(s.v.l.fxcGcloudWaiting), findsOneWidget, reason: s.where);
+      // The owner signs in, in the window that opened; a few seconds later the screen knows.
+      api.gcloudAccountNext = 'me@gmail.com';
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pump();
+      expect(find.byKey(const Key('autoGoogle')), findsOneWidget, reason: s.where);
+      expect(find.text(s.v.l.fxcGcloudSignedIn('me@gmail.com')), findsOneWidget, reason: s.where);
     }, only: [_english]);
 
     smoke('the hands-free way appears only with the Google Cloud tools', (tester, s) async {

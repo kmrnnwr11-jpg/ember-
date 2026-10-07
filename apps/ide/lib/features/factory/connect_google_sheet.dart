@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -28,8 +30,14 @@ class _GoogleConnectSheetState extends ConsumerState<GoogleConnectSheet> {
   String? _working;
   String? _error;
 
+  /// The Google account the Google Cloud tools are signed in with ('' when nobody is).
+  late String _gcloud = widget.accounts.gcloudAccount;
+  bool _waitingSignIn = false;
+  Timer? _poll;
+
   @override
   void dispose() {
+    _poll?.cancel();
     _paste.dispose();
     _developer.dispose();
     super.dispose();
@@ -70,10 +78,51 @@ class _GoogleConnectSheetState extends ConsumerState<GoogleConnectSheet> {
     });
   }
 
+  /// Opens the window that signs the Google Cloud tools in to Google, then watches for the sign-in to finish.
+  Future<void> _signIn() async {
+    final l = AppLocalizations.of(context);
+    try {
+      await (await ref.read(runnerApiProvider.future)).startGcloudLogin();
+    } catch (e) {
+      if (mounted) setState(() => _error = connectFailure(l, e));
+      return;
+    }
+    setState(() {
+      _error = null;
+      _waitingSignIn = true;
+    });
+    var tries = 0;
+    _poll?.cancel();
+    _poll = Timer.periodic(const Duration(seconds: 3), (t) async {
+      tries++;
+      try {
+        final now = StoreAccounts.fromJson(await (await ref.read(runnerApiProvider.future)).connectGcloudStatus());
+        if (!mounted) return;
+        if (now.gcloudAccount.isNotEmpty) {
+          t.cancel();
+          setState(() {
+            _gcloud = now.gcloudAccount;
+            _waitingSignIn = false;
+          });
+        }
+      } catch (_) {
+        // The Runner did not answer this time: the next try asks again.
+      }
+      if (tries >= 100 && mounted) {
+        t.cancel();
+        setState(() => _waitingSignIn = false);
+      }
+    });
+  }
+
   /// The hands-free way: key, invitation in Play Console, then the same check and save.
   Future<void> _auto() async {
     final l = AppLocalizations.of(context);
     final dev = _developer.text.trim();
+    if (_gcloud.isEmpty) {
+      setState(() => _error = l.fxcWhyGcloudLogin);
+      return;
+    }
     if (dev.isEmpty) {
       setState(() => _error = l.fxcWhyDeveloperId);
       return;
@@ -124,11 +173,16 @@ class _GoogleConnectSheetState extends ConsumerState<GoogleConnectSheet> {
             runSpacing: Gap.sm,
             children: [
               FilledButton.icon(key: const Key('saveGoogle'), onPressed: _key.isEmpty ? null : _save, icon: const Icon(Icons.verified_outlined), label: Text(l.fxcCheckSave)),
-              if (widget.accounts.gcloudInstalled)
+              if (widget.accounts.gcloudInstalled && _gcloud.isNotEmpty)
                 OutlinedButton.icon(key: const Key('autoGoogle'), onPressed: _auto, icon: const Icon(Icons.auto_fix_high), label: Text(l.fxcAuto)),
+              if (widget.accounts.gcloudInstalled && _gcloud.isEmpty)
+                OutlinedButton.icon(key: const Key('gcloudSignIn'), onPressed: _waitingSignIn ? null : _signIn, icon: const Icon(Icons.login), label: Text(l.fxcGcloudSignIn)),
             ],
           ),
-        if (widget.accounts.gcloudInstalled) ...[Gap.vSm, Text(l.fxcAutoHelp, style: context.text.bodySmall)],
+        if (widget.accounts.gcloudInstalled) ...[
+          Gap.vSm,
+          if (_waitingSignIn) BusyRow(l.fxcGcloudWaiting) else Text(_gcloud.isEmpty ? l.fxcAutoHelp : l.fxcGcloudSignedIn(_gcloud), style: context.text.bodySmall),
+        ],
       ],
     );
   }

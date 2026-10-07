@@ -1002,5 +1002,16 @@
   "fxcChooseP8": "اختيار ملف .p8",
   "fxcKeepSavedKey": "اترك الملف فارغًا للإبقاء على المفتاح المحفوظ.",
   "fxcTeamId": "Team ID (اختياري)",
-  "fxcTeamIdHelp": "عشرة أحرف. يجده Ember بنفسه عندما يستطيع."
+  "fxcTeamIdHelp": "عشرة أحرف. يجده Ember بنفسه عندما يستطيع.",
+  "fxcGcloudSignIn": "تسجيل الدخول بحساب Google",
+  "fxcGcloudWaiting": "بانتظار تسجيل دخولك في النافذة التي فُتحت…",
+  "fxcGcloudSignedIn": "أدوات Google Cloud مسجّلة الدخول بحساب {account}. «ربط تلقائي» ينجز كل شيء مع معرّف المطوّر.",
+  "@fxcGcloudSignedIn": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcWhyGcloudLogin": "سجّل الدخول بحساب Google أولًا (الزر أعلاه) ثم حاول من جديد."
 }

@@ -23,3 +23,24 @@ describe('play setup', () => {
     await rm(root, { recursive: true, force: true });
   });
 });
+
+describe('onPath', () => {
+  it('finds a program by looking in the PATH folders, with the Windows extensions', async () => {
+    const { mkdtemp, writeFile, rm } = await import('node:fs/promises');
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const { onPath } = await import('./play_setup.js');
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'fc-path-'));
+    try {
+      await writeFile(path.join(dir, 'gcloud.cmd'), '@echo off');
+      expect(onPath('gcloud', { PATH: `C:\nowhere;${dir}`, PATHEXT: '.EXE;.CMD' }, 'win32')).toBe(true);
+      expect(onPath('gcloud', { PATH: 'C:\nowhere', PATHEXT: '.EXE;.CMD' }, 'win32')).toBe(false);
+      // The shell would call this "installed" (it answers "not recognised" with an ordinary exit code).
+      expect(onPath('definitely-not-here', { PATH: dir, PATHEXT: '.EXE;.CMD' }, 'win32')).toBe(false);
+      await writeFile(path.join(dir, 'gcloud'), '#!/bin/sh');
+      expect(onPath('gcloud', { PATH: `/nowhere:${dir}` }, 'linux')).toBe(true);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+});

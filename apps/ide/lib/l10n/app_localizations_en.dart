@@ -3406,4 +3406,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fxcTeamIdHelp =>
       'Ten characters. Ember finds it by itself when it can.';
+
+  @override
+  String get fxcGcloudSignIn => 'Sign in with Google';
+
+  @override
+  String get fxcGcloudWaiting =>
+      'Waiting for you to sign in, in the window that opened…';
+
+  @override
+  String fxcGcloudSignedIn(String account) {
+    return 'Google Cloud tools signed in as $account. “Connect automatically” does it all, with the developer ID.';
+  }
+
+  @override
+  String get fxcWhyGcloudLogin =>
+      'Sign in with Google first (the button above), then try again.';
 }

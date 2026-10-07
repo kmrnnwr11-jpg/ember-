@@ -1564,5 +1564,16 @@
   "fxcChooseP8": "Choose the .p8 file",
   "fxcKeepSavedKey": "Leave the file out to keep the saved key.",
   "fxcTeamId": "Team ID (optional)",
-  "fxcTeamIdHelp": "Ten characters. Ember finds it by itself when it can."
+  "fxcTeamIdHelp": "Ten characters. Ember finds it by itself when it can.",
+  "fxcGcloudSignIn": "Sign in with Google",
+  "fxcGcloudWaiting": "Waiting for you to sign in, in the window that opened…",
+  "fxcGcloudSignedIn": "Google Cloud tools signed in as {account}. “Connect automatically” does it all, with the developer ID.",
+  "@fxcGcloudSignedIn": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcWhyGcloudLogin": "Sign in with Google first (the button above), then try again."
 }

@@ -3414,4 +3414,19 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get fxcTeamIdHelp => 'عشرة أحرف. يجده Ember بنفسه عندما يستطيع.';
+
+  @override
+  String get fxcGcloudSignIn => 'تسجيل الدخول بحساب Google';
+
+  @override
+  String get fxcGcloudWaiting => 'بانتظار تسجيل دخولك في النافذة التي فُتحت…';
+
+  @override
+  String fxcGcloudSignedIn(String account) {
+    return 'أدوات Google Cloud مسجّلة الدخول بحساب $account. «ربط تلقائي» ينجز كل شيء مع معرّف المطوّر.';
+  }
+
+  @override
+  String get fxcWhyGcloudLogin =>
+      'سجّل الدخول بحساب Google أولًا (الزر أعلاه) ثم حاول من جديد.';
 }

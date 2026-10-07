@@ -1002,5 +1002,16 @@
   "fxcChooseP8": "Elegir el archivo .p8",
   "fxcKeepSavedKey": "Deja el archivo vacío para conservar la clave guardada.",
   "fxcTeamId": "Team ID (opcional)",
-  "fxcTeamIdHelp": "Diez caracteres. Ember lo encuentra solo cuando puede."
+  "fxcTeamIdHelp": "Diez caracteres. Ember lo encuentra solo cuando puede.",
+  "fxcGcloudSignIn": "Iniciar sesión con Google",
+  "fxcGcloudWaiting": "Esperando a que inicies sesión en la ventana que se abrió…",
+  "fxcGcloudSignedIn": "Herramientas de Google Cloud con la sesión de {account}. “Conectar automáticamente” lo hace todo, con el ID de desarrollador.",
+  "@fxcGcloudSignedIn": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcWhyGcloudLogin": "Primero inicia sesión con Google (el botón de arriba) y vuelve a intentarlo."
 }

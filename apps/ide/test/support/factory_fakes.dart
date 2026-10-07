@@ -248,6 +248,18 @@ class FakeFactoryApi extends FakeRunnerApi {
     return stores['apple'] = _connected('apple', keyId);
   }
 
+  /// What the Google Cloud tools answer next: set to sign them in, as the owner would in the window.
+  String? gcloudAccountNext;
+
+  @override
+  Future<Map<String, dynamic>> connectGcloudStatus() async {
+    if (gcloudAccountNext != null) stores = {...stores, 'gcloud': {'installed': true, 'account': gcloudAccountNext}};
+    return stores;
+  }
+
+  @override
+  Future<void> startGcloudLogin() async => storeCalls.add('gcloud-login');
+
   @override
   Future<Map<String, dynamic>> connectVerify(String provider) async {
     storeCalls.add('verify:$provider');
@@ -312,7 +324,7 @@ const fakeConnectionsJson = {
 };
 
 /// `GET /v1/connect`: each account is `missing`, `connected`, `invalid` or `unreachable`.
-Map<String, dynamic> fakeStoresJson({String google = 'missing', String apple = 'missing', bool gcloud = false}) {
+Map<String, dynamic> fakeStoresJson({String google = 'missing', String apple = 'missing', bool gcloud = false, bool gcloudSignedIn = true}) {
   Map<String, dynamic> one(String provider, String state, String account) => {
     'provider': provider,
     'state': state,
@@ -328,7 +340,7 @@ Map<String, dynamic> fakeStoresJson({String google = 'missing', String apple = '
   return {
     'googlePlay': one('google_play', google, 'ember@proj.iam.gserviceaccount.com'),
     'apple': one('apple', apple, 'Z47GM3ZDZ6'),
-    'gcloud': {'installed': gcloud, 'account': gcloud ? 'me@gmail.com' : null},
+    'gcloud': {'installed': gcloud, 'account': gcloud && gcloudSignedIn ? 'me@gmail.com' : null},
     'developerId': '',
     'links': {
       'playConsole': 'https://play.google.com/console/developers',

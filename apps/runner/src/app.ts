@@ -17,7 +17,7 @@ import { GitHubError, listEmberApps, restoreFromGitHub, saveToGitHub } from './g
 import { fillAppContent } from './play_console.js';
 import { fillPolicy, isPlaceholderId, publishPolicy } from './publish_prep.js';
 import { detectDataFacts, fillCsv, findExportedCsv, uploadDataSafety, validateFilledCsv } from './data_safety.js';
-import { createServiceAccountKey, gcloudStatus, invitePlayUser, storeImages } from './play_setup.js';
+import { createServiceAccountKey, gcloudStatus, invitePlayUser, openGcloudLogin, storeImages } from './play_setup.js';
 import { claudeLoggedIn, cliLogins, cliModels, forgetLoginCache, openLoginWindow } from './subscription_clis.js';
 import { mkdir, stat } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
@@ -1401,6 +1401,12 @@ export async function buildApp(
 
     // Automatic Google Play connection on the Runner PC (gcloud): key creation and Play Console invite.
     r.get('/v1/play/setup/status', async () => gcloudStatus());
+    // Signs gcloud in to Google: opens a window on this computer, so only when asked from this computer.
+    r.post('/v1/play/setup/gcloud-login', async (req, reply) => {
+      if (driver.kind !== 'local' || !fromThisMac(req.ip)) return reply.status(403).send({ code: 'not_local', message: 'The sign-in window opens only on the computer where Ember runs.' });
+      if ((await openGcloudLogin()) === 'unsupported') return reply.status(501).send({ code: 'unsupported', message: 'Not supported on this system.' });
+      return { opened: true };
+    });
     r.post('/v1/play/setup/service-account', async (req, reply) => {
       if (driver.kind !== 'local') return reply.status(501).send({ code: 'unsupported', message: 'Only available on a local Runner' });
       try {

@@ -22,8 +22,8 @@ export interface ConnectRouteDeps {
 export function registerConnectRoutes(r: FastifyInstance, deps: ConnectRouteDeps): void {
   const { connect } = deps;
   let gcloudSeen: { at: number; value: { installed: boolean; account: string | null } } | null = null;
-  const gcloud = async () => {
-    if (!gcloudSeen || Date.now() - gcloudSeen.at > 5 * 60_000) gcloudSeen = { at: Date.now(), value: await deps.gcloud().catch(() => ({ installed: false, account: null })) };
+  const gcloud = async (fresh = false) => {
+    if (fresh || !gcloudSeen || Date.now() - gcloudSeen.at > 5 * 60_000) gcloudSeen = { at: Date.now(), value: await deps.gcloud().catch(() => ({ installed: false, account: null })) };
     return gcloudSeen.value;
   };
 
@@ -44,9 +44,11 @@ export function registerConnectRoutes(r: FastifyInstance, deps: ConnectRouteDeps
   };
 
   r.get('/v1/connect', async (req) => {
-    const fresh = (req.query as { fresh?: string }).fresh === '1';
+    const q = req.query as { fresh?: string; gcloud?: string };
+    const fresh = q.fresh === '1';
+    // `gcloud=1` asks only the Google Cloud tools again (while waiting for a sign-in), not the stores.
     const { googlePlay, apple } = await connect.status(req.user.id, { fresh });
-    return { googlePlay, apple, gcloud: await gcloud(), developerId: await connect.developerId(req.user.id), links: STORE_LINKS };
+    return { googlePlay, apple, gcloud: await gcloud(fresh || q.gcloud === '1'), developerId: await connect.developerId(req.user.id), links: STORE_LINKS };
   });
 
   r.put('/v1/connect/google-play', async (req, reply) => {

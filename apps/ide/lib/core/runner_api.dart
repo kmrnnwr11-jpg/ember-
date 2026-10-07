@@ -389,6 +389,15 @@ class RunnerApi {
     (d) => d as Map<String, dynamic>,
   );
 
+  /// Only the Google Cloud tools again (while waiting for the owner to sign in), not the stores.
+  Future<Map<String, dynamic>> connectGcloudStatus() =>
+      _call(() => _dio.get('/v1/connect', queryParameters: {'gcloud': '1'}), (d) => d as Map<String, dynamic>);
+
+  /// Opens a window on this computer that signs the Google Cloud tools in to Google.
+  Future<void> startGcloudLogin() async {
+    await _call<void>(() => _dio.post('/v1/play/setup/gcloud-login', data: const <String, dynamic>{}), (_) {});
+  }
+
   /// Asks the store again now. [provider] is `google-play` or `apple`.
   Future<Map<String, dynamic>> connectVerify(String provider) => _call(
     () => _dio.post('/v1/connect/$provider/verify', options: Options(receiveTimeout: const Duration(seconds: 60))),

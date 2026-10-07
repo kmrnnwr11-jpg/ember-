@@ -336,3 +336,28 @@ describe('real operations', () => {
     await expect(readFile(path.join(root, 'build', 'app'), 'utf8')).rejects.toThrow(/ENOENT/);
   });
 });
+
+describe('a store account that stops working', () => {
+  const saveListing = async () => {
+    await mkdir(path.join(dir, 'store'), { recursive: true });
+    await writeFile(path.join(dir, 'store', 'listing.json'), JSON.stringify({ title: 'Water Today', shortDescription: 'Short', fullDescription: 'Full', translations: '{}' }));
+  };
+
+  it('Google refusing the key or the service account parks the app in "needs you" with the account to invite', async () => {
+    await saveListing();
+    const { host, scripted } = fake();
+    scripted.settings['play_service_account'] = JSON.stringify({ type: 'service_account', client_email: 'pub@proj.iam.gserviceaccount.com' });
+    scripted.routes['/android-info'] = () => ({ status: 200, json: { applicationId: 'com.emberapps.watertoday' } });
+    scripted.routes['/play/publish'] = () => ({ status: 422, json: { code: 'play_permission', message: 'permission denied' } });
+    const err = await realOps(host, 'u').stages.play!(ctxFor()).catch((e: unknown) => e);
+    expect((err as NeedsOwner).need).toMatchObject({ kind: 'play_key', data: { email: 'pub@proj.iam.gserviceaccount.com' } });
+  });
+
+  it('Apple refusing the key parks the app too, instead of failing it for good', async () => {
+    await saveListing();
+    const { host, scripted } = fake();
+    scripted.routes['/appstore/autopublish'] = (body: unknown) => (body ? { status: 200, json: {} } : { status: 200, json: { phase: 'failed', error: 'Apple did not accept the key. Check Key ID, Issuer ID and the .p8 file.' } });
+    const err = await realOps(host, 'u').stages.appstore!(ctxFor()).catch((e: unknown) => e);
+    expect((err as NeedsOwner).need.kind).toBe('apple_key');
+  });
+});

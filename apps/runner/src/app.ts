@@ -69,6 +69,8 @@ export function fitStoreText(text: string, max: number): string {
 const fitted = (max: number) => z.string().transform((s) => fitStoreText(s, max));
 import { Session } from './ws.js';
 import { registerFactoryRoutes } from './factory/routes.js';
+import { ConnectionService } from './connect.js';
+import { registerConnectRoutes } from './connect_routes.js';
 import { createFactoryService, INTERNAL_HEADERS } from './factory/wire.js';
 
 declare module 'fastify' {
@@ -215,11 +217,13 @@ export async function buildApp(
     req.user = await auth.verify(bearer(req.headers.authorization));
   };
   const internalSecret = randomBytes(32).toString('hex');
-  const factoryService = createFactoryService({ cfg, app, services, claudeCode, preview, internalSecret, geminiComplete, local: driver.kind === 'local' });
+  const connect = new ConnectionService();
+  const factoryService = createFactoryService({ cfg, app, services, claudeCode, preview, internalSecret, geminiComplete, local: driver.kind === 'local', connect });
 
   app.addHook('onClose', async () => {
     preview.stopAll();
     claudeCode.cancelAll();
+    connect.stop();
     await factoryService.shutdown();
     await hub.closeAll();
   });
@@ -1538,6 +1542,7 @@ export async function buildApp(
     });
 
     registerFactoryRoutes(r, factoryService);
+    registerConnectRoutes(r, { connect, gcloud: gcloudStatus });
 
     r.get('/v1/jobs/:jobId', async (req) => {
       const { jobId } = req.params as { jobId: string };

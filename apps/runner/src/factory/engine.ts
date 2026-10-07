@@ -23,6 +23,7 @@ import {
   type FactorySettings,
   type FactoryState,
   type Idea,
+  type NeedsKind,
   type NeedsYou,
   type Recipe,
   type Stage,
@@ -335,6 +336,19 @@ export class Factory extends EventEmitter<{ change: [rev: number] }> {
   }
 
   /**
+   * Something the owner does once for every app was just done (a store account
+   * was connected): every app waiting for exactly that goes on by itself.
+   */
+  resolveByKind(kinds: readonly NeedsKind[]): number {
+    let n = 0;
+    for (const app of this.orderedApps()) {
+      if (app.state !== 'needs_you') continue;
+      for (const need of [...app.needs]) if (kinds.includes(need.kind) && this.resolveNeed(app.id, need.id)) n++;
+    }
+    return n;
+  }
+
+  /**
    * The owner did what an app was waiting for (or chose to skip that stage).
    * The stage is tried again, or counted as skipped.
    */
@@ -352,8 +366,9 @@ export class Factory extends EventEmitter<{ change: [rev: number] }> {
     } else {
       app.stages[need.stage] = { state: 'pending', attempts: 0 };
     }
-    // Several things can wait at once; the app goes on when none is left open.
-    if (app.needs.length === 0) this.setAppState(app, 'queued');
+    // Several things can wait at once, each holding only its own stages: the app goes back in line so
+    // whatever this one released runs now; what still waits for the owner stays blocked and parks it again.
+    this.setAppState(app, 'queued');
     this.addLog(app, opts.skip ? `⤼ ${need.stage}` : `✓ ${need.title}`);
     this.touch();
     this.dispatch();

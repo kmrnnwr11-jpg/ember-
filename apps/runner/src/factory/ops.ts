@@ -330,6 +330,21 @@ export function realOps(host: OpsHost, ownerId: string, email = ''): Ops {
         data: { name: ctx.app.name, package: applicationId, shortDescription: l.shortDescription ?? '', category: ctx.app.category || 'tools', language: 'en-US' },
       });
     }
+    // A key Google no longer accepts, or a service account nobody invited: the owner fixes it once, for every app.
+    if (res.json.code === 'play_permission' || (res.json.code === 'bad_request' && /service account/i.test(String(res.json.message ?? '')))) {
+      let email = '';
+      try {
+        email = (JSON.parse(key) as { client_email?: string }).client_email ?? '';
+      } catch {
+        // an unreadable key has no email to show
+      }
+      throw new NeedsOwner({
+        kind: 'play_key',
+        title: 'Google Play does not accept the connection',
+        detail: 'The key was refused or the service account has no permission in Play Console. Connect Google Play again.',
+        data: email ? { email } : {},
+      });
+    }
     throw new Error(`Google Play: ${String(res.json.message ?? res.status)}`);
   };
 
@@ -348,11 +363,12 @@ export function realOps(host: OpsHost, ownerId: string, email = ''): Ops {
     return { message: 'ipa built' };
   };
 
+  const appleKeyNeed = () =>
+    new NeedsOwner({ kind: 'apple_key', title: 'Connect App Store Connect', detail: 'Connect App Store Connect once (Key ID, Issuer ID and the .p8 file); every app then uses it.', data: {} });
+
   const appstore: StageOp = async (ctx) => {
     const id = ctx.app.projectId!;
-    if (!(await host.hasAppleKey())) {
-      throw new NeedsOwner({ kind: 'apple_key', title: 'Connect App Store Connect', detail: 'Save the App Store Connect key (Key ID, Issuer ID and the .p8 file) once; every app then uses it.', data: {} });
-    }
+    if (!(await host.hasAppleKey())) throw appleKeyNeed();
     const { listing: l, pages } = await savedListing(ctx);
     let privacyUrl = l.privacyUrl ?? '';
     if (!privacyUrl) {
@@ -383,7 +399,10 @@ export function realOps(host: OpsHost, ownerId: string, email = ''): Ops {
       listing: apple('en-US', l),
       translations: Object.entries(pages).map(([language, p]) => apple(language, p)),
     });
-    if (start.status !== 200) throw new Error(`App Store Connect: ${String(start.json.message ?? start.status)}`);
+    if (start.status !== 200) {
+      if (start.json.code === 'no_key') throw appleKeyNeed();
+      throw new Error(`App Store Connect: ${String(start.json.message ?? start.status)}`);
+    }
     // The one-press publish runs in the background on the Runner; follow it until it is done.
     const pollMs = host.pollMs ?? 15_000;
     for (let waited = 0; waited < 120 * 60_000; waited += pollMs) {
@@ -394,6 +413,7 @@ export function realOps(host: OpsHost, ownerId: string, email = ''): Ops {
       if (st.phase === 'done' || st.phase === 'submitted') return { message: 'in TestFlight' };
       if (st.phase === 'failed') {
         const why = st.error ?? st.message ?? 'failed';
+        if (/did not accept the key|App Manager|Nessuna chiave Apple|non è più salvata/i.test(why)) throw appleKeyNeed();
         if (/non ha ancora un'app|app_not_found/i.test(why)) {
           throw new NeedsOwner({
             kind: 'apple_app_record',

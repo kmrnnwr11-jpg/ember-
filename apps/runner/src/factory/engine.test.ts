@@ -590,3 +590,56 @@ describe('what an app is doing', () => {
     expect(factory.apps()[0]!.state).toBe('done');
   });
 });
+
+describe('connecting a store account', () => {
+  it('lets every app that waited for that account go on, and nothing else', async () => {
+    let connected = false;
+    const { ops } = fakeOps({
+      play: async (ctx) => {
+        if (!connected) throw new NeedsOwner({ kind: 'play_key', title: 'Connect Google Play', detail: '', data: {} });
+        void ctx;
+      },
+      ios: async () => {
+        throw new NeedsOwner({ kind: 'mac', title: 'A Mac is needed', detail: '', data: {} });
+      },
+    });
+    const { factory } = await make(ops, {}, 3);
+    await factory.idle();
+    expect(factory.needsYou().filter((n) => n.kind === 'play_key')).toHaveLength(3);
+    connected = true;
+    // Connecting Apple changes nothing for them; connecting Google Play releases all three.
+    expect(factory.resolveByKind(['apple_key'])).toBe(0);
+    expect(factory.resolveByKind(['play_key'])).toBe(3);
+    await factory.idle();
+    expect(factory.apps().every((a) => a.stages.play.state === 'done')).toBe(true);
+    // The Mac still waits: it is not what was connected.
+    expect(factory.needsYou().map((n) => n.kind)).toEqual(['mac', 'mac', 'mac']);
+  });
+});
+
+describe('an app waiting for two things', () => {
+  it('runs the stage that one of them released, and stays parked for the other', async () => {
+    let keyThere = false;
+    const { ops } = fakeOps({
+      play: async () => {
+        if (!keyThere) throw new NeedsOwner({ kind: 'play_key', title: 'Connect Google Play', detail: '', data: {} });
+      },
+      ios: async () => {
+        throw new NeedsOwner({ kind: 'mac', title: 'A Mac is needed', detail: '', data: {} });
+      },
+    });
+    const { factory } = await make(ops, {}, 1);
+    await factory.idle();
+    const app = factory.apps()[0]!;
+    expect(app.state).toBe('needs_you');
+    expect(app.needs.map((n) => n.kind).sort()).toEqual(['mac', 'play_key']);
+    keyThere = true;
+    factory.resolveNeed(app.id, app.needs.find((n) => n.kind === 'play_key')!.id);
+    await factory.idle();
+    const after = factory.apps()[0]!;
+    expect(after.stages.play.state).toBe('done');
+    expect(after.stages.ios.state).toBe('blocked');
+    expect(after.state).toBe('needs_you');
+    expect(after.needs.map((n) => n.kind)).toEqual(['mac']);
+  });
+});

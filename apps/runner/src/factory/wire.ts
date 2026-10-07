@@ -8,6 +8,7 @@ import { findBrowser, hasScreenshotMode } from '../screenshots.js';
 import type { Services } from '../services.js';
 import { readSettings, writeSettings } from '../settings_store.js';
 import { cliLogins } from '../subscription_clis.js';
+import type { ConnectionService } from '../connect.js';
 import { freeDiskGb } from './capacity.js';
 import { androidLink, readLinks } from './links.js';
 import { realOps, type OpsHost } from './ops.js';
@@ -28,6 +29,8 @@ export interface FactoryHost {
   /** One answer from Gemini on the Runner's own key, when there is one. */
   geminiComplete: (system: string, prompt: string) => Promise<string>;
   local: boolean;
+  /** The store accounts (Google Play, App Store Connect), shared with the /v1/connect routes. */
+  connect: ConnectionService;
 }
 
 /** Calls this Runner's own routes in-process, as [ownerId], with the secret only this process knows. */
@@ -89,7 +92,14 @@ export function createFactoryService(host: FactoryHost): FactoryService {
     simulated,
     opsFor: (ownerId, email) => (simulated ? simulatedOps({ mac: process.platform === 'darwin', speed: cfg.EMBER_FACTORY_SIM_SPEED }) : realOps(opsHost, ownerId, email)),
     complete,
-    links: (ownerId) => readLinks({ cfg, claudeCode, ownerId, local: host.local }),
+    links: (ownerId) => readLinks({ cfg, claudeCode, ownerId, local: host.local, connect: host.connect }),
+    afterStart: (ownerId, factory) => {
+      // Apps waiting for a store key go on by themselves the moment the account is connected again.
+      host.connect.onChange((owner, status) => {
+        if (owner === ownerId && status.state === 'connected') factory.resolveByKind([status.provider === 'google_play' ? 'play_key' : 'apple_key']);
+      });
+      host.connect.monitor(ownerId);
+    },
   });
 }
 

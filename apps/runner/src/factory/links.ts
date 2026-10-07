@@ -9,6 +9,7 @@ import type { Config } from '../config.js';
 import { findBrowser } from '../screenshots.js';
 import { readSettings } from '../settings_store.js';
 import { claudeLoggedIn, cliCommand, cliLogins } from '../subscription_clis.js';
+import type { ConnectionService, ConnStatus } from '../connect.js';
 import type { Link, Links } from './service.js';
 
 const ok: Link = { ready: true, detail: '' };
@@ -58,8 +59,17 @@ export function playKeyLink(saved: string | undefined): Link {
   }
 }
 
-export async function readLinks(opts: { cfg: Config; claudeCode: ClaudeCodeEngine; ownerId: string; local: boolean }): Promise<Links> {
+/** A store account as the connection service sees it, as a readiness line. */
+export function storeLink(status: ConnStatus | undefined): Link {
+  if (!status || status.state === 'missing') return no('missing');
+  if (status.state === 'connected') return { ready: true, detail: status.account };
+  return no(status.state === 'unreachable' ? 'offline' : 'invalid');
+}
+
+export async function readLinks(opts: { cfg: Config; claudeCode: ClaudeCodeEngine; ownerId: string; local: boolean; connect?: ConnectionService }): Promise<Links> {
   const { cfg, claudeCode, ownerId, local } = opts;
+  // The store accounts are asked about, not just looked for: a key that was revoked is not ready.
+  const stores = opts.connect ? await opts.connect.status(ownerId).catch(() => null) : null;
   const logins = local ? await cliLogins().catch(() => ({ codex: false, 'gemini-cli': false, 'qwen-code': false })) : { codex: false, 'gemini-cli': false, 'qwen-code': false };
   const engine = (name: 'codex' | 'gemini-cli' | 'qwen-code'): Link => (!local || !cliCommand(name) ? no('not_installed') : logins[name] ? ok : no('not_signed_in'));
   const claude: Link = !local ? no('not_local') : !(await claudeCode.isAvailable()) ? no('not_installed') : (await claudeLoggedIn(resolveClaudeBin(cfg)).catch(() => false)) ? ok : no('not_signed_in');
@@ -72,8 +82,8 @@ export async function readLinks(opts: { cfg: Config; claudeCode: ClaudeCodeEngin
     flutter: await flutterLink(cfg),
     android: androidLink(),
     chrome: findBrowser() ? ok : no('not_installed'),
-    playKey: playKeyLink(settings['play_service_account']),
-    appleKey: (await readAppleKey().catch(() => null)) ? ok : no('missing'),
+    playKey: stores ? storeLink(stores.googlePlay) : playKeyLink(settings['play_service_account']),
+    appleKey: stores ? storeLink(stores.apple) : (await readAppleKey().catch(() => null)) ? ok : no('missing'),
     mac: process.platform === 'darwin' ? ok : no(process.platform === 'win32' ? 'windows' : 'linux'),
   };
 }

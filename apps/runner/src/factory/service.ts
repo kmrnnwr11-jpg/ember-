@@ -38,6 +38,8 @@ export interface FactoryDeps {
   complete(ownerId: string, system: string, prompt: string): Promise<string>;
   links(ownerId: string): Promise<Links>;
   simulated: boolean;
+  /** Runs once a Factory is up for an owner (the connection monitor starts here). */
+  afterStart?(ownerId: string, factory: Factory): void;
 }
 
 /** One Factory per owner, started the first time it is asked for. */
@@ -71,6 +73,7 @@ export class FactoryService {
       const lanes = this.deps.simulated ? Object.fromEntries(Object.entries(cap.suggested.lanes).map(([k, v]) => [k, k === 'build' ? 4 : k.startsWith('agent:') ? 6 : Math.max(v, 3)])) : cap.suggested.lanes;
       factory.updateSettings({ lanes, maxInFlight: this.deps.simulated ? 24 : cap.suggested.maxInFlight });
     }
+    this.deps.afterStart?.(ownerId, factory);
     return factory;
   }
 

@@ -18,13 +18,9 @@ Future<bool?> showConnectSheet(BuildContext context, WidgetBuilder builder) => s
   context: context,
   isScrollControlled: true,
   useSafeArea: true,
-  builder: (c) => Padding(
-    padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(c).bottom),
-    child: Align(
-      alignment: Alignment.bottomCenter,
-      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: Widths.page), child: builder(c)),
-    ),
-  ),
+  // The sheet is as tall as its content (and scrolls when that is more than the screen), never wider than a page.
+  constraints: const BoxConstraints(maxWidth: Widths.page),
+  builder: (c) => Padding(padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(c).bottom), child: builder(c)),
 );
 
 /// The key file the owner chose: its name, for the screen, and its text, for the Runner.

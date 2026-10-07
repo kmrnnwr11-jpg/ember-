@@ -2719,14 +2719,14 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get fxNeedPlayKeyDetail =>
-      '1. Apri le Impostazioni di Ember.\n2. Sotto Google Play, incolla la chiave dell’account di servizio.\n3. Torna qui e premi “Fatto, continua”.';
+      '1. Premi “Collega adesso”.\n2. Scegli il file della chiave dell’account di servizio.\n3. Le app che aspettavano ripartono da sole.';
 
   @override
   String get fxNeedAppleKeyTitle => 'Collega la chiave di App Store Connect';
 
   @override
   String get fxNeedAppleKeyDetail =>
-      '1. Apri le Impostazioni di Ember.\n2. Sotto App Store, incolla la chiave di App Store Connect.\n3. Torna qui e premi “Fatto, continua”.';
+      '1. Premi “Collega adesso”.\n2. Inserisci Issuer ID e Key ID e scegli il file .p8.\n3. Le app che aspettavano ripartono da sole.';
 
   @override
   String fxNeedLoginTitle(String engine) {
@@ -3225,4 +3225,206 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get fxNeedAndroidSdkDetail =>
       '1. Installa Android Studio (porta con sé gli strumenti Android).\n2. Aprilo una volta e accetta le licenze.\n3. Torna qui e premi “Fatto, continua”.';
+
+  @override
+  String get fxcTitle => 'Account degli store';
+
+  @override
+  String get fxcIntro =>
+      'Collega Google Play e App Store una volta sola. Ember li tiene collegati e carica ogni app da solo.';
+
+  @override
+  String get fxcGoogleName => 'Google Play';
+
+  @override
+  String get fxcAppleName => 'App Store';
+
+  @override
+  String get fxcStateConnected => 'Collegato';
+
+  @override
+  String get fxcStateMissing => 'Non collegato';
+
+  @override
+  String get fxcStateInvalid => 'Da ricollegare';
+
+  @override
+  String get fxcStateUnreachable => 'Lo store non risponde';
+
+  @override
+  String get fxcConnect => 'Collega';
+
+  @override
+  String get fxcReconnect => 'Collega di nuovo';
+
+  @override
+  String get fxcChange => 'Cambia';
+
+  @override
+  String get fxcVerify => 'Controlla ora';
+
+  @override
+  String get fxcDisconnect => 'Scollega';
+
+  @override
+  String fxcDisconnectTitle(String name) {
+    return 'Scollegare $name?';
+  }
+
+  @override
+  String get fxcDisconnectBody =>
+      'Le app già caricate restano dove sono. I nuovi caricamenti aspettano finché non ricolleghi.';
+
+  @override
+  String fxcAccountGoogle(String email) {
+    return 'Account: $email';
+  }
+
+  @override
+  String fxcAccountApple(String keyId) {
+    return 'Chiave $keyId';
+  }
+
+  @override
+  String fxcAccountTeam(String team) {
+    return 'Team $team';
+  }
+
+  @override
+  String get fxcChecking => 'Controllo con lo store…';
+
+  @override
+  String get fxcWhyBadKey => 'Questo non è un file di chiave valido.';
+
+  @override
+  String get fxcWhyRefused =>
+      'Lo store ha rifiutato la chiave. Potrebbe essere stata cancellata o sostituita: creane una nuova.';
+
+  @override
+  String get fxcWhyNoRole =>
+      'La chiave non ha permessi. In App Store Connect dalle il ruolo App Manager.';
+
+  @override
+  String get fxcWhyOffline =>
+      'Non riesco a raggiungere lo store. Controlla la connessione a internet.';
+
+  @override
+  String get fxcWhyDeveloperId =>
+      'L’ID sviluppatore è il numero lungo nell’indirizzo di Play Console.';
+
+  @override
+  String get fxcBannerTitle => 'Collega Google Play e App Store';
+
+  @override
+  String get fxcBannerBody =>
+      'Finché non sono collegati, le app si fermano prima del caricamento.';
+
+  @override
+  String get fxcConnectNow => 'Collega adesso';
+
+  @override
+  String get fxcGoogleTitle => 'Collega Google Play';
+
+  @override
+  String get fxcGoogleStep1 =>
+      'In Google Cloud crea un account di servizio e attiva la “Google Play Android Developer API”.';
+
+  @override
+  String get fxcGoogleStep2 =>
+      'Apri quell’account, poi Chiavi → Aggiungi chiave → JSON. Un file viene salvato sul computer.';
+
+  @override
+  String get fxcGoogleStep3 =>
+      'In Play Console apri Utenti e autorizzazioni e invita l’email dell’account con il permesso di pubblicare le app.';
+
+  @override
+  String get fxcGoogleStep4 =>
+      'Scegli qui sotto il file .json. Ember lo controlla con Google e lo salva.';
+
+  @override
+  String get fxcOpenGoogleCloud => 'Apri Google Cloud';
+
+  @override
+  String get fxcOpenPlayConsole => 'Apri Play Console';
+
+  @override
+  String get fxcChooseJson => 'Scegli il file .json';
+
+  @override
+  String get fxcPasteKey => 'Oppure incolla qui la chiave';
+
+  @override
+  String get fxcDeveloperId => 'ID sviluppatore (facoltativo)';
+
+  @override
+  String get fxcDeveloperIdHelp =>
+      'Il numero lungo nell’indirizzo di Play Console, dopo /developers/.';
+
+  @override
+  String get fxcCheckSave => 'Controlla e salva';
+
+  @override
+  String get fxcAuto => 'Collega in automatico';
+
+  @override
+  String get fxcAutoHelp =>
+      'Usa l’account Google collegato agli strumenti Google Cloud di questo computer. Serve l’ID sviluppatore.';
+
+  @override
+  String get fxcAutoWorking => 'Preparo Google Play… ci vogliono alcuni minuti';
+
+  @override
+  String fxcConnectedOk(String name) {
+    return '$name collegato';
+  }
+
+  @override
+  String fxcFileChosen(String name) {
+    return 'File: $name';
+  }
+
+  @override
+  String get fxcAppleTitle => 'Collega l’App Store';
+
+  @override
+  String get fxcAppleStep1 =>
+      'In App Store Connect apri Utenti e accesso → Integrazioni → API di App Store Connect e crea una chiave con il ruolo App Manager.';
+
+  @override
+  String get fxcAppleStep2 =>
+      'Copia l’Issuer ID (in cima alla pagina) e il Key ID.';
+
+  @override
+  String get fxcAppleStep3 =>
+      'Scarica il file .p8: Apple lo fa scaricare una sola volta.';
+
+  @override
+  String get fxcOpenAppStoreConnect => 'Apri App Store Connect';
+
+  @override
+  String get fxcIssuerId => 'Issuer ID';
+
+  @override
+  String get fxcIssuerHelp => 'Il codice lungo in cima alla pagina Chiavi.';
+
+  @override
+  String get fxcKeyId => 'Key ID';
+
+  @override
+  String get fxcKeyIdHelp =>
+      'Il codice breve accanto alla chiave, tipo Z47GM3ZDZ6.';
+
+  @override
+  String get fxcChooseP8 => 'Scegli il file .p8';
+
+  @override
+  String get fxcKeepSavedKey =>
+      'Lascia il file vuoto per tenere la chiave già salvata.';
+
+  @override
+  String get fxcTeamId => 'Team ID (facoltativo)';
+
+  @override
+  String get fxcTeamIdHelp =>
+      'Dieci caratteri. Ember lo trova da solo quando può.';
 }

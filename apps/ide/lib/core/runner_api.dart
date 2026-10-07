@@ -366,6 +366,40 @@ class RunnerApi {
   Future<String> jobLog(String jobId) =>
       _call(() => _dio.get('/v1/jobs/$jobId'), (d) => d['log'] as String? ?? '');
 
+  // ---- The store accounts (Google Play, App Store Connect) ----
+
+  /// Both accounts as the Runner sees them. [fresh] asks the stores again instead of using the last check.
+  Future<Map<String, dynamic>> connectStatus({bool fresh = false}) =>
+      _call(() => _dio.get('/v1/connect', queryParameters: {if (fresh) 'fresh': '1'}), (d) => d as Map<String, dynamic>);
+
+  /// Checks a service account key with Google and, if Google accepts it, saves it.
+  Future<Map<String, dynamic>> connectGooglePlay({required String serviceAccount, String? developerId}) => _call(
+    () => _dio.put('/v1/connect/google-play', data: {'serviceAccount': serviceAccount, if (developerId != null && developerId.isNotEmpty) 'developerId': developerId}, options: Options(receiveTimeout: const Duration(seconds: 60))),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Checks an App Store Connect key with Apple and, if Apple accepts it, saves it.
+  /// Without [privateKey] the saved .p8 is kept.
+  Future<Map<String, dynamic>> connectApple({required String keyId, required String issuerId, String? privateKey, String? teamId}) => _call(
+    () => _dio.put(
+      '/v1/connect/apple',
+      data: {'keyId': keyId, 'issuerId': issuerId, if (privateKey != null && privateKey.isNotEmpty) 'privateKey': privateKey, if (teamId != null && teamId.isNotEmpty) 'teamId': teamId},
+      options: Options(receiveTimeout: const Duration(seconds: 90)),
+    ),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Asks the store again now. [provider] is `google-play` or `apple`.
+  Future<Map<String, dynamic>> connectVerify(String provider) => _call(
+    () => _dio.post('/v1/connect/$provider/verify', options: Options(receiveTimeout: const Duration(seconds: 60))),
+    (d) => d as Map<String, dynamic>,
+  );
+
+  /// Forgets the account on this computer.
+  Future<void> connectDisconnect(String provider) async {
+    await _call<void>(() => _dio.delete('/v1/connect/$provider'), (_) {});
+  }
+
   // ---- Fabbrica: many apps at once ----
 
   /// The whole state of the Fabbrica, or `{unchanged: true}` when nothing is newer than [rev].

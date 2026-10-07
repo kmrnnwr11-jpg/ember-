@@ -170,3 +170,17 @@ Corpo: `{ "name": "Lotto giardino", "apps": [ { "name", "summary", "brief?", "si
 
 ### Modalità simulata
 Con `EMBER_FACTORY_SIMULATE=1` il Runner usa operazioni finte (tempi di pochi secondi, qualche errore e qualche «serve te» a caso, nessun progetto vero, nessun abbonamento usato): `simulated: true` in `GET /v1/factory`. Serve per provare l'interfaccia con 100 app.
+
+### Account degli store — `/v1/connect`
+Google Play e App Store si collegano **una volta** e restano collegati: la chiave viene controllata presso lo store **prima** di essere salvata, resta solo su questo computer (mai restituita: le schermate ricevono solo l'account e lo stato), e il Runner la ricontrolla ogni 30 minuti. Se una chiave smette di funzionare, le app che dovevano caricarsi si fermano in «Serve te» (`play_key` / `apple_key`) e **ripartono da sole** appena l'account viene ricollegato.
+
+| Rotta | Corpo | Risposta |
+|---|---|---|
+| `GET /v1/connect[?fresh=1]` | – | `{ googlePlay, apple, gcloud: {installed, account}, developerId, links }` |
+| `PUT /v1/connect/google-play` | `{ serviceAccount: "<JSON del file>", developerId? }` | lo stato; `422 {code, message}` se Google rifiuta |
+| `PUT /v1/connect/apple` | `{ keyId, issuerId, privateKey?: "<contenuto .p8>", teamId? }` | lo stato; senza `privateKey` si tiene il .p8 già salvato |
+| `POST /v1/connect/{google-play\|apple}/verify` | – | lo stato, controllato adesso |
+| `DELETE /v1/connect/{google-play\|apple}` | – | lo stato (`missing`) |
+
+Stato di un account: `{ provider: "google_play"|"apple", state: "connected"|"missing"|"invalid"|"unreachable", detail, account, message?, teamId?, connectedAt?, checkedAt? }`. `account` è l'email dell'account di servizio (Google) o il Key ID (Apple). `detail`: `ok`, `missing`, `bad_key` (non è una chiave), `key_refused` (lo store la rifiuta), `no_permission` (Apple: ruolo troppo basso), `offline`, `bad_developer_id`. `links`: dove si creano le chiavi (`playConsole`, `playApiAccess`, `googleCloudKeys`, `appStoreKeys`).
+`GET /v1/factory/connections` → `links.playKey` e `links.appleKey` ora dicono se lo store **accetta** la chiave (`detail` = account, oppure `missing` / `invalid` / `offline`).

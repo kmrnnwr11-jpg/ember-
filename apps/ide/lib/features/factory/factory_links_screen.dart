@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:ide_core/ide_core.dart';
 import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/ui.dart';
+import 'connect_cards.dart';
 import 'factory_controller.dart';
 import 'factory_models.dart';
 import 'factory_widgets.dart';
@@ -65,6 +65,8 @@ class FactoryLinksScreen extends ConsumerWidget {
             ),
           ],
         ),
+        // The store accounts come first: nothing reaches the stores without them.
+        const StoreAccountsSection(),
         conn.when(
           loading: () => Padding(
             padding: const EdgeInsets.all(Gap.xl),
@@ -105,20 +107,6 @@ class FactoryLinksScreen extends ConsumerWidget {
                   StatusRow(done: c.ready('flutter'), text: _withDetail(l, 'Flutter', c.links, ['flutter'])),
                   StatusRow(done: c.ready('android'), text: _withDetail(l, l.fxLinkAndroid, c.links, ['android'])),
                   StatusRow(done: c.ready('chrome'), text: _withDetail(l, l.fxLinkChrome, c.links, ['chrome'])),
-                  StatusRow(
-                    done: c.ready('playKey'),
-                    text: _withDetail(l, l.fxLinkPlayKey, c.links, ['playKey']),
-                    trailing: c.ready('playKey')
-                        ? null
-                        : TextButton(onPressed: () => context.push('/settings'), child: Text(l.settings)),
-                  ),
-                  StatusRow(
-                    done: c.ready('appleKey'),
-                    text: _withDetail(l, l.fxLinkAppleKey, c.links, ['appleKey']),
-                    trailing: c.ready('appleKey')
-                        ? null
-                        : TextButton(onPressed: () => context.push('/settings'), child: Text(l.settings)),
-                  ),
                   StatusRow(done: c.ready('mac'), text: _withDetail(l, l.fxLinkMac, c.links, ['mac'])),
                 ],
               ),

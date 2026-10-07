@@ -1318,9 +1318,9 @@
   "fxNeedMacTitle": "The iPhone app needs a Mac",
   "fxNeedMacDetail": "Apple only lets a Mac build the iPhone app. The code is saved: open Ember on a Mac, take the app back from GitHub and the iPhone part runs there.",
   "fxNeedPlayKeyTitle": "Connect your Google Play key",
-  "fxNeedPlayKeyDetail": "1. Open Settings in Ember.\n2. Under Google Play, paste the service account key.\n3. Come back here and press “Done, continue”.",
+  "fxNeedPlayKeyDetail": "1. Press “Connect now”.\n2. Choose the service account key file.\n3. The apps that were waiting go on by themselves.",
   "fxNeedAppleKeyTitle": "Connect your App Store Connect key",
-  "fxNeedAppleKeyDetail": "1. Open Settings in Ember.\n2. Under App Store, paste the App Store Connect key.\n3. Come back here and press “Done, continue”.",
+  "fxNeedAppleKeyDetail": "1. Press “Connect now”.\n2. Enter the Issuer ID and the Key ID and choose the .p8 file.\n3. The apps that were waiting go on by themselves.",
   "fxNeedLoginTitle": "Sign in again to {engine}",
   "@fxNeedLoginTitle": {"placeholders": {"engine": {"type": "String"}}},
   "fxNeedLoginDetail": "The sign-in expired. Open the Connections page, press “Connect” next to it and sign in. Then press “Done, continue”.",
@@ -1465,5 +1465,104 @@
   "fxLimitsTitle": "Limits",
   "fxLimitInFlight": "Apps being made at the same time",
   "fxNeedAndroidSdkTitle": "Install the Android tools",
-  "fxNeedAndroidSdkDetail": "1. Install Android Studio (it brings the Android tools).\n2. Open it once and accept the licences.\n3. Come back here and press “Done, continue”."
+  "fxNeedAndroidSdkDetail": "1. Install Android Studio (it brings the Android tools).\n2. Open it once and accept the licences.\n3. Come back here and press “Done, continue”.",
+  "fxcTitle": "Store accounts",
+  "fxcIntro": "Connect Google Play and the App Store once. Ember keeps them connected and uploads every app by itself.",
+  "fxcGoogleName": "Google Play",
+  "fxcAppleName": "App Store",
+  "fxcStateConnected": "Connected",
+  "fxcStateMissing": "Not connected",
+  "fxcStateInvalid": "Needs reconnecting",
+  "fxcStateUnreachable": "Cannot reach the store",
+  "fxcConnect": "Connect",
+  "fxcReconnect": "Connect again",
+  "fxcChange": "Change",
+  "fxcVerify": "Check now",
+  "fxcDisconnect": "Disconnect",
+  "fxcDisconnectTitle": "Disconnect {name}?",
+  "@fxcDisconnectTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcDisconnectBody": "Apps already uploaded stay where they are. New uploads wait until you connect again.",
+  "fxcAccountGoogle": "Account: {email}",
+  "@fxcAccountGoogle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAccountApple": "Key {keyId}",
+  "@fxcAccountApple": {
+    "placeholders": {
+      "keyId": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAccountTeam": "Team {team}",
+  "@fxcAccountTeam": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcChecking": "Checking with the store…",
+  "fxcWhyBadKey": "That is not a valid key file.",
+  "fxcWhyRefused": "The store refused this key. It may have been deleted or replaced: make a new one.",
+  "fxcWhyNoRole": "The key has no permission. In App Store Connect give it the App Manager role.",
+  "fxcWhyOffline": "The store could not be reached. Check the internet connection.",
+  "fxcWhyDeveloperId": "The developer ID is the long number in the Play Console address.",
+  "fxcBannerTitle": "Connect Google Play and the App Store",
+  "fxcBannerBody": "Until they are connected, apps stop before the upload.",
+  "fxcConnectNow": "Connect now",
+  "fxcGoogleTitle": "Connect Google Play",
+  "fxcGoogleStep1": "In Google Cloud, create a service account and turn on the “Google Play Android Developer API”.",
+  "fxcGoogleStep2": "Open that account, then Keys → Add key → JSON. A file is saved on your computer.",
+  "fxcGoogleStep3": "In Play Console, open Users and permissions and invite the account’s email with permission to release apps.",
+  "fxcGoogleStep4": "Choose the .json file below. Ember checks it with Google and saves it.",
+  "fxcOpenGoogleCloud": "Open Google Cloud",
+  "fxcOpenPlayConsole": "Open Play Console",
+  "fxcChooseJson": "Choose the .json file",
+  "fxcPasteKey": "Or paste the key here",
+  "fxcDeveloperId": "Developer ID (optional)",
+  "fxcDeveloperIdHelp": "The long number in the Play Console address, after /developers/.",
+  "fxcCheckSave": "Check and save",
+  "fxcAuto": "Connect automatically",
+  "fxcAutoHelp": "Uses the Google account signed in to the Google Cloud tools on this computer. Needs the developer ID.",
+  "fxcAutoWorking": "Setting up Google Play… this can take a few minutes",
+  "fxcConnectedOk": "{name} connected",
+  "@fxcConnectedOk": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcFileChosen": "File: {name}",
+  "@fxcFileChosen": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAppleTitle": "Connect the App Store",
+  "fxcAppleStep1": "In App Store Connect open Users and Access → Integrations → App Store Connect API and create a key with the App Manager role.",
+  "fxcAppleStep2": "Copy the Issuer ID (at the top of the page) and the Key ID.",
+  "fxcAppleStep3": "Download the .p8 file: Apple lets you download it only once.",
+  "fxcOpenAppStoreConnect": "Open App Store Connect",
+  "fxcIssuerId": "Issuer ID",
+  "fxcIssuerHelp": "The long code at the top of the Keys page.",
+  "fxcKeyId": "Key ID",
+  "fxcKeyIdHelp": "The short code next to the key, like Z47GM3ZDZ6.",
+  "fxcChooseP8": "Choose the .p8 file",
+  "fxcKeepSavedKey": "Leave the file out to keep the saved key.",
+  "fxcTeamId": "Team ID (optional)",
+  "fxcTeamIdHelp": "Ten characters. Ember finds it by itself when it can."
 }

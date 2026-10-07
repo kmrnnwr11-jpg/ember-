@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ide_core/ide_core.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/ui.dart';
+import 'connect_cards.dart';
 import 'factory_app_sheet.dart';
 import 'factory_controller.dart';
 import 'factory_models.dart';
@@ -119,6 +120,7 @@ class _FactoryScreenState extends ConsumerState<FactoryScreen> {
                       title: l.fxSimulatedTitle,
                       hint: l.fxSimulatedHint,
                     ),
+                  const StoreAccountsBanner(),
                   _Summary(data: data, onFilter: (f) => setState(() => _filter = f)),
                   Gap.vMd,
                   _ProgressCard(data: data),

@@ -2692,14 +2692,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get fxNeedPlayKeyDetail =>
-      '1. افتح إعدادات Ember.\n2. تحت Google Play الصق مفتاح حساب الخدمة.\n3. ارجع إلى هنا واضغط «تم، تابع».';
+      '1. اضغط «اربط الآن».\n2. اختر ملف مفتاح حساب الخدمة.\n3. تكمل التطبيقات المنتظرة طريقها بنفسها.';
 
   @override
   String get fxNeedAppleKeyTitle => 'اربط مفتاح App Store Connect';
 
   @override
   String get fxNeedAppleKeyDetail =>
-      '1. افتح إعدادات Ember.\n2. تحت App Store الصق مفتاح App Store Connect.\n3. ارجع إلى هنا واضغط «تم، تابع».';
+      '1. اضغط «اربط الآن».\n2. أدخل Issuer ID وKey ID واختر ملف .p8.\n3. تكمل التطبيقات المنتظرة طريقها بنفسها.';
 
   @override
   String fxNeedLoginTitle(String engine) {
@@ -3217,4 +3217,201 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get fxNeedAndroidSdkDetail =>
       '1. ثبّت Android Studio (يأتي معه أدوات أندرويد).\n2. افتحه مرة واحدة ووافق على التراخيص.\n3. ارجع إلى هنا واضغط «تم، تابع».';
+
+  @override
+  String get fxcTitle => 'حسابات المتاجر';
+
+  @override
+  String get fxcIntro =>
+      'اربط Google Play وApp Store مرة واحدة فقط. يُبقيهما Ember مرتبطين ويرفع كل تطبيق بنفسه.';
+
+  @override
+  String get fxcGoogleName => 'Google Play';
+
+  @override
+  String get fxcAppleName => 'App Store';
+
+  @override
+  String get fxcStateConnected => 'مرتبط';
+
+  @override
+  String get fxcStateMissing => 'غير مرتبط';
+
+  @override
+  String get fxcStateInvalid => 'يلزم الربط من جديد';
+
+  @override
+  String get fxcStateUnreachable => 'المتجر لا يستجيب';
+
+  @override
+  String get fxcConnect => 'ربط';
+
+  @override
+  String get fxcReconnect => 'ربط من جديد';
+
+  @override
+  String get fxcChange => 'تغيير';
+
+  @override
+  String get fxcVerify => 'تحقق الآن';
+
+  @override
+  String get fxcDisconnect => 'فصل';
+
+  @override
+  String fxcDisconnectTitle(String name) {
+    return 'فصل $name؟';
+  }
+
+  @override
+  String get fxcDisconnectBody =>
+      'التطبيقات المرفوعة تبقى كما هي. تنتظر عمليات الرفع الجديدة حتى تربط من جديد.';
+
+  @override
+  String fxcAccountGoogle(String email) {
+    return 'الحساب: $email';
+  }
+
+  @override
+  String fxcAccountApple(String keyId) {
+    return 'المفتاح $keyId';
+  }
+
+  @override
+  String fxcAccountTeam(String team) {
+    return 'الفريق $team';
+  }
+
+  @override
+  String get fxcChecking => 'جارٍ التحقق مع المتجر…';
+
+  @override
+  String get fxcWhyBadKey => 'هذا ليس ملف مفتاح صالحًا.';
+
+  @override
+  String get fxcWhyRefused =>
+      'رفض المتجر هذا المفتاح. ربما حُذف أو استُبدل: أنشئ مفتاحًا جديدًا.';
+
+  @override
+  String get fxcWhyNoRole =>
+      'المفتاح بلا صلاحيات. امنحه في App Store Connect دور App Manager.';
+
+  @override
+  String get fxcWhyOffline =>
+      'تعذّر الوصول إلى المتجر. تحقق من اتصال الإنترنت.';
+
+  @override
+  String get fxcWhyDeveloperId =>
+      'معرّف المطوّر هو الرقم الطويل في عنوان Play Console.';
+
+  @override
+  String get fxcBannerTitle => 'اربط Google Play وApp Store';
+
+  @override
+  String get fxcBannerBody => 'ما لم يكونا مرتبطين، تتوقف التطبيقات قبل الرفع.';
+
+  @override
+  String get fxcConnectNow => 'اربط الآن';
+
+  @override
+  String get fxcGoogleTitle => 'ربط Google Play';
+
+  @override
+  String get fxcGoogleStep1 =>
+      'في Google Cloud أنشئ حساب خدمة وفعّل «Google Play Android Developer API».';
+
+  @override
+  String get fxcGoogleStep2 =>
+      'افتح ذلك الحساب ثم المفاتيح ← إضافة مفتاح ← JSON. يُحفظ ملف على حاسوبك.';
+
+  @override
+  String get fxcGoogleStep3 =>
+      'في Play Console افتح المستخدمون والأذونات وادعُ بريد الحساب مع إذن نشر التطبيقات.';
+
+  @override
+  String get fxcGoogleStep4 =>
+      'اختر ملف .json أدناه. يتحقق منه Ember مع Google ويحفظه.';
+
+  @override
+  String get fxcOpenGoogleCloud => 'فتح Google Cloud';
+
+  @override
+  String get fxcOpenPlayConsole => 'فتح Play Console';
+
+  @override
+  String get fxcChooseJson => 'اختيار ملف .json';
+
+  @override
+  String get fxcPasteKey => 'أو الصق المفتاح هنا';
+
+  @override
+  String get fxcDeveloperId => 'معرّف المطوّر (اختياري)';
+
+  @override
+  String get fxcDeveloperIdHelp =>
+      'الرقم الطويل في عنوان Play Console بعد /developers/.';
+
+  @override
+  String get fxcCheckSave => 'تحقق واحفظ';
+
+  @override
+  String get fxcAuto => 'ربط تلقائي';
+
+  @override
+  String get fxcAutoHelp =>
+      'يستخدم حساب Google المسجّل في أدوات Google Cloud على هذا الحاسوب. يحتاج إلى معرّف المطوّر.';
+
+  @override
+  String get fxcAutoWorking => 'جارٍ تجهيز Google Play… قد يستغرق بضع دقائق';
+
+  @override
+  String fxcConnectedOk(String name) {
+    return 'تم ربط $name';
+  }
+
+  @override
+  String fxcFileChosen(String name) {
+    return 'الملف: $name';
+  }
+
+  @override
+  String get fxcAppleTitle => 'ربط App Store';
+
+  @override
+  String get fxcAppleStep1 =>
+      'في App Store Connect افتح المستخدمون والوصول ← التكاملات ← واجهة App Store Connect وأنشئ مفتاحًا بدور App Manager.';
+
+  @override
+  String get fxcAppleStep2 => 'انسخ Issuer ID (أعلى الصفحة) وKey ID.';
+
+  @override
+  String get fxcAppleStep3 => 'نزّل ملف .p8: تسمح Apple بتنزيله مرة واحدة فقط.';
+
+  @override
+  String get fxcOpenAppStoreConnect => 'فتح App Store Connect';
+
+  @override
+  String get fxcIssuerId => 'Issuer ID';
+
+  @override
+  String get fxcIssuerHelp => 'الرمز الطويل في أعلى صفحة المفاتيح.';
+
+  @override
+  String get fxcKeyId => 'Key ID';
+
+  @override
+  String get fxcKeyIdHelp => 'الرمز القصير بجانب المفتاح، مثل Z47GM3ZDZ6.';
+
+  @override
+  String get fxcChooseP8 => 'اختيار ملف .p8';
+
+  @override
+  String get fxcKeepSavedKey =>
+      'اترك الملف فارغًا للإبقاء على المفتاح المحفوظ.';
+
+  @override
+  String get fxcTeamId => 'Team ID (اختياري)';
+
+  @override
+  String get fxcTeamIdHelp => 'عشرة أحرف. يجده Ember بنفسه عندما يستطيع.';
 }

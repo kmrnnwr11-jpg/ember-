@@ -280,10 +280,13 @@ class StatTile extends StatelessWidget {
 /// Something only the owner can do: what, the values to copy, and the buttons
 /// "I did it, go on" and "skip this".
 class NeedsYouTile extends StatelessWidget {
-  const NeedsYouTile({super.key, required this.need, required this.onDone, required this.onSkip, this.showApp = true});
+  const NeedsYouTile({super.key, required this.need, required this.onDone, required this.onSkip, this.onConnect, this.showApp = true});
   final NeedsYou need;
   final VoidCallback onDone;
   final VoidCallback onSkip;
+
+  /// For a missing or refused store key: opens the connection window. The apps go on by themselves once it works.
+  final VoidCallback? onConnect;
   final bool showApp;
 
   @override
@@ -302,7 +305,10 @@ class NeedsYouTile extends StatelessWidget {
           spacing: Gap.sm,
           runSpacing: Gap.sm,
           children: [
-            FilledButton.icon(onPressed: onDone, icon: const Icon(Icons.check), label: Text(l.fxNeedsDone)),
+            if (onConnect != null)
+              FilledButton.icon(key: const Key('needConnect'), onPressed: onConnect, icon: const Icon(Icons.link), label: Text(l.fxcConnectNow))
+            else
+              FilledButton.icon(onPressed: onDone, icon: const Icon(Icons.check), label: Text(l.fxNeedsDone)),
             TextButton(onPressed: onSkip, child: Text(l.fxNeedsSkip)),
           ],
         ),

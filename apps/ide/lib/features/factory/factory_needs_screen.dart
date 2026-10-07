@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ide_core/ide_core.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/ui.dart';
+import 'connect_cards.dart';
+import 'connect_controller.dart';
 import 'factory_controller.dart';
 import 'factory_widgets.dart';
 
@@ -44,6 +46,13 @@ class FactoryNeedsScreen extends ConsumerWidget {
                     need: n,
                     onDone: () => resolve(n.appId, n.id),
                     onSkip: () => resolve(n.appId, n.id, skip: true),
+                    onConnect: switch (n.kind) {
+                      'play_key' || 'apple_key' => () async {
+                        final accounts = await ref.read(storeAccountsProvider.future);
+                        if (context.mounted) await openConnectSheet(context, ref, n.kind == 'play_key' ? 'google_play' : 'apple', accounts);
+                      },
+                      _ => null,
+                    },
                   ),
               ],
             ),

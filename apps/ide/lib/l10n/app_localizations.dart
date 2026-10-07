@@ -4757,7 +4757,7 @@ abstract class AppLocalizations {
   /// No description provided for @fxNeedPlayKeyDetail.
   ///
   /// In en, this message translates to:
-  /// **'1. Open Settings in Ember.\n2. Under Google Play, paste the service account key.\n3. Come back here and press “Done, continue”.'**
+  /// **'1. Press “Connect now”.\n2. Choose the service account key file.\n3. The apps that were waiting go on by themselves.'**
   String get fxNeedPlayKeyDetail;
 
   /// No description provided for @fxNeedAppleKeyTitle.
@@ -4769,7 +4769,7 @@ abstract class AppLocalizations {
   /// No description provided for @fxNeedAppleKeyDetail.
   ///
   /// In en, this message translates to:
-  /// **'1. Open Settings in Ember.\n2. Under App Store, paste the App Store Connect key.\n3. Come back here and press “Done, continue”.'**
+  /// **'1. Press “Connect now”.\n2. Enter the Issuer ID and the Key ID and choose the .p8 file.\n3. The apps that were waiting go on by themselves.'**
   String get fxNeedAppleKeyDetail;
 
   /// No description provided for @fxNeedLoginTitle.
@@ -5485,6 +5485,348 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'1. Install Android Studio (it brings the Android tools).\n2. Open it once and accept the licences.\n3. Come back here and press “Done, continue”.'**
   String get fxNeedAndroidSdkDetail;
+
+  /// No description provided for @fxcTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Store accounts'**
+  String get fxcTitle;
+
+  /// No description provided for @fxcIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Google Play and the App Store once. Ember keeps them connected and uploads every app by itself.'**
+  String get fxcIntro;
+
+  /// No description provided for @fxcGoogleName.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play'**
+  String get fxcGoogleName;
+
+  /// No description provided for @fxcAppleName.
+  ///
+  /// In en, this message translates to:
+  /// **'App Store'**
+  String get fxcAppleName;
+
+  /// No description provided for @fxcStateConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get fxcStateConnected;
+
+  /// No description provided for @fxcStateMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected'**
+  String get fxcStateMissing;
+
+  /// No description provided for @fxcStateInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs reconnecting'**
+  String get fxcStateInvalid;
+
+  /// No description provided for @fxcStateUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot reach the store'**
+  String get fxcStateUnreachable;
+
+  /// No description provided for @fxcConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get fxcConnect;
+
+  /// No description provided for @fxcReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect again'**
+  String get fxcReconnect;
+
+  /// No description provided for @fxcChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get fxcChange;
+
+  /// No description provided for @fxcVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Check now'**
+  String get fxcVerify;
+
+  /// No description provided for @fxcDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get fxcDisconnect;
+
+  /// No description provided for @fxcDisconnectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect {name}?'**
+  String fxcDisconnectTitle(String name);
+
+  /// No description provided for @fxcDisconnectBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Apps already uploaded stay where they are. New uploads wait until you connect again.'**
+  String get fxcDisconnectBody;
+
+  /// No description provided for @fxcAccountGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account: {email}'**
+  String fxcAccountGoogle(String email);
+
+  /// No description provided for @fxcAccountApple.
+  ///
+  /// In en, this message translates to:
+  /// **'Key {keyId}'**
+  String fxcAccountApple(String keyId);
+
+  /// No description provided for @fxcAccountTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Team {team}'**
+  String fxcAccountTeam(String team);
+
+  /// No description provided for @fxcChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking with the store…'**
+  String get fxcChecking;
+
+  /// No description provided for @fxcWhyBadKey.
+  ///
+  /// In en, this message translates to:
+  /// **'That is not a valid key file.'**
+  String get fxcWhyBadKey;
+
+  /// No description provided for @fxcWhyRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'The store refused this key. It may have been deleted or replaced: make a new one.'**
+  String get fxcWhyRefused;
+
+  /// No description provided for @fxcWhyNoRole.
+  ///
+  /// In en, this message translates to:
+  /// **'The key has no permission. In App Store Connect give it the App Manager role.'**
+  String get fxcWhyNoRole;
+
+  /// No description provided for @fxcWhyOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'The store could not be reached. Check the internet connection.'**
+  String get fxcWhyOffline;
+
+  /// No description provided for @fxcWhyDeveloperId.
+  ///
+  /// In en, this message translates to:
+  /// **'The developer ID is the long number in the Play Console address.'**
+  String get fxcWhyDeveloperId;
+
+  /// No description provided for @fxcBannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Google Play and the App Store'**
+  String get fxcBannerTitle;
+
+  /// No description provided for @fxcBannerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Until they are connected, apps stop before the upload.'**
+  String get fxcBannerBody;
+
+  /// No description provided for @fxcConnectNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect now'**
+  String get fxcConnectNow;
+
+  /// No description provided for @fxcGoogleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Google Play'**
+  String get fxcGoogleTitle;
+
+  /// No description provided for @fxcGoogleStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'In Google Cloud, create a service account and turn on the “Google Play Android Developer API”.'**
+  String get fxcGoogleStep1;
+
+  /// No description provided for @fxcGoogleStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Open that account, then Keys → Add key → JSON. A file is saved on your computer.'**
+  String get fxcGoogleStep2;
+
+  /// No description provided for @fxcGoogleStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'In Play Console, open Users and permissions and invite the account’s email with permission to release apps.'**
+  String get fxcGoogleStep3;
+
+  /// No description provided for @fxcGoogleStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the .json file below. Ember checks it with Google and saves it.'**
+  String get fxcGoogleStep4;
+
+  /// No description provided for @fxcOpenGoogleCloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Google Cloud'**
+  String get fxcOpenGoogleCloud;
+
+  /// No description provided for @fxcOpenPlayConsole.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Play Console'**
+  String get fxcOpenPlayConsole;
+
+  /// No description provided for @fxcChooseJson.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the .json file'**
+  String get fxcChooseJson;
+
+  /// No description provided for @fxcPasteKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Or paste the key here'**
+  String get fxcPasteKey;
+
+  /// No description provided for @fxcDeveloperId.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer ID (optional)'**
+  String get fxcDeveloperId;
+
+  /// No description provided for @fxcDeveloperIdHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The long number in the Play Console address, after /developers/.'**
+  String get fxcDeveloperIdHelp;
+
+  /// No description provided for @fxcCheckSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Check and save'**
+  String get fxcCheckSave;
+
+  /// No description provided for @fxcAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect automatically'**
+  String get fxcAuto;
+
+  /// No description provided for @fxcAutoHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses the Google account signed in to the Google Cloud tools on this computer. Needs the developer ID.'**
+  String get fxcAutoHelp;
+
+  /// No description provided for @fxcAutoWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Setting up Google Play… this can take a few minutes'**
+  String get fxcAutoWorking;
+
+  /// No description provided for @fxcConnectedOk.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} connected'**
+  String fxcConnectedOk(String name);
+
+  /// No description provided for @fxcFileChosen.
+  ///
+  /// In en, this message translates to:
+  /// **'File: {name}'**
+  String fxcFileChosen(String name);
+
+  /// No description provided for @fxcAppleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect the App Store'**
+  String get fxcAppleTitle;
+
+  /// No description provided for @fxcAppleStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'In App Store Connect open Users and Access → Integrations → App Store Connect API and create a key with the App Manager role.'**
+  String get fxcAppleStep1;
+
+  /// No description provided for @fxcAppleStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the Issuer ID (at the top of the page) and the Key ID.'**
+  String get fxcAppleStep2;
+
+  /// No description provided for @fxcAppleStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Download the .p8 file: Apple lets you download it only once.'**
+  String get fxcAppleStep3;
+
+  /// No description provided for @fxcOpenAppStoreConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Open App Store Connect'**
+  String get fxcOpenAppStoreConnect;
+
+  /// No description provided for @fxcIssuerId.
+  ///
+  /// In en, this message translates to:
+  /// **'Issuer ID'**
+  String get fxcIssuerId;
+
+  /// No description provided for @fxcIssuerHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The long code at the top of the Keys page.'**
+  String get fxcIssuerHelp;
+
+  /// No description provided for @fxcKeyId.
+  ///
+  /// In en, this message translates to:
+  /// **'Key ID'**
+  String get fxcKeyId;
+
+  /// No description provided for @fxcKeyIdHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The short code next to the key, like Z47GM3ZDZ6.'**
+  String get fxcKeyIdHelp;
+
+  /// No description provided for @fxcChooseP8.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the .p8 file'**
+  String get fxcChooseP8;
+
+  /// No description provided for @fxcKeepSavedKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave the file out to keep the saved key.'**
+  String get fxcKeepSavedKey;
+
+  /// No description provided for @fxcTeamId.
+  ///
+  /// In en, this message translates to:
+  /// **'Team ID (optional)'**
+  String get fxcTeamId;
+
+  /// No description provided for @fxcTeamIdHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Ten characters. Ember finds it by itself when it can.'**
+  String get fxcTeamIdHelp;
 }
 
 class _AppLocalizationsDelegate

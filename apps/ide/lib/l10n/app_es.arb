@@ -782,9 +782,9 @@
   "fxNeedMacTitle": "La app para iPhone necesita un Mac",
   "fxNeedMacDetail": "Apple solo permite crear la app para iPhone en un Mac. El código está guardado: abre Ember en un Mac, recupera la app desde GitHub y la parte de iPhone se hace allí.",
   "fxNeedPlayKeyTitle": "Conecta tu clave de Google Play",
-  "fxNeedPlayKeyDetail": "1. Abre los Ajustes de Ember.\n2. En Google Play, pega la clave de la cuenta de servicio.\n3. Vuelve aquí y pulsa “Hecho, continuar”.",
+  "fxNeedPlayKeyDetail": "1. Pulsa “Conectar ahora”.\n2. Elige el archivo de la clave de la cuenta de servicio.\n3. Las apps que esperaban continúan solas.",
   "fxNeedAppleKeyTitle": "Conecta tu clave de App Store Connect",
-  "fxNeedAppleKeyDetail": "1. Abre los Ajustes de Ember.\n2. En App Store, pega la clave de App Store Connect.\n3. Vuelve aquí y pulsa “Hecho, continuar”.",
+  "fxNeedAppleKeyDetail": "1. Pulsa “Conectar ahora”.\n2. Escribe el Issuer ID y el Key ID y elige el archivo .p8.\n3. Las apps que esperaban continúan solas.",
   "fxNeedLoginTitle": "Inicia sesión de nuevo en {engine}",
   "fxNeedLoginDetail": "El acceso caducó. Abre la página Conexiones, pulsa “Conectar” junto al motor e inicia sesión. Luego pulsa “Hecho, continuar”.",
   "fxDataName": "Nombre",
@@ -903,5 +903,104 @@
   "fxLimitsTitle": "Límites",
   "fxLimitInFlight": "Apps en marcha a la vez",
   "fxNeedAndroidSdkTitle": "Instala las herramientas de Android",
-  "fxNeedAndroidSdkDetail": "1. Instala Android Studio (trae las herramientas de Android).\n2. Ábrelo una vez y acepta las licencias.\n3. Vuelve aquí y pulsa “Hecho, continuar”."
+  "fxNeedAndroidSdkDetail": "1. Instala Android Studio (trae las herramientas de Android).\n2. Ábrelo una vez y acepta las licencias.\n3. Vuelve aquí y pulsa “Hecho, continuar”.",
+  "fxcTitle": "Cuentas de las tiendas",
+  "fxcIntro": "Conecta Google Play y la App Store una sola vez. Ember las mantiene conectadas y sube cada app por sí solo.",
+  "fxcGoogleName": "Google Play",
+  "fxcAppleName": "App Store",
+  "fxcStateConnected": "Conectado",
+  "fxcStateMissing": "No conectado",
+  "fxcStateInvalid": "Hay que reconectar",
+  "fxcStateUnreachable": "La tienda no responde",
+  "fxcConnect": "Conectar",
+  "fxcReconnect": "Conectar de nuevo",
+  "fxcChange": "Cambiar",
+  "fxcVerify": "Comprobar ahora",
+  "fxcDisconnect": "Desconectar",
+  "fxcDisconnectTitle": "¿Desconectar {name}?",
+  "@fxcDisconnectTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcDisconnectBody": "Las apps ya subidas se quedan donde están. Las nuevas subidas esperan hasta que vuelvas a conectar.",
+  "fxcAccountGoogle": "Cuenta: {email}",
+  "@fxcAccountGoogle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAccountApple": "Clave {keyId}",
+  "@fxcAccountApple": {
+    "placeholders": {
+      "keyId": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAccountTeam": "Equipo {team}",
+  "@fxcAccountTeam": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcChecking": "Comprobando con la tienda…",
+  "fxcWhyBadKey": "Ese no es un archivo de clave válido.",
+  "fxcWhyRefused": "La tienda rechazó esta clave. Puede que la borraran o la cambiaran: crea una nueva.",
+  "fxcWhyNoRole": "La clave no tiene permisos. En App Store Connect dale el rol App Manager.",
+  "fxcWhyOffline": "No se pudo llegar a la tienda. Revisa la conexión a internet.",
+  "fxcWhyDeveloperId": "El ID de desarrollador es el número largo de la dirección de Play Console.",
+  "fxcBannerTitle": "Conecta Google Play y la App Store",
+  "fxcBannerBody": "Mientras no estén conectadas, las apps se detienen antes de la subida.",
+  "fxcConnectNow": "Conectar ahora",
+  "fxcGoogleTitle": "Conectar Google Play",
+  "fxcGoogleStep1": "En Google Cloud crea una cuenta de servicio y activa la “Google Play Android Developer API”.",
+  "fxcGoogleStep2": "Abre esa cuenta, luego Claves → Añadir clave → JSON. Se guarda un archivo en tu ordenador.",
+  "fxcGoogleStep3": "En Play Console abre Usuarios y permisos e invita al correo de la cuenta con permiso para publicar apps.",
+  "fxcGoogleStep4": "Elige abajo el archivo .json. Ember lo comprueba con Google y lo guarda.",
+  "fxcOpenGoogleCloud": "Abrir Google Cloud",
+  "fxcOpenPlayConsole": "Abrir Play Console",
+  "fxcChooseJson": "Elegir el archivo .json",
+  "fxcPasteKey": "O pega aquí la clave",
+  "fxcDeveloperId": "ID de desarrollador (opcional)",
+  "fxcDeveloperIdHelp": "El número largo de la dirección de Play Console, después de /developers/.",
+  "fxcCheckSave": "Comprobar y guardar",
+  "fxcAuto": "Conectar automáticamente",
+  "fxcAutoHelp": "Usa la cuenta de Google con la que están iniciadas las herramientas de Google Cloud de este ordenador. Necesita el ID de desarrollador.",
+  "fxcAutoWorking": "Preparando Google Play… puede tardar unos minutos",
+  "fxcConnectedOk": "{name} conectado",
+  "@fxcConnectedOk": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcFileChosen": "Archivo: {name}",
+  "@fxcFileChosen": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAppleTitle": "Conectar la App Store",
+  "fxcAppleStep1": "En App Store Connect abre Usuarios y acceso → Integraciones → API de App Store Connect y crea una clave con el rol App Manager.",
+  "fxcAppleStep2": "Copia el Issuer ID (arriba en la página) y el Key ID.",
+  "fxcAppleStep3": "Descarga el archivo .p8: Apple solo permite descargarlo una vez.",
+  "fxcOpenAppStoreConnect": "Abrir App Store Connect",
+  "fxcIssuerId": "Issuer ID",
+  "fxcIssuerHelp": "El código largo de la parte de arriba de la página de Claves.",
+  "fxcKeyId": "Key ID",
+  "fxcKeyIdHelp": "El código corto junto a la clave, como Z47GM3ZDZ6.",
+  "fxcChooseP8": "Elegir el archivo .p8",
+  "fxcKeepSavedKey": "Deja el archivo vacío para conservar la clave guardada.",
+  "fxcTeamId": "Team ID (opcional)",
+  "fxcTeamIdHelp": "Diez caracteres. Ember lo encuentra solo cuando puede."
 }

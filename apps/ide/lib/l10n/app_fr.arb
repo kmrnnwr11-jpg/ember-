@@ -782,9 +782,9 @@
   "fxNeedMacTitle": "L’app iPhone a besoin d’un Mac",
   "fxNeedMacDetail": "Apple ne permet de construire l’app iPhone que sur un Mac. Le code est sauvegardé : ouvre Ember sur un Mac, récupère l’app depuis GitHub et la partie iPhone se fait là-bas.",
   "fxNeedPlayKeyTitle": "Connecte ta clé Google Play",
-  "fxNeedPlayKeyDetail": "1. Ouvre les Réglages d’Ember.\n2. Sous Google Play, colle la clé du compte de service.\n3. Reviens ici et appuie sur « Fait, continuer ».",
+  "fxNeedPlayKeyDetail": "1. Appuyez sur « Connecter maintenant ».\n2. Choisissez le fichier de clé du compte de service.\n3. Les apps qui attendaient reprennent toutes seules.",
   "fxNeedAppleKeyTitle": "Connecte ta clé App Store Connect",
-  "fxNeedAppleKeyDetail": "1. Ouvre les Réglages d’Ember.\n2. Sous App Store, colle la clé App Store Connect.\n3. Reviens ici et appuie sur « Fait, continuer ».",
+  "fxNeedAppleKeyDetail": "1. Appuyez sur « Connecter maintenant ».\n2. Saisissez l’Issuer ID et le Key ID et choisissez le fichier .p8.\n3. Les apps qui attendaient reprennent toutes seules.",
   "fxNeedLoginTitle": "Reconnecte-toi à {engine}",
   "fxNeedLoginDetail": "La connexion a expiré. Ouvre la page Connexions, appuie sur « Connecter » à côté du moteur et connecte-toi. Puis appuie sur « Fait, continuer ».",
   "fxDataName": "Nom",
@@ -903,5 +903,104 @@
   "fxLimitsTitle": "Limites",
   "fxLimitInFlight": "Apps en cours en même temps",
   "fxNeedAndroidSdkTitle": "Installe les outils Android",
-  "fxNeedAndroidSdkDetail": "1. Installe Android Studio (il apporte les outils Android).\n2. Ouvre-le une fois et accepte les licences.\n3. Reviens ici et appuie sur « Fait, continuer »."
+  "fxNeedAndroidSdkDetail": "1. Installe Android Studio (il apporte les outils Android).\n2. Ouvre-le une fois et accepte les licences.\n3. Reviens ici et appuie sur « Fait, continuer ».",
+  "fxcTitle": "Comptes des stores",
+  "fxcIntro": "Connectez Google Play et l’App Store une seule fois. Ember les garde connectés et envoie chaque app tout seul.",
+  "fxcGoogleName": "Google Play",
+  "fxcAppleName": "App Store",
+  "fxcStateConnected": "Connecté",
+  "fxcStateMissing": "Non connecté",
+  "fxcStateInvalid": "À reconnecter",
+  "fxcStateUnreachable": "Le store ne répond pas",
+  "fxcConnect": "Connecter",
+  "fxcReconnect": "Reconnecter",
+  "fxcChange": "Modifier",
+  "fxcVerify": "Vérifier maintenant",
+  "fxcDisconnect": "Déconnecter",
+  "fxcDisconnectTitle": "Déconnecter {name} ?",
+  "@fxcDisconnectTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcDisconnectBody": "Les apps déjà envoyées restent où elles sont. Les nouveaux envois attendent que vous vous reconnectiez.",
+  "fxcAccountGoogle": "Compte : {email}",
+  "@fxcAccountGoogle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAccountApple": "Clé {keyId}",
+  "@fxcAccountApple": {
+    "placeholders": {
+      "keyId": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAccountTeam": "Équipe {team}",
+  "@fxcAccountTeam": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcChecking": "Vérification auprès du store…",
+  "fxcWhyBadKey": "Ce n’est pas un fichier de clé valide.",
+  "fxcWhyRefused": "Le store a refusé cette clé. Elle a peut-être été supprimée ou remplacée : créez-en une nouvelle.",
+  "fxcWhyNoRole": "La clé n’a aucune autorisation. Dans App Store Connect, donnez-lui le rôle App Manager.",
+  "fxcWhyOffline": "Impossible de joindre le store. Vérifiez la connexion internet.",
+  "fxcWhyDeveloperId": "L’ID développeur est le long numéro dans l’adresse de Play Console.",
+  "fxcBannerTitle": "Connectez Google Play et l’App Store",
+  "fxcBannerBody": "Tant qu’ils ne sont pas connectés, les apps s’arrêtent avant l’envoi.",
+  "fxcConnectNow": "Connecter maintenant",
+  "fxcGoogleTitle": "Connecter Google Play",
+  "fxcGoogleStep1": "Dans Google Cloud, créez un compte de service et activez la « Google Play Android Developer API ».",
+  "fxcGoogleStep2": "Ouvrez ce compte, puis Clés → Ajouter une clé → JSON. Un fichier est enregistré sur votre ordinateur.",
+  "fxcGoogleStep3": "Dans Play Console, ouvrez Utilisateurs et autorisations et invitez l’e-mail du compte avec l’autorisation de publier des apps.",
+  "fxcGoogleStep4": "Choisissez le fichier .json ci-dessous. Ember le vérifie auprès de Google et l’enregistre.",
+  "fxcOpenGoogleCloud": "Ouvrir Google Cloud",
+  "fxcOpenPlayConsole": "Ouvrir Play Console",
+  "fxcChooseJson": "Choisir le fichier .json",
+  "fxcPasteKey": "Ou collez la clé ici",
+  "fxcDeveloperId": "ID développeur (facultatif)",
+  "fxcDeveloperIdHelp": "Le long numéro dans l’adresse de Play Console, après /developers/.",
+  "fxcCheckSave": "Vérifier et enregistrer",
+  "fxcAuto": "Connecter automatiquement",
+  "fxcAutoHelp": "Utilise le compte Google connecté aux outils Google Cloud de cet ordinateur. Demande l’ID développeur.",
+  "fxcAutoWorking": "Préparation de Google Play… cela peut prendre quelques minutes",
+  "fxcConnectedOk": "{name} connecté",
+  "@fxcConnectedOk": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcFileChosen": "Fichier : {name}",
+  "@fxcFileChosen": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAppleTitle": "Connecter l’App Store",
+  "fxcAppleStep1": "Dans App Store Connect, ouvrez Utilisateurs et accès → Intégrations → API App Store Connect et créez une clé avec le rôle App Manager.",
+  "fxcAppleStep2": "Copiez l’Issuer ID (en haut de la page) et le Key ID.",
+  "fxcAppleStep3": "Téléchargez le fichier .p8 : Apple ne le laisse télécharger qu’une seule fois.",
+  "fxcOpenAppStoreConnect": "Ouvrir App Store Connect",
+  "fxcIssuerId": "Issuer ID",
+  "fxcIssuerHelp": "Le long code en haut de la page Clés.",
+  "fxcKeyId": "Key ID",
+  "fxcKeyIdHelp": "Le code court à côté de la clé, comme Z47GM3ZDZ6.",
+  "fxcChooseP8": "Choisir le fichier .p8",
+  "fxcKeepSavedKey": "Laissez le fichier de côté pour garder la clé enregistrée.",
+  "fxcTeamId": "Team ID (facultatif)",
+  "fxcTeamIdHelp": "Dix caractères. Ember le trouve tout seul quand il le peut."
 }

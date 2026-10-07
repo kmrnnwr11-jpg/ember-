@@ -27,7 +27,8 @@ const Variant _englishWide = (size: wide, locale: Locale('en'), brightness: Brig
 
 List<Override> _overrides(FakeFactory fake, {FakeFactoryApi? api}) => [
   ...signedIn(
-    api: api ?? FakeFactoryApi(plan: fakePlanJson(), connections: fakeConnectionsJson),
+    // Both stores connected: the reminder to connect them has its own tests (connect_test.dart).
+    api: api ?? FakeFactoryApi(plan: fakePlanJson(), connections: fakeConnectionsJson, stores: fakeStoresJson(google: 'connected', apple: 'connected')),
   ),
   factoryProvider.overrideWith(() => fake),
 ];
@@ -480,7 +481,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       s.expectClean(tester);
       expect(find.text('${engineLabel('qwen-code')} · ${s.v.l.fxWhyNotInstalled}'), findsOneWidget, reason: s.where);
-      expect(find.text(s.v.l.fxConnect), findsNWidgets(2), reason: '${s.where}: Qwen and Gemini can be connected');
+      expect(find.widgetWithText(TextButton, s.v.l.fxConnect), findsNWidgets(2), reason: '${s.where}: Qwen and Gemini can be connected');
       await s.sweep(tester, pageScroll());
     });
 
@@ -495,7 +496,7 @@ void main() {
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(find.text(s.v.l.fxConnect).first);
+      await tester.tap(find.widgetWithText(TextButton, s.v.l.fxConnect).first);
       await tester.pump();
       expect(api.signIns, ['gemini-cli'], reason: 'the first one not connected, in the order shown');
       await tester.scrollUntilVisible(find.text(s.v.l.fxLimitsTitle), 300, scrollable: pageScroll());

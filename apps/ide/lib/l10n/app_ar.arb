@@ -782,9 +782,9 @@
   "fxNeedMacTitle": "تطبيق آيفون يحتاج إلى جهاز Mac",
   "fxNeedMacDetail": "تسمح Apple ببناء تطبيق آيفون على جهاز Mac فقط. الكود محفوظ: افتح Ember على جهاز Mac واستعد التطبيق من GitHub وسيتم جزء آيفون هناك.",
   "fxNeedPlayKeyTitle": "اربط مفتاح Google Play",
-  "fxNeedPlayKeyDetail": "1. افتح إعدادات Ember.\n2. تحت Google Play الصق مفتاح حساب الخدمة.\n3. ارجع إلى هنا واضغط «تم، تابع».",
+  "fxNeedPlayKeyDetail": "1. اضغط «اربط الآن».\n2. اختر ملف مفتاح حساب الخدمة.\n3. تكمل التطبيقات المنتظرة طريقها بنفسها.",
   "fxNeedAppleKeyTitle": "اربط مفتاح App Store Connect",
-  "fxNeedAppleKeyDetail": "1. افتح إعدادات Ember.\n2. تحت App Store الصق مفتاح App Store Connect.\n3. ارجع إلى هنا واضغط «تم، تابع».",
+  "fxNeedAppleKeyDetail": "1. اضغط «اربط الآن».\n2. أدخل Issuer ID وKey ID واختر ملف .p8.\n3. تكمل التطبيقات المنتظرة طريقها بنفسها.",
   "fxNeedLoginTitle": "سجّل الدخول مجدداً إلى {engine}",
   "fxNeedLoginDetail": "انتهت صلاحية تسجيل الدخول. افتح صفحة الاتصالات واضغط «اتصال» بجانب المحرك وسجّل الدخول. ثم اضغط «تم، تابع».",
   "fxDataName": "الاسم",
@@ -903,5 +903,104 @@
   "fxLimitsTitle": "الحدود",
   "fxLimitInFlight": "التطبيقات قيد الصنع في الوقت نفسه",
   "fxNeedAndroidSdkTitle": "ثبّت أدوات أندرويد",
-  "fxNeedAndroidSdkDetail": "1. ثبّت Android Studio (يأتي معه أدوات أندرويد).\n2. افتحه مرة واحدة ووافق على التراخيص.\n3. ارجع إلى هنا واضغط «تم، تابع»."
+  "fxNeedAndroidSdkDetail": "1. ثبّت Android Studio (يأتي معه أدوات أندرويد).\n2. افتحه مرة واحدة ووافق على التراخيص.\n3. ارجع إلى هنا واضغط «تم، تابع».",
+  "fxcTitle": "حسابات المتاجر",
+  "fxcIntro": "اربط Google Play وApp Store مرة واحدة فقط. يُبقيهما Ember مرتبطين ويرفع كل تطبيق بنفسه.",
+  "fxcGoogleName": "Google Play",
+  "fxcAppleName": "App Store",
+  "fxcStateConnected": "مرتبط",
+  "fxcStateMissing": "غير مرتبط",
+  "fxcStateInvalid": "يلزم الربط من جديد",
+  "fxcStateUnreachable": "المتجر لا يستجيب",
+  "fxcConnect": "ربط",
+  "fxcReconnect": "ربط من جديد",
+  "fxcChange": "تغيير",
+  "fxcVerify": "تحقق الآن",
+  "fxcDisconnect": "فصل",
+  "fxcDisconnectTitle": "فصل {name}؟",
+  "@fxcDisconnectTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcDisconnectBody": "التطبيقات المرفوعة تبقى كما هي. تنتظر عمليات الرفع الجديدة حتى تربط من جديد.",
+  "fxcAccountGoogle": "الحساب: {email}",
+  "@fxcAccountGoogle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAccountApple": "المفتاح {keyId}",
+  "@fxcAccountApple": {
+    "placeholders": {
+      "keyId": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAccountTeam": "الفريق {team}",
+  "@fxcAccountTeam": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcChecking": "جارٍ التحقق مع المتجر…",
+  "fxcWhyBadKey": "هذا ليس ملف مفتاح صالحًا.",
+  "fxcWhyRefused": "رفض المتجر هذا المفتاح. ربما حُذف أو استُبدل: أنشئ مفتاحًا جديدًا.",
+  "fxcWhyNoRole": "المفتاح بلا صلاحيات. امنحه في App Store Connect دور App Manager.",
+  "fxcWhyOffline": "تعذّر الوصول إلى المتجر. تحقق من اتصال الإنترنت.",
+  "fxcWhyDeveloperId": "معرّف المطوّر هو الرقم الطويل في عنوان Play Console.",
+  "fxcBannerTitle": "اربط Google Play وApp Store",
+  "fxcBannerBody": "ما لم يكونا مرتبطين، تتوقف التطبيقات قبل الرفع.",
+  "fxcConnectNow": "اربط الآن",
+  "fxcGoogleTitle": "ربط Google Play",
+  "fxcGoogleStep1": "في Google Cloud أنشئ حساب خدمة وفعّل «Google Play Android Developer API».",
+  "fxcGoogleStep2": "افتح ذلك الحساب ثم المفاتيح ← إضافة مفتاح ← JSON. يُحفظ ملف على حاسوبك.",
+  "fxcGoogleStep3": "في Play Console افتح المستخدمون والأذونات وادعُ بريد الحساب مع إذن نشر التطبيقات.",
+  "fxcGoogleStep4": "اختر ملف .json أدناه. يتحقق منه Ember مع Google ويحفظه.",
+  "fxcOpenGoogleCloud": "فتح Google Cloud",
+  "fxcOpenPlayConsole": "فتح Play Console",
+  "fxcChooseJson": "اختيار ملف .json",
+  "fxcPasteKey": "أو الصق المفتاح هنا",
+  "fxcDeveloperId": "معرّف المطوّر (اختياري)",
+  "fxcDeveloperIdHelp": "الرقم الطويل في عنوان Play Console بعد /developers/.",
+  "fxcCheckSave": "تحقق واحفظ",
+  "fxcAuto": "ربط تلقائي",
+  "fxcAutoHelp": "يستخدم حساب Google المسجّل في أدوات Google Cloud على هذا الحاسوب. يحتاج إلى معرّف المطوّر.",
+  "fxcAutoWorking": "جارٍ تجهيز Google Play… قد يستغرق بضع دقائق",
+  "fxcConnectedOk": "تم ربط {name}",
+  "@fxcConnectedOk": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcFileChosen": "الملف: {name}",
+  "@fxcFileChosen": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAppleTitle": "ربط App Store",
+  "fxcAppleStep1": "في App Store Connect افتح المستخدمون والوصول ← التكاملات ← واجهة App Store Connect وأنشئ مفتاحًا بدور App Manager.",
+  "fxcAppleStep2": "انسخ Issuer ID (أعلى الصفحة) وKey ID.",
+  "fxcAppleStep3": "نزّل ملف .p8: تسمح Apple بتنزيله مرة واحدة فقط.",
+  "fxcOpenAppStoreConnect": "فتح App Store Connect",
+  "fxcIssuerId": "Issuer ID",
+  "fxcIssuerHelp": "الرمز الطويل في أعلى صفحة المفاتيح.",
+  "fxcKeyId": "Key ID",
+  "fxcKeyIdHelp": "الرمز القصير بجانب المفتاح، مثل Z47GM3ZDZ6.",
+  "fxcChooseP8": "اختيار ملف .p8",
+  "fxcKeepSavedKey": "اترك الملف فارغًا للإبقاء على المفتاح المحفوظ.",
+  "fxcTeamId": "Team ID (اختياري)",
+  "fxcTeamIdHelp": "عشرة أحرف. يجده Ember بنفسه عندما يستطيع."
 }

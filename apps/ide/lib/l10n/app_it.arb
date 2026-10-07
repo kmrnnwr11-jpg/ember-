@@ -803,9 +803,9 @@
   "fxNeedMacTitle": "L’app per iPhone ha bisogno di un Mac",
   "fxNeedMacDetail": "Apple permette di costruire l’app per iPhone solo su un Mac. Il codice è salvato: apri Ember su un Mac, riprendi l’app da GitHub e la parte iPhone gira lì.",
   "fxNeedPlayKeyTitle": "Collega la chiave di Google Play",
-  "fxNeedPlayKeyDetail": "1. Apri le Impostazioni di Ember.\n2. Sotto Google Play, incolla la chiave dell’account di servizio.\n3. Torna qui e premi “Fatto, continua”.",
+  "fxNeedPlayKeyDetail": "1. Premi “Collega adesso”.\n2. Scegli il file della chiave dell’account di servizio.\n3. Le app che aspettavano ripartono da sole.",
   "fxNeedAppleKeyTitle": "Collega la chiave di App Store Connect",
-  "fxNeedAppleKeyDetail": "1. Apri le Impostazioni di Ember.\n2. Sotto App Store, incolla la chiave di App Store Connect.\n3. Torna qui e premi “Fatto, continua”.",
+  "fxNeedAppleKeyDetail": "1. Premi “Collega adesso”.\n2. Inserisci Issuer ID e Key ID e scegli il file .p8.\n3. Le app che aspettavano ripartono da sole.",
   "fxNeedLoginTitle": "Accedi di nuovo a {engine}",
   "fxNeedLoginDetail": "L’accesso è scaduto. Apri la pagina Collegamenti, premi “Collega” accanto al motore e accedi. Poi premi “Fatto, continua”.",
   "fxDataName": "Nome",
@@ -924,5 +924,104 @@
   "fxLimitsTitle": "Limiti",
   "fxLimitInFlight": "App in lavorazione nello stesso momento",
   "fxNeedAndroidSdkTitle": "Installa gli strumenti Android",
-  "fxNeedAndroidSdkDetail": "1. Installa Android Studio (porta con sé gli strumenti Android).\n2. Aprilo una volta e accetta le licenze.\n3. Torna qui e premi “Fatto, continua”."
+  "fxNeedAndroidSdkDetail": "1. Installa Android Studio (porta con sé gli strumenti Android).\n2. Aprilo una volta e accetta le licenze.\n3. Torna qui e premi “Fatto, continua”.",
+  "fxcTitle": "Account degli store",
+  "fxcIntro": "Collega Google Play e App Store una volta sola. Ember li tiene collegati e carica ogni app da solo.",
+  "fxcGoogleName": "Google Play",
+  "fxcAppleName": "App Store",
+  "fxcStateConnected": "Collegato",
+  "fxcStateMissing": "Non collegato",
+  "fxcStateInvalid": "Da ricollegare",
+  "fxcStateUnreachable": "Lo store non risponde",
+  "fxcConnect": "Collega",
+  "fxcReconnect": "Collega di nuovo",
+  "fxcChange": "Cambia",
+  "fxcVerify": "Controlla ora",
+  "fxcDisconnect": "Scollega",
+  "fxcDisconnectTitle": "Scollegare {name}?",
+  "@fxcDisconnectTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcDisconnectBody": "Le app già caricate restano dove sono. I nuovi caricamenti aspettano finché non ricolleghi.",
+  "fxcAccountGoogle": "Account: {email}",
+  "@fxcAccountGoogle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAccountApple": "Chiave {keyId}",
+  "@fxcAccountApple": {
+    "placeholders": {
+      "keyId": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAccountTeam": "Team {team}",
+  "@fxcAccountTeam": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcChecking": "Controllo con lo store…",
+  "fxcWhyBadKey": "Questo non è un file di chiave valido.",
+  "fxcWhyRefused": "Lo store ha rifiutato la chiave. Potrebbe essere stata cancellata o sostituita: creane una nuova.",
+  "fxcWhyNoRole": "La chiave non ha permessi. In App Store Connect dalle il ruolo App Manager.",
+  "fxcWhyOffline": "Non riesco a raggiungere lo store. Controlla la connessione a internet.",
+  "fxcWhyDeveloperId": "L’ID sviluppatore è il numero lungo nell’indirizzo di Play Console.",
+  "fxcBannerTitle": "Collega Google Play e App Store",
+  "fxcBannerBody": "Finché non sono collegati, le app si fermano prima del caricamento.",
+  "fxcConnectNow": "Collega adesso",
+  "fxcGoogleTitle": "Collega Google Play",
+  "fxcGoogleStep1": "In Google Cloud crea un account di servizio e attiva la “Google Play Android Developer API”.",
+  "fxcGoogleStep2": "Apri quell’account, poi Chiavi → Aggiungi chiave → JSON. Un file viene salvato sul computer.",
+  "fxcGoogleStep3": "In Play Console apri Utenti e autorizzazioni e invita l’email dell’account con il permesso di pubblicare le app.",
+  "fxcGoogleStep4": "Scegli qui sotto il file .json. Ember lo controlla con Google e lo salva.",
+  "fxcOpenGoogleCloud": "Apri Google Cloud",
+  "fxcOpenPlayConsole": "Apri Play Console",
+  "fxcChooseJson": "Scegli il file .json",
+  "fxcPasteKey": "Oppure incolla qui la chiave",
+  "fxcDeveloperId": "ID sviluppatore (facoltativo)",
+  "fxcDeveloperIdHelp": "Il numero lungo nell’indirizzo di Play Console, dopo /developers/.",
+  "fxcCheckSave": "Controlla e salva",
+  "fxcAuto": "Collega in automatico",
+  "fxcAutoHelp": "Usa l’account Google collegato agli strumenti Google Cloud di questo computer. Serve l’ID sviluppatore.",
+  "fxcAutoWorking": "Preparo Google Play… ci vogliono alcuni minuti",
+  "fxcConnectedOk": "{name} collegato",
+  "@fxcConnectedOk": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcFileChosen": "File: {name}",
+  "@fxcFileChosen": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fxcAppleTitle": "Collega l’App Store",
+  "fxcAppleStep1": "In App Store Connect apri Utenti e accesso → Integrazioni → API di App Store Connect e crea una chiave con il ruolo App Manager.",
+  "fxcAppleStep2": "Copia l’Issuer ID (in cima alla pagina) e il Key ID.",
+  "fxcAppleStep3": "Scarica il file .p8: Apple lo fa scaricare una sola volta.",
+  "fxcOpenAppStoreConnect": "Apri App Store Connect",
+  "fxcIssuerId": "Issuer ID",
+  "fxcIssuerHelp": "Il codice lungo in cima alla pagina Chiavi.",
+  "fxcKeyId": "Key ID",
+  "fxcKeyIdHelp": "Il codice breve accanto alla chiave, tipo Z47GM3ZDZ6.",
+  "fxcChooseP8": "Scegli il file .p8",
+  "fxcKeepSavedKey": "Lascia il file vuoto per tenere la chiave già salvata.",
+  "fxcTeamId": "Team ID (facoltativo)",
+  "fxcTeamIdHelp": "Dieci caratteri. Ember lo trova da solo quando può."
 }

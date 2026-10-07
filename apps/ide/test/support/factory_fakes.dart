@@ -208,12 +208,58 @@ class FakeFactory extends FactoryController {
 
 /// The Runner's REST side for the Fabbrica: the supervisor's answer and the connections.
 class FakeFactoryApi extends FakeRunnerApi {
-  FakeFactoryApi({this.plan = const {}, this.connections = const {}, this.planError});
+  FakeFactoryApi({this.plan = const {}, this.connections = const {}, this.planError, Map<String, dynamic>? stores}) : stores = stores ?? fakeStoresJson();
   final Map<String, dynamic> plan;
   final Map<String, dynamic> connections;
   final RunnerException? planError;
   final planRequests = <Map<String, Object?>>[];
   final signIns = <String>[];
+
+  /// The store accounts as `GET /v1/connect` answers them; connecting changes them like the Runner does.
+  Map<String, dynamic> stores;
+
+  /// What was asked of the store accounts, in order.
+  final storeCalls = <String>[];
+
+  /// Set to make the next connection attempt fail the way a store refusal does.
+  RunnerException? storeError;
+
+  Map<String, dynamic> _connected(String provider, String account) => {
+    'provider': provider,
+    'state': 'connected',
+    'detail': 'ok',
+    'account': account,
+  };
+
+  @override
+  Future<Map<String, dynamic>> connectStatus({bool fresh = false}) async => stores;
+
+  @override
+  Future<Map<String, dynamic>> connectGooglePlay({required String serviceAccount, String? developerId}) async {
+    storeCalls.add('google:${serviceAccount.length}:${developerId ?? ''}');
+    if (storeError != null) throw storeError!;
+    return stores['googlePlay'] = _connected('google_play', 'ember@proj.iam.gserviceaccount.com');
+  }
+
+  @override
+  Future<Map<String, dynamic>> connectApple({required String keyId, required String issuerId, String? privateKey, String? teamId}) async {
+    storeCalls.add('apple:$keyId:$issuerId:${privateKey ?? '-'}:${teamId ?? ''}');
+    if (storeError != null) throw storeError!;
+    return stores['apple'] = _connected('apple', keyId);
+  }
+
+  @override
+  Future<Map<String, dynamic>> connectVerify(String provider) async {
+    storeCalls.add('verify:$provider');
+    return stores[provider == 'apple' ? 'apple' : 'googlePlay'] as Map<String, dynamic>;
+  }
+
+  @override
+  Future<void> connectDisconnect(String provider) async {
+    storeCalls.add('disconnect:$provider');
+    final key = provider == 'apple' ? 'apple' : 'googlePlay';
+    stores[key] = {'provider': key == 'apple' ? 'apple' : 'google_play', 'state': 'missing', 'detail': 'missing', 'account': ''};
+  }
 
   @override
   Future<Map<String, dynamic>> factoryPlan({required String text, int? count, Map<String, int>? engines}) async {
@@ -264,3 +310,30 @@ const fakeConnectionsJson = {
   },
   'capacity': {'cpus': 16, 'totalRamMb': 8100, 'freeRamMb': 3200, 'freeDiskGb': 108, 'buildSlots': 1, 'agentSlots': 6},
 };
+
+/// `GET /v1/connect`: each account is `missing`, `connected`, `invalid` or `unreachable`.
+Map<String, dynamic> fakeStoresJson({String google = 'missing', String apple = 'missing', bool gcloud = false}) {
+  Map<String, dynamic> one(String provider, String state, String account) => {
+    'provider': provider,
+    'state': state,
+    'detail': switch (state) {
+      'connected' => 'ok',
+      'invalid' => 'key_refused',
+      'unreachable' => 'offline',
+      _ => 'missing',
+    },
+    'account': state == 'missing' ? '' : account,
+    if (provider == 'apple' && state == 'connected') 'teamId': 'ABCDE12345',
+  };
+  return {
+    'googlePlay': one('google_play', google, 'ember@proj.iam.gserviceaccount.com'),
+    'apple': one('apple', apple, 'Z47GM3ZDZ6'),
+    'gcloud': {'installed': gcloud, 'account': gcloud ? 'me@gmail.com' : null},
+    'developerId': '',
+    'links': {
+      'playConsole': 'https://play.google.com/console/developers',
+      'googleCloudKeys': 'https://console.cloud.google.com/iam-admin/serviceaccounts',
+      'appStoreKeys': 'https://appstoreconnect.apple.com/access/integrations/api',
+    },
+  };
+}

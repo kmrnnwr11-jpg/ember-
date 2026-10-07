@@ -206,9 +206,9 @@ void main() {
       );
       s.expectClean(tester);
       expect(
-        find.byType(NavigationRail).evaluate().isNotEmpty || find.byType(NavigationBar).evaluate().isNotEmpty,
+        find.byKey(const Key('factoryTab0')).evaluate().isNotEmpty || find.byType(NavigationBar).evaluate().isNotEmpty,
         isTrue,
-        reason: s.where,
+        reason: '${s.where}: the places are tabs in the top bar, or a bar under the page',
       );
       expect(find.text(s.v.l.fxTitle), findsOneWidget, reason: s.where);
       // The number of things waiting for the owner sits on its entry.
